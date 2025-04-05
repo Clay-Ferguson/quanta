@@ -14,12 +14,25 @@ function QuantaChat() {
 
             <main className="flex-grow overflow-y-auto p-4">
                 <div className="space-y-2 max-w-full">
-                    {gs.messages.map((message, index) => (
+                    {gs.messages.map((msg, index) => (
                         <div 
                             key={index} 
-                            className={`${message.sender === gs.userName ? 'bg-white' : 'bg-gray-200'} p-3 rounded-md shadow-sm`}
+                            className={`${msg.sender === gs.userName ? 'bg-white' : 'bg-gray-200'} p-3 rounded-md shadow-sm flex`}
                         >
-                            {message.sender}: {message.content}
+                            <div className="flex flex-col mr-3 min-w-[100px] text-left">
+                                <span className="font-semibold text-sm">{msg.sender}</span>
+                                <span className="text-xs text-gray-500">
+                                    {new Date(msg.timestamp).toLocaleDateString('en-US', { 
+                                        month: '2-digit', 
+                                        day: '2-digit', 
+                                        year: '2-digit' 
+                                    })} {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                            <div className="w-px bg-gray-300 self-stretch mx-2"></div>
+                            <div className="flex-1 text-left">
+                                {msg.content}
+                            </div>
                         </div>
                     ))}
                 </div>
