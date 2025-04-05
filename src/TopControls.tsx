@@ -1,43 +1,19 @@
-import { useGlobalState, useGlobalDispatch } from './GlobalState';
+import { useGlobalState } from './GlobalState';
+import { div } from './DOM'
+import './styles/components/TopControls.scss'; 
 
 const TopControls = () => {
-    const globalState = useGlobalState();
-    const dispatch = useGlobalDispatch();
+    const gs = useGlobalState();
 
-    const handleIncrement = () => {
-        dispatch({ type: 'INCREMENT' });
-    };
-
-    const handleSetData = () => {
-        dispatch({ type: 'SET_SOME_DATA', payload: 'New Data from MyComponent' });
-    };
-
-    const handleLogin = () => {
-        dispatch({ type: 'LOGIN', payload: { id: 2, name: 'Jane Doe' } });
-    };
-
-    const handleLogout = () => {
-        dispatch({ type: 'LOGOUT' });
-    };
+    let participants;
+    if (gs.participants.size === 0) {
+        participants = 'QuantaChat: No participants yet';
+    } else {
+        participants = 'QuantaChat with: ' + Array.from(gs.participants).join(', ');
+    }
 
     return (
-        <div>
-            <h1>My Component</h1>
-            <p>Some Global Data: {globalState.someData}</p>
-            <p>Count: {globalState.count}</p>
-            {globalState.user ? (
-                <p>Logged in as: {globalState.user.name}</p>
-            ) : (
-                <p>Not logged in</p>
-            )}
-            <button onClick={handleIncrement}>Increment Global Count</button>
-            <button onClick={handleSetData}>Set Global Data</button>
-            {!globalState.user ? (
-                <button onClick={handleLogin}>Login Globally</button>
-            ) : (
-                <button onClick={handleLogout}>Logout Globally</button>
-            )}
-        </div>
+        div({className: "top-controls"}, participants)
     );
 };
 

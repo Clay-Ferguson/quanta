@@ -6,13 +6,34 @@ const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undef
 
 // 2. Define the Initial State (You can customize this based on your app's needs)
 interface GlobalState {
-  someData: string;
-  count: number;
-  user: { id: number; name: string } | null;
-  // Add other global state properties here
+    userName: string; // Example property, you can remove or modify it as needed
+    messages: Array<{ content: string; sender: string, timestamp: number }>; // Example message structure
+    participants: Set<string>; // Set of participant IDs
+    // ---------- The rest are from demo  
+    someData: string;
+    count: number;
+    user: { id: number; name: string } | null;
+    // Add other global state properties here
 }
 
 const initialState: GlobalState = {
+    userName: 'clay', // Default username, can be change
+    messages: [
+        // Example initial messages, you can start with an empty array or some default messages
+        // add 10 mssages
+        { content: 'Welcome to QuantaChat!', sender: 'clay', timestamp: Date.now() }, // Add timestamp for each message
+        { content: 'Feel free to chat!', sender: 'system', timestamp: Date.now() }, // Add timestamp for each message
+        { content: 'How can I help you today?', sender: 'clay', timestamp: Date.now() }, // Add timestamp for each message
+        { content: 'Enjoy your stay!', sender: 'system', timestamp: Date.now() }, // Add timestamp for each message
+        { content: 'Have a great day!', sender: 'clay', timestamp: Date.now()},
+        { content: 'Let us know if you have any questions.', sender: 'system', timestamp: Date.now() },
+        { content: 'We are here to assist you.', sender: 'system' , timestamp: Date.now()},
+        { content: 'Feel free to explore the features.', sender: 'system' , timestamp: Date.now()},
+        { content: 'Join the conversation anytime.', sender: 'system' , timestamp: Date.now()},
+        { content: 'Thank you for being here!', sender: 'system', timestamp: Date.now() }
+    ], // Initialize with an empty array
+    participants: new Set<string>(), // Initialize with an empty Set
+    // ---------- The rest are from demo
     someData: 'Initial Data',
     count: 0,
     user: null,
