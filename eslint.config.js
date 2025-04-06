@@ -25,6 +25,7 @@ export default tseslint.config(
       ],
       'indent': ['error', 4],
       '@typescript-eslint/no-explicit-any': 'off', // Disable no-explicit-any rule
+      'no-debugger': 'off',
     },
   },
 )

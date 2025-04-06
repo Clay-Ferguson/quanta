@@ -1,10 +1,30 @@
 import { useGlobalState, useGlobalDispatch } from './GlobalState';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './App.css'
+import AppService from './AppService';
+const app = AppService.getInst(); // Ensure the singleton is initialized
 
 function QuantaChat() {
     const gs = useGlobalState();
     const dispatch = useGlobalDispatch();
+
+    const [message, setMessage] = useState('');
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    // Auto-resize function for textarea
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            // Reset height to auto to get the correct scrollHeight
+            textarea.style.height = 'auto';
+            // Set new height but cap it with CSS max-height
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    }, [message]);
+    
+    const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setMessage(e.target.value);
+    };
     
     // Local state for form fields
     const [formData, setFormData] = useState({
@@ -20,16 +40,22 @@ function QuantaChat() {
         }));
     };
 
-    const connect = () => {
-        dispatch({ type: 'CONNECT', payload: { 
-            userName: formData.userName, 
-            roomName: formData.roomName 
-        }});
+    const connect = async () => {
+        app._connect(dispatch, formData.userName, formData.roomName);
     };
 
     const disconnect = () => {
-        dispatch({ type: 'DISCONNECT'});
+        app._disconnect(dispatch);
     };
+
+    const send = () => {
+        if (!message.trim() || !gs.connected) {
+            console.log("Not connected or empty message, not sending.");
+            return;
+        }
+        app.send(dispatch, message.trim(), null, gs);
+        setMessage(''); // Clear the message input after sending
+    }
 
     const participants = 'Participants: ' + Array.from(gs.participants).join(', ');
     return (
@@ -61,6 +87,7 @@ function QuantaChat() {
                         />
                     </div>
                     <button 
+                        disabled={!formData.userName || !formData.roomName || gs.connected}
                         onClick={connect}
                         className="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-4 rounded"
                     >
@@ -102,8 +129,16 @@ function QuantaChat() {
             </main>
 
             <footer className="w-full bg-gray-300 p-4 flex items-center flex-shrink-0">
-                <input type="text" placeholder="Type your message..." className="flex-grow rounded-md border-gray-400 shadow-sm p-2" />
-                <button className="bg-green-500 text-white rounded-md px-4 py-2 ml-2">Send</button>
+                <textarea 
+                    ref={textareaRef}
+                    value={message}
+                    onChange={handleMessageChange}
+                    placeholder="Type your message..." 
+                    className="flex-grow rounded-md border-gray-400 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto"
+                />
+                <button className="bg-green-500 text-white rounded-md px-4 py-2 ml-2"
+                    onClick={send}
+                >Send</button>
             </footer>
         </div>
     )

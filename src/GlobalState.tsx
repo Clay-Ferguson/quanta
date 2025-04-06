@@ -6,6 +6,7 @@ const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undef
 
 // 2. Define the Initial State (You can customize this based on your app's needs)
 interface GlobalState {
+    connected?: boolean; // Optional, not in the GlobalState interface but can be added if needed
     roomName: string; // 
     userName: string; // Example property, you can remove or modify it as needed
     messages: Array<{ content: string; sender: string, timestamp: number }>; // Example message structure
@@ -18,21 +19,10 @@ interface GlobalState {
 }
 
 const initialState: GlobalState = {
+    connected: false, // This property is not in the GlobalState interface but can be added if needed
     roomName: 'romper',
     userName: 'clay', // Default username, can be change
     messages: [
-        // Example initial messages, you can start with an empty array or some default messages
-        // add 10 mssages
-        { content: 'Welcome to QuantaChat!', sender: 'clay', timestamp: Date.now() }, // Add timestamp for each message
-        { content: 'Feel free to chat!', sender: 'system', timestamp: Date.now() }, // Add timestamp for each message
-        { content: 'How can I help you today?', sender: 'clay', timestamp: Date.now() }, // Add timestamp for each message
-        { content: 'Enjoy your stay!', sender: 'system', timestamp: Date.now() }, // Add timestamp for each message
-        { content: 'Have a great day!', sender: 'clay', timestamp: Date.now()},
-        { content: 'Let us know if you have any questions.', sender: 'system', timestamp: Date.now() },
-        { content: 'We are here to assist you.', sender: 'system' , timestamp: Date.now()},
-        { content: 'Feel free to explore the features.', sender: 'system' , timestamp: Date.now()},
-        { content: 'Join the conversation anytime.', sender: 'system' , timestamp: Date.now()},
-        { content: 'Thank you for being here!', sender: 'system', timestamp: Date.now() }
     ], // Initialize with an empty array
     participants: new Set<string>(), // Initialize with an empty Set
     // ---------- The rest are from demo
@@ -42,50 +32,15 @@ const initialState: GlobalState = {
 };
 
 // 3. Define the Actions Type (Optional but good for type safety)
-type GlobalAction =
-  | { type: 'SET_SOME_DATA'; payload: string }
-  | { type: 'INCREMENT' }
-  | { type: 'DECREMENT' }
-  | { type: 'CONNECT'; payload: { roomName: string; userName: string } } // Example action for connecting to a roo
-  | { type: 'DISCONNECT' } // Example action for disconnecting from a room
-  | { type: 'LOGIN'; payload: { id: number; name: string } }
-  | { type: 'LOGOUT' };
+type GlobalAction = { type: string, payload: any};
 
 // 4. Define the Reducer Function
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
-    console.log('Dispatching action:', action); // Log the action being dispatched
-
-    switch (action.type) {
-    case 'SET_SOME_DATA':
-        return { ...state, someData: action.payload };
-    case 'INCREMENT':
-        return { ...state, count: state.count + 1 };
-    case 'DECREMENT':
-        return { ...state, count: state.count - 1 };
-    case 'LOGIN':
-        return { ...state, user: action.payload };
-    case 'LOGOUT':
-        return { ...state, user: null };
-    case 'CONNECT': {
-        const { roomName, userName } = action.payload;
-        return {
-            ...state,
-            roomName: roomName || state.roomName, // Update roomName if provided
-            userName: userName || state.userName, // Update userName if provided
-        };
-    }
-    case 'DISCONNECT': {
-        return {
-            ...state,
-            roomName: '', // Clear roomName on disconnect
-            userName: '', // Clear userName on disconnect
-            messages: [], // Optionally clear messages on disconnect
-            participants: new Set<string>(), // Clear participants on disconnect
-        };
-    }
-    default:
-        return state;
-    }
+    console.log('Dispatching action: '+ action.type); // Log the action being dispatched
+    return {
+        ...state,
+        ...action.payload, // Merge the new state into the existing state
+    };
 };
 
 // 5. Create the Provider Component
