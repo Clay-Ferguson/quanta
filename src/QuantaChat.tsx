@@ -9,7 +9,9 @@ function QuantaChat() {
     const dispatch = useGlobalDispatch();
 
     const [message, setMessage] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     // Auto-resize function for textarea
     useEffect(() => {
@@ -56,13 +58,40 @@ function QuantaChat() {
         }
     };
     
+    const handleFileSelect = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+    
+    const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            // Convert FileList to array for easier manipulation
+            const filesArray = Array.from(e.target.files);
+            setSelectedFiles(filesArray);
+        }
+    };
+    
     const send = () => {
-        if (!message.trim() || !gs.connected) {
-            console.log("Not connected or empty message, not sending.");
+        if ((!message.trim() && selectedFiles.length === 0) || !gs.connected) {
+            console.log("Not connected or empty message with no attachments, not sending.");
             return;
         }
+        
+        // For now, we're just setting up the UI so we'll just log the files
+        if (selectedFiles.length > 0) {
+            console.log(`Sending message with ${selectedFiles.length} attachments`);
+            // Later we'll process these files before sending
+        }
+        
         app.send(dispatch, message.trim(), null, gs);
         setMessage(''); // Clear the message input after sending
+        setSelectedFiles([]); // Clear the selected files after sending
+        
+        // Reset the file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     }
 
     const participants = 'Participants: ' + Array.from(gs.participants).join(', ');
@@ -99,6 +128,16 @@ function QuantaChat() {
 
     return (
         <div className="h-screen flex flex-col w-screen min-w-full">
+            {/* Hidden file input element */}
+            <input 
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                multiple
+                onChange={handleFiles}
+            />
+            
+            {/* Rest of your component... */}
             <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0 flex justify-between items-center">
                 <div className="w-1/4">
                     <h1 className="text-xl font-semibold">QuantaChat</h1>
@@ -181,9 +220,21 @@ function QuantaChat() {
                     placeholder="Type your message..." 
                     className="flex-grow rounded-md border-gray-400 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto"
                 />
-                <button className="bg-green-500 text-white rounded-md px-4 py-2 ml-2"
+                <button 
+                    className="bg-blue-500 text-white rounded-md px-4 py-2 ml-2"
+                    onClick={handleFileSelect}
+                    disabled={!gs.connected}
+                    title={selectedFiles.length === 0 ? 'Attach files' : `${selectedFiles.length} file(s) attached`}
+                >
+                    {selectedFiles.length ? `📎(${selectedFiles.length})` : '📎'}
+                </button>
+                <button 
+                    className="bg-green-500 text-white rounded-md px-4 py-2 ml-2"
                     onClick={send}
-                >Send</button>
+                    disabled={!gs.connected}
+                >
+                    Send
+                </button>
             </footer>
         </div>
     )

@@ -9,26 +9,16 @@ interface GlobalState {
     connected?: boolean; // Optional, not in the GlobalState interface but can be added if needed
     roomName: string; // 
     userName: string; // Example property, you can remove or modify it as needed
-    messages: Array<{ content: string; sender: string, timestamp: number }>; // Example message structure
+    messages: Array<{ content: string; sender: string, timestamp: number, attachments: [] }>; // Example message structure
     participants: Set<string>; // Set of participant IDs
-    // ---------- The rest are from demo  
-    someData: string;
-    count: number;
-    user: { id: number; name: string } | null;
-    // Add other global state properties here
 }
 
 const initialState: GlobalState = {
     connected: false, // This property is not in the GlobalState interface but can be added if needed
     roomName: 'romper',
     userName: 'clay', // Default username, can be change
-    messages: [
-    ], // Initialize with an empty array
+    messages: [], // Initialize with an empty array
     participants: new Set<string>(), // Initialize with an empty Set
-    // ---------- The rest are from demo
-    someData: 'Initial Data',
-    count: 0,
-    user: null,
 };
 
 // 3. Define the Actions Type (Optional but good for type safety)
