@@ -2,7 +2,6 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
-import './index.css';
 import QuantaChat from './QuantaChat.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import AppService from './AppService';

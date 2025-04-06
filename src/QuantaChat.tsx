@@ -1,6 +1,5 @@
 import { useGlobalState, useGlobalDispatch } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
-import './App.css'
 import AppService from './AppService';
 const app = AppService.getInst(); 
 
