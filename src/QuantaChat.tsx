@@ -102,7 +102,7 @@ function QuantaChat() {
                 </div>
             </header>
 
-            <main className="flex-grow overflow-y-auto p-4">
+            <main id="chatLog" className="flex-grow overflow-y-auto p-4">
                 <div className="space-y-2 max-w-full">
                     {gs.messages.map((msg, index) => (
                         <div 

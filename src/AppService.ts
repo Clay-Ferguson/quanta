@@ -49,6 +49,7 @@ class AppService {
             messages,
             connected: true  
         }});
+        this.scrollToBottom();
     }
 
     _disconnect = (dispatch: any) => {
@@ -70,11 +71,20 @@ class AppService {
 
             // NOTE: displatch adds to 'gs.messages' array in the reducer
             dispatch({ type: 'send', payload: gs});
-
+            this.scrollToBottom();
+        
             // this.clearAttachments();
             // input.value = '';
             //  mr.refreshAll();
         }
+    }
+
+    scrollToBottom = () => {
+        setTimeout(() => {
+            const chatLog = document.getElementById('chatLog');
+            if (chatLog) {
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }}, 200);
     }
 
     _persistMessage = async (msg: any, gs: any) => {
