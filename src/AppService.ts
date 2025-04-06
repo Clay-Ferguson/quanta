@@ -11,6 +11,8 @@ class AppService {
     private static inst: AppService | null = null;
     public storage: any; // IndexedDB instance
     public rtc: any; // WebRTC instance
+    private globalDispatch: any = null;
+    private globalState: any = null;
 
     constructor() {
         console.log('Util singleton created');
@@ -29,6 +31,32 @@ class AppService {
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         this.rtc = await WebRTC.getInst(this.storage, this, RTC_HOST, RTC_PORT);
+    }
+
+    setGlobals = (dispatch: any, state: any) => {
+        this.globalDispatch = dispatch;
+        this.globalState = state;
+        console.log('Globals set in AppService');
+    }
+
+    _rtcStateChange = () => {
+        if (!this.globalDispatch) {
+            console.warn('Global dispatch not yet available for RTC state change');
+            return;
+        }
+        
+        // Get current RTC state
+        const participants = this.rtc.participants || new Set<string>();
+        const connected = this.rtc.connected || false;
+        
+        // Dispatch to update global state
+        this.globalDispatch({ 
+            type: 'updateRtcState', 
+            payload: { 
+                participants,
+                connected
+            }
+        });
     }
 
     _connect = async (dispatch: any, userName: string, roomName: string) => {
@@ -71,7 +99,6 @@ class AppService {
 
             // NOTE: displatch adds to 'gs.messages' array in the reducer
             dispatch({ type: 'send', payload: gs});
-            this.scrollToBottom();
         
             // this.clearAttachments();
             // input.value = '';
@@ -88,6 +115,8 @@ class AppService {
     }
 
     _persistMessage = async (msg: any, gs: any) => {
+        console.log("Persisting message: ", msg);
+        gs = gs || this.globalState;
         if (this.messageExists(msg, gs)) {
             return false; // Message already exists, do not save again
         }
@@ -104,11 +133,12 @@ class AppService {
         // todo-0: we could put a timer here to batch save messages instead of saving every time
         // and also make sure the GUI never waits for the DB.
         this.saveMessages(gs);
-        // this.asyncScrollToBottom(); // todo-0: need to bring this back.
+        this.scrollToBottom();
     }
 
     // Message storage and persistence functions
     saveMessages(gs: any) {
+        gs = gs || this.globalState;
         try {
             // Get existing room data or create a new room object
             const roomData = {

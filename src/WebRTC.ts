@@ -160,7 +160,7 @@ class WebRTC {
                 this.app._persistMessage(evt.message);
             }
         }
-        // this.app._rtcStateChange();
+        this.app._rtcStateChange();
     }
 
     _onopen = () => {
@@ -175,13 +175,13 @@ class WebRTC {
                 name: this.userName
             }));}
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        // this.app._rtcStateChange();
+        this.app._rtcStateChange();
     }
 
     _onerror = (error: any) => {
         util.log('WebSocket error: ' + error);
         this.connected = false;
-        // this.app._rtcStateChange();
+        this.app._rtcStateChange();
     };
 
     _onclose = () => {
@@ -193,7 +193,7 @@ class WebRTC {
         this.peerConnections.clear();
         this.dataChannels.clear();
 
-        // this.app._rtcStateChange();
+        this.app._rtcStateChange();
     }
 
     createPeerConnection(peerName: string, isInitiator: boolean) {
@@ -311,7 +311,6 @@ class WebRTC {
         // Reset participants
         this.participants.clear();
         this.connected = false;
-        // this.app._rtcStateChange();
     }
 
     setupDataChannel(channel: any, peerName: string) {
