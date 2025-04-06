@@ -185,7 +185,7 @@ function QuantaChat() {
     }, []);  // Empty dependency array means this runs once on component mount
 
     return (
-        <div className="h-screen flex flex-col w-screen min-w-full">
+        <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200">
             {/* Hidden file input element */}
             <input 
                 type="file"
@@ -195,65 +195,65 @@ function QuantaChat() {
                 onChange={handleFiles}
             />
             
-            <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0 flex justify-between items-center">
+            <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md">
                 <div className="w-1/4">
-                    <h1 className="text-xl font-semibold">Quanta Chat</h1>
-                    <h2 className="font-semibold">{participants}</h2>
+                    <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
+                    <h2 className="font-semibold text-gray-300">{participants}</h2>
                 </div>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center">
-                        <label htmlFor="userName" className="mr-2">Name:</label>
+                        <label htmlFor="userName" className="mr-2 text-gray-300">Name:</label>
                         <input 
                             id="userName"
                             type="text" 
                             value={formData.userName} 
                             onChange={handleInputChange}
-                            className="rounded px-2 py-1 text-black w-28" 
+                            className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         />
                     </div>
                     <div className="flex items-center">
-                        <label htmlFor="roomName" className="mr-2">Room:</label>
+                        <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
                         <input 
                             id="roomName"
                             type="text" 
                             value={formData.roomName} 
                             onChange={handleInputChange}
-                            className="rounded px-2 py-1 text-black w-28" 
+                            className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         />
                     </div>
                     <button 
                         disabled={!formData.userName || !formData.roomName || gs.connected}
                         onClick={connect}
-                        className="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-4 rounded"
+                        className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Connect
                     </button>
                     <button 
                         onClick={disconnect}
-                        className="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded"
+                        className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
                     >
                         Disconnect
                     </button>
                     <button 
                         onClick={clear}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-1 px-4 rounded"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-gray-100 font-medium py-1 px-4 rounded"
                     >
                         Clear
                     </button>
                 </div>
             </header>
 
-            <main id="chatLog" className="flex-grow overflow-y-auto p-4">
-                <div className="space-y-2 max-w-full">
+            <main id="chatLog" className="flex-grow overflow-y-auto p-4 bg-gray-900">
+                <div className="space-y-3 max-w-full">
                     {gs.messages.map((msg, index) => (
                         <div 
                             key={index} 
-                            className={`${msg.sender === gs.userName ? 'bg-white' : 'bg-gray-200'} p-3 rounded-md shadow-sm flex flex-col`}
+                            className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' : 'bg-gray-800'} p-3 rounded-md shadow-md flex flex-col`}
                         >
                             <div className="flex">
                                 <div className="flex flex-col mr-3 min-w-[100px] text-left">
-                                    <span className="font-semibold text-sm">{msg.sender}</span>
-                                    <span className="text-xs text-gray-500">
+                                    <span className="font-semibold text-sm text-blue-400">{msg.sender}</span>
+                                    <span className="text-xs text-gray-400">
                                         {new Date(msg.timestamp).toLocaleDateString('en-US', { 
                                             month: '2-digit', 
                                             day: '2-digit', 
@@ -261,18 +261,18 @@ function QuantaChat() {
                                         })} {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                <div className="w-px bg-gray-300 self-stretch mx-2"></div>
-                                <div className="flex-1 text-left">
+                                <div className="w-px bg-gray-600 self-stretch mx-2"></div>
+                                <div className="flex-1 text-left text-gray-200">
                                     {msg.content}
                                 </div>
                             </div>
                             
                             {/* Attachments section */}
                             {msg.attachments && msg.attachments.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-gray-300">
+                                <div className="mt-2 pt-2 border-t border-gray-600">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                         {msg.attachments.map((attachment: any, attIndex) => (
-                                            <div key={attIndex} className="attachment-container border rounded p-2 flex flex-col">
+                                            <div key={attIndex} className="attachment-container border border-gray-600 rounded p-2 flex flex-col bg-gray-800">
                                                 {attachment.type.startsWith('image/') ? (
                                                     <>
                                                         {/* Image attachment */}
@@ -285,7 +285,7 @@ function QuantaChat() {
                                                                 title="Click to view full size"
                                                             />
                                                             <button 
-                                                                className="absolute top-1 right-1 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600"
+                                                                className="absolute top-1 right-1 bg-blue-600 text-gray-100 rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-700"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     // For base64 data, we can use it directly for download
@@ -301,7 +301,7 @@ function QuantaChat() {
                                                                 ⬇️
                                                             </button>
                                                         </div>
-                                                        <div className="text-xs mt-1 truncate">{attachment.name}</div>
+                                                        <div className="text-xs mt-1 truncate text-gray-300">{attachment.name}</div>
                                                     </>
                                                 ) : (
                                                     <>
@@ -309,11 +309,11 @@ function QuantaChat() {
                                                         <div className="flex items-center">
                                                             <span className="text-2xl mr-2">📄</span>
                                                             <div className="flex-1">
-                                                                <div className="font-medium text-sm truncate">{attachment.name}</div>
-                                                                <div className="text-xs text-gray-500">{formatFileSize(attachment.size)}</div>
+                                                                <div className="font-medium text-sm truncate text-gray-200">{attachment.name}</div>
+                                                                <div className="text-xs text-gray-400">{formatFileSize(attachment.size)}</div>
                                                             </div>
                                                             <button 
-                                                                className="bg-blue-500 text-white rounded px-2 py-1 text-sm hover:bg-blue-600"
+                                                                className="bg-blue-600 text-gray-100 rounded px-2 py-1 text-sm hover:bg-blue-700"
                                                                 onClick={() => {
                                                                     const downloadLink = document.createElement('a');
                                                                     downloadLink.href = attachment.data;
@@ -339,16 +339,16 @@ function QuantaChat() {
                 </div>
             </main>
 
-            <footer className="w-full bg-gray-300 p-4 flex items-center flex-shrink-0">
+            <footer className="w-full bg-gray-800 p-4 flex items-center flex-shrink-0 shadow-md">
                 <textarea 
                     ref={textareaRef}
                     value={message}
                     onChange={handleMessageChange}
                     placeholder="Type your message..." 
-                    className="flex-grow rounded-md border-gray-400 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto"
+                    className="flex-grow rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button 
-                    className="bg-blue-500 text-white rounded-md px-4 py-2 ml-2"
+                    className="bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-md px-4 py-2 ml-2 border border-gray-600"
                     onClick={handleFileSelect}
                     disabled={!gs.connected}
                     title={selectedFiles.length === 0 ? 'Attach files' : `${selectedFiles.length} file(s) attached`}
@@ -356,7 +356,7 @@ function QuantaChat() {
                     {selectedFiles.length ? `📎(${selectedFiles.length})` : '📎'}
                 </button>
                 <button 
-                    className="bg-green-500 text-white rounded-md px-4 py-2 ml-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-gray-100 rounded-md px-4 py-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={send}
                     disabled={!gs.connected}
                 >
@@ -367,12 +367,12 @@ function QuantaChat() {
             {/* Full-size image viewer modal */}
             {fullSizeImage && (
                 <div 
-                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 overflow-auto"
+                    className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4 overflow-auto"
                     onClick={() => setFullSizeImage(null)}
                 >
                     <div className="relative max-w-full max-h-full">
                         <button 
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 z-10"
+                            className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 z-10"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setFullSizeImage(null);
@@ -380,8 +380,8 @@ function QuantaChat() {
                         >
                             ✕
                         </button>
-                        <div className="bg-white p-2 rounded shadow-lg">
-                            <h3 className="text-center text-lg font-medium mb-2">{fullSizeImage.name}</h3>
+                        <div className="bg-gray-800 p-3 rounded shadow-lg border border-gray-700">
+                            <h3 className="text-center text-lg font-medium mb-2 text-gray-200">{fullSizeImage.name}</h3>
                             <img 
                                 src={fullSizeImage.src} 
                                 alt={fullSizeImage.name}
