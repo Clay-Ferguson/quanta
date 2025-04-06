@@ -1,3 +1,4 @@
+/* todo-0: get rid of this and move it into the main.scss file. WARNING: 'body' is duplicated */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

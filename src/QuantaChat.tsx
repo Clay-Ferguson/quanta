@@ -2,7 +2,7 @@ import { useGlobalState, useGlobalDispatch } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import './App.css'
 import AppService from './AppService';
-const app = AppService.getInst(); // Ensure the singleton is initialized
+const app = AppService.getInst(); 
 
 function QuantaChat() {
     const gs = useGlobalState();
@@ -153,10 +153,10 @@ function QuantaChat() {
         }
     }
 
-    const participants = 'Participants: ' + Array.from(gs.participants).join(', ');
+    const participants = 'Members: ' + Array.from(gs.participants).join(', ');
     
     useEffect(() => {
-        // Function to get URL parameters
+        // Get URL parameters
         const getUrlParameter = (name: string): string | null => {
             const searchParams = new URLSearchParams(window.location.search);
             return searchParams.get(name);
@@ -196,10 +196,9 @@ function QuantaChat() {
                 onChange={handleFiles}
             />
             
-            {/* Rest of your component... */}
             <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0 flex justify-between items-center">
                 <div className="w-1/4">
-                    <h1 className="text-xl font-semibold">QuantaChat</h1>
+                    <h1 className="text-xl font-semibold">Quanta Chat</h1>
                     <h2 className="font-semibold">{participants}</h2>
                 </div>
                 <div className="flex items-center space-x-4">

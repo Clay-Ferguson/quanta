@@ -1,4 +1,4 @@
-# QuantaChat
+# Quanta Chat
 
 ## To Run the Server
 

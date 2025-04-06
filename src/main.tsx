@@ -24,7 +24,6 @@ function AppServiceConnector() {
     return null; // This component doesn't render anything
 }
 
-// Use the connector inside your provider
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <GlobalStateProvider> 
