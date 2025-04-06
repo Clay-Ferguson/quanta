@@ -48,6 +48,14 @@ function QuantaChat() {
         app._disconnect(dispatch);
     };
 
+    const clear = () => {
+        if (gs.connected) {
+            app._clearMessages(dispatch);
+        } else {
+            console.log("Not connected, cannot clear messages.");
+        }
+    };
+    
     const send = () => {
         if (!message.trim() || !gs.connected) {
             console.log("Not connected or empty message, not sending.");
@@ -129,6 +137,12 @@ function QuantaChat() {
                         className="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded"
                     >
                         Disconnect
+                    </button>
+                    <button 
+                        onClick={clear}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-1 px-4 rounded"
+                    >
+                        Clear
                     </button>
                 </div>
             </header>

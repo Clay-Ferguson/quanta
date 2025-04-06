@@ -90,6 +90,18 @@ class AppService {
         }});
     }
 
+    _clearMessages = (dispatch: any) => {
+        if (confirm("Clear all chat history for room?")) {
+            if (!this.globalState || !this.globalState.connected) {
+                console.log("Not connected, cannot clear messages.");
+                return;
+            }
+
+            this.globalState.messages = []; 
+            this.saveMessages(this.globalState); 
+            dispatch({ type: 'clearMessages', payload: this.globalState });}
+    }
+
     // todo-0: add type safety to 'gs'
     send = (dispatch: any, message: string, selectedFiles: any, gs: any) => {
         if (message || selectedFiles.length > 0) {
@@ -99,10 +111,6 @@ class AppService {
 
             // NOTE: displatch adds to 'gs.messages' array in the reducer
             dispatch({ type: 'send', payload: gs});
-        
-            // this.clearAttachments();
-            // input.value = '';
-            //  mr.refreshAll();
         }
     }
 
