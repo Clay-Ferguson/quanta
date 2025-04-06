@@ -53,9 +53,7 @@ type GlobalAction =
 
 // 4. Define the Reducer Function
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
-    // NOTE: In debug environments this WILL log twice here because of the Strict Mode tag. Don't worry this is fine
-    // and is part of React's Strict Mode behavior in development. It helps identify side effects.
-    // console.log('Dispatching action:', action); // Log the action being dispatched
+    console.log('Dispatching action:', action); // Log the action being dispatched
 
     switch (action.type) {
     case 'SET_SOME_DATA':

@@ -21,7 +21,6 @@ function QuantaChat() {
     };
 
     const connect = () => {
-        console.log("Connect called.");
         dispatch({ type: 'CONNECT', payload: { 
             userName: formData.userName, 
             roomName: formData.roomName 

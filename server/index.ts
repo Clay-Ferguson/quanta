@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // ESM equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -22,14 +23,39 @@ app.get('/api/data', (req: Request, res: Response) => {
     res.json({ message: 'This is data from the API' });
 });
 
-// Serve static files from the dist directory (client application)
 const distPath = path.join(__dirname, '../../dist');
-app.use(express.static(distPath));
 
-// All other GET requests not handled before will return the React app
-app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.resolve(distPath, 'index.html'));
-});
+// Function to serve index.html with replaced placeholders
+const serveIndexHtml = (req: Request, res: Response) => {
+    const filePath = path.resolve(distPath, 'index.html');
+    // console.log(`Serving index.html from: ${filePath}`);
+  
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading index.html:', err);
+            return res.status(500).send('Error loading page');
+        }
+    
+        // Replace the placeholders with actual values
+        const result = data
+            .replace('{{HOST}}', process.env.QUANTA_CHAT_HOST || 'localhost')
+            .replace('{{PORT}}', process.env.QUANTA_CHAT_PORT || '8080');
+    
+        // Set the content type and send the modified HTML
+        res.contentType('text/html');
+        res.send(result);
+    });
+};
+
+// Define HTML routes BEFORE static middleware
+// Explicitly serve index.html for root path
+app.get('/', serveIndexHtml);
+
+// Serve static files from the dist directory, but disable index serving
+app.use(express.static(distPath, { index: false }));
+
+// Fallback for any other routes not handled above
+app.get('*', serveIndexHtml);
 
 // Start the server
 app.listen(PORT, () => {

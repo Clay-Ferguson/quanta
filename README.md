@@ -5,8 +5,7 @@ I'm saving this folder structure as the pre-built starter package for a Vite + T
 ## To Run the Server
 
 ```bash
-yarn build
-yarn start
+yarn build && yarn start
 ```
 
 # NOTE:
