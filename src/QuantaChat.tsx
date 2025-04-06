@@ -58,6 +58,37 @@ function QuantaChat() {
     }
 
     const participants = 'Participants: ' + Array.from(gs.participants).join(', ');
+    
+    useEffect(() => {
+        // Function to get URL parameters
+        const getUrlParameter = (name: string): string | null => {
+            const searchParams = new URLSearchParams(window.location.search);
+            return searchParams.get(name);
+        };
+        
+        // Get userName and roomName from URL if they exist
+        const userNameParam = getUrlParameter('user');
+        const roomNameParam = getUrlParameter('room');
+        
+        // Update form data if URL parameters exist
+        if (userNameParam || roomNameParam) {
+            setFormData(prev => ({
+                userName: userNameParam || prev.userName,
+                roomName: roomNameParam || prev.roomName
+            }));
+        }
+        
+        // Auto-connect if both parameters are present
+        if (userNameParam && roomNameParam && !gs.connected) {
+            // Use a short timeout to ensure state is updated before connecting
+            const timer = setTimeout(() => {
+                app._connect(dispatch, userNameParam, roomNameParam);
+            }, 100);
+            
+            return () => clearTimeout(timer);
+        }
+    }, []);  // Empty dependency array means this runs once on component mount
+
     return (
         <div className="h-screen flex flex-col w-screen min-w-full">
             <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0 flex justify-between items-center">
