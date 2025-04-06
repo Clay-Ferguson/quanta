@@ -64,27 +64,78 @@ function QuantaChat() {
         }
     };
     
-    const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Add this utility function to convert file to base64
+    // todo-0: this was already in Utils, but AI duplicated it here.
+    const fileToBase64 = (file: File): Promise<{
+        name: string;
+        type: string;
+        size: number;
+        data: string;
+    }> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                data: reader.result as string
+            });
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    const toggleFullSize = () => {
+    }
+
+    // Modify the handleFiles function to convert files to base64
+    const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            // Convert FileList to array for easier manipulation
-            const filesArray = Array.from(e.target.files);
-            setSelectedFiles(filesArray);
+            try {
+                const filesArray = Array.from(e.target.files);
+                setSelectedFiles(filesArray);
+            } catch (error) {
+                console.error("Error processing files:", error);
+            }
         }
     };
+
+    // Utility function to format file size
+    // todo-0: I think I have a Utils method for this already.
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
     
-    const send = () => {
+    // Update the send function to convert files to base64 before sending
+    const send = async () => {
         if ((!message.trim() && selectedFiles.length === 0) || !gs.connected) {
             console.log("Not connected or empty message with no attachments, not sending.");
             return;
         }
         
-        // For now, we're just setting up the UI so we'll just log the files
         if (selectedFiles.length > 0) {
-            console.log(`Sending message with ${selectedFiles.length} attachments`);
-            // Later we'll process these files before sending
+            try {
+                console.log(`Sending message with ${selectedFiles.length} attachments`);
+                
+                // Convert all files to base64 format
+                const processedAttachments = await Promise.all(
+                    selectedFiles.map(file => fileToBase64(file))
+                );
+                
+                // Send message with attachments
+                app.send(dispatch, message.trim(), processedAttachments, gs);
+            } catch (error) {
+                console.error("Error processing attachments:", error);
+            }
+        } else {
+            // Send message without attachments
+            app.send(dispatch, message.trim(), null, gs);
         }
         
-        app.send(dispatch, message.trim(), null, gs);
         setMessage(''); // Clear the message input after sending
         setSelectedFiles([]); // Clear the selected files after sending
         
@@ -191,22 +242,92 @@ function QuantaChat() {
                     {gs.messages.map((msg, index) => (
                         <div 
                             key={index} 
-                            className={`${msg.sender === gs.userName ? 'bg-white' : 'bg-gray-200'} p-3 rounded-md shadow-sm flex`}
+                            className={`${msg.sender === gs.userName ? 'bg-white' : 'bg-gray-200'} p-3 rounded-md shadow-sm flex flex-col`}
                         >
-                            <div className="flex flex-col mr-3 min-w-[100px] text-left">
-                                <span className="font-semibold text-sm">{msg.sender}</span>
-                                <span className="text-xs text-gray-500">
-                                    {new Date(msg.timestamp).toLocaleDateString('en-US', { 
-                                        month: '2-digit', 
-                                        day: '2-digit', 
-                                        year: '2-digit' 
-                                    })} {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                            <div className="flex">
+                                <div className="flex flex-col mr-3 min-w-[100px] text-left">
+                                    <span className="font-semibold text-sm">{msg.sender}</span>
+                                    <span className="text-xs text-gray-500">
+                                        {new Date(msg.timestamp).toLocaleDateString('en-US', { 
+                                            month: '2-digit', 
+                                            day: '2-digit', 
+                                            year: '2-digit' 
+                                        })} {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                                <div className="w-px bg-gray-300 self-stretch mx-2"></div>
+                                <div className="flex-1 text-left">
+                                    {msg.content}
+                                </div>
                             </div>
-                            <div className="w-px bg-gray-300 self-stretch mx-2"></div>
-                            <div className="flex-1 text-left">
-                                {msg.content}
-                            </div>
+                            
+                            {/* Attachments section */}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-gray-300">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                        {msg.attachments.map((attachment: any, attIndex) => (
+                                            <div key={attIndex} className="attachment-container border rounded p-2 flex flex-col">
+                                                {attachment.type.startsWith('image/') ? (
+                                                    <>
+                                                        {/* Image attachment */}
+                                                        <div className="relative">
+                                                            <img 
+                                                                src={attachment.data}
+                                                                alt={attachment.name}
+                                                                className="max-w-full rounded cursor-pointer max-h-40 object-contain"
+                                                                onClick={toggleFullSize}
+                                                                title="Click to view full size"
+                                                            />
+                                                            <button 
+                                                                className="absolute top-1 right-1 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-600"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    // For base64 data, we can use it directly for download
+                                                                    const downloadLink = document.createElement('a');
+                                                                    downloadLink.href = attachment.data;
+                                                                    downloadLink.download = attachment.name;
+                                                                    document.body.appendChild(downloadLink);
+                                                                    downloadLink.click();
+                                                                    document.body.removeChild(downloadLink);
+                                                                }}
+                                                                title={`Download ${attachment.name}`}
+                                                            >
+                                                                ⬇️
+                                                            </button>
+                                                        </div>
+                                                        <div className="text-xs mt-1 truncate">{attachment.name}</div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {/* Non-image attachment */}
+                                                        <div className="flex items-center">
+                                                            <span className="text-2xl mr-2">📄</span>
+                                                            <div className="flex-1">
+                                                                <div className="font-medium text-sm truncate">{attachment.name}</div>
+                                                                <div className="text-xs text-gray-500">{formatFileSize(attachment.size)}</div>
+                                                            </div>
+                                                            <button 
+                                                                className="bg-blue-500 text-white rounded px-2 py-1 text-sm hover:bg-blue-600"
+                                                                onClick={() => {
+                                                                    const downloadLink = document.createElement('a');
+                                                                    downloadLink.href = attachment.data;
+                                                                    downloadLink.download = attachment.name;
+                                                                    document.body.appendChild(downloadLink);
+                                                                    downloadLink.click();
+                                                                    document.body.removeChild(downloadLink);
+                                                                }}
+                                                                title={`Download ${attachment.name}`}
+                                                            >
+                                                                Download
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
