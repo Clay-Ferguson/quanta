@@ -6,6 +6,7 @@ const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undef
 
 // 2. Define the Initial State (You can customize this based on your app's needs)
 interface GlobalState {
+    roomName: string; // 
     userName: string; // Example property, you can remove or modify it as needed
     messages: Array<{ content: string; sender: string, timestamp: number }>; // Example message structure
     participants: Set<string>; // Set of participant IDs
@@ -17,6 +18,7 @@ interface GlobalState {
 }
 
 const initialState: GlobalState = {
+    roomName: 'romper',
     userName: 'clay', // Default username, can be change
     messages: [
         // Example initial messages, you can start with an empty array or some default messages
@@ -44,11 +46,17 @@ type GlobalAction =
   | { type: 'SET_SOME_DATA'; payload: string }
   | { type: 'INCREMENT' }
   | { type: 'DECREMENT' }
+  | { type: 'CONNECT'; payload: { roomName: string; userName: string } } // Example action for connecting to a roo
+  | { type: 'DISCONNECT' } // Example action for disconnecting from a room
   | { type: 'LOGIN'; payload: { id: number; name: string } }
   | { type: 'LOGOUT' };
 
 // 4. Define the Reducer Function
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
+    // NOTE: In debug environments this WILL log twice here because of the Strict Mode tag. Don't worry this is fine
+    // and is part of React's Strict Mode behavior in development. It helps identify side effects.
+    // console.log('Dispatching action:', action); // Log the action being dispatched
+
     switch (action.type) {
     case 'SET_SOME_DATA':
         return { ...state, someData: action.payload };
@@ -60,6 +68,23 @@ const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState =>
         return { ...state, user: action.payload };
     case 'LOGOUT':
         return { ...state, user: null };
+    case 'CONNECT': {
+        const { roomName, userName } = action.payload;
+        return {
+            ...state,
+            roomName: roomName || state.roomName, // Update roomName if provided
+            userName: userName || state.userName, // Update userName if provided
+        };
+    }
+    case 'DISCONNECT': {
+        return {
+            ...state,
+            roomName: '', // Clear roomName on disconnect
+            userName: '', // Clear userName on disconnect
+            messages: [], // Optionally clear messages on disconnect
+            participants: new Set<string>(), // Clear participants on disconnect
+        };
+    }
     default:
         return state;
     }

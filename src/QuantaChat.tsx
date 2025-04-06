@@ -1,15 +1,79 @@
-import { useGlobalState } from './GlobalState';
+import { useGlobalState, useGlobalDispatch } from './GlobalState';
+import { useState } from 'react';
 import './App.css'
 
 function QuantaChat() {
     const gs = useGlobalState();
+    const dispatch = useGlobalDispatch();
+    
+    // Local state for form fields
+    const [formData, setFormData] = useState({
+        userName: gs.userName || '',
+        roomName: gs.roomName || ''
+    });
+
+    const handleInputChange = (e: any) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [id]: value
+        }));
+    };
+
+    const connect = () => {
+        console.log("Connect called.");
+        dispatch({ type: 'CONNECT', payload: { 
+            userName: formData.userName, 
+            roomName: formData.roomName 
+        }});
+    };
+
+    const disconnect = () => {
+        dispatch({ type: 'DISCONNECT'});
+    };
 
     const participants = 'Participants: ' + Array.from(gs.participants).join(', ');
     return (
         <div className="h-screen flex flex-col w-screen min-w-full">
-            <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0">
-                <h1 className="text-xl font-semibold">QuantaChat</h1>
-                <h2 className="font-semibold">{participants}</h2>
+            <header className="w-full bg-blue-500 text-white p-4 flex-shrink-0 flex justify-between items-center">
+                <div className="w-1/4">
+                    <h1 className="text-xl font-semibold">QuantaChat</h1>
+                    <h2 className="font-semibold">{participants}</h2>
+                </div>
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                        <label htmlFor="userName" className="mr-2">Name:</label>
+                        <input 
+                            id="userName"
+                            type="text" 
+                            value={formData.userName} 
+                            onChange={handleInputChange}
+                            className="rounded px-2 py-1 text-black w-28" 
+                        />
+                    </div>
+                    <div className="flex items-center">
+                        <label htmlFor="roomName" className="mr-2">Room:</label>
+                        <input 
+                            id="roomName"
+                            type="text" 
+                            value={formData.roomName} 
+                            onChange={handleInputChange}
+                            className="rounded px-2 py-1 text-black w-28" 
+                        />
+                    </div>
+                    <button 
+                        onClick={connect}
+                        className="bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-4 rounded"
+                    >
+                        Connect
+                    </button>
+                    <button 
+                        onClick={disconnect}
+                        className="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded"
+                    >
+                        Disconnect
+                    </button>
+                </div>
             </header>
 
             <main className="flex-grow overflow-y-auto p-4">
