@@ -8,8 +8,3 @@ body {
   @apply h-screen w-full bg-gray-100 m-0 p-0 overflow-hidden;
 }
 
-// Remove or modify the custom-container class if you're not using it specifically
-// If you need it elsewhere, keep it but don't apply it to your chat components
-.custom-container {
-  @apply max-w-6xl mx-auto px-4;
-}

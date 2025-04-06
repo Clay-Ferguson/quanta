@@ -4,13 +4,14 @@ import IndexedDB from './IndexedDB.ts';
 import Utils from './Util.js';
 const util = Utils.getInst();
 
+// Vars are injected diretly into HTML by server
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
 class AppService {
     private static inst: AppService | null = null;
-    public storage: any; // IndexedDB instance
-    public rtc: any; // WebRTC instance
+    public storage: IndexedDB | null = null;
+    public rtc: WebRTC | null = null;
     private globalDispatch: any = null;
     private globalState: any = null;
 
@@ -24,7 +25,6 @@ class AppService {
             AppService.inst = new AppService();
             AppService.inst.init();
         }
-
         return AppService.inst;
     }
 
@@ -40,7 +40,7 @@ class AppService {
     }
 
     _rtcStateChange = () => {
-        if (!this.globalDispatch) {
+        if (!this.globalDispatch || !this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
@@ -60,6 +60,10 @@ class AppService {
     }
 
     _connect = async (dispatch: any, userName: string, roomName: string) => {
+        if (!this.rtc) {
+            console.warn('Global dispatch not yet available for RTC state change');
+            return;
+        }
         // if user or room is empty, return
         // if (!user || !room) {
         //     alert('Please enter both username and room name');
@@ -103,7 +107,12 @@ class AppService {
     }
 
     // todo-0: add type safety to 'gs'
+    // todo-0: now that we have global state in here do we need to pass 'gs'
     send = (dispatch: any, message: string, selectedFiles: any, gs: any) => {
+        if (!this.rtc) {
+            console.warn('RTC instance not available for sending message');
+            return;
+        }
         if (message || selectedFiles.length > 0) {
             const msg: any = this.createMessage(message, this.rtc.userName, selectedFiles);
             this._persistMessage(msg, gs);
@@ -146,6 +155,10 @@ class AppService {
 
     // Message storage and persistence functions
     saveMessages(gs: any) {
+        if (!this.storage || !this.rtc) { 
+            console.warn('No storage or rct instance available for saving messages');
+            return;
+        }
         gs = gs || this.globalState;
         try {
             // Get existing room data or create a new room object
@@ -181,9 +194,13 @@ class AppService {
     }
 
     async loadRoomMessages(roomId: string) {
+        if (!this.storage) {
+            console.warn('No storage instance available for loading messages');
+            return [];
+        }
         console.log("Loading messages for room: " + roomId);
         try {
-            const roomData = await this.storage.getItem('room_' + roomId);
+            const roomData: any = await this.storage.getItem('room_' + roomId);
             if (roomData) {
                 util.log('Loaded ' + roomData.messages.length + ' messages for room: ' + roomId);
                 return roomData.messages || [];
