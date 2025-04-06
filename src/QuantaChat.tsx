@@ -13,6 +13,12 @@ function QuantaChat() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
+    // Add state for the full-size image viewer
+    const [fullSizeImage, setFullSizeImage] = useState<{
+        src: string;
+        name: string;
+    } | null>(null);
+    
     // Auto-resize function for textarea
     useEffect(() => {
         const textarea = textareaRef.current;
@@ -85,8 +91,10 @@ function QuantaChat() {
         });
     };
 
-    const toggleFullSize = () => {
-    }
+    // Update the toggleFullSize function to handle opening the full-size image viewer
+    const toggleFullSize = (src: string, name: string) => {
+        setFullSizeImage(fullSizeImage ? null : { src, name });
+    };
 
     // Modify the handleFiles function to convert files to base64
     const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,7 +283,7 @@ function QuantaChat() {
                                                                 src={attachment.data}
                                                                 alt={attachment.name}
                                                                 className="max-w-full rounded cursor-pointer max-h-40 object-contain"
-                                                                onClick={toggleFullSize}
+                                                                onClick={() => toggleFullSize(attachment.data, attachment.name)}
                                                                 title="Click to view full size"
                                                             />
                                                             <button 
@@ -357,6 +365,34 @@ function QuantaChat() {
                     Send
                 </button>
             </footer>
+            
+            {/* Full-size image viewer modal */}
+            {fullSizeImage && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 overflow-auto"
+                    onClick={() => setFullSizeImage(null)}
+                >
+                    <div className="relative max-w-full max-h-full">
+                        <button 
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 z-10"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFullSizeImage(null);
+                            }}
+                        >
+                            ✕
+                        </button>
+                        <div className="bg-white p-2 rounded shadow-lg">
+                            <h3 className="text-center text-lg font-medium mb-2">{fullSizeImage.name}</h3>
+                            <img 
+                                src={fullSizeImage.src} 
+                                alt={fullSizeImage.name}
+                                className="max-w-full max-h-[80vh] object-contain"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
