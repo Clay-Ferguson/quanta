@@ -2,17 +2,11 @@
 
 I'm saving this folder structure as the pre-built starter package for a Vite + TypeScript + React app.
 
-## To get started: 
+## To Run the Server
 
 ```bash
-# This project was created with 
-yarn create vite
-
-# To enable command line use
-yarn add -D vite
-
-# To run the app
-yarn vite
+yarn build
+yarn start
 ```
 
 # NOTE:
