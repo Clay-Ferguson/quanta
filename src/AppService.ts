@@ -12,8 +12,8 @@ class AppService {
     private static inst: AppService | null = null;
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
-    private globalDispatch: any = null;
-    private globalState: any = null;
+    private gd: any = null; // Global Dispatch Function
+    private gs: any = null; // Global State Object
 
     constructor() {
         console.log('Util singleton created');
@@ -34,13 +34,12 @@ class AppService {
     }
 
     setGlobals = (dispatch: any, state: any) => {
-        this.globalDispatch = dispatch;
-        this.globalState = state;
-        console.log('Globals set in AppService');
+        this.gd = dispatch;
+        this.gs = state;
     }
 
     _rtcStateChange = () => {
-        if (!this.globalDispatch || !this.rtc) {
+        if (!this.gd || !this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
@@ -50,7 +49,7 @@ class AppService {
         const connected = this.rtc.connected || false;
         
         // Dispatch to update global state
-        this.globalDispatch({ 
+        this.gd({ 
             type: 'updateRtcState', 
             payload: { 
                 participants,
@@ -59,7 +58,7 @@ class AppService {
         });
     }
 
-    _connect = async (dispatch: any, userName: string, roomName: string) => {
+    _connect = async (userName: string, roomName: string) => {
         if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
@@ -71,11 +70,9 @@ class AppService {
         // }
 
         const messages = await this.loadRoomMessages(roomName);
-
-        // todo-0: theoretically we could call this in async thread
         await this.rtc._connect(userName, roomName);
 
-        dispatch({ type: 'connect', payload: { 
+        this.gd({ type: 'connect', payload: { 
             userName,
             roomName,
             messages,
@@ -84,8 +81,8 @@ class AppService {
         this.scrollToBottom();
     }
 
-    _disconnect = (dispatch: any) => {
-        dispatch({ type: 'disconnect', payload: { 
+    _disconnect = () => {
+        this.gd({ type: 'disconnect', payload: { 
             roomName: '', 
             userName: '',
             messages: [], 
@@ -94,32 +91,30 @@ class AppService {
         }});
     }
 
-    _clearMessages = (dispatch: any) => {
+    _clearMessages = () => {
         if (confirm("Clear all chat history for room?")) {
-            if (!this.globalState || !this.globalState.connected) {
+            if (!this.gs || !this.gs.connected) {
                 console.log("Not connected, cannot clear messages.");
                 return;
             }
 
-            this.globalState.messages = []; 
-            this.saveMessages(this.globalState); 
-            dispatch({ type: 'clearMessages', payload: this.globalState });}
+            this.gs.messages = []; 
+            this.saveMessages(this.gs); 
+            this.gd({ type: 'clearMessages', payload: this.gs });}
     }
 
-    // todo-0: add type safety to 'gs'
-    // todo-0: now that we have global state in here do we need to pass 'gs'
-    send = (dispatch: any, message: string, selectedFiles: any, gs: any) => {
+    _send = (message: string, selectedFiles: any) => {
         if (!this.rtc) {
             console.warn('RTC instance not available for sending message');
             return;
         }
         if (message || selectedFiles.length > 0) {
             const msg: any = this.createMessage(message, this.rtc.userName, selectedFiles);
-            this._persistMessage(msg, gs);
+            this._persistMessage(msg);
             this.rtc._sendMessage(msg);
 
             // NOTE: displatch adds to 'gs.messages' array in the reducer
-            dispatch({ type: 'send', payload: gs});
+            this.gd({ type: 'send', payload: this.gs});
         }
     }
 
@@ -131,14 +126,13 @@ class AppService {
             }}, 200);
     }
 
-    _persistMessage = async (msg: any, gs: any) => {
+    _persistMessage = async (msg: any) => {
         console.log("Persisting message: ", msg);
-        gs = gs || this.globalState;
-        if (this.messageExists(msg, gs)) {
+        if (this.messageExists(msg)) {
             return false; // Message already exists, do not save again
         }
 
-        gs.messages.push(msg); // Update local state immediately
+        this.gs.messages.push(msg); // Update local state immediately
 
         try {
             // todo-0: add this back in
@@ -147,19 +141,18 @@ class AppService {
             util.log('Error checking storage or saving message: ' + error);
         }
 
-        // todo-0: we could put a timer here to batch save messages instead of saving every time
-        // and also make sure the GUI never waits for the DB.
-        this.saveMessages(gs);
+        this.saveMessages(this.gs);
         this.scrollToBottom();
     }
 
-    // Message storage and persistence functions
+    // Message storage and persistence functions. 
+    // todo-0: Note we could probably use 'this.gs' from this class, instead of arg here.
     saveMessages(gs: any) {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
         }
-        gs = gs || this.globalState;
+        gs = gs || this.gs;
         try {
             // Get existing room data or create a new room object
             const roomData = {
@@ -174,8 +167,8 @@ class AppService {
         }
     }
 
-    messageExists(msg: any, gs: any) {
-        return gs.messages.some((message: any) =>
+    messageExists(msg: any) {
+        return this.gs.messages.some((message: any) =>
             message.timestamp === msg.timestamp &&
             message.sender === msg.sender &&
             message.content === msg.content

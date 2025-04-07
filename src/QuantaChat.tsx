@@ -1,11 +1,12 @@
-import { useGlobalState, useGlobalDispatch } from './GlobalState';
+import { useGlobalState } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import AppService from './AppService';
 const app = AppService.getInst(); 
 
+let urlAccepted: boolean = false;
+
 function QuantaChat() {
     const gs = useGlobalState();
-    const dispatch = useGlobalDispatch();
 
     const [message, setMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -48,16 +49,16 @@ function QuantaChat() {
     };
 
     const connect = async () => {
-        app._connect(dispatch, formData.userName, formData.roomName);
+        app._connect(formData.userName, formData.roomName);
     };
 
     const disconnect = () => {
-        app._disconnect(dispatch);
+        app._disconnect();
     };
 
     const clear = () => {
         if (gs.connected) {
-            app._clearMessages(dispatch);
+            app._clearMessages();
         } else {
             console.log("Not connected, cannot clear messages.");
         }
@@ -124,24 +125,22 @@ function QuantaChat() {
             return;
         }
         
+        let processedFiles: any = null;
         if (selectedFiles.length > 0) {
             try {
                 console.log(`Sending message with ${selectedFiles.length} attachments`);
                 
                 // Convert all files to base64 format
-                const processedAttachments = await Promise.all(
+                processedFiles = await Promise.all(
                     selectedFiles.map(file => fileToBase64(file))
                 );
                 
-                // Send message with attachments
-                app.send(dispatch, message.trim(), processedAttachments, gs);
             } catch (error) {
                 console.error("Error processing attachments:", error);
             }
-        } else {
-            // Send message without attachments
-            app.send(dispatch, message.trim(), null, gs);
-        }
+        } 
+        // Send message without attachments
+        app._send(message.trim(), processedFiles);
         
         setMessage(''); // Clear the message input after sending
         setSelectedFiles([]); // Clear the selected files after sending
@@ -155,6 +154,9 @@ function QuantaChat() {
     const participants = 'Members: ' + Array.from(gs.participants).join(', ');
     
     useEffect(() => {
+        if (urlAccepted) return;
+        urlAccepted = true; // Prevents multiple executions
+
         // Get URL parameters
         const getUrlParameter = (name: string): string | null => {
             const searchParams = new URLSearchParams(window.location.search);
@@ -177,7 +179,7 @@ function QuantaChat() {
         if (userNameParam && roomNameParam && !gs.connected) {
             // Use a short timeout to ensure state is updated before connecting
             const timer = setTimeout(() => {
-                app._connect(dispatch, userNameParam, roomNameParam);
+                app._connect(userNameParam, roomNameParam);
             }, 100);
             
             return () => clearTimeout(timer);
@@ -271,7 +273,8 @@ function QuantaChat() {
                     {gs.messages.map((msg, index) => (
                         <div 
                             key={index} 
-                            className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' : 'bg-gray-800'} p-3 rounded-md shadow-md flex flex-col`}
+                            className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
+                                : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
                         >
                             <div className="flex">
                                 <div className="flex flex-col mr-3 min-w-[100px] text-left">
