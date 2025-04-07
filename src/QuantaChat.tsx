@@ -201,37 +201,45 @@ function QuantaChat() {
                     <h2 className="font-semibold text-gray-300">{participants}</h2>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
-                        <label htmlFor="userName" className="mr-2 text-gray-300">Name:</label>
-                        <input 
-                            id="userName"
-                            type="text" 
-                            value={formData.userName} 
-                            onChange={handleInputChange}
-                            className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        />
-                    </div>
-                    <div className="flex items-center">
-                        <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
-                        <input 
-                            id="roomName"
-                            type="text" 
-                            value={formData.roomName} 
-                            onChange={handleInputChange}
-                            className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        />
-                    </div>
-                    {!gs.connected && (
-                        <button 
-                            disabled={!formData.userName || !formData.roomName}
-                            onClick={connect}
-                            className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Connect
-                        </button>
-                    )}
-                    {gs.connected && (
+                    {!gs.connected ? (
                         <>
+                            <div className="flex items-center">
+                                <label htmlFor="userName" className="mr-2 text-gray-300">Name:</label>
+                                <input 
+                                    id="userName"
+                                    type="text" 
+                                    value={formData.userName} 
+                                    onChange={handleInputChange}
+                                    className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                            </div>
+                            <div className="flex items-center">
+                                <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
+                                <input 
+                                    id="roomName"
+                                    type="text" 
+                                    value={formData.roomName} 
+                                    onChange={handleInputChange}
+                                    className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                            </div>
+                            <button 
+                                disabled={!formData.userName || !formData.roomName}
+                                onClick={connect}
+                                className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Connect
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center bg-gray-700 rounded px-3 py-1 border border-gray-600">
+                                <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                    <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gs.roomName}</span></span>
+                                </div>
+                            </div>
                             <button 
                                 onClick={disconnect}
                                 className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
