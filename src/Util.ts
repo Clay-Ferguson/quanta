@@ -18,14 +18,6 @@ class Util {
         console.log(message);
     }
 
-    // todo-0: used to set innerHTML, needs to be sanitized to protect against injection attacks.
-    renderContent(content: string) {
-        return content; // todo-0: add marked here, from an import
-        // return (typeof marked !== 'undefined')
-        //     ? marked.parse(content)
-        //     : content.replace(/\n/g, '<br>')
-    }
-
     // Utility function to get URL parameters
     getUrlParameter(name: string) {
         const urlParams = new URLSearchParams(window.location.search);

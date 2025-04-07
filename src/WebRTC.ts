@@ -2,13 +2,16 @@ import Utils from './Util.ts';
 const util = Utils.getInst();
 
 /**
- * WebRTC class for handling WebRTC connections
+ * WebRTC class for handling WebRTC connections on the P2P clients.
+ * 
  * Designed as a singleton that can be instantiated once and reused
  */
 class WebRTC {
     private static inst: WebRTC | null = null;
 
-    peerConnections = new Map();
+    // maps user names to their RTCPeerConnection objects
+    peerConnections: Map<string, RTCPeerConnection> = new Map();
+
     dataChannels = new Map();
     socket: WebSocket | null = null;
     roomId = "";
@@ -91,13 +94,10 @@ class WebRTC {
             util.log('User left: ' + evt.name);
             this.participants.delete(evt.name);
 
-            // Let's not do this for now.
-            // const msg = this.createMessage(evt.name + ' left the chat', 'system');
-            // this.app._displayMessage(msg);
-
             // Clean up connections
-            if (this.peerConnections.has(evt.name)) {
-                this.peerConnections.get(evt.name).close();
+            const pc = this.peerConnections.get(evt.name);
+            if (pc) {
+                pc.close();
                 this.peerConnections.delete(evt.name);
             }
 
@@ -111,44 +111,46 @@ class WebRTC {
             util.log('Received offer from ' + evt.sender);
 
             // Create a connection if it doesn't exist
-            let pc;
+            let pc: RTCPeerConnection | undefined;
             if (!this.peerConnections.has(evt.sender)) {
                 pc = this.createPeerConnection(evt.sender, false);
             } else {
                 pc = this.peerConnections.get(evt.sender);
             }
 
-            pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
-                .then(() => pc.createAnswer())
-                .then((answer: any) => pc.setLocalDescription(answer))
-                .then(() => {
-                    if (this.socket) {
-                        this.socket.send(JSON.stringify({
-                            type: 'answer',
-                            answer: pc.localDescription,
-                            target: evt.sender,
-                            room: this.roomId
-                        }));
-                    }
-                    util.log('Sent answer to ' + evt.sender);
-                })
-                .catch((error: any) => util.log('Error creating answer: ' + error));
+            if (pc) {
+                pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
+                    .then(() => pc.createAnswer())
+                    .then((answer: any) => pc.setLocalDescription(answer))
+                    .then(() => {
+                        if (this.socket) {
+                            this.socket.send(JSON.stringify({
+                                type: 'answer',
+                                answer: pc.localDescription,
+                                target: evt.sender,
+                                room: this.roomId
+                            }));
+                        }
+                        util.log('Sent answer to ' + evt.sender);
+                    })
+                    .catch((error: any) => util.log('Error creating answer: ' + error));
+            }
         }
 
         else if (evt.type === 'answer' && evt.sender) {
             util.log('Received answer from ' + evt.sender);
-            if (this.peerConnections.has(evt.sender)) {
-                this.peerConnections.get(evt.sender)
-                    .setRemoteDescription(new RTCSessionDescription(evt.answer))
+            const pc = this.peerConnections.get(evt.sender);
+            if (pc) {
+                pc.setRemoteDescription(new RTCSessionDescription(evt.answer))
                     .catch((error: any) => util.log('Error setting remote description: ' + error));
             }
         }
 
         else if (evt.type === 'ice-candidate' && evt.sender) {
             util.log('Received ICE candidate from ' + evt.sender);
-            if (this.peerConnections.has(evt.sender)) {
-                this.peerConnections.get(evt.sender)
-                    .addIceCandidate(new RTCIceCandidate(evt.candidate))
+            const pc = this.peerConnections.get(evt.sender);
+            if (pc) {
+                pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
                     .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
             }
         }
@@ -274,9 +276,6 @@ class WebRTC {
 
         await this.storage.setItem('username', this.userName);
         await this.storage.setItem('room', this.roomId);
-        // await this.app.displayRoomHistory(this.roomId);
-
-        // this.app._rtcStateChange(); // todo-0: verify that this gets called at the right time, and not too soon.
 
         // If already connected, reset connection with new name and room
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
