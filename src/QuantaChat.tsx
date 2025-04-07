@@ -185,7 +185,7 @@ function QuantaChat() {
     }, []);  // Empty dependency array means this runs once on component mount
 
     return (
-        <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200">
+        <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
             {/* Hidden file input element */}
             <input 
                 type="file"
@@ -195,7 +195,7 @@ function QuantaChat() {
                 onChange={handleFiles}
             />
             
-            <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md">
+            <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
                 <div className="w-1/4">
                     <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
                     <h2 className="font-semibold text-gray-300">{participants}</h2>
@@ -353,7 +353,7 @@ function QuantaChat() {
                 </div>
             </main>
 
-            <footer className="w-full bg-gray-800 p-4 flex items-center flex-shrink-0 shadow-md">
+            <footer className="w-full bg-gray-800 p-4 flex items-center flex-shrink-0 shadow-md border-t border-blue-400/30">
                 <textarea 
                     ref={textareaRef}
                     value={message}
