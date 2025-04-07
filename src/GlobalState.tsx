@@ -12,8 +12,8 @@ interface GlobalState {
 
 const initialState: GlobalState = {
     connected: false, 
-    roomName: 'romper',
-    userName: 'clay', 
+    roomName: '',
+    userName: '', 
     messages: [], 
     participants: new Set<string>(),
 };
