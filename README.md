@@ -20,7 +20,21 @@
 ## To Run the Server
 
 ```bash
-yarn build && yarn start
+# Install Node first, then Yarn:
+sudo npm install --global yarn
+
+# if you don't have the project yet
+git clone https://github.com/Clay-Ferguson/quanta-chat
+
+# if you already have project, and want the latest 
+git reset --hard HEAD
+git pull --force
+
+# install all packages (only need to run this once)
+yarn install
+
+# run to build and start the app.
+sudo ./run-prod.sh
 ```
 
 ## Tech Stack
