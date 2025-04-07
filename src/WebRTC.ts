@@ -1,3 +1,5 @@
+import AppServiceIntf from './AppServiceIntf.ts';
+import IndexedDB from './IndexedDB.ts';
 import Utils from './Util.ts';
 const util = Utils.getInst();
 
@@ -12,14 +14,16 @@ class WebRTC {
     // maps user names to their RTCPeerConnection objects
     peerConnections: Map<string, RTCPeerConnection> = new Map();
 
-    dataChannels = new Map();
+    // maps user names to their RTCDataChannel objects
+    dataChannels: Map<string, RTCDataChannel> = new Map();
+
     socket: WebSocket | null = null;
     roomId = "";
     userName = "";
-    participants = new Set();
+    participants = new Set<string>();
     connected: boolean = false;
-    storage: any = null;
-    app: any = null; // NOTE: This will probably be circular reference if I include. May need to use interface type
+    storage: IndexedDB | null = null;
+    app: AppServiceIntf | null = null; // NOTE: This will probably be circular reference if I include. Use an Interfaces import for the 'shape'
     host: string = "";
     port: string = "";
 
@@ -27,8 +31,7 @@ class WebRTC {
         console.log('WebRTC singleton created');
     }
 
-    static async getInst(storage: any, app: any, host: string, port: string) {
-        // Create instance if it doesn't exist
+    static async getInst(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
         if (!WebRTC.inst) {
             WebRTC.inst = new WebRTC();
             await WebRTC.inst.init(storage, app, host, port);
@@ -36,7 +39,7 @@ class WebRTC {
         return WebRTC.inst;
     }
 
-    async init(storage: any, app: any, host: string, port: string) {
+    async init(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
         this.storage = storage;
         this.app = app;
         this.host = host;
@@ -56,6 +59,7 @@ class WebRTC {
         this.socket.onclose = this._onclose;
     }
 
+    // todo-0: break this up into one function per event type
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
 
@@ -78,10 +82,6 @@ class WebRTC {
         else if (evt.type === 'user-joined') {
             util.log('User joined: ' + evt.name);
             this.participants.add(evt.name);
-
-            // Let's not do this for now.
-            // const msg = this.createMessage(evt.name + ' joined the chat', 'system');
-            // this.app._displayMessage(msg);
 
             // Create a connection with the new user (we are initiator)
             if (!this.peerConnections.has(evt.name)) {
@@ -158,11 +158,9 @@ class WebRTC {
         // Handle broadcast messages
         else if (evt.type === 'broadcast' && evt.sender) {
             util.log('broadcast. Received broadcast message from ' + evt.sender);
-            if (this.app) {
-                this.app._persistMessage(evt.message);
-            }
+            this.app?._persistMessage(evt.message);            
         }
-        this.app._rtcStateChange();
+        this.app?._rtcStateChange();
     }
 
     _onopen = () => {
@@ -177,13 +175,13 @@ class WebRTC {
                 name: this.userName
             }));}
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        this.app._rtcStateChange();
+        this.app?._rtcStateChange();
     }
 
     _onerror = (error: any) => {
         util.log('WebSocket error: ' + error);
         this.connected = false;
-        this.app._rtcStateChange();
+        this.app?._rtcStateChange();
     };
 
     _onclose = () => {
@@ -195,17 +193,16 @@ class WebRTC {
         this.peerConnections.clear();
         this.dataChannels.clear();
 
-        this.app._rtcStateChange();
+        this.app?._rtcStateChange();
     }
 
     createPeerConnection(peerName: string, isInitiator: boolean) {
         util.log('Creating peer connection with ' + peerName + (isInitiator ? ' (as initiator)' : ''));
-
         const pc = new RTCPeerConnection();
         this.peerConnections.set(peerName, pc);
 
         // Set up ICE candidate handling
-        pc.onicecandidate = event => {
+        pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
             if (event.candidate && this.socket) {
                 this.socket.send(JSON.stringify({
                     type: 'ice-candidate',
@@ -225,11 +222,10 @@ class WebRTC {
             } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
                 util.log('WebRTC disconnected from ' + peerName);
             }
-            // this.app._rtcStateChange();
         };
 
         // Handle incoming data channels
-        pc.ondatachannel = event => {
+        pc.ondatachannel = (event: RTCDataChannelEvent) => {
             util.log('Received data channel from ' + peerName);
             this.setupDataChannel(event.channel, peerName);
         };
@@ -312,26 +308,24 @@ class WebRTC {
         this.connected = false;
     }
 
-    setupDataChannel(channel: any, peerName: string) {
+    setupDataChannel(channel: RTCDataChannel, peerName: string) {
         util.log('Setting up data channel for ' + peerName);
         this.dataChannels.set(peerName, channel);
 
         channel.onopen = () => {
             util.log('Data channel open with ' + peerName);
-            // this.app._rtcStateChange();
         };
 
         channel.onclose = () => {
             util.log('Data channel closed with ' + peerName);
             this.dataChannels.delete(peerName);
-            // this.app._rtcStateChange();
         };
 
-        channel.onmessage = (event: any) => {
+        channel.onmessage = (event: MessageEvent) => {
             util.log('onMessage. Received message from ' + peerName);
             try {
                 const msg = JSON.parse(event.data);
-                this.app._persistMessage(msg);
+                this.app?._persistMessage(msg);
             } catch (error) {
                 util.log('Error parsing message: ' + error);
             }
@@ -339,7 +333,6 @@ class WebRTC {
 
         channel.onerror = (error: any) => {
             util.log('Data channel error with ' + peerName + ': ' + error);
-            // this.app._rtcStateChange();
         };
     }
 
@@ -347,7 +340,7 @@ class WebRTC {
     _sendMessage = (msg: string) => {
         // Try to send through data channels first
         let channelsSent = 0;
-        this.dataChannels.forEach((channel) => {
+        this.dataChannels.forEach((channel: RTCDataChannel) => {
             if (channel.readyState === 'open') {
                 channel.send(JSON.stringify(msg));
                 channelsSent++;

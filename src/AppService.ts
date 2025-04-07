@@ -2,13 +2,14 @@ import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import Utils from './Util.js';
+import AppServiceIntf from './AppServiceIntf.ts';
 const util = Utils.getInst();
 
 // Vars are injected diretly into HTML by server
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
-class AppService {
+class AppService implements AppServiceIntf  {
     private static inst: AppService | null = null;
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
@@ -130,7 +131,7 @@ class AppService {
     _persistMessage = async (msg: any) => {
         console.log("Persisting message: ", msg);
         if (this.messageExists(msg)) {
-            return false; // Message already exists, do not save again
+            return; // Message already exists, do not save again
         }
 
         this.gs.messages.push(msg); // Update local state immediately
