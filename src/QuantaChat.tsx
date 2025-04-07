@@ -129,7 +129,7 @@ function QuantaChat() {
     let participants = null;
     if (gs.connected) {
         if (gs.participants.size === 0) {
-            participants = `You're alone right now.`;
+            participants = `No one else is in this room.`;
         }
         else {
             participants = `Members: You, ${Array.from(gs.participants).sort().join(', ')}`

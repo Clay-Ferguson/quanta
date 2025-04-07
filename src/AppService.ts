@@ -64,11 +64,6 @@ class AppService implements AppServiceIntf  {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
-        // if user or room is empty, return
-        // if (!user || !room) {
-        //     alert('Please enter both username and room name');
-        //     return;
-        // }
 
         const messages = await this.loadRoomMessages(roomName);
         await this.rtc._connect(userName, roomName);

@@ -59,106 +59,122 @@ class WebRTC {
         this.socket.onclose = this._onclose;
     }
 
-    // todo-0: break this up into one function per event type
+    _onRoomInfo = (evt: any) => {
+        util.log('Room info received with participants: ' + evt.participants.join(', '));
+
+        // Update our list of participants
+        this.participants = new Set(evt.participants);
+
+        // For each participant, create a peer connection and make an offer
+        evt.participants.forEach((participant: any) => {
+            if (!this.peerConnections.has(participant)) {
+                this.createPeerConnection(participant, true);
+            }
+        });
+    }
+
+    _onUserJoined = (evt: any) => {
+        util.log('User joined: ' + evt.name);
+        this.participants.add(evt.name);
+
+        // Create a connection with the new user (we are initiator)
+        if (!this.peerConnections.has(evt.name)) {
+            this.createPeerConnection(evt.name, true);
+        }
+    }
+
+    _onUserLeft = (evt: any) => {
+        util.log('User left: ' + evt.name);
+        this.participants.delete(evt.name);
+
+        // Clean up connections
+        const pc = this.peerConnections.get(evt.name);
+        if (pc) {
+            pc.close();
+            this.peerConnections.delete(evt.name);
+        }
+
+        if (this.dataChannels.has(evt.name)) {
+            this.dataChannels.delete(evt.name);
+        }
+    }
+
+    _onOffer = (evt: any) => {
+        util.log('Received offer from ' + evt.sender);
+
+        // Create a connection if it doesn't exist
+        let pc: RTCPeerConnection | undefined;
+        if (!this.peerConnections.has(evt.sender)) {
+            pc = this.createPeerConnection(evt.sender, false);
+        } else {
+            pc = this.peerConnections.get(evt.sender);
+        }
+
+        if (pc) {
+            pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
+                .then(() => pc.createAnswer())
+                .then((answer: any) => pc.setLocalDescription(answer))
+                .then(() => {
+                    if (this.socket) {
+                        this.socket.send(JSON.stringify({
+                            type: 'answer',
+                            answer: pc.localDescription,
+                            target: evt.sender,
+                            room: this.roomId
+                        }));
+                    }
+                    util.log('Sent answer to ' + evt.sender);
+                })
+                .catch((error: any) => util.log('Error creating answer: ' + error));
+        }
+    }
+
+    _onAnswer = (evt: any) => {
+        util.log('Received answer from ' + evt.sender);
+        const pc = this.peerConnections.get(evt.sender);
+        if (pc) {
+            pc.setRemoteDescription(new RTCSessionDescription(evt.answer))
+                .catch((error: any) => util.log('Error setting remote description: ' + error));
+        }
+    }
+
+    _onIceCandidate = (evt: any) => {
+        util.log('Received ICE candidate from ' + evt.sender);
+        const pc = this.peerConnections.get(evt.sender);
+        if (pc) {
+            pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
+                .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
+        }
+    }
+
+    _onBroadcast = (evt: any) => {
+        util.log('broadcast. Received broadcast message from ' + evt.sender);
+        this.app?._persistMessage(evt.message);           
+    }
+
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
 
-        // Handle room information (received when joining)
         if (evt.type === 'room-info') {
-            util.log('Room info received with participants: ' + evt.participants.join(', '));
-
-            // Update our list of participants
-            this.participants = new Set(evt.participants);
-
-            // For each participant, create a peer connection and make an offer
-            evt.participants.forEach((participant: any) => {
-                if (!this.peerConnections.has(participant)) {
-                    this.createPeerConnection(participant, true);
-                }
-            });
+            this._onRoomInfo(evt);
         }
-
-        // Handle user joined event
         else if (evt.type === 'user-joined') {
-            util.log('User joined: ' + evt.name);
-            this.participants.add(evt.name);
-
-            // Create a connection with the new user (we are initiator)
-            if (!this.peerConnections.has(evt.name)) {
-                this.createPeerConnection(evt.name, true);
-            }
+            this._onUserJoined(evt);
         }
-
-        // Handle user left event
         else if (evt.type === 'user-left') {
-            util.log('User left: ' + evt.name);
-            this.participants.delete(evt.name);
-
-            // Clean up connections
-            const pc = this.peerConnections.get(evt.name);
-            if (pc) {
-                pc.close();
-                this.peerConnections.delete(evt.name);
-            }
-
-            if (this.dataChannels.has(evt.name)) {
-                this.dataChannels.delete(evt.name);
-            }
+            this._onUserLeft(evt);
         }
-
-        // Handle WebRTC signaling messages
         else if (evt.type === 'offer' && evt.sender) {
-            util.log('Received offer from ' + evt.sender);
-
-            // Create a connection if it doesn't exist
-            let pc: RTCPeerConnection | undefined;
-            if (!this.peerConnections.has(evt.sender)) {
-                pc = this.createPeerConnection(evt.sender, false);
-            } else {
-                pc = this.peerConnections.get(evt.sender);
-            }
-
-            if (pc) {
-                pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
-                    .then(() => pc.createAnswer())
-                    .then((answer: any) => pc.setLocalDescription(answer))
-                    .then(() => {
-                        if (this.socket) {
-                            this.socket.send(JSON.stringify({
-                                type: 'answer',
-                                answer: pc.localDescription,
-                                target: evt.sender,
-                                room: this.roomId
-                            }));
-                        }
-                        util.log('Sent answer to ' + evt.sender);
-                    })
-                    .catch((error: any) => util.log('Error creating answer: ' + error));
-            }
+            this._onOffer(evt);
         }
-
         else if (evt.type === 'answer' && evt.sender) {
-            util.log('Received answer from ' + evt.sender);
-            const pc = this.peerConnections.get(evt.sender);
-            if (pc) {
-                pc.setRemoteDescription(new RTCSessionDescription(evt.answer))
-                    .catch((error: any) => util.log('Error setting remote description: ' + error));
-            }
+            this._onAnswer(evt);
         }
-
         else if (evt.type === 'ice-candidate' && evt.sender) {
-            util.log('Received ICE candidate from ' + evt.sender);
-            const pc = this.peerConnections.get(evt.sender);
-            if (pc) {
-                pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
-                    .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
-            }
+            this._onIceCandidate(evt);
         }
-
-        // Handle broadcast messages
         else if (evt.type === 'broadcast' && evt.sender) {
-            util.log('broadcast. Received broadcast message from ' + evt.sender);
-            this.app?._persistMessage(evt.message);            
+            this._onBroadcast(evt); 
         }
         this.app?._rtcStateChange();
     }
@@ -259,7 +275,6 @@ class WebRTC {
         return pc;
     }
 
-    // Underscore at front of method indicates it's permanently locked to 'this' and thus callable from event handlers.
     _connect = async (userName: string, roomId: string) => {
         console.log( 'WebRTC Connecting to room: ' + roomId + ' as user: ' + userName);
         this.userName = userName;
@@ -336,7 +351,6 @@ class WebRTC {
         };
     }
 
-    // Send message function (fat arrow makes callable from event handlers)
     _sendMessage = (msg: string) => {
         // Try to send through data channels first
         let channelsSent = 0;
