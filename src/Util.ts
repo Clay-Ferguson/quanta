@@ -32,9 +32,12 @@ class Util {
         return urlParams.get(name);
     }
 
-    // Convert file to base64 for storage
-    // todo-0: need better typesafety on 'file' here.
-    fileToBase64(file: any) {
+    fileToBase64(file: File): Promise<{
+        name: string;
+        type: string;
+        size: number;
+        data: string;
+    }> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -42,18 +45,19 @@ class Util {
                 name: file.name,
                 type: file.type,
                 size: file.size,
-                data: reader.result
+                data: reader.result as string
             });
             reader.onerror = error => reject(error);
         });
-    }
+    };
 
-    // Helper function to format file size
-    formatFileSize(bytes: number) {
-        if (bytes < 1024) return bytes + ' bytes';
-        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / 1048576).toFixed(1) + ' MB';
-    }
+    formatFileSize(bytes: number): string {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
     formatStorageSize(bytes: number) {
         if (bytes === 0) return '0 B';

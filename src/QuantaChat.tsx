@@ -1,7 +1,10 @@
 import { useGlobalState } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import AppService from './AppService';
+import Util from './Util';
+
 const app = AppService.getInst(); 
+const util = Util.getInst(); 
 
 let urlAccepted: boolean = false;
 
@@ -69,27 +72,6 @@ function QuantaChat() {
             fileInputRef.current.click();
         }
     };
-    
-    // Add this utility function to convert file to base64
-    // todo-0: this was already in Utils, but AI duplicated it here.
-    const fileToBase64 = (file: File): Promise<{
-        name: string;
-        type: string;
-        size: number;
-        data: string;
-    }> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve({
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                data: reader.result as string
-            });
-            reader.onerror = error => reject(error);
-        });
-    };
 
     // Update the toggleFullSize function to handle opening the full-size image viewer
     const toggleFullSize = (src: string, name: string) => {
@@ -107,16 +89,6 @@ function QuantaChat() {
             }
         }
     };
-
-    // Utility function to format file size
-    // todo-0: I think I have a Utils method for this already.
-    const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
     
     // Update the send function to convert files to base64 before sending
     const send = async () => {
@@ -132,7 +104,7 @@ function QuantaChat() {
                 
                 // Convert all files to base64 format
                 processedFiles = await Promise.all(
-                    selectedFiles.map(file => fileToBase64(file))
+                    selectedFiles.map(file => util.fileToBase64(file))
                 );
                 
             } catch (error) {
@@ -336,7 +308,7 @@ function QuantaChat() {
                                                             <span className="text-2xl mr-2">📄</span>
                                                             <div className="flex-1">
                                                                 <div className="font-medium text-sm truncate text-gray-200">{attachment.name}</div>
-                                                                <div className="text-xs text-gray-400">{formatFileSize(attachment.size)}</div>
+                                                                <div className="text-xs text-gray-400">{util.formatFileSize(attachment.size)}</div>
                                                             </div>
                                                             <button 
                                                                 className="bg-blue-600 text-gray-100 rounded px-2 py-1 text-sm hover:bg-blue-700"
