@@ -196,7 +196,7 @@ function QuantaChat() {
             />
             
             <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
-                <div id="logoTextAndMembers" className="w-1/4 flex items-center">
+                <div id="logoTextAndMembers" className="flex-1 flex items-center">
                     <div className="mr-3">
                         <img 
                             src="/logo-100px-tr.jpg" 
@@ -204,9 +204,9 @@ function QuantaChat() {
                             className="h-auto object-contain border border-blue-400/30 rounded"
                         />
                     </div>
-                    <div>
+                    <div className="overflow-hidden">
                         <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
-                        <h2 className="font-semibold text-gray-300">{participants}</h2>
+                        <h2 className="font-semibold text-gray-300 truncate">{participants}</h2>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
