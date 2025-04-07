@@ -191,7 +191,7 @@ function QuantaChat() {
                         />
                     </div>
                     <div className="overflow-hidden">
-                        <h1 className="text-xl font-semibold text-blue-400">{gs.roomName ? `Quanta Chat: ${gs.roomName}` : `Quanta Chat`}</h1>
+                        <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
                         <h2 className="font-semibold text-gray-300 truncate">{participants}</h2>
                     </div>
                 </div>
@@ -228,6 +228,13 @@ function QuantaChat() {
                         </>
                     ) : (
                         <>
+                            <div className="flex items-center bg-gray-700 rounded px-3 py-1 border border-gray-600">
+                                <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                    <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gs.roomName}</span></span>
+                                </div>
+                            </div>
                             <button 
                                 onClick={disconnect}
                                 className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
