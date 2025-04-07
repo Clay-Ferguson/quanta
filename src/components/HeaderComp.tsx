@@ -51,7 +51,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                                 type="text" 
                                 value={formData.userName} 
                                 onChange={handleInputChange}
-                                className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                className="input-field" 
                             />
                         </div>
                         <div className="flex items-center">
@@ -61,7 +61,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                                 type="text" 
                                 value={formData.roomName} 
                                 onChange={handleInputChange}
-                                className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                className="input-field" 
                             />
                         </div>
                         <button 

@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+// This is where your custom components go
+@layer components {
+  .input-field {
+    @apply rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600;
+  }
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
