@@ -17,7 +17,13 @@
 * For ease of use you can create a shortcut like `http://chat.quanta.wiki/?user=bob&room=sports`, which has the username and room name embedded in the url and will automatically connect you to that room, when you visit the url.
 * Technical Note: The data for chat rooms is saved using the `IndexedDB` API feature in Web Browsers, so the amount of storage allowed will currently be determined by the limitations of that storage space.
 
-## To Run the Server
+## To Run in IDE (VSCode)
+
+```bash
+yarn build && yarn start
+```
+
+## To Run the Server (PROD)
 
 ```bash
 # Install Node first, then Yarn:
