@@ -221,25 +221,31 @@ function QuantaChat() {
                             className="rounded px-2 py-1 bg-gray-700 text-gray-100 border border-gray-600 w-28 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         />
                     </div>
-                    <button 
-                        disabled={!formData.userName || !formData.roomName || gs.connected}
-                        onClick={connect}
-                        className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Connect
-                    </button>
-                    <button 
-                        onClick={disconnect}
-                        className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
-                    >
-                        Disconnect
-                    </button>
-                    <button 
-                        onClick={clear}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-gray-100 font-medium py-1 px-4 rounded"
-                    >
-                        Clear
-                    </button>
+                    {!gs.connected && (
+                        <button 
+                            disabled={!formData.userName || !formData.roomName}
+                            onClick={connect}
+                            className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Connect
+                        </button>
+                    )}
+                    {gs.connected && (
+                        <>
+                            <button 
+                                onClick={disconnect}
+                                className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
+                            >
+                                Disconnect
+                            </button>
+                            <button 
+                                onClick={clear}
+                                className="bg-yellow-600 hover:bg-yellow-700 text-gray-100 font-medium py-1 px-4 rounded"
+                            >
+                                Clear
+                            </button>
+                        </>
+                    )}
                 </div>
             </header>
 
