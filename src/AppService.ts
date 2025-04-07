@@ -99,7 +99,7 @@ class AppService {
             }
 
             this.gs.messages = []; 
-            this.saveMessages(this.gs); 
+            this.saveMessages(); 
             this.gd({ type: 'clearMessages', payload: this.gs });}
     }
 
@@ -135,33 +135,105 @@ class AppService {
         this.gs.messages.push(msg); // Update local state immediately
 
         try {
-            // todo-0: add this back in
-            // await this.autoPruneDatabase(msg);
+            await this.pruneDB(msg);
         } catch (error) {
             util.log('Error checking storage or saving message: ' + error);
         }
 
-        this.saveMessages(this.gs);
+        this.saveMessages();
         this.scrollToBottom();
     }
 
-    // Message storage and persistence functions. 
-    // todo-0: Note we could probably use 'this.gs' from this class, instead of arg here.
-    saveMessages(gs: any) {
+    async pruneDB(msg: any) {
+        if (navigator.storage && navigator.storage.estimate) {
+            const estimate: any = await navigator.storage.estimate();
+            const remainingStorage = estimate.quota - estimate.usage;
+            const usagePercentage = (estimate.usage / estimate.quota) * 100;
+            const forceClean = false; // set to true to simuilate low storage, and cause pruning, after every message send
+
+            console.log(`Storage: (${Math.round(usagePercentage)}% used). Quota: ${util.formatStorageSize(estimate.quota)}`);
+
+            // Calculate message size and check storage limits
+            const msgSize = this.calculateMessageSize(msg);
+
+            // If we're within 10% of storage limit
+            if (remainingStorage < msgSize || usagePercentage > 90 || forceClean) {
+                const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
+                    `Would you like to remove the oldest 20% of messages to free up space?`;
+
+                if (confirm(warningMsg)) {
+                    // Sort messages by timestamp and remove oldest 20%
+                    this.gs.messages.sort((a: any, b: any) => a.timestamp - b.timestamp);
+                    const countToRemove = Math.ceil(this.gs.messages.length * 0.20);
+                    this.gs.messages = this.gs.messages.slice(countToRemove);
+
+                    // Save the pruned messages
+                    this.saveMessages();
+                    util.log(`Removed ${countToRemove} old messages due to storage constraints`);
+                }
+            }
+        }
+    }
+
+    // Calculate the size of a message object in bytes
+    calculateMessageSize(msg: any) {
+        let totalSize = 0;
+
+        // Text content size
+        if (msg.content) {
+            totalSize += new Blob([msg.content]).size;
+        }
+
+        // Metadata size (sender, timestamp, etc.)
+        totalSize += new Blob([JSON.stringify({
+            sender: msg.sender,
+            timestamp: msg.timestamp
+        })]).size;
+
+        // Attachments size
+        if (msg.attachments && msg.attachments.length > 0) {
+            msg.attachments.forEach((attachment: any) => {
+                // Base64 data URLs are approximately 33% larger than the original binary
+                // The actual data portion is after the comma in "data:image/jpeg;base64,..."
+                if (attachment.data) {
+                    const dataUrl = attachment.data;
+                    const base64Index = dataUrl.indexOf(',') + 1;
+                    if (base64Index > 0) {
+                        const base64Data = dataUrl.substring(base64Index);
+                        // Convert from base64 size to binary size (approx)
+                        totalSize += Math.floor((base64Data.length * 3) / 4);
+                    } else {
+                        // Fallback if data URL format is unexpected
+                        totalSize += new Blob([dataUrl]).size;
+                    }
+                }
+
+                // Add size of attachment metadata
+                totalSize += new Blob([JSON.stringify({
+                    name: attachment.name,
+                    type: attachment.type,
+                    size: attachment.size
+                })]).size;
+            });
+        }
+        return totalSize;
+    }
+
+    saveMessages() {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
         }
-        gs = gs || this.gs;
+
         try {
             // Get existing room data or create a new room object
             const roomData = {
-                messages: gs.messages,
+                messages: this.gs.messages,
                 lastUpdated: new Date().toISOString()
             };
 
             this.storage.setItem('room_' + this.rtc.roomId, roomData);
-            util.log('Saved ' + gs.messages.length + ' messages for room: ' + gs.roomName);
+            util.log('Saved ' + this.gs.messages.length + ' messages for room: ' + this.gs.roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);
         }
