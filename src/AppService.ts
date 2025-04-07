@@ -82,6 +82,7 @@ class AppService {
     }
 
     _disconnect = () => {
+        this.rtc?._disconnect();
         this.gd({ type: 'disconnect', payload: { 
             roomName: '', 
             userName: '',
