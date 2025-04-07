@@ -4,7 +4,7 @@
  */
 class IndexedDB {
     private static inst: IndexedDB | null = null;
-    private db: any | null = null;
+    private db: IDBDatabase | null = null;
     private dbName: string = '';
     private storeName: string = '';
     private dbVersion: number = 1;
@@ -34,20 +34,20 @@ class IndexedDB {
         this.storeName = storeName;
         this.dbVersion = dbVersion;
 
-        const dbPromise = new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.dbVersion);
+        const dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+            const request: IDBOpenDBRequest = indexedDB.open(this.dbName, this.dbVersion);
 
-            request.onerror = (event: any) => {
-                console.error('IndexedDB error:', event.target.error);
-                reject(event.target.error);
+            request.onerror = (event: Event) => {
+                console.error('IndexedDB error:', (event.target as IDBOpenDBRequest).error);
+                reject((event.target as IDBOpenDBRequest).error);
             };
 
-            request.onsuccess = (event: any) => {
-                resolve(event.target.result);
+            request.onsuccess = (event: Event) => {
+                resolve((event.target as IDBOpenDBRequest).result);
             };
 
-            request.onupgradeneeded = (event: any) => {
-                const db = event.target.result;
+            request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+                const db = (event.target as IDBOpenDBRequest).result;
                 if (!db.objectStoreNames.contains(this.storeName)) {
                     db.createObjectStore(this.storeName);
                 }
@@ -66,16 +66,16 @@ class IndexedDB {
     async setItem(key: string, value: any) {
         this.checkDB();
         try {
-            return new Promise((resolve: any, reject: any) => {
-                const transaction = this.db.transaction(this.storeName, 'readwrite');
+            return new Promise<void>((resolve, reject) => {
+                const transaction = this.db!.transaction(this.storeName, 'readwrite');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.put(value, key);
 
                 request.onsuccess = () => resolve();
-                request.onerror = (event: any) => reject(event.target.error);
+                request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
 
                 transaction.oncomplete = () => resolve();
-                transaction.onerror = (event: any) => reject(event.target.error);
+                transaction.onerror = (event: Event) => reject((event.target as IDBTransaction).error);
             });
         } catch (error) {
             console.error('Error in setItem:', error);
@@ -91,13 +91,13 @@ class IndexedDB {
     async getItem(key: string) {
         this.checkDB();
         try {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(this.storeName, 'readonly');
+            return new Promise<any>((resolve, reject) => {
+                const transaction = this.db!.transaction(this.storeName, 'readonly');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.get(key);
 
                 request.onsuccess = () => resolve(request.result);
-                request.onerror = (event: any) => reject(event.target.error);
+                request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
             });
         } catch (error) {
             console.error('Error in getItem:', error);
@@ -113,16 +113,16 @@ class IndexedDB {
     async removeItem(key: string) {
         this.checkDB();
         try {
-            return new Promise((resolve: any, reject: any) => {
-                const transaction = this.db.transaction(this.storeName, 'readwrite');
+            return new Promise<void>((resolve, reject) => {
+                const transaction = this.db!.transaction(this.storeName, 'readwrite');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.delete(key);
 
                 request.onsuccess = () => resolve();
-                request.onerror = (event: any) => reject(event.target.error);
+                request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
 
                 transaction.oncomplete = () => resolve();
-                transaction.onerror = (event: any) => reject(event.target.error);
+                transaction.onerror = (event: Event) => reject((event.target as IDBTransaction).error);
             });
         } catch (error) {
             console.error('Error in removeItem:', error);
@@ -137,16 +137,16 @@ class IndexedDB {
     async clear() {
         this.checkDB();
         try {
-            return new Promise((resolve: any, reject: any) => {
-                const transaction = this.db.transaction(this.storeName, 'readwrite');
+            return new Promise<void>((resolve, reject) => {
+                const transaction = this.db!.transaction(this.storeName, 'readwrite');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.clear();
 
                 request.onsuccess = () => resolve();
-                request.onerror = (event: any) => reject(event.target.error);
+                request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
 
                 transaction.oncomplete = () => resolve();
-                transaction.onerror = (event: any) => reject(event.target.error);
+                transaction.onerror = (event: Event) => reject((event.target as IDBTransaction).error);
             });
         } catch (error) {
             console.error('Error in clear:', error);
@@ -161,13 +161,13 @@ class IndexedDB {
     async keys() {
         this.checkDB();
         try {
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction(this.storeName, 'readonly');
+            return new Promise<string[]>((resolve, reject) => {
+                const transaction = this.db!.transaction(this.storeName, 'readonly');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.getAllKeys();
 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event: any) => reject(event.target.error);
+                request.onsuccess = () => resolve(request.result as string[]);
+                request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
             });
         } catch (error) {
             console.error('Error in keys:', error);
