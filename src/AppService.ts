@@ -21,7 +21,6 @@ class AppService implements AppServiceIntf  {
     }
 
     static getInst() {
-        // Create instance if it doesn't exist
         if (!AppService.inst) {
             AppService.inst = new AppService();
             AppService.inst.init();
@@ -45,11 +44,9 @@ class AppService implements AppServiceIntf  {
             return;
         }
         
-        // Get current RTC state
         const participants = this.rtc.participants || new Set<string>();
         const connected = this.rtc.connected || false;
         
-        // Dispatch to update global state
         this.gd({ 
             type: 'updateRtcState', 
             payload: { 
@@ -109,8 +106,6 @@ class AppService implements AppServiceIntf  {
             const msg: any = this.createMessage(message, this.rtc.userName, selectedFiles);
             this._persistMessage(msg);
             this.rtc._sendMessage(msg);
-
-            // NOTE: displatch adds to 'gs.messages' array in the reducer
             this.gd({ type: 'send', payload: this.gs});
         }
     }
@@ -129,8 +124,7 @@ class AppService implements AppServiceIntf  {
             return; // Message already exists, do not save again
         }
 
-        this.gs.messages.push(msg); // Update local state immediately
-
+        this.gs.messages.push(msg);
         try {
             await this.pruneDB(msg);
         } catch (error) {
@@ -223,7 +217,6 @@ class AppService implements AppServiceIntf  {
         }
 
         try {
-            // Get existing room data or create a new room object
             const roomData = {
                 messages: this.gs.messages,
                 lastUpdated: new Date().toISOString()

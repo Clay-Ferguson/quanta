@@ -6,11 +6,9 @@ class Util {
     }
 
     static getInst() {
-        // Create instance if it doesn't exist
         if (!Util.inst) {
             Util.inst = new Util();
         }
-
         return Util.inst;
     }
 

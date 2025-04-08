@@ -19,7 +19,6 @@ function QuantaChat() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    // Add state for the full-size image viewer
     const [fullSizeImage, setFullSizeImage] = useState<{
         src: string;
         name: string;
@@ -40,7 +39,6 @@ function QuantaChat() {
         setMessage(e.target.value);
     };
     
-    // Local state for form fields
     const [formData, setFormData] = useState({
         userName: gs.userName || '',
         roomName: gs.roomName || ''
@@ -76,12 +74,10 @@ function QuantaChat() {
         }
     };
 
-    // Update the toggleFullSize function to handle opening the full-size image viewer
     const toggleFullSize = (src: string, name: string) => {
         setFullSizeImage(fullSizeImage ? null : { src, name });
     };
 
-    // Modify the handleFiles function to convert files to base64
     const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             try {
@@ -93,7 +89,6 @@ function QuantaChat() {
         }
     };
     
-    // Update the send function to convert files to base64 before sending
     const send = async () => {
         if ((!message.trim() && selectedFiles.length === 0) || !gs.connected) {
             console.log("Not connected or empty message with no attachments, not sending.");
@@ -117,8 +112,8 @@ function QuantaChat() {
         // Send message without attachments
         app._send(message.trim(), processedFiles);
         
-        setMessage(''); // Clear the message input after sending
-        setSelectedFiles([]); // Clear the selected files after sending
+        setMessage(''); 
+        setSelectedFiles([]); 
         
         // Reset the file input
         if (fileInputRef.current) {
@@ -143,13 +138,11 @@ function QuantaChat() {
         if (urlAccepted) return;
         urlAccepted = true; // Prevents multiple executions
 
-        // Get URL parameters
         const getUrlParameter = (name: string): string | null => {
             const searchParams = new URLSearchParams(window.location.search);
             return searchParams.get(name);
         };
         
-        // Get userName and roomName from URL if they exist
         const userNameParam = getUrlParameter('user');
         const roomNameParam = getUrlParameter('room');
         
@@ -166,7 +159,7 @@ function QuantaChat() {
             // Use a short timeout to ensure state is updated before connecting
             const timer = setTimeout(() => {
                 app._connect(userNameParam, roomNameParam);
-            }, 100);
+            }, 250);
             
             return () => clearTimeout(timer);
         }

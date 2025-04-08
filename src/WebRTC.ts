@@ -23,7 +23,7 @@ class WebRTC {
     participants = new Set<string>();
     connected: boolean = false;
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null; // NOTE: This will probably be circular reference if I include. Use an Interfaces import for the 'shape'
+    app: AppServiceIntf | null = null; 
     host: string = "";
     port: string = "";
 
@@ -61,11 +61,8 @@ class WebRTC {
 
     _onRoomInfo = (evt: any) => {
         util.log('Room info received with participants: ' + evt.participants.join(', '));
-
-        // Update our list of participants
         this.participants = new Set(evt.participants);
 
-        // For each participant, create a peer connection and make an offer
         evt.participants.forEach((participant: any) => {
             if (!this.peerConnections.has(participant)) {
                 this.createPeerConnection(participant, true);
@@ -203,12 +200,7 @@ class WebRTC {
     _onclose = () => {
         util.log('Disconnected from signaling server');
         this.connected = false;
-
-        // Clean up all connections
-        this.peerConnections.forEach(pc => pc.close());
-        this.peerConnections.clear();
-        this.dataChannels.clear();
-
+        this.closeAllConnections();
         this.app?._rtcStateChange();
     }
 
@@ -290,10 +282,7 @@ class WebRTC {
 
         // If already connected, reset connection with new name and room
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            // Clean up all connections
-            this.peerConnections.forEach(pc => pc.close());
-            this.peerConnections.clear();
-            this.dataChannels.clear();
+            this.closeAllConnections();
 
             // Rejoin with new name and room
             this.socket.send(JSON.stringify({
@@ -312,15 +301,18 @@ class WebRTC {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.close();
         }
-
-        // Clean up all connections
-        this.peerConnections.forEach(pc => pc.close());
-        this.peerConnections.clear();
-        this.dataChannels.clear();
+        this.closeAllConnections();
 
         // Reset participants
         this.participants.clear();
         this.connected = false;
+    }
+
+    closeAllConnections() {
+        // Clean up all connections
+        this.peerConnections.forEach(pc => pc.close());
+        this.peerConnections.clear();
+        this.dataChannels.clear();
     }
 
     setupDataChannel(channel: RTCDataChannel, peerName: string) {
