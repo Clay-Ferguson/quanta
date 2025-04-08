@@ -5,6 +5,7 @@ const logger = Logger.getInst();
 const log = logger.logInfo;
 const logError = logger.logError;
 
+/* NOTE: See README.md, to unserstand why this Legacy class still exists. */
 class WebRTCSigServer {
     private static inst: WebRTCSigServer | null = null;
 
@@ -80,34 +81,31 @@ class WebRTCSigServer {
                         });
                     }
 
-                    else if (data.type === 'signal' && data.target) {
-                        const clientInfo = clients.get(ws);
-                        if (clientInfo) {
-                            const sender = clientInfo.name;
-                            const room = clientInfo.room;
-                    
-                            // Add sender info and forward the signal data
-                            const messageToSend = JSON.stringify({
-                                type: 'signal',
-                                sender: sender,
-                                target: data.target, // Keep original target
-                                data: data.data      // Forward the payload from simple-peer
-                            });
-                    
+                    // For WebRTC signaling messages (offer, answer, ice-candidate)
+                    if ((data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') && data.target) {
+                        const client = clients.get(ws);
+
+                        if (client) {
+                            const room = client.room;
+                            const sender = client.name;
+
+                            // Add sender info to the message
+                            data.sender = sender;
+                            data.room = room;
+
                             // Find the target client and send the message
-                            wss.clients.forEach((targetClient) => {
-                                const targetClientInfo = clients.get(targetClient);
-                                if (targetClient.readyState === WebSocket.OPEN &&
-                                    targetClientInfo &&
-                                    targetClientInfo.room === room &&
-                                    targetClientInfo.name === data.target) {
-                    
-                                    log(`Relaying signal from ${sender} to ${data.target} in room ${room}`);
-                                    targetClient.send(messageToSend);
+                            wss.clients.forEach((client) => {
+                                const clientInfo = clients.get(client);
+                                if (client.readyState === WebSocket.OPEN &&
+                            clientInfo &&
+                            clientInfo.room === room &&
+                            clientInfo.name === data.target) {
+                                    log(`Sending ${data.type} from ${sender} to ${data.target} in room ${room}`);
+                                    client.send(JSON.stringify(data));
                                 }
                             });
                         } else {
-                            log("Received signal message but sender client info not found");
+                            log("Received signaling message but client not in a room");
                         }
                     }
                     // Handle broadcast messages to everyone in a room

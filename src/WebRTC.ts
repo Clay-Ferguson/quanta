@@ -1,57 +1,62 @@
+import SimplePeer, { Instance as SimplePeerInstance, SignalData } from 'simple-peer';
 import AppServiceIntf from './AppServiceIntf.ts';
 import IndexedDB from './IndexedDB.ts';
 import Utils from './Util.ts';
 const util = Utils.getInst();
 
 /**
- * WebRTC class for handling WebRTC connections on the P2P clients.
- * 
- * Designed as a singleton that can be instantiated once and reused
+ * WebRTC class using simple-peer for handling P2P connections.
+ * Designed as a singleton.
  */
 class WebRTC {
     private static inst: WebRTC | null = null;
 
-    // maps user names to their RTCPeerConnection objects
-    peerConnections: Map<string, RTCPeerConnection> = new Map();
-
-    // maps user names to their RTCDataChannel objects
-    dataChannels: Map<string, RTCDataChannel> = new Map();
+    // Map peer names to their SimplePeer instances
+    peers: Map<string, SimplePeerInstance> = new Map();
 
     socket: WebSocket | null = null;
     roomId = "";
     userName = "";
-    participants = new Set<string>();
-    connected: boolean = false;
+    participants = new Set<string>(); // Keep track of expected participants in the room
+    connected: boolean = false; // WebSocket connection status
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null; 
+    app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
 
     constructor() {
-        console.log('WebRTC singleton created');
+        console.log('WebRTC singleton (using simple-peer) created');
     }
 
     static async getInst(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
         if (!WebRTC.inst) {
             WebRTC.inst = new WebRTC();
-            await WebRTC.inst.init(storage, app, host, port);
+            WebRTC.inst.storage = storage;
+            WebRTC.inst.app = app;
+            WebRTC.inst.host = host;
+            WebRTC.inst.port = port;
         }
         return WebRTC.inst;
     }
 
-    async init(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
-        this.storage = storage;
-        this.app = app;
-        this.host = host;
-        this.port = port;
-    }
-
     initRTC() {
-        util.log('Starting WebRTC connection setup...');
+        if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+            util.log('WebSocket connection already open or connecting.');
+            return;
+        }
 
-        // Create WebSocket connection to signaling server. 
+        util.log('Starting WebSocket connection for signaling...');
         const url = `ws://${this.host}:${this.port}`;
         console.log('Connecting to signaling server at ' + url);
+
+        // Clean up any old socket listeners before creating a new one
+        if (this.socket) {
+            this.socket.removeEventListener('open', this._onopen);
+            this.socket.removeEventListener('message', this._onmessage);
+            this.socket.removeEventListener('error', this._onerror);
+            this.socket.removeEventListener('close', this._onclose);
+        }
+
         this.socket = new WebSocket(url);
         this.socket.onopen = this._onopen;
         this.socket.onmessage = this._onmessage;
@@ -59,309 +64,336 @@ class WebRTC {
         this.socket.onclose = this._onclose;
     }
 
-    _onRoomInfo = (evt: any) => {
-        util.log('Room info received with participants: ' + evt.participants.join(', '));
-        this.participants = new Set(evt.participants);
-
-        evt.participants.forEach((participant: any) => {
-            if (!this.peerConnections.has(participant)) {
-                this.createPeerConnection(participant, true);
-            }
-        });
-    }
-
-    _onUserJoined = (evt: any) => {
-        util.log('User joined: ' + evt.name);
-        this.participants.add(evt.name);
-
-        // Create a connection with the new user (we are initiator)
-        if (!this.peerConnections.has(evt.name)) {
-            this.createPeerConnection(evt.name, true);
-        }
-    }
-
-    _onUserLeft = (evt: any) => {
-        util.log('User left: ' + evt.name);
-        this.participants.delete(evt.name);
-
-        // Clean up connections
-        const pc = this.peerConnections.get(evt.name);
-        if (pc) {
-            pc.close();
-            this.peerConnections.delete(evt.name);
-        }
-
-        if (this.dataChannels.has(evt.name)) {
-            this.dataChannels.delete(evt.name);
-        }
-    }
-
-    _onOffer = (evt: any) => {
-        util.log('Received offer from ' + evt.sender);
-
-        // Create a connection if it doesn't exist
-        let pc: RTCPeerConnection | undefined;
-        if (!this.peerConnections.has(evt.sender)) {
-            pc = this.createPeerConnection(evt.sender, false);
-        } else {
-            pc = this.peerConnections.get(evt.sender);
-        }
-
-        if (pc) {
-            pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
-                .then(() => pc.createAnswer())
-                .then((answer: any) => pc.setLocalDescription(answer))
-                .then(() => {
-                    if (this.socket) {
-                        this.socket.send(JSON.stringify({
-                            type: 'answer',
-                            answer: pc.localDescription,
-                            target: evt.sender,
-                            room: this.roomId
-                        }));
-                    }
-                    util.log('Sent answer to ' + evt.sender);
-                })
-                .catch((error: any) => util.log('Error creating answer: ' + error));
-        }
-    }
-
-    _onAnswer = (evt: any) => {
-        util.log('Received answer from ' + evt.sender);
-        const pc = this.peerConnections.get(evt.sender);
-        if (pc) {
-            pc.setRemoteDescription(new RTCSessionDescription(evt.answer))
-                .catch((error: any) => util.log('Error setting remote description: ' + error));
-        }
-    }
-
-    _onIceCandidate = (evt: any) => {
-        util.log('Received ICE candidate from ' + evt.sender);
-        const pc = this.peerConnections.get(evt.sender);
-        if (pc) {
-            pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
-                .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
-        }
-    }
-
-    _onBroadcast = (evt: any) => {
-        util.log('broadcast. Received broadcast message from ' + evt.sender);
-        this.app?._persistMessage(evt.message);           
-    }
-
-    _onmessage = (event: any) => {
-        const evt = JSON.parse(event.data);
-
-        if (evt.type === 'room-info') {
-            this._onRoomInfo(evt);
-        }
-        else if (evt.type === 'user-joined') {
-            this._onUserJoined(evt);
-        }
-        else if (evt.type === 'user-left') {
-            this._onUserLeft(evt);
-        }
-        else if (evt.type === 'offer' && evt.sender) {
-            this._onOffer(evt);
-        }
-        else if (evt.type === 'answer' && evt.sender) {
-            this._onAnswer(evt);
-        }
-        else if (evt.type === 'ice-candidate' && evt.sender) {
-            this._onIceCandidate(evt);
-        }
-        else if (evt.type === 'broadcast' && evt.sender) {
-            this._onBroadcast(evt); 
-        }
-        this.app?._rtcStateChange();
-    }
+    // --- WebSocket Event Handlers ---
 
     _onopen = () => {
         util.log('Connected to signaling server.');
         this.connected = true;
 
-        // Join a room with user name
-        if (this.socket) {
+        // Join the room now that the socket is open
+        if (this.socket && this.userName && this.roomId) {
             this.socket.send(JSON.stringify({
                 type: 'join',
                 room: this.roomId,
                 name: this.userName
-            }));}
-        util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
+            }));
+            util.log(`Sent join request for room: ${this.roomId} as ${this.userName}`);
+        } else {
+            console.error("Cannot join room: userName or roomId missing, or socket unavailable.");
+        }
         this.app?._rtcStateChange();
     }
 
-    _onerror = (error: any) => {
-        util.log('WebSocket error: ' + error);
+    _onerror = (error: Event) => {
+        console.error('WebSocket error:', error);
         this.connected = false;
+        // Consider attempting reconnection here?
         this.app?._rtcStateChange();
     };
 
     _onclose = () => {
         util.log('Disconnected from signaling server');
         this.connected = false;
-        this.closeAllConnections();
+        this.closeAllConnections(); // Clean up all peers
         this.app?._rtcStateChange();
+        // Consider attempting reconnection here?
     }
 
-    createPeerConnection(peerName: string, isInitiator: boolean) {
-        util.log('Creating peer connection with ' + peerName + (isInitiator ? ' (as initiator)' : ''));
-        const pc = new RTCPeerConnection();
-        this.peerConnections.set(peerName, pc);
+    _onmessage = (event: MessageEvent) => {
+        try {
+            const msg = JSON.parse(event.data);
+            util.log(`Received message type: ${msg.type} from ${msg.sender || 'server'}`);
 
-        // Set up ICE candidate handling
-        pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-            if (event.candidate && this.socket) {
-                this.socket.send(JSON.stringify({
-                    type: 'ice-candidate',
-                    candidate: event.candidate,
-                    target: peerName,
-                    room: this.roomId
-                }));
-                util.log('Sent ICE candidate to ' + peerName);
+            switch (msg.type) {
+            case 'room-info': // Received initial list of participants from server
+                this._handleRoomInfo(msg);
+                break;
+            case 'user-joined': // A new user joined the room
+                this._handleUserJoined(msg);
+                break;
+            case 'user-left': // A user left the room
+                this._handleUserLeft(msg);
+                break;
+            case 'signal': // Received signaling data (offer/answer/candidate) from a peer
+                this._handleSignal(msg);
+                break;
+            case 'broadcast': // Received a broadcast message via signaling server (fallback)
+                this._handleBroadcast(msg);
+                break;
+            default:
+                util.log('Received unknown message type: ' + msg.type);
             }
-        };
+            this.app?._rtcStateChange(); // Notify app of potential state changes
 
-        // Connection state changes
-        pc.onconnectionstatechange = () => {
-            util.log('Connection state with ' + peerName + ': ' + pc.connectionState);
-            if (pc.connectionState === 'connected') {
-                util.log('WebRTC connected with ' + peerName + '!');
-            } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                util.log('WebRTC disconnected from ' + peerName);
+        } catch (error) {
+            console.error('Error processing WebSocket message:', error, event.data);
+        }
+    }
+
+    // --- Signaling Message Handlers ---
+
+    _handleRoomInfo = (msg: { participants: string[], room: string }) => {
+        util.log('Room info received. Participants: ' + msg.participants.join(', '));
+        const existingParticipants = new Set(msg.participants);
+        this.participants = existingParticipants; // Update our view of the room
+
+        // Initiate connections TO existing users
+        existingParticipants.forEach(peerName => {
+            if (peerName !== this.userName && !this.peers.has(peerName)) {
+                this.createPeer(peerName, true); // We initiate
             }
-        };
+        });
+    }
 
-        // Handle incoming data channels
-        pc.ondatachannel = (event: RTCDataChannelEvent) => {
-            util.log('Received data channel from ' + peerName);
-            this.setupDataChannel(event.channel, peerName);
-        };
+    _handleUserJoined = (msg: { name: string, room: string }) => {
+        util.log('User joined: ' + msg.name);
+        if (msg.name === this.userName || this.peers.has(msg.name)) {
+            return; // Ignore self or existing connections
+        }
+        this.participants.add(msg.name);
 
-        // If we're the initiator, create a data channel
-        if (isInitiator) {
-            try {
-                util.log('Creating data channel as initiator for ' + peerName);
-                const channel = pc.createDataChannel('chat');
-                this.setupDataChannel(channel, peerName);
+        // New user joined, WE initiate the connection TO them.
+        this.createPeer(msg.name, true);
+    }
 
-                // Create and send offer
-                pc.createOffer()
-                    .then(offer => pc.setLocalDescription(offer))
-                    .then(() => {
-                        if (this.socket) {
-                            this.socket.send(JSON.stringify({
-                                type: 'offer',
-                                offer: pc.localDescription,
-                                target: peerName,
-                                room: this.roomId
-                            }));
-                            util.log('Sent offer to ' + peerName);
-                        }
-                    })
-                    .catch(error => util.log('Error creating offer: ' + error));
-            } catch (err) {
-                util.log('Error creating data channel: ' + err);
+    _handleUserLeft = (msg: { name: string, room: string }) => {
+        util.log('User left: ' + msg.name);
+        this.participants.delete(msg.name);
+
+        const peer = this.peers.get(msg.name);
+        if (peer) {
+            util.log(`Destroying connection to ${msg.name}`);
+            peer.destroy(); // Cleanly close the connection
+            // The 'close' event handler on the peer will remove it from the map
+        }
+    }
+
+    _handleSignal = (msg: { sender: string, target: string, data: SignalData }) => {
+        if (msg.sender === this.userName) return; // Ignore signals sent by ourselves (shouldn't happen)
+
+        util.log(`Received signal from ${msg.sender}`);
+        let peer = this.peers.get(msg.sender);
+
+        // If we receive a signal (likely an offer) from someone we aren't connected to yet,
+        // create a peer instance for them (non-initiator).
+        if (!peer) {
+            util.log(`Received signal from new peer ${msg.sender}, creating non-initiator peer.`);
+            const newPeer = this.createPeer(msg.sender, false); // They initiated
+            if (newPeer) {
+                peer = newPeer;
             }
         }
-        return pc;
+
+        // Pass the signal data to the simple-peer instance
+        if (peer) {
+            peer.signal(msg.data);
+        } else {
+            console.error(`Peer not found for signal from ${msg.sender}`);
+        }
     }
 
-    _connect = async (userName: string, roomId: string) => {
-        console.log( 'WebRTC Connecting to room: ' + roomId + ' as user: ' + userName);
-        this.userName = userName;
-        this.roomId = roomId;
+    _handleBroadcast = (msg: { sender: string, message: any, room: string }) => {
+        util.log('Received broadcast message via signaling from ' + msg.sender);
+        if (msg.sender !== this.userName) { // Avoid persisting our own fallback messages
+            this.app?._persistMessage(msg.message);
+        }
+    }
 
+    // --- Peer Connection Management ---
+
+    createPeer(peerName: string, isInitiator: boolean): SimplePeerInstance | null {
+        if (this.peers.has(peerName)) {
+            util.log(`Already have a peer connection with ${peerName}`);
+            return this.peers.get(peerName) || null;
+        }
+
+        util.log(`Creating ${isInitiator ? 'initiator' : 'non-initiator'} peer connection with ${peerName}`);
+
+        try {
+            const peer = new SimplePeer({
+                initiator: isInitiator,
+                trickle: true, // Enable trickle ICE for faster connection setup
+                // objectMode: true, // Consider if you want to send JS objects directly (requires receiver support)
+            });
+
+            // Store the peer instance
+            this.peers.set(peerName, peer);
+            util.log(`Peer instance created for ${peerName}. Total peers: ${this.peers.size}`);
+
+
+            // --- SimplePeer Event Handlers ---
+
+            peer.on('signal', (data: SignalData) => {
+                util.log(`Generated signal for ${peerName}`);
+                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    this.socket.send(JSON.stringify({
+                        type: 'signal',
+                        target: peerName, // Send it TO the specific peer
+                        sender: this.userName, // Let them know it's from us
+                        data: data         // The actual signaling payload
+                    }));
+                    util.log(`Sent signal to ${peerName}`);
+                } else {
+                    console.error(`Cannot send signal to ${peerName}: WebSocket not open.`);
+                    // Optional: Queue the signal and send when socket reopens?
+                }
+            });
+
+            peer.on('connect', () => {
+                util.log(`CONNECTED with ${peerName}!`);
+                // You can optionally send a backlog of messages or a confirmation here if needed
+                // peer.send(JSON.stringify({ type: 'hello', from: this.userName }));
+                this.app?._rtcStateChange();
+            });
+
+            peer.on('data', (data: any) => {
+                // Attempt to parse data, assuming JSON strings for messages
+                try {
+                    // simple-peer might return Buffer, convert to string
+                    const messageString = data.toString();
+                    const msg = JSON.parse(messageString);
+                    util.log(`onData. Received P2P message from ${peerName}`);
+                    this.app?._persistMessage(msg);
+                } catch (error) {
+                    console.error(`Error processing P2P data from ${peerName}:`, error, data);
+                }
+                this.app?._rtcStateChange();
+            });
+
+            peer.on('close', () => {
+                util.log(`Connection CLOSED with ${peerName}`);
+                this.peers.delete(peerName); // Remove from map on close
+                this.participants.delete(peerName); // Also remove from participants list
+                util.log(`Peer instance removed for ${peerName}. Total peers: ${this.peers.size}`);
+                this.app?._rtcStateChange();
+            });
+
+            peer.on('error', (err: Error) => {
+                console.error(`Connection ERROR with ${peerName}:`, err.message);
+                // Attempt to clean up the connection
+                if (this.peers.has(peerName)) {
+                    this.peers.get(peerName)?.destroy(); // Ensure cleanup
+                    this.peers.delete(peerName);
+                    this.participants.delete(peerName);
+                    util.log(`Peer instance removed for ${peerName} after error. Total peers: ${this.peers.size}`);
+                }
+                this.app?._rtcStateChange();
+            });
+
+            return peer;
+
+        } catch (error) {
+            console.error(`Failed to create SimplePeer instance for ${peerName}:`, error);
+            return null;
+        }
+    }
+
+    closeAllConnections() {
+        util.log(`Closing all (${this.peers.size}) peer connections.`);
+        this.peers.forEach((peer, name) => {
+            util.log(`Destroying connection to ${name}`);
+            peer.destroy();
+        });
+        this.peers.clear();
+        this.participants.clear(); // Clear participants when fully disconnected
+    }
+
+    // --- Public API Methods (intended for AppServiceIntf) ---
+
+    async _connect(userName: string, roomId: string) {
+        util.log(`Connecting to room: ${roomId} as user: ${userName}`);
+        if (!userName || !roomId) {
+            console.error("Username and Room ID are required to connect.");
+            return;
+        }
         if (!this.storage) {
-            util.log('Storage not initialized. Cannot connect.');
+            console.error('Storage not initialized. Cannot connect.');
             return;
         }
 
+        // If already connected, disconnect cleanly first
+        if (this.connected || this.peers.size > 0 || this.socket?.readyState === WebSocket.OPEN) {
+            util.log("Already connected or connecting, disconnecting first...");
+            this._disconnect(); // Clean up old state
+            // Wait a moment for cleanup before reconnecting
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+
+        this.userName = userName;
+        this.roomId = roomId;
+
+        // Persist user/room info
         await this.storage.setItem('username', this.userName);
         await this.storage.setItem('room', this.roomId);
 
-        // If already connected, reset connection with new name and room
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.closeAllConnections();
-
-            // Rejoin with new name and room
-            this.socket.send(JSON.stringify({
-                type: 'join',
-                room: this.roomId,
-                name: this.userName
-            }));
-            util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        } else {
-            this.initRTC();
-        }
+        // Start the signaling connection process
+        this.initRTC();
     }
 
-    _disconnect = () => {
+    _disconnect() {
+        util.log('Disconnecting...');
         // Close the signaling socket
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.close();
         }
+        // Socket 'close' handler will trigger closeAllConnections
+        // But call it explicitly in case socket wasn't open
         this.closeAllConnections();
-
-        // Reset participants
-        this.participants.clear();
         this.connected = false;
+        this.userName = "";
+        this.roomId = "";
+        // Clear persisted data maybe? Or leave it for next login?
+        // this.storage?.removeItem('username');
+        // this.storage?.removeItem('room');
+
+        util.log('Disconnect process initiated.');
+        this.app?._rtcStateChange(); // Notify app
     }
 
-    closeAllConnections() {
-        // Clean up all connections
-        this.peerConnections.forEach(pc => pc.close());
-        this.peerConnections.clear();
-        this.dataChannels.clear();
-    }
+    _sendMessage = (msg: any) => {
+        if (!this.userName || !this.roomId) {
+            console.error("Cannot send message: not connected to a room.");
+            return;
+        }
 
-    setupDataChannel(channel: RTCDataChannel, peerName: string) {
-        util.log('Setting up data channel for ' + peerName);
-        this.dataChannels.set(peerName, channel);
+        const messageString = JSON.stringify(msg);
 
-        channel.onopen = () => {
-            util.log('Data channel open with ' + peerName);
-        };
-
-        channel.onclose = () => {
-            util.log('Data channel closed with ' + peerName);
-            this.dataChannels.delete(peerName);
-        };
-
-        channel.onmessage = (event: MessageEvent) => {
-            util.log('onMessage. Received message from ' + peerName);
-            try {
-                const msg = JSON.parse(event.data);
-                this.app?._persistMessage(msg);
-            } catch (error) {
-                util.log('Error parsing message: ' + error);
-            }
-        };
-
-        channel.onerror = (error: any) => {
-            util.log('Data channel error with ' + peerName + ': ' + error);
-        };
-    }
-
-    _sendMessage = (msg: string) => {
-        // Try to send through data channels first
-        let channelsSent = 0;
-        this.dataChannels.forEach((channel: RTCDataChannel) => {
-            if (channel.readyState === 'open') {
-                channel.send(JSON.stringify(msg));
-                channelsSent++;
+        this.peers.forEach((peer, peerName) => {
+            if (peer.connected) {
+                try {
+                    peer.send(messageString);
+                    util.log(`Sent P2P message to ${peerName}`);
+                } catch (error) {
+                    console.error(`Error sending P2P message to ${peerName}:`, error);
+                }
+            } else {
+                util.log(`Skipping send to ${peerName}, not connected.`);
             }
         });
 
-        // If no channels are ready or no peers, send through signaling server
-        if ((channelsSent === 0 || this.participants.size === 0) &&
-            this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({
-                type: 'broadcast',
-                message: msg,
-                room: this.roomId
-            }));
-            util.log('Sent message via signaling server');
+        // Fallback: If no peers are connected, send via signaling server broadcast
+        // Note: In a pure P2P setup, you might *not* want this fallback if delivery
+        // guarantee isn't critical or if you only want messages when peers are directly connected.
+        // Adjust this logic based on your app's requirements.
+        const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
+
+        if (connectedPeerCount === 0 && this.participants.size > 0) {
+            util.log(`No connected P2P peers (${this.peers.size} total). Sending message via signaling broadcast.`);
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({
+                    type: 'broadcast',
+                    message: msg, // Send the original object for broadcast
+                    room: this.roomId
+                }));
+                util.log('Sent message via signaling server broadcast.');
+            } else {
+                console.error('Cannot send broadcast message: WebSocket not open.');
+            }
+        } else if (connectedPeerCount > 0) {
+            util.log(`Message sent via P2P to ${connectedPeerCount} peers.`);
+        } else {
+            util.log('No participants in the room to send the message to.');
         }
     }
 }
