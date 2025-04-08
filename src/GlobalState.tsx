@@ -3,6 +3,7 @@ import React, { createContext, useContext, useReducer } from 'react';
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 interface GlobalState {
+    page: string,
     connected?: boolean;
     roomName: string; 
     userName: string;
@@ -11,6 +12,7 @@ interface GlobalState {
 }
 
 const initialState: GlobalState = {
+    page: 'QuantaChat',
     connected: false, 
     roomName: '',
     userName: '', 

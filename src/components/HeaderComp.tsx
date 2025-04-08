@@ -11,6 +11,7 @@ interface HeaderCompProps {
   connect: () => void;
   disconnect: () => void;
   clear: () => void;
+  settingsPage:() => void;
   gsUserName: string;
   gsRoomName: string;
 }
@@ -23,6 +24,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
     connect,
     disconnect,
     clear,
+    settingsPage,
     gsUserName,
     gsRoomName
 }) => {
@@ -83,18 +85,24 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                         </div>
                         <button 
                             onClick={disconnect}
-                            className="bg-red-600 hover:bg-red-700 text-gray-100 font-medium py-1 px-4 rounded"
+                            className="btn-danger"
                         >
               Disconnect
                         </button>
                         <button 
                             onClick={clear}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-gray-100 font-medium py-1 px-4 rounded"
+                            className="btn-warning"
                         >
               Clear
                         </button>
                     </>
                 )}
+                <button 
+                    onClick={settingsPage}
+                    className="btn-primary"
+                >
+              Settings
+                </button>
             </div>
         </header>
     );

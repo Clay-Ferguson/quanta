@@ -1,4 +1,4 @@
-import { useGlobalState } from './GlobalState';
+import { useGlobalState, useGlobalDispatch } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import AppService from './AppService';
 import Util from './Util';
@@ -13,6 +13,7 @@ let urlAccepted: boolean = false;
 
 function QuantaChat() {
     const gs = useGlobalState();
+    const gd = useGlobalDispatch();
 
     const [message, setMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -66,6 +67,11 @@ function QuantaChat() {
         } else {
             console.log("Not connected, cannot clear messages.");
         }
+    };
+
+    const settingsPage = () => {
+        gs.page = 'SettingsPage'; 
+        gd({ type: 'setPage', payload: gs });
     };
     
     const handleFileSelect = () => {
@@ -184,6 +190,7 @@ function QuantaChat() {
                 connect={connect}
                 disconnect={disconnect}
                 clear={clear}
+                settingsPage={settingsPage}
                 gsUserName={gs.userName}
                 gsRoomName={gs.roomName}
             />

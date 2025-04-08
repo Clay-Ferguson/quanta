@@ -3,6 +3,7 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
 import QuantaChat from './QuantaChat.tsx';
+import SettingsPage from './components/SettingsPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import AppService from './AppService';
 
@@ -23,11 +24,24 @@ function AppServiceConnector() {
     return null; // This component doesn't render anything
 }
 
+// Component to handle conditional page rendering
+function PageRouter() {
+    const { page } = useGlobalState();
+    
+    switch (page) {
+    case 'SettingsPage':
+        return <SettingsPage />;
+    case 'QuantaChat':
+    default:
+        return <QuantaChat />;
+    }
+}
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <GlobalStateProvider> 
             <AppServiceConnector />
-            <QuantaChat />
+            <PageRouter />
         </GlobalStateProvider>
     </StrictMode>,
 );
