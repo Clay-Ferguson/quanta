@@ -59,23 +59,4 @@ app.listen(HTTP_PORT, () => {
 // Initialize WebRTCSigServer signaling server
 WebRTCSigServer.getInst(HOST, PORT);
 
-// todo-0: put this in a singleton
-// Setup logging
-// const logDir = path.join(__dirname, 'logs');
-// if (!fs.existsSync(logDir)) {
-//     fs.mkdirSync(logDir, { recursive: true });
-// }
-// const logFile = path.join(logDir, `server-${new Date().toISOString().split('T')[0]}.log`);
-
-// // Logger function
-// function log(message: any, level = 'INFO') {
-//     const timestamp = new Date().toISOString();
-//     const logMessage = `[${timestamp}] [${level}] ${message}`;
-
-//     // Log to console
-//     console.log(logMessage);
-
-//     // Log to file
-//     fs.appendFileSync(logFile, logMessage + '\n');
-// }
 

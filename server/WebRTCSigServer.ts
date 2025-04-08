@@ -1,10 +1,15 @@
 import {WebSocketServer} from 'ws';
+import Logger from './Logger.js';
+
+const logger = Logger.getInst();
+const log = logger.logInfo;
+const logError = logger.logError;
 
 class WebRTCSigServer {
     private static inst: WebRTCSigServer | null = null;
 
     constructor() {
-        console.log('WebRTCSigServer singleton created');
+        log('WebRTCSigServer singleton created');
     }
 
     static getInst(host: string, port: string) {
@@ -22,7 +27,7 @@ class WebRTCSigServer {
             port: parseInt(port)
         });
 
-        console.log(`Signaling Server running on ws://${host}:${port}`);
+        log(`Signaling Server running on ws://${host}:${port}`);
 
         // Track client connections with more information
         const clients = new Map(); // Map of WebSocket -> {room, name}
@@ -30,12 +35,12 @@ class WebRTCSigServer {
 
         wss.on('connection', (ws, req) => {
             const clientIp = req.socket.remoteAddress;
-            console.log(`New WebSocket client connected from ${clientIp}`);
+            log(`New WebSocket client connected from ${clientIp}`);
 
             ws.on('message', (message: any) => {
                 try {
                     const data = JSON.parse(message);
-                    console.log(`Received message: ${data.type} from ${clients.get(ws)?.name || 'unknown'}`);
+                    log(`Received message: ${data.type} from ${clients.get(ws)?.name || 'unknown'}`);
 
                     // Handle join message
                     if (data.type === 'join') {
@@ -51,7 +56,7 @@ class WebRTCSigServer {
                         }
                         rooms.get(room).add(name);
 
-                        console.log(`Client ${name} joined room: ${room}`);
+                        log(`Client ${name} joined room: ${room}`);
 
                         // Send the current participants list to the new client
                         const participants = Array.from(rooms.get(room));
@@ -94,12 +99,12 @@ class WebRTCSigServer {
                             clientInfo &&
                             clientInfo.room === room &&
                             clientInfo.name === data.target) {
-                                    console.log(`Sending ${data.type} from ${sender} to ${data.target} in room ${room}`);
+                                    log(`Sending ${data.type} from ${sender} to ${data.target} in room ${room}`);
                                     client.send(JSON.stringify(data));
                                 }
                             });
                         } else {
-                            console.log("Received signaling message but client not in a room", "WARN");
+                            log("Received signaling message but client not in a room");
                         }
                     }
                     // Handle broadcast messages to everyone in a room
@@ -113,7 +118,7 @@ class WebRTCSigServer {
                             c.readyState === WebSocket.OPEN &&
                             clientInfo &&
                             clientInfo.room === data.room) {
-                                    console.log(`Broadcasting message in room ${data.room} from ${client.name}`);
+                                    log(`Broadcasting message in room ${data.room} from ${client.name}`);
                                     c.send(JSON.stringify(data));
                                 }
                             });
@@ -121,7 +126,7 @@ class WebRTCSigServer {
                     }
 
                 } catch (error) {
-                    console.error("Error processing WebSocket message", error);
+                    logError("Error processing WebSocket message", error);
                 }
             });
 
@@ -129,7 +134,7 @@ class WebRTCSigServer {
                 const client = clients.get(ws);
                 if (client) {
                     const { room, name } = client;
-                    console.log(`Client ${name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
+                    log(`Client ${name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
 
                     // Remove from room participants
                     if (rooms.has(room)) {
@@ -138,7 +143,7 @@ class WebRTCSigServer {
                         // If room is empty, remove it
                         if (rooms.get(room).size === 0) {
                             rooms.delete(room);
-                            console.log(`Room ${room} deleted as it's now empty`);
+                            log(`Room ${room} deleted as it's now empty`);
                         } else {
                             // Notify others about the participant leaving
                             wss.clients.forEach((c) => {
@@ -156,37 +161,37 @@ class WebRTCSigServer {
 
                     clients.delete(ws);
                 } else {
-                    console.log(`Unknown client disconnected (Code: ${code})`, "WARN");
+                    log(`Unknown client disconnected (Code: ${code})`);
                 }
             });
 
             ws.on('error', (error) => {
-                console.error("WebSocket client error", error);
+                logError("WebSocket client error", error);
 
                 // Try to get client info for better logging
                 const client = clients.get(ws);
                 if (client) {
-                    console.log(`Error for client ${client.name} in room ${client.room}`, "ERROR");
+                    logError(`Error for client ${client.name} in room ${client.room}`);
                 }
             });
         });
 
         // Add error handler to WebSocket server
         wss.on('error', (error) => {
-            console.error("WebSocket server error", error);
+            logError("WebSocket server error", error);
         });
 
         // Global error handler for uncaught exceptions
         process.on('uncaughtException', (error) => {
-            console.error("UNCAUGHT EXCEPTION - Server continuing to run:", error);
+            logError("UNCAUGHT EXCEPTION - Server continuing to run:", error);
         });
 
         // Global error handler for unhandled promise rejections
         process.on('unhandledRejection', (reason) => {
-            console.error("UNHANDLED PROMISE REJECTION:", reason);
+            logError("UNHANDLED PROMISE REJECTION:", reason);
         });
 
-        console.log("QuantaChatServer initialization complete");
+        log("QuantaChatServer initialization complete");
     }
 }
 
