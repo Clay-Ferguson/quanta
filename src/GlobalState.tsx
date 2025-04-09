@@ -26,6 +26,7 @@ const initialState: GlobalState = {
     userName: '', 
     messages: [], 
     participants: new Set<string>(),
+    contacts: []
 };
 
 type GlobalAction = { type: string, payload: any};

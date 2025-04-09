@@ -43,6 +43,12 @@ class AppService implements AppServiceIntf  {
                 keyPair
             }});
         }
+
+        // Load the contacts from IndexedDB
+        const contacts = await this.storage?.getItem('contacts');
+        if (contacts) {
+            this.gd({ type: 'setContacts', payload: { contacts }});
+        }
     }
 
     setGlobals = (dispatch: any, state: any) => {
@@ -98,6 +104,14 @@ class AppService implements AppServiceIntf  {
             connected: true  
         }});
         this.scrollToBottom();
+    }
+
+    _setContacts = (contacts: any) => {
+        // Save into global state
+        this.gd({ type: 'setContacts', payload: { contacts }});
+
+        // Save to IndexedDB
+        this.storage?.setItem('contacts', contacts);
     }
 
     _disconnect = () => {

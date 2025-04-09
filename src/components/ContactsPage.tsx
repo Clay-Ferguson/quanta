@@ -1,8 +1,6 @@
-// import React, { useState } from 'react';
+import React from 'react';
 import { useGlobalState, useGlobalDispatch } from '../GlobalState';
-// import AppService from '../AppService';
-
-// const app = AppService.getInst(); 
+import ContactsList from './ContactsList';
 
 const ContactsPage: React.FC = () => {
     const gs = useGlobalState();
@@ -32,17 +30,10 @@ const ContactsPage: React.FC = () => {
             </header>
             <div id="contactsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="contactsList" className="space-y-3">
-                    {/* Note to Claude AI: Put Contacts List Here, each one having ability to go
-                     into "Edit Mode" where the name, alias, and publicKey turns into editable text fields right inline in the list.
-                     
-                     Contacts should be displayed alphabetically by 'name' */}
+                    <ContactsList />
                 </div>
                 <div className="space-y-3 mt-4">
                     <div className="flex space-x-4">
-                        {/* Note to Claude AI: Make 'Add Contact' create a new empty contact in the list which goes into edit mode */}
-                        <button className="btn-primary">
-                        Add Contact
-                        </button>
                         <button className="btn-primary" onClick={handleDone}>Done</button>
                     </div>
                 </div>
