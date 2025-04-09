@@ -2,7 +2,7 @@ import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import Utils from './Util.js';
-import AppServiceIntf from './AppServiceIntf.ts';
+import {AppServiceIntf, ChatMessage} from './AppServiceIntf.ts';
 const util = Utils.getInst();
 
 import Crypto from './Crypto.ts';  
@@ -51,6 +51,13 @@ class AppService implements AppServiceIntf  {
     }
 
     _createIdentity = async () => {
+        // if they already have a keyPair, ask if they want to create a new one
+        if (this.gs && this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {
+            if (!confirm("Create new Identity Keys?")) {
+                return;
+            }
+        }
+
         const keyPair: KeyPairHex= crypto.generateKeypair();
         this.gd({ type: 'creatIdentity', payload: { 
             keyPair
@@ -258,10 +265,10 @@ class AppService implements AppServiceIntf  {
         );
     }
 
-    createMessage(content: string, sender: string, attachments = []) {
+    createMessage(content: string, sender: string, attachments = []): ChatMessage {
         console.log("Creating message from sender: " + sender);
         const msg = {
-            timestamp: new Date().toISOString(),
+            timestamp: new Date().getTime(),
             sender,
             content,
             attachments

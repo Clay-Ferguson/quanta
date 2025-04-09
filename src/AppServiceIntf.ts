@@ -1,4 +1,4 @@
-interface AppServiceIntf {
+export interface AppServiceIntf {
     /**
      * Handle RTC state changes
      */
@@ -11,5 +11,19 @@ interface AppServiceIntf {
     _persistMessage(msg: any): Promise<void>;
 }
 
-// todo-0: this is wrong. Just use `export interface` above and remove the `export default` below
-export default AppServiceIntf;
+export type MessageAttachment = {
+    name: string;
+    type: string;
+    size: number;
+    data: string;
+}
+
+export type ChatMessage = {
+    sender: string;
+    content: string;
+    timestamp: number;
+    attachments?: MessageAttachment[];
+    sigVersion?: string;
+    signature?: string;
+}
+

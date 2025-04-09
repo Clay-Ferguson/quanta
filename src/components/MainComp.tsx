@@ -1,22 +1,9 @@
 import React from 'react';
 import AttachmentComp from './AttachmentComp';
-
-interface MessageAttachment {
-  name: string;
-  type: string;
-  size: number;
-  data: string;
-}
-
-interface Message {
-  sender: string;
-  timestamp: number;
-  content: string;
-  attachments?: MessageAttachment[];
-}
+import { ChatMessage } from '../AppServiceIntf';
 
 interface MainCompProps {
-  messages: Message[];
+  messages: ChatMessage[];
   currentUserName: string;
   toggleFullSize: (src: string, name: string) => void;
 }
