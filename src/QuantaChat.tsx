@@ -69,6 +69,8 @@ function QuantaChat() {
         }
     };
 
+    // todo-0: passing down all these functions is bad. Probably other stuff as well
+    // doesn't need to be passed down
     const settingsPage = () => {
         gs.page = 'SettingsPage'; 
         gd({ type: 'setPage', payload: gs });
@@ -76,6 +78,11 @@ function QuantaChat() {
 
     const contactsPage = () => {
         gs.page = 'ContactsPage'; 
+        gd({ type: 'setPage', payload: gs });
+    };
+
+    const userGuidePage = () => {
+        gs.page = 'UserGuidePage'; 
         gd({ type: 'setPage', payload: gs });
     };
     
@@ -197,6 +204,7 @@ function QuantaChat() {
                 clear={clear}
                 settingsPage={settingsPage}
                 contactsPage={contactsPage}
+                userGuidePage={userGuidePage}
                 gsUserName={gs.userName}
                 gsRoomName={gs.roomName}
             />

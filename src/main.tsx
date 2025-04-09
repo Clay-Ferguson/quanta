@@ -5,6 +5,7 @@ import './styles/main.scss';
 import QuantaChat from './QuantaChat.tsx';
 import SettingsPage from './components/SettingsPage.tsx';
 import ContactsPage from './components/ContactsPage.tsx';
+import UserGuidePage from './components/UserGuidePage.tsx'; 
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import AppService from './AppService';
 
@@ -34,6 +35,8 @@ function PageRouter() {
         return <SettingsPage />;
     case 'ContactsPage':
         return <ContactsPage />;
+    case 'UserGuidePage':
+        return <UserGuidePage />;
     case 'QuantaChat':
     default:
         return <QuantaChat />;
