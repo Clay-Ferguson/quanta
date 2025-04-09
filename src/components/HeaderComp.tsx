@@ -12,6 +12,7 @@ interface HeaderCompProps {
   disconnect: () => void;
   clear: () => void;
   settingsPage:() => void;
+  contactsPage:() => void;
   gsUserName: string;
   gsRoomName: string;
 }
@@ -25,6 +26,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
     disconnect,
     clear,
     settingsPage,
+    contactsPage,
     gsUserName,
     gsRoomName
 }) => {
@@ -97,6 +99,12 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                         </button>
                     </>
                 )}
+                <button 
+                    onClick={contactsPage}
+                    className="btn-primary"
+                >
+              Contacts
+                </button>
                 <button 
                     onClick={settingsPage}
                     className="btn-primary"

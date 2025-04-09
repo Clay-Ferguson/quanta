@@ -21,7 +21,7 @@ const SettingsPage: React.FC = () => {
     return (
         <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
             <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
-                <div id="logoTextAndMembers" className="flex-1 flex items-center">
+                <div id="settingsLogo" className="flex-1 flex items-center">
                     <div className="mr-3">
                         <img 
                             src="/logo-100px-tr.jpg" 

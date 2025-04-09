@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from './CryptoIntf';
+import { Contact } from './AppServiceIntf';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -9,6 +10,10 @@ interface GlobalState {
     connected?: boolean;
     roomName: string; 
     userName: string;
+
+    contacts?: Array<Contact>; 
+
+    // todo-0: Here and probably many other places we haven't yet used the new ChatMessage type
     messages: Array<{ content: string; sender: string, timestamp: number, attachments: [] }>; 
     participants: Set<string>;
 }

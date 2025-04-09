@@ -28,3 +28,9 @@ export type ChatMessage = {
     publicKey?: string; // public key hex
 }
 
+export type Contact = {
+    name: string;
+    alias?: string;
+    publicKey: string;
+}
+

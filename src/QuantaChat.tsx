@@ -73,6 +73,11 @@ function QuantaChat() {
         gs.page = 'SettingsPage'; 
         gd({ type: 'setPage', payload: gs });
     };
+
+    const contactsPage = () => {
+        gs.page = 'ContactsPage'; 
+        gd({ type: 'setPage', payload: gs });
+    };
     
     const handleFileSelect = () => {
         if (fileInputRef.current) {
@@ -191,6 +196,7 @@ function QuantaChat() {
                 disconnect={disconnect}
                 clear={clear}
                 settingsPage={settingsPage}
+                contactsPage={contactsPage}
                 gsUserName={gs.userName}
                 gsRoomName={gs.roomName}
             />

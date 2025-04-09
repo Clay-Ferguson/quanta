@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
 import QuantaChat from './QuantaChat.tsx';
 import SettingsPage from './components/SettingsPage.tsx';
+import ContactsPage from './components/ContactsPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import AppService from './AppService';
 
@@ -31,6 +32,8 @@ function PageRouter() {
     switch (page) {
     case 'SettingsPage':
         return <SettingsPage />;
+    case 'ContactsPage':
+        return <ContactsPage />;
     case 'QuantaChat':
     default:
         return <QuantaChat />;
