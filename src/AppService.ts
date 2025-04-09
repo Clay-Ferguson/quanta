@@ -35,6 +35,14 @@ class AppService implements AppServiceIntf  {
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         this.rtc = await WebRTC.getInst(this.storage, this, RTC_HOST, RTC_PORT);
+
+        // Load the keyPair from IndexedDB
+        const keyPair: KeyPairHex = await this.storage?.getItem('keyPair');
+        if (keyPair) {
+            this.gd({ type: 'setIdentity', payload: { 
+                keyPair
+            }});
+        }
     }
 
     setGlobals = (dispatch: any, state: any) => {
@@ -47,6 +55,8 @@ class AppService implements AppServiceIntf  {
         this.gd({ type: 'creatIdentity', payload: { 
             keyPair
         }});
+        // Save the keyPair to IndexedDB
+        await this.storage?.setItem('keyPair', keyPair);
     }
 
     _rtcStateChange = () => {
