@@ -23,8 +23,8 @@ const ContactsPage: React.FC = () => {
                         />
                     </div>
                     <div className="overflow-hidden">
-                        <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
-                        <h2 className="font-semibold text-gray-300 truncate">Contacts</h2>
+                        <h2 className="font-semibold text-blue-400">Quanta Chat</h2>
+                        <h4 className="font-semibold text-gray-300 truncate">Contacts</h4>
                     </div>
                 </div>
             </header>

@@ -9,11 +9,12 @@
 * Basic chat room with a scrolling window of messages from all participants in the room.
 * Anyone can join any room using any name 
 * Messages can be simple text or text and file attachments
+* Markdown supported
 * File attachments that are images are displayed in the GUI
 * Attached images can be clicked on to get an enlarged view
 * All attached files are downloadable (making this app able to function as a rudamentary "File Sharing App")
 * Uses Crypto Keys and Digital Signatures to authenticate messages
-* Contact List Feature lets you can define what users (Public Keys you trust)
+* Contact List lets you can define what users (Public Keys you trust)
 * All local storage is kept in your browsers storage space, private to your browser, but there's a "Clear" button you can use to wipe out your entire copy of an entire chat room that you or anyone else created. (Note: This only clears your own personal copy of the chat room)
 * For ease of use you can create a shortcut like `http://chat.quanta.wiki/?user=bob&room=sports`, which has the username and room name embedded in the url and will automatically connect you to that room, when you visit the url.
 * Technical Note: The data for chat rooms is saved using the `IndexedDB` API feature in Web Browsers, so the amount of storage allowed will currently be determined by the limitations of that storage space.

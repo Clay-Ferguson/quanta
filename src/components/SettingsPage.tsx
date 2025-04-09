@@ -30,8 +30,8 @@ const SettingsPage: React.FC = () => {
                         />
                     </div>
                     <div className="overflow-hidden">
-                        <h1 className="text-xl font-semibold text-blue-400">Quanta Chat</h1>
-                        <h2 className="font-semibold text-gray-300 truncate">Settings</h2>
+                        <h2 className="font-semibold text-blue-400">Quanta Chat</h2>
+                        <h4 className="font-semibold text-gray-300 truncate">Settings</h4>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">

@@ -1,6 +1,7 @@
 import React from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceIntf';
+import Markdown from './MarkdownComp';
 
 interface MainCompProps {
   messages: ChatMessage[];
@@ -54,7 +55,7 @@ const MainComp: React.FC<MainCompProps> = ({
                             </div>
                             <div className="w-px bg-gray-600 self-stretch mx-2"></div>
                             <div className="flex-1 text-left text-gray-200">
-                                {msg.content}
+                                <Markdown markdownContent={msg.content} />
                             </div>
                         </div>
             
