@@ -39,19 +39,7 @@ class Crypto {
     exportKey(keyHex: any) {
         return keyHex; // In this case, it's already a hex string
     }
-  
-    // Function to import a private key from a hex string
-    importPrivateKey(privateKeyHex: any) {
-        try {
-            const privateKeyBytes = hexToBytes(privateKeyHex);
-            // You might want to add validation here to ensure it's a valid private key
-            return privateKeyBytes;
-        } catch (error) {
-            console.error("Invalid private key hex string:", error);
-            return null;
-        }
-    }
-  
+    
     // Function to import a public key from a hex string
     importPublicKey(publicKeyHex: any) {
         try {
@@ -65,29 +53,79 @@ class Crypto {
     }
 
     async signMessage(msg: ChatMessage, keyPair: KeyPairHex) {
-        const privateKeyBytes = this.importPrivateKey(keyPair.privateKey);
+        const privateKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
         if (!privateKeyBytes) {
             throw new Error("Invalid private key");
         }
         
-        // Create a canonical form of the message with deterministic ordering
-        const canonicalMsg = {
-            sender: msg.sender,
-            content: msg.content,
-            timestamp: msg.timestamp
-        };
-        
-        const canonicalString = this.getCanonicalJSON(canonicalMsg);
-        const canonicalBytes = new TextEncoder().encode(canonicalString);
-        const msgHash = sha256(canonicalBytes);
+        const msgHash: Uint8Array = this.getMessageHashBytes(msg);
 
         // Now the sign function will work because hmacSha256Sync is set
-        const signature = await secp.signAsync(msgHash, privateKeyBytes);
+        const signature: secp.SignatureWithRecovery = await secp.signAsync(msgHash, privateKeyBytes);
 
         // Convert the signature to compact format and then to hex
         msg.signature = signature.toCompactHex();
         msg.publicKey = keyPair.publicKey;
         console.log("Signature Hex:", msg.signature);
+
+        // Optionally, you can verify the signature here
+        // this.verifySignature(msg);
+    }
+
+    importPrivateKey(privateKeyHex: string): Uint8Array | null {
+        if (!privateKeyHex || privateKeyHex.length !== 64) {
+            console.log("Invalid private key hex string.");
+            return null;
+        }
+        try {
+            return hexToBytes(privateKeyHex);
+        } catch (error) {
+            console.error("Error importing private key:", error);
+            return null;
+        }
+    }
+
+    async verifySignature(msg: ChatMessage): Promise<boolean> {
+        if (!msg.signature || !msg.publicKey) {
+            console.warn("Message is missing signature or public key.");
+            return false;
+        }
+
+        const msgHash: Uint8Array = this.getMessageHashBytes(msg);
+        const publicKeyBytes: Uint8Array = hexToBytes(msg.publicKey);
+        const signatureBytes: Uint8Array = hexToBytes(msg.signature);
+
+        // The `@noble/secp256k1` library expects a Signature object, not just the raw bytes for verification.
+        // Since we used `toCompactHex()` during signing, we should use `Signature.fromCompact()` here.
+        let signature: secp.Signature;
+        try {
+            signature = secp.Signature.fromCompact(signatureBytes);
+        } catch (error) {
+            console.error("Error parsing signature:", error);
+            return false;
+        }
+
+        // 4. Verify the signature
+        try {
+            const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
+            console.log("Signature Verified:", isVerified);
+            return isVerified;
+        } catch (error) {
+            console.error("Error verifying signature:", error);
+            return false;
+        }
+    }
+
+    getMessageHashBytes(msg: ChatMessage): Uint8Array {
+        const canonicalMsg = {
+            sender: msg.sender,
+            content: msg.content,
+            timestamp: msg.timestamp
+        };
+        const canonicalString: string = this.getCanonicalJSON(canonicalMsg);
+        const canonicalBytes: Uint8Array = new TextEncoder().encode(canonicalString);
+        const msgHash: Uint8Array = sha256(canonicalBytes);
+        return msgHash;
     }
 
     // Helper function for deterministic JSON serialization

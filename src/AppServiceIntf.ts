@@ -8,7 +8,7 @@ export interface AppServiceIntf {
      * Persist a message to storage
      * @param msg The message to persist
      */
-    _persistMessage(msg: any): Promise<void>;
+    _persistMessage(msg: ChatMessage): Promise<void>;
 }
 
 export type MessageAttachment = {

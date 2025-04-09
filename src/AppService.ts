@@ -74,7 +74,6 @@ class AppService implements AppServiceIntf  {
         
         const participants = this.rtc.participants || new Set<string>();
         const connected = this.rtc.connected || false;
-        
         this.gd({ 
             type: 'updateRtcState', 
             payload: { 
@@ -89,7 +88,6 @@ class AppService implements AppServiceIntf  {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
-
         const messages = await this.loadRoomMessages(roomName);
         await this.rtc._connect(userName, roomName);
 
@@ -119,7 +117,6 @@ class AppService implements AppServiceIntf  {
                 console.log("Not connected, cannot clear messages.");
                 return;
             }
-
             this.gs.messages = []; 
             this.saveMessages(); 
             this.gd({ type: 'clearMessages', payload: this.gs });}
@@ -131,9 +128,8 @@ class AppService implements AppServiceIntf  {
             return;
         }
         if (message || selectedFiles.length > 0) {
-            const msg: any = this.createMessage(message, this.rtc.userName, selectedFiles);
+            const msg: ChatMessage = this.createMessage(message, this.rtc.userName, selectedFiles);
             
-            // this is failing (see note in method)
             if (this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {   
                 try {
                     await crypto.signMessage(msg, this.gs.keyPair);
@@ -141,7 +137,6 @@ class AppService implements AppServiceIntf  {
                     console.error('Error signing message:', error);
                 }
             }
-            
             this._persistMessage(msg);
             this.rtc._sendMessage(msg);
             this.gd({ type: 'send', payload: this.gs});
@@ -156,8 +151,13 @@ class AppService implements AppServiceIntf  {
             }}, 200);
     }
 
-    _persistMessage = async (msg: any) => {
+    _persistMessage = async (msg: ChatMessage) => {
         console.log("Persisting message: ", msg);
+
+        if (msg.signature) {
+            crypto.verifySignature(msg);
+        }
+
         if (this.messageExists(msg)) {
             return; // Message already exists, do not save again
         }
@@ -267,7 +267,7 @@ class AppService implements AppServiceIntf  {
         }
     }
 
-    messageExists(msg: any) {
+    messageExists(msg: ChatMessage) {
         return this.gs.messages.some((message: any) =>
             message.timestamp === msg.timestamp &&
             message.sender === msg.sender &&
@@ -277,7 +277,7 @@ class AppService implements AppServiceIntf  {
 
     createMessage(content: string, sender: string, attachments = []): ChatMessage {
         console.log("Creating message from sender: " + sender);
-        const msg = {
+        const msg: ChatMessage = {
             timestamp: new Date().getTime(),
             sender,
             content,

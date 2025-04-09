@@ -20,7 +20,7 @@ class WebRTC {
     participants = new Set<string>(); // Keep track of expected participants in the room
     connected: boolean = false; // WebSocket connection status
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null;
+    app: AppServiceIntf | null = null; // todo-0: rename this to svc
     host: string = "";
     port: string = "";
 
@@ -343,10 +343,7 @@ class WebRTC {
         this.connected = false;
         this.userName = "";
         this.roomId = "";
-        // Clear persisted data maybe? Or leave it for next login?
-        // this.storage?.removeItem('username');
-        // this.storage?.removeItem('room');
-
+        
         util.log('Disconnect process initiated.');
         this.app?._rtcStateChange(); // Notify app
     }
