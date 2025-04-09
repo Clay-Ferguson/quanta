@@ -116,7 +116,7 @@ function QuantaChat() {
             }
         } 
         // Send message without attachments
-        app._send(message.trim(), processedFiles);
+        await app._send(message.trim(), processedFiles);
         
         setMessage(''); 
         setSelectedFiles([]); 

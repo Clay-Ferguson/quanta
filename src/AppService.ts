@@ -125,13 +125,23 @@ class AppService implements AppServiceIntf  {
             this.gd({ type: 'clearMessages', payload: this.gs });}
     }
 
-    _send = (message: string, selectedFiles: any) => {
+    _send = async (message: string, selectedFiles: any) => {
         if (!this.rtc) {
             console.warn('RTC instance not available for sending message');
             return;
         }
         if (message || selectedFiles.length > 0) {
             const msg: any = this.createMessage(message, this.rtc.userName, selectedFiles);
+            
+            // this is failing (see note in method)
+            if (this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {   
+                try {
+                    await crypto.signMessage(msg, this.gs.keyPair);
+                } catch (error) {
+                    console.error('Error signing message:', error);
+                }
+            }
+            
             this._persistMessage(msg);
             this.rtc._sendMessage(msg);
             this.gd({ type: 'send', payload: this.gs});

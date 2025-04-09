@@ -24,6 +24,7 @@ export type ChatMessage = {
     timestamp: number;
     attachments?: MessageAttachment[];
     sigVersion?: string;
-    signature?: string;
+    signature?: string; // signature hex
+    publicKey?: string; // public key hex
 }
 

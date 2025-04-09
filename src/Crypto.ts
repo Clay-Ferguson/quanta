@@ -1,7 +1,10 @@
-import * as secp256k1 from '@noble/secp256k1';
+import * as secp from '@noble/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { sha256 } from '@noble/hashes/sha256';
 import { KeyPairHex } from './CryptoIntf';
+import { ChatMessage } from './AppServiceIntf';
 
+// See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
     private static inst: Crypto | null = null;
 
@@ -19,11 +22,11 @@ class Crypto {
     // Function to generate a new keypair
     generateKeypair(): KeyPairHex {
         // Generate a random private key (32 bytes)
-        const privateKeyBytes = secp256k1.utils.randomPrivateKey();
+        const privateKeyBytes = secp.utils.randomPrivateKey();
         const privateKeyHex = bytesToHex(privateKeyBytes);
   
         // Get the corresponding public key (compressed format, 33 bytes)
-        const publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes);
+        const publicKeyBytes = secp.getPublicKey(privateKeyBytes);
         const publicKeyHex = bytesToHex(publicKeyBytes);
   
         return {
@@ -60,38 +63,51 @@ class Crypto {
             return null;
         }
     }
-  
-    // Example Usage:
-    useExample() {
-        // Generate a new keypair
-        const newKeypair = this.generateKeypair();
 
-        console.log("Generated Keypair:");
-        console.log("Private Key (Hex):", newKeypair.privateKey);
-        console.log("Public Key (Hex):", newKeypair.publicKey);
-  
-        // Export the keys (already in hex)
-        const exportedPrivateKey = this.exportKey(newKeypair.privateKey);
-        const exportedPublicKey = this.exportKey(newKeypair.publicKey);
+    async signMessage(msg: ChatMessage, keyPair: KeyPairHex) {
+        const privateKeyBytes = this.importPrivateKey(keyPair.privateKey);
+        if (!privateKeyBytes) {
+            throw new Error("Invalid private key");
+        }
+        
+        // Create a canonical form of the message with deterministic ordering
+        const canonicalMsg = {
+            sender: msg.sender,
+            content: msg.content,
+            timestamp: msg.timestamp
+        };
+        
+        const canonicalString = this.getCanonicalJSON(canonicalMsg);
+        const canonicalBytes = new TextEncoder().encode(canonicalString);
+        const msgHash = sha256(canonicalBytes);
 
-        console.log("\nExported Keys:");
-        console.log("Exported Private Key (Hex):", exportedPrivateKey);
-        console.log("Exported Public Key (Hex):", exportedPublicKey);
-  
-        // Simulate importing the private key
-        const importedPrivateKeyBytes = this.importPrivateKey(exportedPrivateKey);
-        if (importedPrivateKeyBytes) {
-            console.log("\nImported Private Key (Bytes):", importedPrivateKeyBytes);
-            // You can then derive the public key from the imported private key if needed
-            const publicKeyFromImportedPrivate = secp256k1.getPublicKey(importedPrivateKeyBytes);
-            console.log("Public Key from Imported Private (Hex):", bytesToHex(publicKeyFromImportedPrivate));
+        // Now the sign function will work because hmacSha256Sync is set
+        const signature = await secp.signAsync(msgHash, privateKeyBytes);
+
+        // Convert the signature to compact format and then to hex
+        msg.signature = signature.toCompactHex();
+        msg.publicKey = keyPair.publicKey;
+        console.log("Signature Hex:", msg.signature);
+    }
+
+    // Helper function for deterministic JSON serialization
+    getCanonicalJSON(obj: any): string {
+        if (typeof obj !== 'object' || obj === null) {
+            return JSON.stringify(obj);
         }
-  
-        // Simulate importing the public key
-        const importedPublicKeyBytes = this.importPublicKey(exportedPublicKey);
-        if (importedPublicKeyBytes) {
-            console.log("\nImported Public Key (Bytes):", importedPublicKeyBytes);
+        
+        if (Array.isArray(obj)) {
+            return '[' + obj.map(item => this.getCanonicalJSON(item)).join(',') + ']';
         }
+        
+        // Sort object keys alphabetically
+        const sortedKeys = Object.keys(obj).sort();
+        const parts = sortedKeys.map(key => {
+            const value = obj[key];
+            return JSON.stringify(key) + ':' + this.getCanonicalJSON(value);
+        });
+        
+        return '{' + parts.join(',') + '}';
     }
 }
 
