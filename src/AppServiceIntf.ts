@@ -26,6 +26,8 @@ export type ChatMessage = {
     sigVersion?: string;
     signature?: string; // signature hex
     publicKey?: string; // public key hex
+    sigOk?: boolean; // signature valid, regardless of presence in our Contact List
+    trusted?: boolean; // trusted contact (in our Contact List, at time of receipt)
 }
 
 export type Contact = {

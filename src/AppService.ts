@@ -168,12 +168,15 @@ class AppService implements AppServiceIntf  {
     _persistMessage = async (msg: ChatMessage) => {
         console.log("Persisting message: ", msg);
 
-        if (msg.signature) {
-            crypto.verifySignature(msg);
-        }
-
         if (this.messageExists(msg)) {
             return; // Message already exists, do not save again
+        }
+
+        if (msg.signature) {
+            msg.sigOk = await crypto.verifySignature(msg);
+            if (msg.sigOk) {
+                msg.trusted = this.existsInContacts(msg);
+            }
         }
 
         this.gs.messages.push(msg);
@@ -185,6 +188,13 @@ class AppService implements AppServiceIntf  {
 
         this.saveMessages();
         this.scrollToBottom();
+    }
+
+    existsInContacts(msg: ChatMessage) {
+        if (!this.gs || !this.gs.contacts) {
+            return false;
+        }
+        return this.gs.contacts.some((contact: any) => contact.publicKey === msg.publicKey);
     }
 
     async pruneDB(msg: any) {
