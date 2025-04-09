@@ -105,7 +105,6 @@ class Crypto {
             return false;
         }
 
-        // 4. Verify the signature
         try {
             const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
             console.log("Signature Verified:", isVerified);

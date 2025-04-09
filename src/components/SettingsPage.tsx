@@ -39,7 +39,7 @@ const SettingsPage: React.FC = () => {
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div className="space-y-6 max-w-2xl mx-auto">
-                    <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2">Your Cryptographic Keys</h3>
+                    <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2">Your Identity Keys</h3>
                     
                     {/* Public Key Section */}
                     <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
