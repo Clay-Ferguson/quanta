@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useReducer } from 'react';
+import { KeyPairHex } from './CryptoIntf';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 interface GlobalState {
+    keyPair: KeyPairHex;
     page: string,
     connected?: boolean;
     roomName: string; 
@@ -12,6 +14,7 @@ interface GlobalState {
 }
 
 const initialState: GlobalState = {
+    keyPair: { privateKey: '', publicKey: '' },
     page: 'QuantaChat',
     connected: false, 
     roomName: '',

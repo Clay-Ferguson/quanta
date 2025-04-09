@@ -5,6 +5,10 @@ import Utils from './Util.js';
 import AppServiceIntf from './AppServiceIntf.ts';
 const util = Utils.getInst();
 
+import Crypto from './Crypto.ts';  
+import { KeyPairHex } from './CryptoIntf.ts';
+const crypto = Crypto.getInst();
+
 // Vars are injected diretly into HTML by server
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
@@ -36,6 +40,13 @@ class AppService implements AppServiceIntf  {
     setGlobals = (dispatch: any, state: any) => {
         this.gd = dispatch;
         this.gs = state;
+    }
+
+    _createIdentity = async () => {
+        const keyPair: KeyPairHex= crypto.generateKeypair();
+        this.gd({ type: 'creatIdentity', payload: { 
+            keyPair
+        }});
     }
 
     _rtcStateChange = () => {

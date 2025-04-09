@@ -1,5 +1,8 @@
 import React from 'react';
 import { useGlobalState, useGlobalDispatch } from '../GlobalState';
+import AppService from '../AppService';
+
+const app = AppService.getInst(); 
 
 const SettingsPage: React.FC = () => {
     const gs = useGlobalState();
@@ -34,7 +37,10 @@ const SettingsPage: React.FC = () => {
                     <div>
                     We'll have some settings here soon!
                     </div>
-                    <button className="btn-primary" onClick={handleDone}>Done</button>
+                    <div className="flex space-x-4">
+                        <button className="btn-primary" onClick={app._createIdentity}>Create Identity</button>
+                        <button className="btn-primary" onClick={handleDone}>Done</button>
+                    </div>
                 </div>
             </div>
         </div>
