@@ -2,7 +2,7 @@ import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import Utils from './Util.js';
-import {AppServiceIntf, ChatMessage} from './AppServiceIntf.ts';
+import {AppServiceIntf, ChatMessage, MessageAttachment} from './AppServiceIntf.ts';
 const util = Utils.getInst();
 
 import Crypto from './Crypto.ts';  
@@ -60,6 +60,11 @@ class AppService implements AppServiceIntf  {
             this.gd({ type: `restoreVal-${val}`, payload: { [key]: val }});
             // console.log("Restored value: " + key + " = " + val);
         }
+    }
+
+    setFullSizeImage = (att: MessageAttachment | null) => {
+        this.gs.fullSizeImage = att ? {src: att.data, name: att.name} : null;
+        this.gd({ type: 'setFullSizeImage', payload: this.gs});
     }
 
     goToPage = (page: string) => {

@@ -1,22 +1,17 @@
 import React from 'react';
 import Util from '../Util';
-
-interface MessageAttachment {
-  name: string;
-  type: string;
-  size: number;
-  data: string;
-}
+import AppService from '../AppService';
+import { MessageAttachment } from '../AppServiceIntf';
 
 interface AttachmentCompProps {
   attachment: MessageAttachment;
-  toggleFullSize: (src: string, name: string) => void;
   index?: number;
 }
 
+const app = AppService.getInst();
+
 const AttachmentComp: React.FC<AttachmentCompProps> = ({ 
-    attachment: att, 
-    toggleFullSize, 
+    attachment: att,
     index = 0 
 }) => {
     const util = Util.getInst();
@@ -40,7 +35,7 @@ const AttachmentComp: React.FC<AttachmentCompProps> = ({
                             src={att.data}
                             alt={att.name}
                             className="max-w-full rounded cursor-pointer max-h-40 object-contain"
-                            onClick={() => toggleFullSize(att.data, att.name)}
+                            onClick={() => app.setFullSizeImage(att)}
                             title="Click to view full size"
                         />
                         <button 

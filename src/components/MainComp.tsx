@@ -4,13 +4,7 @@ import { ChatMessage } from '../AppServiceIntf';
 import Markdown from './MarkdownComp';
 import { useGlobalState } from '../GlobalState';
 
-interface MainCompProps {
-  toggleFullSize: (src: string, name: string) => void;
-}
-
-const MainComp: React.FC<MainCompProps> = ({
-    toggleFullSize
-}) => {
+const MainComp: React.FC = () => {
     const gs = useGlobalState();
 
     const formatMessageTime = (msg: ChatMessage) => {
@@ -65,7 +59,6 @@ const MainComp: React.FC<MainCompProps> = ({
                                         <AttachmentComp 
                                             key={idx}
                                             attachment={att} 
-                                            toggleFullSize={toggleFullSize} 
                                             index={idx} 
                                         />
                                     ))}

@@ -16,6 +16,7 @@ interface GlobalState {
     // todo-0: Here and probably many other places we haven't yet used the new ChatMessage type
     messages: Array<ChatMessage>; 
     participants: Set<string>;
+    fullSizeImage: {src: string, name: string} | null;
 }
 
 const initialState: GlobalState = {
@@ -26,7 +27,8 @@ const initialState: GlobalState = {
     userName: '', 
     messages: [], 
     participants: new Set<string>(),
-    contacts: []
+    contacts: [],
+    fullSizeImage: null
 };
 
 type GlobalAction = { type: string, payload: any};
