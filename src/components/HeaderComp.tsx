@@ -33,7 +33,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
     gsRoomName
 }) => {
     return (
-        <header className="w-full bg-gray-800 text-gray-100 p-4 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
+        <header className="w-full bg-gray-800 text-gray-100 px-4 py-0 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
             <div id="logoTextAndMembers" className="flex-1 flex items-center">
                 <div className="mr-3">
                     <img 
