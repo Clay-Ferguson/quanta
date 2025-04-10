@@ -1,12 +1,15 @@
 import { useGlobalState, useGlobalDispatch } from '../GlobalState';
-
+import { useEffect, useState } from 'react';
 import Markdown from "./MarkdownComp";
 
-// const app = AppService.getInst(); 
+// Cache for the user guide content
+let cachedUserGuide: string | null = null;
 
 const UserGuidePage: React.FC = () => {
     const gs = useGlobalState();
     const gd = useGlobalDispatch();
+    const [guideContent, setGuideContent] = useState<string | null>(cachedUserGuide);
+    const [isLoading, setIsLoading] = useState<boolean>(cachedUserGuide === null);
 
     // todo-0: we need a global (on app object?) method to set the page, which just takes the arg string of page name.
     // todo-0: also this back button needs to be somehow at the top of all pages that aren't the main page.
@@ -14,6 +17,39 @@ const UserGuidePage: React.FC = () => {
         gs.page = 'QuantaChat'; 
         gd({ type: 'setPage', payload: gs });
     };
+
+    useEffect(() => {
+        // If we already have cached content, no need to fetch
+        if (cachedUserGuide !== null) {
+            return;
+        }
+
+        const fetchUserGuide = async () => {
+            setIsLoading(true);
+            try {
+                // Fetch the user guide markdown file from the server
+                const response = await fetch('/user-guide.md');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load user guide: ${response.status}`);
+                }
+                
+                const content = await response.text();
+                
+                // Update the cache and state
+                cachedUserGuide = content;
+                setGuideContent(content);
+            } catch (error) {
+                console.error('Error loading user guide:', error);
+                // Set a fallback message in case of error
+                setGuideContent('## Error\n\nSorry, we encountered an error loading the user guide. Please try again later.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUserGuide();
+    }, []);
 
     return (
         <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
@@ -37,36 +73,14 @@ const UserGuidePage: React.FC = () => {
             </header>
             <div id="userGuideContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
                 <div className="max-w-2xl w-full">
-                    <Markdown markdownContent={`
-## Joining a Chat Room
-
-To join a chat room, simply enter the room name in the input field (and currently you need a username as well)
-and click the "Connect" button. You will be taken to the chat room where you can start
-chatting with other users. Rooms are created on demand, and no one "owns" any room. If you want a private room for you and your friends, 
-just create a room with a unique name.
-
-## Sending Messages
-
-To send a message, simply type your message in the input field and press "Send" button. Your message will go out in realtime to all other
-users who are in the same room. You can also use markdown syntax to format your messages.
-
-## Leaving a Room
-
-To leave a room, simply click the "Disconnect" button. You will be taken back to the main screen where you can join another room or create a new one.
-
-## Enable Signatures
-
-You can enable message signatures by clicking the "Settings" button. This will let you create a cryptographic signature for your messages, which will be
-verified by other apps automatically. This is a great way to ensure that your messages are authentic and have not been tampered with, and that 
-messages really come from you. Similar to other decentralized or Peer-to-Peer apps, your identity is a public key, and your messages are signed with your private key.
-
-## Configure Contacts
-
-If you want to verify that messages you recieve are from a specific person, you can add them to your contacts list. This will allow you to set their public key,
- and verify that messages you receive are from them. You can also add a nickname for them, so you can easily identify them in the chat room. Any time a message
- is display the authenticity is always checked via cryptographic signature, and if the sender is not in your contacts list, you will see a warning icon next to their name,
- or else you will see a green checkmark.
-                    `}/>
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-64">
+                            <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="mt-4 text-blue-300">Loading user guide...</p>
+                        </div>
+                    ) : (
+                        <Markdown markdownContent={guideContent || ''} />
+                    )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
                 </div>
             </div>
