@@ -130,11 +130,10 @@ const SettingsPage: React.FC = () => {
                                 Warning: Keep your private key secret. Never share it with anyone.
                             </p>
                         </div>
-                    </div>
-
-                    <div className="space-y-3 mt-4">
-                        <div className="flex space-x-4">
-                            <button className="btn-primary" onClick={app._createIdentity}>Create New Identity</button>
+                        <div className="space-y-3 mt-4">
+                            <div className="flex space-x-4">
+                                <button className="btn-primary" onClick={app._createIdentity}>Create New Keys</button>
+                            </div>
                         </div>
                     </div>
                 </div>

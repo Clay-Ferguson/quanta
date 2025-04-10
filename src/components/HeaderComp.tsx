@@ -4,18 +4,6 @@ import { useGlobalState } from '../GlobalState';
 
 const app = AppService.getInst(); 
 
-// DO NOT DELETE (keep for future refeence)
-//   interface HeaderCompProps {
-//     participants: string | null;
-//     clear: () => void;
-//   }  
-//   const HeaderComp: React.FC<HeaderCompProps> = ({
-//       participants,
-//       clear
-//   }) => {
-//     // rest of the component code
-//   }
-
 const HeaderComp: React.FC = () => {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
@@ -56,60 +44,62 @@ const HeaderComp: React.FC = () => {
                 </div>
             </div>
             <div className="flex items-center space-x-4">
-                {!gs.connected ? (
-                    <>
-                        <div className="flex items-center">
-                            <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
-                            <input 
-                                id="roomName"
-                                type="text" 
-                                value={roomName} 
-                                onChange={(e) => setRoomName(e.target.value)}
-                                className="input-field" 
-                            />
-                        </div>
-                        <button 
-                            disabled={!gs.userName || !roomName}
-                            onClick={() => app._connect(null, roomName)}
-                            className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-              Join
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <div className="flex items-center bg-gray-700 rounded px-3 py-1 border border-gray-600">
-                            <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
-                            <div className="flex flex-col">
-                                <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
-                                <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gs.roomName}</span></span>
+                <div className="border border-gray-600 rounded px-3 py-1 bg-gray-700/50 flex items-center space-x-3">
+                    {!gs.connected ? (
+                        <>
+                            <div className="flex items-center">
+                                <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
+                                <input 
+                                    id="roomName"
+                                    type="text" 
+                                    value={roomName} 
+                                    onChange={(e) => setRoomName(e.target.value)}
+                                    className="input-field" 
+                                />
                             </div>
-                        </div>
-                        <button 
-                            onClick={app._disconnect}
-                            className="btn-danger"
-                        >
-              Leave
-                        </button>
-                        <button 
-                            onClick={app._clearMessages}
-                            className="btn-warning"
-                        >
-              Clear
-                        </button>
-                    </>
-                )}
+                            <button 
+                                disabled={!gs.userName || !roomName}
+                                onClick={() => app._connect(null, roomName)}
+                                className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Join
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center">
+                                <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                    <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gs.roomName}</span></span>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={app._disconnect}
+                                className="btn-danger"
+                            >
+                                Leave
+                            </button>
+                            <button 
+                                onClick={app._clearMessages}
+                                className="btn-warning"
+                            >
+                                Clear
+                            </button>
+                        </>
+                    )}
+                </div>
                 <button 
                     onClick={() => app.goToPage('ContactsPage')}
-                    className="btn-primary"
+                    className="btn-secondary"
                 >
-              Contacts
+                    Contacts
                 </button>
                 <button 
                     onClick={() => app.goToPage('SettingsPage')}
-                    className="btn-primary"
+                    className="btn-secondary"
                 >
-              Settings
+                    Settings
                 </button>
                 <button
                     onClick={() => app.goToPage('UserGuidePage')}

@@ -94,7 +94,7 @@ const FooterComponent: React.FC = () => {
                 ref={textareaRef}
                 value={message}
                 onChange={messageChange}
-                placeholder="Type your message..." 
+                placeholder={gs.connected ? "Type your message..." : "Join a room to start chatting..."} 
                 className="flex-grow rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-800"
                 disabled={!gs.connected}
             />
