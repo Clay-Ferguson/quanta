@@ -3,9 +3,9 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
 import QuantaChat from './QuantaChat.tsx';
-import SettingsPage from './components/SettingsPage.tsx';
-import ContactsPage from './components/ContactsPage.tsx';
-import UserGuidePage from './components/UserGuidePage.tsx'; 
+import SettingsPage from './pages/SettingsPage.tsx';
+import ContactsPage from './pages/ContactsPage.tsx';
+import UserGuidePage from './pages/UserGuidePage.tsx'; 
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import AppService from './AppService';
 

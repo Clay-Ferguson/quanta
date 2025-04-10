@@ -1,6 +1,6 @@
 import { useGlobalState, useGlobalDispatch } from '../GlobalState';
 import { useEffect, useState } from 'react';
-import Markdown from "./MarkdownComp";
+import Markdown from "../components/MarkdownComp";
 
 // Cache for the user guide content
 let cachedUserGuide: string | null = null;

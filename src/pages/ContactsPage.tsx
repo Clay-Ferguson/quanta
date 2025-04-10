@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGlobalState, useGlobalDispatch } from '../GlobalState';
-import ContactsList from './ContactsList';
+import ContactsList from '../components/ContactsList';
 
 const ContactsPage: React.FC = () => {
     const gs = useGlobalState();
