@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
-import { useGlobalState, useGlobalDispatch } from '../GlobalState';
+import { useGlobalState } from '../GlobalState';
 import AppService from '../AppService';
 
 const app = AppService.getInst(); 
 
 const SettingsPage: React.FC = () => {
     const gs = useGlobalState();
-    const gd = useGlobalDispatch();
     const [showPrivateKey, setShowPrivateKey] = useState(false);
-    
-    const handleDone = () => {
-        gs.page = 'QuantaChat'; 
-        gd({ type: 'setPage', payload: gs });
-    };
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -30,11 +24,12 @@ const SettingsPage: React.FC = () => {
                         />
                     </div>
                     <div className="overflow-hidden">
-                        <h2 className="font-semibold text-blue-400">Quanta Chat</h2>
-                        <h4 className="font-semibold text-gray-300 truncate">Settings</h4>
+                        <h3 className="font-semibold text-blue-400">Quanta Chat</h3>
+                        <h5 className="font-semibold text-gray-300 truncate">Settings</h5>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
+                    <button className="btn-primary" onClick={app.goToMainPage}>Back</button>
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
@@ -97,7 +92,6 @@ const SettingsPage: React.FC = () => {
                     <div className="space-y-3 mt-4">
                         <div className="flex space-x-4">
                             <button className="btn-primary" onClick={app._createIdentity}>Create New Identity</button>
-                            <button className="btn-primary" onClick={handleDone}>Done</button>
                         </div>
                     </div>
                 </div>

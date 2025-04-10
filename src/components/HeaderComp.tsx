@@ -43,8 +43,8 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                     />
                 </div>
                 <div className="overflow-hidden">
-                    <h2 className="font-semibold text-blue-400">Quanta Chat</h2>
-                    <h4 className="font-semibold text-gray-300 truncate">{participants}</h4>
+                    <h3 className="font-semibold text-blue-400">Quanta Chat</h3>
+                    <h5 className="font-semibold text-gray-300 truncate">{participants}</h5>
                 </div>
             </div>
             <div className="flex items-center space-x-4">

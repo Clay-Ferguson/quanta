@@ -1,22 +1,15 @@
-import { useGlobalState, useGlobalDispatch } from '../GlobalState';
 import { useEffect, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
+import AppService from '../AppService';
+
+const app = AppService.getInst(); 
 
 // Cache for the user guide content
 let cachedUserGuide: string | null = null;
 
 const UserGuidePage: React.FC = () => {
-    const gs = useGlobalState();
-    const gd = useGlobalDispatch();
     const [guideContent, setGuideContent] = useState<string | null>(cachedUserGuide);
     const [isLoading, setIsLoading] = useState<boolean>(cachedUserGuide === null);
-
-    // todo-0: we need a global (on app object?) method to set the page, which just takes the arg string of page name.
-    // todo-0: also this back button needs to be somehow at the top of all pages that aren't the main page.
-    const back = () => {
-        gs.page = 'QuantaChat'; 
-        gd({ type: 'setPage', payload: gs });
-    };
 
     useEffect(() => {
         // If we already have cached content, no need to fetch
@@ -63,12 +56,12 @@ const UserGuidePage: React.FC = () => {
                         />
                     </div>
                     <div className="overflow-hidden">
-                        <h2 className="font-semibold text-blue-400">Quanta Chat</h2>
-                        <h4 className="font-semibold text-gray-300 truncate">User Guide</h4>
+                        <h3 className="font-semibold text-blue-400">Quanta Chat</h3>
+                        <h5 className="font-semibold text-gray-300 truncate">User Guide</h5>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <button className="btn-primary" onClick={back}>Back</button>
+                    <button className="btn-primary" onClick={app.goToMainPage}>Back</button>
                 </div>
             </header>
             <div id="userGuideContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
