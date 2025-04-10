@@ -19,6 +19,10 @@
 * For ease of use you can create a shortcut like `http://chat.quanta.wiki/?user=bob&room=sports`, which has the username and room name embedded in the url and will automatically connect you to that room, when you visit the url.
 * Technical Note: The data for chat rooms is saved using the `IndexedDB` API feature in Web Browsers, so the amount of storage allowed will currently be determined by the limitations of that storage space.
 
+# User Guide
+
+Learn how to use the app with the [User Guide](public/user-guide.md)
+
 ## To Run in IDE (VSCode)
 
 ```bash
@@ -63,9 +67,9 @@ The command shown above starts the `Quanta Chat Server` which is a very tiny web
 
 ## The Chat Client
 
-The chat client itself is very simple. It allows users to enter their username and a chat room name, and then click "Connect" button, to join that room. Rooms are automatically created once they're needed by someone. The room's history of chat message is kept only on the peers (clients) and is saved in browser local storage. None of the messages are ever seen by the server, because they're sent directly to the browsers of all chat room participants in a peer-to-peer way.
+The chat client itself is very simple. It allows users to enter their username and a chat room name, and then click "Join" button, to join that room. Rooms are automatically created once they're needed by someone. The room's history of chat message is kept only on the peers (clients) and is saved in browser local storage. None of the messages are ever seen by the server, because they're sent directly to the browsers of all chat room participants in a peer-to-peer way.
 
-If you refresh the browser you'll need to click "Connect" again to resume, but the chat room's history will still be there. Note, however that since this is a peer-to-peer system (with no central storage or database) any conversations that happen in a room while you're not online and in that room, will not be visible to you. There's currently no strategy for syncing messages `across` all users that have ever participated in a room. This could be a potential future feature.
+If you refresh the browser you'll need to click "Joiin" again to resume, but the chat room's history will still be there. Note, however that since this is a peer-to-peer system (with no central storage or database) any conversations that happen in a room while you're not online and in that room, will not be visible to you. There's currently no strategy for syncing messages `across` all users that have ever participated in a room. This could be a potential future feature.
 
 # Notes
 

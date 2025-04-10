@@ -75,7 +75,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                             onClick={connect}
                             className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-              Connect
+              Join
                         </button>
                     </>
                 ) : (
@@ -91,7 +91,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                             onClick={disconnect}
                             className="btn-danger"
                         >
-              Disconnect
+              Leave
                         </button>
                         <button 
                             onClick={clear}
