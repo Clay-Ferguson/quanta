@@ -177,6 +177,10 @@ class AppService implements AppServiceIntf  {
             return; // Message already exists, do not save again
         }
 
+        if (!msg.id) {
+            msg.id = util.generateShortId();
+        }
+
         if (msg.signature) {
             msg.sigOk = await crypto.verifySignature(msg);
             if (msg.sigOk) {
@@ -318,8 +322,9 @@ class AppService implements AppServiceIntf  {
     }
 
     createMessage(content: string, sender: string, attachments = []): ChatMessage {
-        console.log("Creating message from sender: " + sender);
+        // console.log("Creating message from sender: " + sender);
         const msg: ChatMessage = {
+            id: util.generateShortId(),
             timestamp: new Date().getTime(),
             sender,
             content,

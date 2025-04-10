@@ -25,7 +25,7 @@ class WebRTC {
     participants = new Set<string>();
     connected: boolean = false;
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null; // todo-0: rename this to svc
+    app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
 

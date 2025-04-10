@@ -20,7 +20,7 @@ class WebRTC {
     participants = new Set<string>(); // Keep track of expected participants in the room
     connected: boolean = false; // WebSocket connection status
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null; // todo-0: rename this to svc
+    app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
 

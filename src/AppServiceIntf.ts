@@ -19,6 +19,7 @@ export type MessageAttachment = {
 }
 
 export type ChatMessage = {
+    id: string;
     sender: string;
     content: string;
     timestamp: number;

@@ -16,6 +16,13 @@ class Util {
         console.log(message);
     }
 
+    // Generate a shorter random ID (about 8-10 characters)
+    generateShortId = () => {
+        const array = new Uint8Array(6); // 6 bytes = ~8 chars in base64
+        crypto.getRandomValues(array);
+        return btoa(String.fromCharCode(...array)).replace(/[+/=]/g, '');
+    };
+
     // Utility function to get URL parameters
     getUrlParameter(name: string) {
         const urlParams = new URLSearchParams(window.location.search);
