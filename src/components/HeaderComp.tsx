@@ -1,34 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import AppService from '../AppService';
+import { useGlobalState } from '../GlobalState';
 
 const app = AppService.getInst(); 
 
 interface HeaderCompProps {
   participants: string | null;
   isConnected: boolean | undefined;
-  formData: {
-    userName: string;
-    roomName: string;
-  };
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  connect: () => void;
   disconnect: () => void;
   clear: () => void;
-  gsUserName: string;
-  gsRoomName: string;
 }
 
 const HeaderComp: React.FC<HeaderCompProps> = ({
     participants,
     isConnected,
-    formData,
-    handleInputChange,
-    connect,
     disconnect,
-    clear,
-    gsUserName,
-    gsRoomName
+    clear
 }) => {
+    const gs = useGlobalState();
+    const [roomName, setRoomName] = useState('');
+    
+    useEffect(() => {
+        // Initialize the userName from global state when component mounts
+        if (gs.roomName) {
+            setRoomName(gs.roomName);
+        }
+    }, [gs.roomName]);
+    
     return (
         <header className="w-full bg-gray-800 text-gray-100 px-4 py-0 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
             <div id="logoTextAndMembers" className="flex-1 flex items-center">
@@ -48,28 +46,18 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                 {!isConnected ? (
                     <>
                         <div className="flex items-center">
-                            <label htmlFor="userName" className="mr-2 text-gray-300">Name:</label>
-                            <input 
-                                id="userName"
-                                type="text" 
-                                value={formData.userName} 
-                                onChange={handleInputChange}
-                                className="input-field" 
-                            />
-                        </div>
-                        <div className="flex items-center">
                             <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
                             <input 
                                 id="roomName"
                                 type="text" 
-                                value={formData.roomName} 
-                                onChange={handleInputChange}
+                                value={roomName} 
+                                onChange={(e) => setRoomName(e.target.value)}
                                 className="input-field" 
                             />
                         </div>
                         <button 
-                            disabled={!formData.userName || !formData.roomName}
-                            onClick={connect}
+                            disabled={!gs.userName || !roomName}
+                            onClick={() => app._connect(null, roomName)}
                             className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         >
               Join
@@ -80,8 +68,8 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                         <div className="flex items-center bg-gray-700 rounded px-3 py-1 border border-gray-600">
                             <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
                             <div className="flex flex-col">
-                                <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gsUserName}</span></span>
-                                <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gsRoomName}</span></span>
+                                <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{gs.roomName}</span></span>
                             </div>
                         </div>
                         <button 

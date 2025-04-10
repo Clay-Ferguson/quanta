@@ -44,10 +44,21 @@ class AppService implements AppServiceIntf  {
             }});
         }
 
-        // Load the contacts from IndexedDB
-        const contacts = await this.storage?.getItem('contacts');
-        if (contacts) {
-            this.gd({ type: 'setContacts', payload: { contacts }});
+        await this.restoreSavedValues();
+    }
+
+    restoreSavedValues = async () => {
+        // console.log("Restoring saved values from IndexedDB");
+        await this.restoreSavedValue('contacts');
+        await this.restoreSavedValue('userName');
+        await this.restoreSavedValue('roomName');
+    }
+
+    restoreSavedValue = async (key: string) => {
+        const val = await this.storage?.getItem(key);
+        if (val) {
+            this.gd({ type: `restoreVal-${val}`, payload: { [key]: val }});
+            // console.log("Restored value: " + key + " = " + val);
         }
     }
 
@@ -59,6 +70,25 @@ class AppService implements AppServiceIntf  {
     setGlobals = (dispatch: any, state: any) => {
         this.gd = dispatch;
         this.gs = state;
+    }
+
+    setUserName  = async (userName: string) => {
+        console.log("Setting userName: " + userName);
+        this.persistGlobalValue('userName', userName);
+    }
+
+    setRoomName = async (roomName: string) => {
+        console.log("Setting roomName: " + roomName);
+        this.persistGlobalValue('roomName', roomName);
+    }
+
+    persistGlobalValue = async (key: string, value: any) => {
+        // save to global state
+        this.gd({ type: `persistGlobalValue-${key}`, payload: { 
+            [key]: value
+        }});
+        // Save the keyPair to IndexedDB
+        await this.storage?.setItem(key, value);
     }
 
     _createIdentity = async () => {
@@ -94,13 +124,16 @@ class AppService implements AppServiceIntf  {
         });
     }
 
-    _connect = async (userName: string, roomName: string) => {
+    // userName is optional and will default to global state if not provided
+    _connect = async (userName: string | null, roomName: string) => {
+        userName = userName || this.gs.userName;
         if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
         const messages = await this.loadRoomMessages(roomName);
-        await this.rtc._connect(userName, roomName);
+        await this.rtc._connect(userName!, roomName);
+        await this.setRoomName(roomName);
 
         this.gd({ type: 'connect', payload: { 
             userName,
@@ -122,8 +155,6 @@ class AppService implements AppServiceIntf  {
     _disconnect = () => {
         this.rtc?._disconnect();
         this.gd({ type: 'disconnect', payload: { 
-            roomName: '', 
-            userName: '',
             messages: [], 
             participants: new Set<string>(), 
             connected: false, 

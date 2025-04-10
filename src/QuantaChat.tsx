@@ -9,8 +9,6 @@ import MainComp from './components/MainComp';
 const app = AppService.getInst(); 
 const util = Util.getInst(); 
 
-let urlAccepted: boolean = false;
-
 function QuantaChat() {
     const gs = useGlobalState();
 
@@ -37,23 +35,6 @@ function QuantaChat() {
     
     const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
-    };
-    
-    const [formData, setFormData] = useState({
-        userName: gs.userName || '',
-        roomName: gs.roomName || ''
-    });
-
-    const handleInputChange = (e: any) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [id]: value
-        }));
-    };
-
-    const connect = async () => {
-        app._connect(formData.userName, formData.roomName);
     };
 
     const disconnect = () => {
@@ -134,37 +115,6 @@ function QuantaChat() {
         participants = '';
     }
     
-    useEffect(() => {
-        if (urlAccepted) return;
-        urlAccepted = true; // Prevents multiple executions
-
-        const getUrlParameter = (name: string): string | null => {
-            const searchParams = new URLSearchParams(window.location.search);
-            return searchParams.get(name);
-        };
-        
-        const userNameParam = getUrlParameter('user');
-        const roomNameParam = getUrlParameter('room');
-        
-        // Update form data if URL parameters exist
-        if (userNameParam || roomNameParam) {
-            setFormData(prev => ({
-                userName: userNameParam || prev.userName,
-                roomName: roomNameParam || prev.roomName
-            }));
-        }
-        
-        // Auto-connect if both parameters are present
-        if (userNameParam && roomNameParam && !gs.connected) {
-            // Use a short timeout to ensure state is updated before connecting
-            const timer = setTimeout(() => {
-                app._connect(userNameParam, roomNameParam);
-            }, 250);
-            
-            return () => clearTimeout(timer);
-        }
-    }, []);  // Empty dependency array means this runs once on component mount
-
     return (
         <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
             {/* Hidden file input element */}
@@ -179,18 +129,12 @@ function QuantaChat() {
             <HeaderComp
                 participants={participants}
                 isConnected={gs.connected}
-                formData={formData}
-                handleInputChange={handleInputChange}
-                connect={connect}
                 disconnect={disconnect}
                 clear={clear}
-                gsUserName={gs.userName}
-                gsRoomName={gs.roomName}
             />
 
             <MainComp 
                 messages={gs.messages}
-                currentUserName={gs.userName}
                 toggleFullSize={toggleFullSize}
             />
 

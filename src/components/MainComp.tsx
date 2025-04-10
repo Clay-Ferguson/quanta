@@ -2,18 +2,18 @@ import React from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceIntf';
 import Markdown from './MarkdownComp';
+import { useGlobalState } from '../GlobalState';
 
 interface MainCompProps {
   messages: ChatMessage[];
-  currentUserName: string;
   toggleFullSize: (src: string, name: string) => void;
 }
 
 const MainComp: React.FC<MainCompProps> = ({
     messages,
-    currentUserName,
     toggleFullSize
 }) => {
+    const gs = useGlobalState();
 
     const formatMessageTime = (msg: ChatMessage) => {
         return new Date(msg.timestamp).toLocaleDateString('en-US', { 
@@ -30,7 +30,7 @@ const MainComp: React.FC<MainCompProps> = ({
                 {messages.map((msg, index) => (
                     <div 
                         key={index} 
-                        className={`${msg.sender === currentUserName ? 'bg-gray-700 border-l-4 border-blue-500' 
+                        className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
                             : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
                     >
                         <div className="flex">
