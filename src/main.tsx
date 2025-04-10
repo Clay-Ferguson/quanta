@@ -2,7 +2,7 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
-import QuantaChat from './QuantaChat.tsx';
+import QuantaChatPage from './pages/QuantaChatPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import UserGuidePage from './pages/UserGuidePage.tsx'; 
@@ -39,7 +39,7 @@ function PageRouter() {
         return <UserGuidePage />;
     case 'QuantaChat':
     default:
-        return <QuantaChat />;
+        return <QuantaChatPage />;
     }
 }
 
