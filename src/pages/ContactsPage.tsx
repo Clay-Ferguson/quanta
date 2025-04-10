@@ -1,5 +1,5 @@
 import React from 'react';
-import ContactsList from '../components/ContactsList';
+import ContactsListComp from '../components/ContactsListComp';
 import AppService from '../AppService';
 
 const app = AppService.getInst(); 
@@ -27,7 +27,7 @@ const ContactsPage: React.FC = () => {
             </header>
             <div id="contactsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="contactsList" className="space-y-3">
-                    <ContactsList />
+                    <ContactsListComp />
                 </div>
             </div>
         </div>

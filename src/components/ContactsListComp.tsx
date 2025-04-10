@@ -5,7 +5,7 @@ import AppService from '../AppService';
 
 const app = AppService.getInst(); 
 
-const ContactsList: React.FC = () => {
+const ContactsListComp: React.FC = () => {
     const { contacts = [] } = useGlobalState();
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
     const [editingContact, setEditingContact] = useState<string | null>(null);
@@ -259,4 +259,4 @@ const ContactEditRow: React.FC<{
     );
 };
 
-export default ContactsList;
+export default ContactsListComp;
