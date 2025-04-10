@@ -36,18 +36,6 @@ function QuantaChat() {
     const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
     };
-
-    // const disconnect = () => {
-    //     app._disconnect();
-    // };
-
-    // const clear = () => {
-    //     if (gs.connected) {
-    //         app._clearMessages();
-    //     } else {
-    //         console.log("Not connected, cannot clear messages.");
-    //     }
-    // };
     
     const handleFileSelect = () => {
         if (fileInputRef.current) {
@@ -114,9 +102,7 @@ function QuantaChat() {
             />
             
             <HeaderComp/>
-
             <MainComp 
-                messages={gs.messages}
                 toggleFullSize={toggleFullSize}
             />
 
@@ -127,7 +113,6 @@ function QuantaChat() {
                 selectedFiles={selectedFiles}
                 onFileSelect={handleFileSelect}
                 onSend={send}
-                isConnected={gs.connected}
             />
             
             {/* Full-size image viewer modal */}

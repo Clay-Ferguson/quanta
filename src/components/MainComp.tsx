@@ -5,12 +5,10 @@ import Markdown from './MarkdownComp';
 import { useGlobalState } from '../GlobalState';
 
 interface MainCompProps {
-  messages: ChatMessage[];
   toggleFullSize: (src: string, name: string) => void;
 }
 
 const MainComp: React.FC<MainCompProps> = ({
-    messages,
     toggleFullSize
 }) => {
     const gs = useGlobalState();
@@ -27,7 +25,7 @@ const MainComp: React.FC<MainCompProps> = ({
     return (
         <main id="chatLog" className="flex-grow overflow-y-auto p-4 bg-gray-900">
             <div className="space-y-3 max-w-full">
-                {messages.map((msg, index) => (
+                {gs.messages.map((msg, index) => (
                     <div 
                         key={index} 
                         className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
