@@ -16,7 +16,6 @@
 * Uses Crypto Keys and Digital Signatures to authenticate messages
 * Contact List lets you can define what users (Public Keys you trust)
 * All local storage is kept in your browsers storage space, private to your browser, but there's a "Clear" button you can use to wipe out your entire copy of an entire chat room that you or anyone else created. (Note: This only clears your own personal copy of the chat room)
-* For ease of use you can create a shortcut like `http://chat.quanta.wiki/?user=bob&room=sports`, which has the username and room name embedded in the url and will automatically connect you to that room, when you visit the url.
 * Technical Note: The data for chat rooms is saved using the `IndexedDB` API feature in Web Browsers, so the amount of storage allowed will currently be determined by the limitations of that storage space.
 
 # User Guide
