@@ -37,17 +37,17 @@ function QuantaChat() {
         setMessage(e.target.value);
     };
 
-    const disconnect = () => {
-        app._disconnect();
-    };
+    // const disconnect = () => {
+    //     app._disconnect();
+    // };
 
-    const clear = () => {
-        if (gs.connected) {
-            app._clearMessages();
-        } else {
-            console.log("Not connected, cannot clear messages.");
-        }
-    };
+    // const clear = () => {
+    //     if (gs.connected) {
+    //         app._clearMessages();
+    //     } else {
+    //         console.log("Not connected, cannot clear messages.");
+    //     }
+    // };
     
     const handleFileSelect = () => {
         if (fileInputRef.current) {
@@ -101,19 +101,6 @@ function QuantaChat() {
             fileInputRef.current.value = '';
         }
     }
-
-    let participants = null;
-    if (gs.connected) {
-        if (gs.participants.size === 0) {
-            participants = `No one else is in this room.`;
-        }
-        else {
-            participants = `Members: You, ${Array.from(gs.participants).sort().join(', ')}`
-        }
-    }
-    else {
-        participants = '';
-    }
     
     return (
         <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
@@ -126,12 +113,7 @@ function QuantaChat() {
                 onChange={handleFiles}
             />
             
-            <HeaderComp
-                participants={participants}
-                isConnected={gs.connected}
-                disconnect={disconnect}
-                clear={clear}
-            />
+            <HeaderComp/>
 
             <MainComp 
                 messages={gs.messages}

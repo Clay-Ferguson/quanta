@@ -4,19 +4,19 @@ import { useGlobalState } from '../GlobalState';
 
 const app = AppService.getInst(); 
 
-interface HeaderCompProps {
-  participants: string | null;
-  isConnected: boolean | undefined;
-  disconnect: () => void;
-  clear: () => void;
-}
+// DO NOT DELETE (keep for future refeence)
+//   interface HeaderCompProps {
+//     participants: string | null;
+//     clear: () => void;
+//   }  
+//   const HeaderComp: React.FC<HeaderCompProps> = ({
+//       participants,
+//       clear
+//   }) => {
+//     // rest of the component code
+//   }
 
-const HeaderComp: React.FC<HeaderCompProps> = ({
-    participants,
-    isConnected,
-    disconnect,
-    clear
-}) => {
+const HeaderComp: React.FC = () => {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
     
@@ -26,6 +26,19 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
             setRoomName(gs.roomName);
         }
     }, [gs.roomName]);
+
+    let participants = null;
+    if (gs.connected) {
+        if (gs.participants.size === 0) {
+            participants = `No one else is in this room.`;
+        }
+        else {
+            participants = `Members: You, ${Array.from(gs.participants).sort().join(', ')}`
+        }
+    }
+    else {
+        participants = '';
+    }
     
     return (
         <header className="w-full bg-gray-800 text-gray-100 px-4 py-0 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
@@ -43,7 +56,7 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                 </div>
             </div>
             <div className="flex items-center space-x-4">
-                {!isConnected ? (
+                {!gs.connected ? (
                     <>
                         <div className="flex items-center">
                             <label htmlFor="roomName" className="mr-2 text-gray-300">Room:</label>
@@ -73,13 +86,13 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                             </div>
                         </div>
                         <button 
-                            onClick={disconnect}
+                            onClick={app._disconnect}
                             className="btn-danger"
                         >
               Leave
                         </button>
                         <button 
-                            onClick={clear}
+                            onClick={app._clearMessages}
                             className="btn-warning"
                         >
               Clear
