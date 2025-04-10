@@ -10,10 +10,7 @@ interface GlobalState {
     connected?: boolean;
     roomName: string; 
     userName: string;
-
     contacts?: Array<Contact>; 
-
-    // todo-0: Here and probably many other places we haven't yet used the new ChatMessage type
     messages: Array<ChatMessage>; 
     participants: Set<string>;
     fullSizeImage: {src: string, name: string} | null;

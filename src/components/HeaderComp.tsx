@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import AppService from '../AppService';
 import { useGlobalState } from '../GlobalState';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+
 
 const app = AppService.getInst(); 
 
@@ -97,19 +100,18 @@ const HeaderComp: React.FC = () => {
                 </button>
                 <button 
                     onClick={() => app.goToPage('SettingsPage')}
-                    className="btn-secondary"
+                    className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
+                    title="Settings"
                 >
-                    Settings
+                    <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                 </button>
-                <button
+                <button 
                     onClick={() => app.goToPage('UserGuidePage')}
-                    className="p-2 ml-2 text-blue-300 hover:bg-blue-600/30 rounded-md"
+                    className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
                     title="Help"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </button> 
+                    <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
+                </button>
             </div>
         </header>
     );

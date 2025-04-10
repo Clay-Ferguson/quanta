@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
 import AppService from '../AppService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const app = AppService.getInst(); 
 
@@ -61,7 +63,13 @@ const UserGuidePage: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <button className="btn-primary" onClick={() => app.goToPage('QuantaChat')}>Back</button>
+                    <button 
+                        onClick={() => app.goToPage('QuantaChat')}
+                        className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
+                        title="Back"
+                    >
+                        <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5" />
+                    </button>
                 </div>
             </header>
             <div id="userGuideContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
