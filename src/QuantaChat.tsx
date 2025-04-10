@@ -1,4 +1,4 @@
-import { useGlobalState, useGlobalDispatch } from './GlobalState';
+import { useGlobalState } from './GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import AppService from './AppService';
 import Util from './Util';
@@ -13,7 +13,6 @@ let urlAccepted: boolean = false;
 
 function QuantaChat() {
     const gs = useGlobalState();
-    const gd = useGlobalDispatch();
 
     const [message, setMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -67,23 +66,6 @@ function QuantaChat() {
         } else {
             console.log("Not connected, cannot clear messages.");
         }
-    };
-
-    // todo-0: passing down all these functions is bad. Probably other stuff as well
-    // doesn't need to be passed down
-    const settingsPage = () => {
-        gs.page = 'SettingsPage'; 
-        gd({ type: 'setPage', payload: gs });
-    };
-
-    const contactsPage = () => {
-        gs.page = 'ContactsPage'; 
-        gd({ type: 'setPage', payload: gs });
-    };
-
-    const userGuidePage = () => {
-        gs.page = 'UserGuidePage'; 
-        gd({ type: 'setPage', payload: gs });
     };
     
     const handleFileSelect = () => {
@@ -202,9 +184,6 @@ function QuantaChat() {
                 connect={connect}
                 disconnect={disconnect}
                 clear={clear}
-                settingsPage={settingsPage}
-                contactsPage={contactsPage}
-                userGuidePage={userGuidePage}
                 gsUserName={gs.userName}
                 gsRoomName={gs.roomName}
             />

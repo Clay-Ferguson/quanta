@@ -51,8 +51,8 @@ class AppService implements AppServiceIntf  {
         }
     }
 
-    goToMainPage = () => {
-        this.gs.page = 'QuantaChat'; 
+    goToPage = (page: string) => {
+        this.gs.page = page; 
         this.gd({ type: 'setPage', payload: this.gs });
     }
 

@@ -1,4 +1,7 @@
 import React from 'react';
+import AppService from '../AppService';
+
+const app = AppService.getInst(); 
 
 interface HeaderCompProps {
   participants: string | null;
@@ -11,9 +14,6 @@ interface HeaderCompProps {
   connect: () => void;
   disconnect: () => void;
   clear: () => void;
-  settingsPage:() => void;
-  contactsPage:() => void;
-  userGuidePage:() => void;
   gsUserName: string;
   gsRoomName: string;
 }
@@ -26,9 +26,6 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
     connect,
     disconnect,
     clear,
-    settingsPage,
-    contactsPage,
-    userGuidePage,
     gsUserName,
     gsRoomName
 }) => {
@@ -102,19 +99,19 @@ const HeaderComp: React.FC<HeaderCompProps> = ({
                     </>
                 )}
                 <button 
-                    onClick={contactsPage}
+                    onClick={() => app.goToPage('ContactsPage')}
                     className="btn-primary"
                 >
               Contacts
                 </button>
                 <button 
-                    onClick={settingsPage}
+                    onClick={() => app.goToPage('SettingsPage')}
                     className="btn-primary"
                 >
               Settings
                 </button>
                 <button
-                    onClick={userGuidePage}
+                    onClick={() => app.goToPage('UserGuidePage')}
                     className="p-2 ml-2 text-blue-300 hover:bg-blue-600/30 rounded-md"
                     title="Help"
                 >

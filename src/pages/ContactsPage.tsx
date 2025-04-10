@@ -22,7 +22,7 @@ const ContactsPage: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <button className="btn-primary" onClick={app.goToMainPage}>Back</button>
+                    <button className="btn-primary" onClick={() => app.goToPage('QuantaChat')}>Back</button>
                 </div>
             </header>
             <div id="contactsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
