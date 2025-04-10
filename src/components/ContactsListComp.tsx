@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Contact } from '../AppServiceIntf';
 import { useGlobalState } from '../GlobalState';
 import AppService from '../AppService';   
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const app = AppService.getInst(); 
 
@@ -48,8 +50,9 @@ const ContactsListComp: React.FC = () => {
         setEditingContact(null);
     };
 
-    const handleDelete = (publicKey: string) => {
-        const updatedContacts = contacts.filter(contact => contact.publicKey !== publicKey);
+    const handleDelete = (contact: any) => {
+        if (!confirm(`Are you sure you want to delete contact '${contact.name}' ?`)) return;
+        const updatedContacts = contacts.filter(c => c.publicKey !== contact.publicKey);
         app._setContacts(updatedContacts);
     };
 
@@ -115,7 +118,11 @@ const ContactsListComp: React.FC = () => {
                                 contact={newContact}
                                 isNew={true}
                                 onSave={(contact) => {
-                                    if (contact.name && contact.publicKey) {
+                                    if (!contact.publicKey) {
+                                        alert('Public key is required');
+                                        return;
+                                    }
+                                    if (contact.name) {
                                         app._setContacts([...contacts, contact]);
                                     }
                                     setNewContact(null);
@@ -171,13 +178,13 @@ const ContactsListComp: React.FC = () => {
                                                 onClick={() => handleEdit(contact.publicKey)}
                                                 className="text-blue-400 hover:text-blue-300 mr-2"
                                             >
-                        Edit
+                                                <FontAwesomeIcon icon={faUserEdit} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(contact.publicKey)}
+                                                onClick={() => handleDelete(contact)}
                                                 className="text-red-400 hover:text-red-300"
                                             >
-                        Delete
+                                                <FontAwesomeIcon icon={faTrash} />
                                             </button>
                                         </td>
                                     </tr>

@@ -4,7 +4,6 @@ import AppService from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
-
 const app = AppService.getInst(); 
 
 const ContactsPage: React.FC = () => {
