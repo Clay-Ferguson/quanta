@@ -6,6 +6,19 @@ Quanta Chat is a P2P (Peer-to-Peer) messaging app that allows browsers to send m
 
 ![Romper Room](img/romper-room.png)
 
+# Features
+
+* Basic chat room with a scrolling window of messages from all participants in the room.
+* Anyone can join any room using any name 
+* Messages can be simple text or text and file attachments
+* Markdown supported
+* File attachments that are images are displayed in the GUI
+* Attached images can be clicked on to get an enlarged view
+* All attached files are downloadable (making this app able to function as a rudamentary "File Sharing App")
+* Uses Crypto Keys and Digital Signatures to authenticate messages
+* Contact List lets you can define what users (Public Keys you trust)
+* All local storage is kept in your browsers storage space, private to your browser, but there's a "Clear" button you can use to wipe out your entire copy of an entire chat room that you or anyone else created. (Note: This only clears your own personal copy of the chat room)
+
 ## Joining a Chat Room
 
 To join a chat room, simply enter the room name in the input field (and currently you need a username as well) and click the "Join" button. You will be taken to the chat room where you can start chatting with other users. Rooms are created on demand, and no one "owns" any room. If you want a private room for you and your friends, just create a room with a unique name.
