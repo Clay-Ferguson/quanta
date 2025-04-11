@@ -6,45 +6,55 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const app = AppService.getInst(); 
 
-// Cache for the user guide content
-let cachedUserGuide: string | null = null;
+// Cache for the documents content, using a Map to support multiple documents
+const documentCache: Map<string, string> = new Map();
 
-const UserGuidePage: React.FC = () => {
-    const [guideContent, setGuideContent] = useState<string | null>(cachedUserGuide);
-    const [isLoading, setIsLoading] = useState<boolean>(cachedUserGuide === null);
+interface DocViewerPageProps {
+    filename?: string;
+    title?: string;
+}
+
+const DocViewerPage: React.FC<DocViewerPageProps> = ({ 
+    filename = '/user-guide.md',
+    title = 'Document Viewer' 
+}) => {
+    const [docContent, setDocContent] = useState<string | null>(documentCache.get(filename) || null);
+    const [isLoading, setIsLoading] = useState<boolean>(!documentCache.has(filename));
 
     useEffect(() => {
-        // If we already have cached content, no need to fetch
-        if (cachedUserGuide !== null) {
+        // If we already have cached content for this file, no need to fetch
+        if (documentCache.has(filename)) {
+            setDocContent(documentCache.get(filename) || null);
+            setIsLoading(false);
             return;
         }
 
-        const fetchUserGuide = async () => {
+        const fetchDoc = async () => {
             setIsLoading(true);
             try {
-                // Fetch the user guide markdown file from the server
-                const response = await fetch('/user-guide.md');
+                // Fetch the markdown file from the server
+                const response = await fetch(filename);
                 
                 if (!response.ok) {
-                    throw new Error(`Failed to load user guide: ${response.status}`);
+                    throw new Error(`Failed to load document: ${response.status}`);
                 }
                 
                 const content = await response.text();
                 
                 // Update the cache and state
-                cachedUserGuide = content;
-                setGuideContent(content);
+                documentCache.set(filename, content);
+                setDocContent(content);
             } catch (error) {
-                console.error('Error loading user guide:', error);
+                console.error('Error loading doc:', error);
                 // Set a fallback message in case of error
-                setGuideContent('## Error\n\nSorry, we encountered an error loading the user guide. Please try again later.');
+                setDocContent(`## Error\n\nSorry, we encountered an error loading the document "${filename}". Please try again later.`);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchUserGuide();
-    }, []);
+        fetchDoc();
+    }, [filename]);
 
     return (
         <div className="h-screen flex flex-col w-screen min-w-full bg-gray-900 text-gray-200 border border-blue-400/30">
@@ -59,7 +69,7 @@ const UserGuidePage: React.FC = () => {
                     </div>
                     <div className="overflow-hidden">
                         <h3 className="font-semibold text-blue-400">Quanta Chat</h3>
-                        <h5 className="font-semibold text-gray-300 truncate">User Guide</h5>
+                        <h5 className="font-semibold text-gray-300 truncate">{title}</h5>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -72,15 +82,15 @@ const UserGuidePage: React.FC = () => {
                     </button>
                 </div>
             </header>
-            <div id="userGuideContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
+            <div id="docContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
                 <div className="max-w-2xl w-full">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-64">
                             <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="mt-4 text-blue-300">Loading user guide...</p>
+                            <p className="mt-4 text-blue-300">Loading document...</p>
                         </div>
                     ) : (
-                        <Markdown markdownContent={guideContent || ''} />
+                        <Markdown markdownContent={docContent || ''} />
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
                 </div>
@@ -89,4 +99,4 @@ const UserGuidePage: React.FC = () => {
     );
 };
 
-export default UserGuidePage;
+export default DocViewerPage;

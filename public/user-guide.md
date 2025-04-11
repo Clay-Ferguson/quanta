@@ -1,3 +1,9 @@
+# Quanta Chat User Guide
+
+## About Quanta Chat
+
+Quanta Chat is a P2P (Peer-to-Peer) messaging app that allows browsers to send messages directly to each other without going thru a master server. This means there's no central storage for the chat messages, and file attachments, becasue all that information is kept in browser local storage instead. There's essentially no setup or configuration required, you can just enter a room name, and start chatting with people in that room. Rooms are created as needed, and no one "owns" or controls any rooms.
+
 ## Joining a Chat Room
 
 To join a chat room, simply enter the room name in the input field (and currently you need a username as well) and click the "Join" button. You will be taken to the chat room where you can start chatting with other users. Rooms are created on demand, and no one "owns" any room. If you want a private room for you and your friends, just create a room with a unique name.
