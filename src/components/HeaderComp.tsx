@@ -28,7 +28,12 @@ const HeaderComp: React.FC = () => {
         }
     }
     else {
-        participants = '';
+        if (gs.userName) {
+            participants = `Hi ${gs.userName}, Join a room name and click Join.`;
+        }
+        else {
+            participants = 'You should go to the settings page to set your username.';
+        }
     }
     
     return (

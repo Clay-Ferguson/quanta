@@ -36,6 +36,8 @@ class AppService implements AppServiceIntf  {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         this.rtc = await WebRTC.getInst(this.storage, this, RTC_HOST, RTC_PORT);
 
+        await this.restoreSavedValues();
+
         // Load the keyPair from IndexedDB
         const keyPair: KeyPairHex = await this.storage?.getItem('keyPair');
         if (keyPair) {
@@ -43,23 +45,27 @@ class AppService implements AppServiceIntf  {
                 keyPair
             }});
         }
-
-        await this.restoreSavedValues();
     }
 
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
+        const userName = await this.restoreSavedValue('userName');
         await this.restoreSavedValue('contacts');
-        await this.restoreSavedValue('userName');
         await this.restoreSavedValue('roomName');
+
+        // if no username we send to settings page.
+        if (!userName) {
+            this.gd({ type: 'setPage', payload: { page: 'SettingsPage' }});
+        }
     }
 
-    restoreSavedValue = async (key: string) => {
-        const val = await this.storage?.getItem(key);
+    restoreSavedValue = async (key: string): Promise<any> => {
+        const val: any = await this.storage?.getItem(key);
         if (val) {
             this.gd({ type: `restoreVal-${val}`, payload: { [key]: val }});
             // console.log("Restored value: " + key + " = " + val);
         }
+        return val;
     }
 
     setFullSizeImage = (att: MessageAttachment | null) => {
@@ -72,9 +78,9 @@ class AppService implements AppServiceIntf  {
         this.gd({ type: 'setPage', payload: this.gs });
     }
 
-    setGlobals = (dispatch: any, state: any) => {
-        this.gd = dispatch;
-        this.gs = state;
+    setGlobals = (gd: any, gs: any) => {
+        this.gd = gd;
+        this.gs = gs;
     }
 
     setUserName  = async (userName: string) => {

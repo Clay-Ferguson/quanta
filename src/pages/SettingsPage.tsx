@@ -49,6 +49,15 @@ const SettingsPage: React.FC = () => {
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
+                {!gs.userName && ( 
+                    <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
+                        <h2 className="text-2xl font-bold text-blue-300 mb-2">Welcome to Quanta Chat!</h2>
+                        <p className="text-lg text-gray-200">
+                            Please enter a username below to get started. Your username helps identify you in conversations.
+                        </p>
+                    </div>
+                )} 
+                
                 <div className="space-y-6 max-w-2xl mx-auto">
                     {/* About You Section */}
                     <div className="border border-blue-400/30 rounded-lg p-4">

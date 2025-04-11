@@ -11,24 +11,30 @@ import AppService from './AppService';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
-    const dispatch = useGlobalDispatch();
-    const globalState = useGlobalState();
+    const gd = useGlobalDispatch();
+    const gs = useGlobalState();
     
     useEffect(() => {
         const appService = AppService.getInst();
-        appService.setGlobals(dispatch, globalState);
+        appService.setGlobals(gd, gs);
         
         return () => {
             // Optional cleanup if needed
         };
-    }, [dispatch, globalState]);
+    }, [gd, gs]);
     
     return null; // This component doesn't render anything
 }
 
 // Component to handle conditional page rendering
 function PageRouter() {
-    const { page } = useGlobalState();
+    const { page, userName } = useGlobalState();
+
+    // Until user enters a username, show the settings page, which will tell them why they're seeing it.
+    if (!userName) {
+        console.log('No username set, in PageRouter, showing settings page');
+        return <SettingsPage />;
+    }
     
     switch (page) {
     case 'SettingsPage':
