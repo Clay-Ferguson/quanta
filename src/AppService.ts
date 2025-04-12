@@ -25,7 +25,10 @@ export class AppService implements AppServiceTypes  {
 
         // Load the keyPair from IndexedDB
         const keyPair: KeyPairHex = await this.storage?.getItem('keyPair');
-        if (keyPair) {
+        if (!keyPair) {
+            await this._createIdentity(false);
+        }
+        else {
             this.gd({ type: 'setIdentity', payload: { 
                 keyPair
             }});
@@ -91,9 +94,9 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(key, value);
     }
 
-    _createIdentity = async () => {
+    _createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
-        if (this.gs && this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {
+        if (askFirst && this.gs && this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {
             if (!confirm("Create new Identity Keys?")) {
                 return;
             }

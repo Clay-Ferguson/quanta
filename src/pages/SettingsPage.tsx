@@ -134,7 +134,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <div className="space-y-3 mt-4">
                             <div className="flex space-x-4">
-                                <button className="btn-primary" onClick={app._createIdentity}>Create New Keys</button>
+                                <button className="btn-primary" onClick={() => app._createIdentity(true)}>Create New Keys</button>
                             </div>
                         </div>
                     </div>
