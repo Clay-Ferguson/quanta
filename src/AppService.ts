@@ -4,32 +4,18 @@ import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.js';
 import {AppServiceIntf, ChatMessage, MessageAttachment} from './AppServiceIntf.ts';
 
-import Crypto from './Crypto.ts';  
+import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
-const crypto = Crypto.getInst();
 
 // Vars are injected diretly into HTML by server
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
 export class AppService implements AppServiceIntf  {
-    private static inst: AppService | null = null;
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     private gd: any = null; // Global Dispatch Function
     private gs: any = null; // Global State Object
-
-    constructor() {
-        console.log('Util singleton created');
-    }
-
-    static getInst() {
-        if (!AppService.inst) {
-            AppService.inst = new AppService();
-            AppService.inst.init();
-        }
-        return AppService.inst;
-    }
 
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
@@ -393,6 +379,5 @@ export class AppService implements AppServiceIntf  {
     }
 }
 
-// export default AppService;
-
-export const app = AppService.getInst();
+export const app = new AppService();
+app.init();

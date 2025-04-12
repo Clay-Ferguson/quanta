@@ -9,10 +9,6 @@ class IndexedDB {
     private storeName: string = '';
     private dbVersion: number = 1;
 
-    constructor() {
-        console.log('IndexedDB singleton created');
-    }
-
     static async getInst(dbName: string, storeName: string, dbVersion: number) {
         // Create instance if it doesn't exist
         if (!IndexedDB.inst) {

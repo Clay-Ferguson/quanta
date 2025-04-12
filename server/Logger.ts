@@ -6,21 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class Logger {
-    private static inst: Logger | null = null;
     logFile: string | null = null;
-
-    constructor() {
-        console.log('Logger singleton created');
-    }
-
-    static getInst() {
-        // Create instance if it doesn't exist
-        if (!Logger.inst) {
-            Logger.inst = new Logger();
-            Logger.inst.init();
-        }
-        return Logger.inst;
-    }
 
     async init() {
         const logDir = path.join(__dirname, 'logs');
@@ -75,4 +61,4 @@ class Logger {
     }
 }
 
-export default Logger;
+export const logger = new Logger();

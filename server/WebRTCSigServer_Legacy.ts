@@ -1,7 +1,6 @@
 import {WebSocketServer} from 'ws';
-import Logger from './Logger.js';
+import { logger } from './Logger.js';
 
-const logger = Logger.getInst();
 const log = logger.logInfo;
 const logError = logger.logError;
 

@@ -1,17 +1,4 @@
 class Util {
-    private static inst: Util | null = null;
-
-    constructor() {
-        console.log('Util singleton created');
-    }
-
-    static getInst() {
-        if (!Util.inst) {
-            Util.inst = new Util();
-        }
-        return Util.inst;
-    }
-
     log(message: string) {
         console.log(message);
     }
@@ -71,5 +58,5 @@ class Util {
     }
 }
 
-export const util = Util.getInst();
+export const util = new Util();
 

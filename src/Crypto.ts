@@ -6,18 +6,6 @@ import { ChatMessage } from './AppServiceIntf';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
-    private static inst: Crypto | null = null;
-
-    constructor() {
-        console.log('Crypto singleton created');
-    }
-
-    static getInst() {
-        if (!Crypto.inst) {
-            Crypto.inst = new Crypto();
-        }
-        return Crypto.inst;
-    }
 
     // Function to generate a new keypair
     generateKeypair(): KeyPairHex {
@@ -148,4 +136,4 @@ class Crypto {
     }
 }
 
-export default Crypto;
+export const crypto = new Crypto();
