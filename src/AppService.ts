@@ -33,6 +33,18 @@ export class AppService implements AppServiceTypes  {
                 keyPair
             }});
         }
+
+        this.restoreConnection();
+    }
+
+    restoreConnection = async () => {
+        const userName = await this.storage?.getItem(DBKeys.userName);
+        const roomName = await this.storage?.getItem(DBKeys.roomName);
+        const connected = await this.storage?.getItem(DBKeys.connected);
+
+        if (userName && roomName && connected) {
+            await this._connect(userName, roomName);
+        }
     }
 
     restoreSavedValues = async () => {
@@ -145,6 +157,8 @@ export class AppService implements AppServiceTypes  {
             connected: true  
         }});
 
+        // set connected DB key
+        await this.storage?.setItem(DBKeys.connected, true);
         this.scrollToBottom();
     }
 
@@ -156,13 +170,14 @@ export class AppService implements AppServiceTypes  {
         this.storage?.setItem('contacts', contacts);
     }
 
-    _disconnect = () => {
+    _disconnect = async () => {
         this.rtc?._disconnect();
         this.gd({ type: 'disconnect', payload: { 
             messages: [], 
             participants: new Set<string>(), 
             connected: false, 
         }});
+        await this.storage?.setItem(DBKeys.connected, false);
     }
 
     _clearMessages = () => {
