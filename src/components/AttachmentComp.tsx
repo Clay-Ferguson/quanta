@@ -2,6 +2,8 @@ import React from 'react';
 import Util from '../Util';
 import AppService from '../AppService';
 import { MessageAttachment } from '../AppServiceIntf';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
 
 interface AttachmentCompProps {
   attachment: MessageAttachment;
@@ -39,14 +41,14 @@ const AttachmentComp: React.FC<AttachmentCompProps> = ({
                             title="Click to view full size"
                         />
                         <button 
-                            className="absolute top-1 right-1 bg-blue-600 text-gray-100 rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-700"
+                            className="btn-secondary absolute top-2 right-2"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 downloadFile(att);
                             }}
                             title={`Download ${att.name}`}
                         >
-              ⬇️
+                            <FontAwesomeIcon icon={faDownload} className="h-5 w-5" />
                         </button>
                     </div>
                     <div className="text-xs mt-1 truncate text-gray-300">{att.name}</div>
@@ -55,19 +57,19 @@ const AttachmentComp: React.FC<AttachmentCompProps> = ({
                 <>
                     {/* Non-image attachment */}
                     <div className="flex items-center">
-                        <span className="text-2xl mr-2">📄</span>
+                        <span className="text-2xl mr-2"><FontAwesomeIcon icon={faFile} className="h-5 w-5" /></span>
                         <div className="flex-1">
                             <div className="font-medium text-sm truncate text-gray-200">{att.name}</div>
                             <div className="text-xs text-gray-400">{util.formatFileSize(att.size)}</div>
                         </div>
                         <button 
-                            className="bg-blue-600 text-gray-100 rounded px-2 py-1 text-sm hover:bg-blue-700"
+                            className="btn-secondary"
                             onClick={() => {
                                 downloadFile(att);
                             }}
                             title={`Download ${att.name}`}
                         >
-              Download
+                            <FontAwesomeIcon icon={faDownload} className="h-5 w-5" />
                         </button>
                     </div>
                 </>
