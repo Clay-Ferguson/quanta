@@ -72,9 +72,15 @@ export class AppService implements AppServiceTypes  {
         this.persistGlobalValue(DBKeys.userName, userName);
     }
 
-    setRoomName = async (roomName: string) => {
-        this.persistGlobalValue(DBKeys.roomName, roomName);
-    }
+    // we have this method only for effeciency to do a single state update.
+    setRoomAndUserName = async (roomName: string, userName: string, ) => {
+        this.gd({ type: `setRoomAndUser}`, payload: { 
+            roomName, userName
+        }});
+        // Save the keyPair to IndexedDB
+        await this.storage?.setItem(DBKeys.roomName, roomName);
+        await this.storage?.setItem(DBKeys.userName, userName);
+    }        
 
     persistGlobalValue = async (key: string, value: any) => {
         // save to global state
@@ -127,7 +133,7 @@ export class AppService implements AppServiceTypes  {
         }
         const messages = await this.loadRoomMessages(roomName);
         await this.rtc._connect(userName!, roomName);
-        await this.setRoomName(roomName);
+        await this.setRoomAndUserName(roomName, userName!);
 
         this.gd({ type: 'connect', payload: { 
             userName,
@@ -135,6 +141,7 @@ export class AppService implements AppServiceTypes  {
             messages,
             connected: true  
         }});
+
         this.scrollToBottom();
     }
 

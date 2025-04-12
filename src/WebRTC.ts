@@ -1,5 +1,5 @@
 import SimplePeer, { Instance as SimplePeerInstance, SignalData } from 'simple-peer';
-import {AppServiceTypes, DBKeys} from './AppServiceTypes.ts';
+import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 
@@ -319,11 +319,6 @@ class WebRTC {
 
         this.userName = userName;
         this.roomId = roomId;
-
-        // Persist user/room info
-        // todo-0: move this one layer up in the call stack so no 'storage' happens inside the WebRTC class
-        await this.storage.setItem(DBKeys.userName, this.userName);
-        await this.storage.setItem(DBKeys.roomName, this.roomId);
 
         // Start the signaling connection process
         this.initRTC();

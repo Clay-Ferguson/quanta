@@ -1,4 +1,4 @@
-import {AppServiceTypes, DBKeys} from './AppServiceTypes.ts';
+import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 
@@ -277,9 +277,6 @@ class WebRTC {
             util.log('Storage not initialized. Cannot connect.');
             return;
         }
-
-        await this.storage.setItem(DBKeys.userName, this.userName);
-        await this.storage.setItem(DBKeys.roomName, this.roomId);
 
         // If already connected, reset connection with new name and room
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {

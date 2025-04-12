@@ -147,19 +147,36 @@ const SettingsPage: React.FC = () => {
                                 <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>
                             </div>
                             <p className="text-sm text-gray-300 mb-4">
-                                This will permanently delete all your messages, settings, and stored data. This action cannot be undone.
+                                This will permanently delete all your chat data, contacts, and identity keys.
                             </p>
                             <button 
                                 className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
                                 onClick={() => {
-                                    if (window.confirm("Are you sure you want to delete all your data? This action cannot be undone.")) {
+                                    if (window.confirm("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
                                         app.clear();
                                     }
                                 }}
                             >
-                                Wipe Data
+                                Wipe All Data
                             </button>
                         </div>
+
+                        {gs.roomName && (
+                            <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md mt-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-lg font-medium text-red-300">Wipe Room '{gs.roomName}' Data</h4>
+                                </div>
+                                <p className="text-sm text-gray-300 mb-4">
+                                    This will permanently delete all messages in the current room, from your device. Other users will still have their messages.
+                                </p>
+                                <button 
+                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
+                                    onClick={() => app._clearMessages()}
+                                >
+                                    Wipe Room Data
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

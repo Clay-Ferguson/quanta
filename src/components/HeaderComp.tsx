@@ -74,12 +74,6 @@ const HeaderComp: React.FC = () => {
                             >
                                 Leave
                             </button>
-                            <button 
-                                onClick={app._clearMessages}
-                                className="btn-warning"
-                            >
-                                Clear
-                            </button>
                         </>
                     )}
                 </div>
