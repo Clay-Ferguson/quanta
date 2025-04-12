@@ -375,6 +375,13 @@ export class AppService implements AppServiceTypes  {
         }
         return [];
     }
+
+    clear = async () => {
+        await this.storage?.clear();
+        console.log("Cleared IndexedDB");
+        // refresh browser page
+        window.location.reload();
+    }
 }
 
 export const app = new AppService();

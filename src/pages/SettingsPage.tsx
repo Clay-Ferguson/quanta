@@ -138,6 +138,29 @@ const SettingsPage: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                    {/* Danger Zone Section */}
+                    <div className="border border-red-400/30 rounded-lg p-4">
+                        <h3 className="text-xl font-medium text-red-400 border-b border-red-400/30 pb-2 mb-4">Danger Zone</h3>
+                        
+                        <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>
+                            </div>
+                            <p className="text-sm text-gray-300 mb-4">
+                                This will permanently delete all your messages, settings, and stored data. This action cannot be undone.
+                            </p>
+                            <button 
+                                className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
+                                onClick={() => {
+                                    if (window.confirm("Are you sure you want to delete all your data? This action cannot be undone.")) {
+                                        app.clear();
+                                    }
+                                }}
+                            >
+                                Wipe Data
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

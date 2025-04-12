@@ -17,7 +17,7 @@ export enum DBKeys {
     contacts = 'contacts',
     keyPair = 'keyPair',
     roomPrefix = 'room_',
-  }
+}
 
 export type MessageAttachment = {
     name: string;
