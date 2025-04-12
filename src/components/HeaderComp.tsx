@@ -3,6 +3,7 @@ import AppService from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import LogoBlockComp from './LogoBlockComp';
 
 
 const app = AppService.getInst(); 
@@ -37,20 +38,8 @@ const HeaderComp: React.FC = () => {
     }
     
     return (
-        <header className="w-full bg-gray-800 text-gray-100 p-2 flex-shrink-0 flex justify-between items-center shadow-md border-b border-blue-400/30">
-            <div id="logoTextAndMembers" className="flex-1 flex items-center">
-                <div className="mr-3">
-                    <img 
-                        src="/logo-100px-tr.jpg" 
-                        alt="Quanta Chat Logo" 
-                        className="h-auto object-contain border border-blue-400/30 rounded"
-                    />
-                </div>
-                <div className="overflow-hidden">
-                    <h3 className="font-semibold text-blue-400">Quanta Chat</h3>
-                    <h5 className="font-semibold text-gray-300 truncate">{participants}</h5>
-                </div>
-            </div>
+        <header className="app-header">
+            <LogoBlockComp subText={participants}/>
             <div className="flex items-center space-x-4">
                 <div className="border border-gray-600 rounded px-3 py-1 bg-gray-700/50 flex items-center space-x-3">
                     {!gs.connected ? (
