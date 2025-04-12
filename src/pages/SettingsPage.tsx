@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
 import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 
 const SettingsPage: React.FC = () => {
@@ -107,13 +107,13 @@ const SettingsPage: React.FC = () => {
                                     className="text-sm px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 transition flex items-center"
                                 >
                                     <span>{showPrivateKey ? "Hide" : "Show"} Private Key</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <span className="h-4 w-4 ml-2" >
                                         {showPrivateKey ? (
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <FontAwesomeIcon icon={faEyeSlash} className="h-5 w-5" />
                                         ) : (
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c-4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                            <FontAwesomeIcon icon={faEye} className="h-5 w-5" />
                                         )}
-                                    </svg>
+                                    </span>
                                 </button>
                             </div>
                             <div className="bg-gray-900 p-3 rounded border border-red-400/20">
@@ -123,9 +123,7 @@ const SettingsPage: React.FC = () => {
                                     </code>
                                 ) : (
                                     <div className="text-gray-500 italic text-sm flex items-center justify-center p-2 border-dashed border border-gray-700 rounded">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
+                                        <FontAwesomeIcon icon={faLock} className="h-5 w-5 mr-2" />
                                         Click "Show Private Key" to reveal
                                     </div>
                                 )}
