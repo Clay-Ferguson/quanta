@@ -70,7 +70,10 @@ const SettingsPage: React.FC = () => {
                             <div className="flex justify-end">
                                 <button 
                                     className="btn-primary"
-                                    onClick={() => app.setUserName(userName)}
+                                    onClick={() => {
+                                        app.setUserName(userName);
+                                        alert("Username saved successfully!");
+                                    }}
                                 >
                                     Save
                                 </button>
