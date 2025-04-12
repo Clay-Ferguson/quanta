@@ -20,6 +20,13 @@ export enum DBKeys {
     connected = 'connected'
 }
 
+export enum PageNames{
+    contacts = 'ContactsPage',
+    settings = 'SettingsPage',
+    userGuide = 'UserGuidePage',
+    quantaChat = 'QuantaChat',
+}
+
 export type MessageAttachment = {
     name: string;
     type: string;

@@ -4,6 +4,7 @@ import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
+import { PageNames } from '../AppServiceTypes';
 
 const HeaderComp: React.FC = () => {
     const gs = useGlobalState();
@@ -78,20 +79,20 @@ const HeaderComp: React.FC = () => {
                     )}
                 </div>
                 <button 
-                    onClick={() => app.goToPage('ContactsPage')}
+                    onClick={() => app.goToPage(PageNames.contacts)}
                     className="btn-secondary"
                 >
                     Contacts
                 </button>
                 <button 
-                    onClick={() => app.goToPage('SettingsPage')}
+                    onClick={() => app.goToPage(PageNames.settings)}
                     className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
                     title="Settings"
                 >
                     <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                 </button>
                 <button 
-                    onClick={() => app.goToPage('UserGuidePage')}
+                    onClick={() => app.goToPage(PageNames.userGuide)}
                     className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
                     title="Help"
                 >

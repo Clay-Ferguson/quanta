@@ -4,6 +4,7 @@ import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
+import { PageNames } from '../AppServiceTypes';
 
 const SettingsPage: React.FC = () => {
     const gs = useGlobalState();
@@ -27,7 +28,7 @@ const SettingsPage: React.FC = () => {
                 <LogoBlockComp subText="Settings"/>
                 <div className="flex items-center space-x-4">
                     <button 
-                        onClick={() => app.goToPage('QuantaChat')}
+                        onClick={() => app.goToPage(PageNames.quantaChat)}
                         className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
                         title="Back"
                     >

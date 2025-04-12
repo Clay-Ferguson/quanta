@@ -8,6 +8,7 @@ import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import {app} from './AppService';
+import { PageNames } from './AppServiceTypes.ts';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
@@ -36,13 +37,13 @@ function PageRouter() {
     }
     
     switch (page) {
-    case 'SettingsPage':
+    case PageNames.settings:
         return <SettingsPage />;
-    case 'ContactsPage':
+    case PageNames.contacts:
         return <ContactsPage />;
-    case 'UserGuidePage':
+    case PageNames.userGuide:
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
-    case 'QuantaChat':
+    case PageNames.quantaChat:
     default:
         return <QuantaChatPage />;
     }

@@ -4,6 +4,7 @@ import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
+import { PageNames } from '../AppServiceTypes';
 
 const ContactsPage: React.FC = () => {
     return (
@@ -12,7 +13,7 @@ const ContactsPage: React.FC = () => {
                 <LogoBlockComp subText="Contacts"/>
                 <div className="flex items-center space-x-4">
                     <button 
-                        onClick={() => app.goToPage('QuantaChat')}
+                        onClick={() => app.goToPage(PageNames.quantaChat)}
                         className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
                         title="Back"
                     >

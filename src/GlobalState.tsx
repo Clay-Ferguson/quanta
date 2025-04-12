@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from './CryptoIntf';
-import { ChatMessage, Contact } from './AppServiceTypes';
+import { ChatMessage, Contact, PageNames } from './AppServiceTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -18,7 +18,7 @@ interface GlobalState {
 
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
-    page: 'QuantaChat',
+    page: PageNames.quantaChat,
     connected: false, 
     roomName: '',
     userName: '', 

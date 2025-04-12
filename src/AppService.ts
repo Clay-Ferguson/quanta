@@ -2,7 +2,7 @@ import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, ChatMessage, DBKeys, MessageAttachment} from './AppServiceTypes.ts';
+import {AppServiceTypes, ChatMessage, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
 
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
@@ -55,7 +55,7 @@ export class AppService implements AppServiceTypes  {
 
         // if no username we send to settings page.
         if (!userName) {
-            this.gd({ type: 'setPage', payload: { page: 'SettingsPage' }});
+            this.gd({ type: 'setPage', payload: { page: PageNames.settings }});
         }
     }
 
