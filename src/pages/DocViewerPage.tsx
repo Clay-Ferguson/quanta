@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
-import {app} from '../AppService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
-import { PageNames } from '../AppServiceTypes';
+import BackButton from '../components/BackButton';
 
 // Cache for the documents content, using a Map to support multiple documents
 const documentCache: Map<string, string> = new Map();
@@ -61,13 +58,7 @@ const DocViewerPage: React.FC<DocViewerPageProps> = ({
             <header className="app-header">
                 <LogoBlockComp subText={title}/>
                 <div className="flex items-center space-x-4">
-                    <button 
-                        onClick={() => app.goToPage(PageNames.quantaChat)}
-                        className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
-                        title="Back"
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5" />
-                    </button>
+                    <BackButton/>
                 </div>
             </header>
             <div id="docContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">

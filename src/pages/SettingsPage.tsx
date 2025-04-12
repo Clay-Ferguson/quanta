@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
 import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
-import { PageNames } from '../AppServiceTypes';
+import BackButton from '../components/BackButton';
 
 const SettingsPage: React.FC = () => {
     const gs = useGlobalState();
@@ -27,13 +27,7 @@ const SettingsPage: React.FC = () => {
             <header className="app-header">
                 <LogoBlockComp subText="Settings"/>
                 <div className="flex items-center space-x-4">
-                    <button 
-                        onClick={() => app.goToPage(PageNames.quantaChat)}
-                        className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
-                        title="Back"
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5" />
-                    </button>
+                    <BackButton/>
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
