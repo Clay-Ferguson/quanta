@@ -1,5 +1,5 @@
 import SimplePeer, { Instance as SimplePeerInstance, SignalData } from 'simple-peer';
-import {AppServiceIntf} from './AppServiceIntf.ts';
+import {AppServiceTypes, DBKeys} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 
@@ -19,7 +19,7 @@ class WebRTC {
     participants = new Set<string>(); // Keep track of expected participants in the room
     connected: boolean = false; // WebSocket connection status
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null;
+    app: AppServiceTypes | null = null;
     host: string = "";
     port: string = "";
 
@@ -27,7 +27,7 @@ class WebRTC {
         console.log('WebRTC singleton (using simple-peer) created');
     }
 
-    static async getInst(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
+    static async getInst(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
         if (!WebRTC.inst) {
             WebRTC.inst = new WebRTC();
             WebRTC.inst.storage = storage;
@@ -297,8 +297,6 @@ class WebRTC {
         this.participants.clear(); // Clear participants when fully disconnected
     }
 
-    // --- Public API Methods (intended for AppServiceIntf) ---
-
     async _connect(userName: string, roomId: string) {
         util.log(`Connecting to room: ${roomId} as user: ${userName}`);
         if (!userName || !roomId) {
@@ -323,8 +321,9 @@ class WebRTC {
         this.roomId = roomId;
 
         // Persist user/room info
-        await this.storage.setItem('username', this.userName);
-        await this.storage.setItem('room', this.roomId);
+        // todo-0: move this one layer up in the call stack so no 'storage' happens inside the WebRTC class
+        await this.storage.setItem(DBKeys.userName, this.userName);
+        await this.storage.setItem(DBKeys.roomName, this.roomId);
 
         // Start the signaling connection process
         this.initRTC();

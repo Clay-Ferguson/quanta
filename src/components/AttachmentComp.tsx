@@ -1,7 +1,7 @@
 import React from 'react';
 import {util} from '../Util';
 import { app } from '../AppService';
-import { MessageAttachment } from '../AppServiceIntf';
+import { MessageAttachment } from '../AppServiceTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Contact } from '../AppServiceIntf';
+import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import {app} from '../AppService';   
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

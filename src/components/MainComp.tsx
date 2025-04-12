@@ -1,6 +1,6 @@
 import React from 'react';
 import AttachmentComp from './AttachmentComp';
-import { ChatMessage } from '../AppServiceIntf';
+import { ChatMessage } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

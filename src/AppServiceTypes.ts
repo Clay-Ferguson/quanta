@@ -1,4 +1,4 @@
-export interface AppServiceIntf {
+export interface AppServiceTypes {
     /**
      * Handle RTC state changes
      */
@@ -10,6 +10,14 @@ export interface AppServiceIntf {
      */
     _persistMessage(msg: ChatMessage): Promise<void>;
 }
+
+export enum DBKeys {
+    userName = 'userName',
+    roomName = 'roomName',
+    contacts = 'contacts',
+    keyPair = 'keyPair',
+    roomPrefix = 'room_',
+  }
 
 export type MessageAttachment = {
     name: string;

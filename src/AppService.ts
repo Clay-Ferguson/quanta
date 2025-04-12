@@ -2,7 +2,7 @@ import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceIntf, ChatMessage, MessageAttachment} from './AppServiceIntf.ts';
+import {AppServiceTypes, ChatMessage, DBKeys, MessageAttachment} from './AppServiceTypes.ts';
 
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
@@ -11,7 +11,7 @@ import { KeyPairHex } from './CryptoIntf.ts';
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
-export class AppService implements AppServiceIntf  {
+export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     private gd: any = null; // Global Dispatch Function
@@ -34,7 +34,7 @@ export class AppService implements AppServiceIntf  {
 
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
-        const userName = await this.restoreSavedValue('userName');
+        const userName = await this.restoreSavedValue(DBKeys.userName);
         await this.restoreSavedValue('contacts');
         await this.restoreSavedValue('roomName');
 
@@ -69,13 +69,11 @@ export class AppService implements AppServiceIntf  {
     }
 
     setUserName  = async (userName: string) => {
-        console.log("Setting userName: " + userName);
-        this.persistGlobalValue('userName', userName);
+        this.persistGlobalValue(DBKeys.userName, userName);
     }
 
     setRoomName = async (roomName: string) => {
-        console.log("Setting roomName: " + roomName);
-        this.persistGlobalValue('roomName', roomName);
+        this.persistGlobalValue(DBKeys.roomName, roomName);
     }
 
     persistGlobalValue = async (key: string, value: any) => {
@@ -100,7 +98,7 @@ export class AppService implements AppServiceIntf  {
             keyPair
         }});
         // Save the keyPair to IndexedDB
-        await this.storage?.setItem('keyPair', keyPair);
+        await this.storage?.setItem(DBKeys.keyPair, keyPair);
     }
 
     _rtcStateChange = () => {
@@ -333,7 +331,7 @@ export class AppService implements AppServiceIntf  {
                 lastUpdated: new Date().toISOString()
             };
 
-            this.storage.setItem('room_' + this.rtc.roomId, roomData);
+            this.storage.setItem(DBKeys.roomPrefix + this.rtc.roomId, roomData);
             util.log('Saved ' + this.gs.messages.length + ' messages for room: ' + this.gs.roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from './CryptoIntf';
-import { ChatMessage, Contact } from './AppServiceIntf';
+import { ChatMessage, Contact } from './AppServiceTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 

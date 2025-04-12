@@ -1,4 +1,4 @@
-import {AppServiceIntf} from './AppServiceIntf.ts';
+import {AppServiceTypes, DBKeys} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 
@@ -24,7 +24,7 @@ class WebRTC {
     participants = new Set<string>();
     connected: boolean = false;
     storage: IndexedDB | null = null;
-    app: AppServiceIntf | null = null;
+    app: AppServiceTypes | null = null;
     host: string = "";
     port: string = "";
 
@@ -32,7 +32,7 @@ class WebRTC {
         console.log('WebRTC singleton created');
     }
 
-    static async getInst(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
+    static async getInst(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
         if (!WebRTC.inst) {
             WebRTC.inst = new WebRTC();
             await WebRTC.inst.init(storage, app, host, port);
@@ -40,7 +40,7 @@ class WebRTC {
         return WebRTC.inst;
     }
 
-    async init(storage: IndexedDB, app: AppServiceIntf, host: string, port: string) {
+    async init(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
         this.storage = storage;
         this.app = app;
         this.host = host;
@@ -278,8 +278,8 @@ class WebRTC {
             return;
         }
 
-        await this.storage.setItem('username', this.userName);
-        await this.storage.setItem('room', this.roomId);
+        await this.storage.setItem(DBKeys.userName, this.userName);
+        await this.storage.setItem(DBKeys.roomName, this.roomId);
 
         // If already connected, reset connection with new name and room
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
