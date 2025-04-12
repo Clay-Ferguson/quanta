@@ -16,7 +16,7 @@ const LogoBlockComp: React.FC<LogoBlockCompProps> = ({
                 <img 
                     src="/logo-100px-tr.jpg" 
                     alt="Quanta Chat Logo" 
-                    className="h-auto object-contain border border-blue-400/30 rounded"
+                    className="h-auto object-contain border-2 border-gray-200/30 rounded"
                 />
             </div>
             <div className="overflow-hidden cursor-pointer" onClick={handleLogoClick}>

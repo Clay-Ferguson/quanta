@@ -86,14 +86,14 @@ const HeaderComp: React.FC = () => {
                 </button>
                 <button 
                     onClick={() => app.goToPage(PageNames.settings)}
-                    className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
+                    className="btn-icon"
                     title="Settings"
                 >
                     <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                 </button>
                 <button 
                     onClick={() => app.goToPage(PageNames.userGuide)}
-                    className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
+                    className="btn-icon"
                     title="Help"
                 >
                     <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />

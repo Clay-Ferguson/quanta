@@ -9,7 +9,7 @@ const BackButton: React.FC = () => {
     return (
         <button 
             onClick={() => app.goToPage(PageNames.quantaChat)}
-            className="p-2 text-blue-300 hover:bg-blue-600/30 rounded-md flex items-center justify-center"
+            className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
             title="Back"
         >
             <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5 mr-1" />Back
