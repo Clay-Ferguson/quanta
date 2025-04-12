@@ -1,4 +1,3 @@
-import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
@@ -6,20 +5,29 @@ import {AppServiceTypes, ChatMessage, DBKeys, MessageAttachment, PageNames} from
 
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
+import { WebRTCIntf } from './WebRTCIntf.ts';
+import WebRTC from './WebRTC.ts';
+import WebRTC_Legacy from './WebRTC_Legacy.ts';
 
 // Vars are injected diretly into HTML by server
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
+// WARNING: This same variable exists on Client and Server and must match, to determine which WebRTC implementation to use, and these
+// need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
+const useLegacyWebRTC = true;
+
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
-    public rtc: WebRTC | null = null;
+    public rtc: WebRTCIntf | null = null;
     private gd: any = null; // Global Dispatch Function
     private gs: any = null; // Global State Object
 
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
-        this.rtc = await WebRTC.getInst(this.storage, this, RTC_HOST, RTC_PORT);
+        this.rtc = useLegacyWebRTC ? //
+            new WebRTC_Legacy(this.storage, this, RTC_HOST, RTC_PORT) :
+            new WebRTC(this.storage, this, RTC_HOST, RTC_PORT);
 
         await this.restoreSavedValues();
 
@@ -197,7 +205,7 @@ export class AppService implements AppServiceTypes  {
             return;
         }
         if (message || selectedFiles.length > 0) {
-            const msg: ChatMessage = this.createMessage(message, this.rtc.userName, selectedFiles);
+            const msg: ChatMessage = this.createMessage(message, this.gs.userName, selectedFiles);
             
             if (this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {   
                 try {
@@ -356,7 +364,7 @@ export class AppService implements AppServiceTypes  {
                 lastUpdated: new Date().toISOString()
             };
 
-            this.storage.setItem(DBKeys.roomPrefix + this.rtc.roomId, roomData);
+            this.storage.setItem(DBKeys.roomPrefix + this.gs.roomName, roomData);
             util.log('Saved ' + this.gs.messages.length + ' messages for room: ' + this.gs.roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);

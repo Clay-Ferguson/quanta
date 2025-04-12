@@ -1,6 +1,7 @@
 import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
+import { WebRTCIntf } from './WebRTCIntf.ts';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -9,8 +10,7 @@ import {util} from './Util.ts';
  * 
  * NOTE: See README.md, to unserstand why this Legacy class still exists.
  */
-class WebRTC {
-    private static inst: WebRTC | null = null;
+class WebRTC_Legacy implements WebRTCIntf {
 
     // maps user names to their RTCPeerConnection objects
     peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -28,19 +28,7 @@ class WebRTC {
     host: string = "";
     port: string = "";
 
-    constructor() {
-        console.log('WebRTC singleton created');
-    }
-
-    static async getInst(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
-        if (!WebRTC.inst) {
-            WebRTC.inst = new WebRTC();
-            await WebRTC.inst.init(storage, app, host, port);
-        }
-        return WebRTC.inst;
-    }
-
-    async init(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
+    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
         this.storage = storage;
         this.app = app;
         this.host = host;
@@ -364,4 +352,4 @@ class WebRTC {
     }
 }
 
-export default WebRTC;
+export default WebRTC_Legacy;

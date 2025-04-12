@@ -2,43 +2,36 @@ import SimplePeer, { Instance as SimplePeerInstance, SignalData } from 'simple-p
 import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
+import { WebRTCIntf } from './WebRTCIntf.ts';
 
 /**
  * WebRTC class using simple-peer for handling P2P connections.
  * Designed as a singleton.
  */
-class WebRTC {
-    private static inst: WebRTC | null = null;
-
+// todo-0: make all classes do 'export default' right at the class keyword like we do here
+export default class WebRTC implements WebRTCIntf {
     // Map peer names to their SimplePeer instances
-    peers: Map<string, SimplePeerInstance> = new Map();
+    private peers: Map<string, SimplePeerInstance> = new Map();
+    private socket: WebSocket | null = null;
+    private roomId = "";
+    private userName = "";
 
-    socket: WebSocket | null = null;
-    roomId = "";
-    userName = "";
-    participants = new Set<string>(); // Keep track of expected participants in the room
-    connected: boolean = false; // WebSocket connection status
     storage: IndexedDB | null = null;
     app: AppServiceTypes | null = null;
     host: string = "";
     port: string = "";
 
-    constructor() {
-        console.log('WebRTC singleton (using simple-peer) created');
+    participants = new Set<string>(); // Keep track of expected participants in the room
+    connected: boolean = false; // WebSocket connection status
+    
+    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
+        this.storage = storage;
+        this.app = app;
+        this.host = host;
+        this.port = port;
     }
 
-    static async getInst(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
-        if (!WebRTC.inst) {
-            WebRTC.inst = new WebRTC();
-            WebRTC.inst.storage = storage;
-            WebRTC.inst.app = app;
-            WebRTC.inst.host = host;
-            WebRTC.inst.port = port;
-        }
-        return WebRTC.inst;
-    }
-
-    initRTC() {
+    private initRTC() {
         if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
             util.log('WebSocket connection already open or connecting.');
             return;
@@ -65,7 +58,7 @@ class WebRTC {
 
     // --- WebSocket Event Handlers ---
 
-    _onopen = () => {
+    private _onopen = () => {
         util.log('Connected to signaling server.');
         this.connected = true;
 
@@ -83,14 +76,14 @@ class WebRTC {
         this.app?._rtcStateChange();
     }
 
-    _onerror = (error: Event) => {
+    private _onerror = (error: Event) => {
         console.error('WebSocket error:', error);
         this.connected = false;
         // Consider attempting reconnection here?
         this.app?._rtcStateChange();
     };
 
-    _onclose = () => {
+    private _onclose = () => {
         util.log('Disconnected from signaling server');
         this.connected = false;
         this.closeAllConnections(); // Clean up all peers
@@ -98,7 +91,7 @@ class WebRTC {
         // Consider attempting reconnection here?
     }
 
-    _onmessage = (event: MessageEvent) => {
+    private _onmessage = (event: MessageEvent) => {
         try {
             const msg = JSON.parse(event.data);
             util.log(`Received message type: ${msg.type} from ${msg.sender || 'server'}`);
@@ -131,7 +124,7 @@ class WebRTC {
 
     // --- Signaling Message Handlers ---
 
-    _handleRoomInfo = (msg: { participants: string[], room: string }) => {
+    private _handleRoomInfo = (msg: { participants: string[], room: string }) => {
         util.log('Room info received. Participants: ' + msg.participants.join(', '));
         const existingParticipants = new Set(msg.participants);
         this.participants = existingParticipants; // Update our view of the room
@@ -144,7 +137,7 @@ class WebRTC {
         });
     }
 
-    _handleUserJoined = (msg: { name: string, room: string }) => {
+    private _handleUserJoined = (msg: { name: string, room: string }) => {
         util.log('User joined: ' + msg.name);
         if (msg.name === this.userName || this.peers.has(msg.name)) {
             return; // Ignore self or existing connections
@@ -155,7 +148,7 @@ class WebRTC {
         this.createPeer(msg.name, true);
     }
 
-    _handleUserLeft = (msg: { name: string, room: string }) => {
+    private _handleUserLeft = (msg: { name: string, room: string }) => {
         util.log('User left: ' + msg.name);
         this.participants.delete(msg.name);
 
@@ -167,7 +160,7 @@ class WebRTC {
         }
     }
 
-    _handleSignal = (msg: { sender: string, target: string, data: SignalData }) => {
+    private _handleSignal = (msg: { sender: string, target: string, data: SignalData }) => {
         if (msg.sender === this.userName) return; // Ignore signals sent by ourselves (shouldn't happen)
 
         util.log(`Received signal from ${msg.sender}`);
@@ -191,7 +184,7 @@ class WebRTC {
         }
     }
 
-    _handleBroadcast = (msg: { sender: string, message: any, room: string }) => {
+    private _handleBroadcast = (msg: { sender: string, message: any, room: string }) => {
         util.log('Received broadcast message via signaling from ' + msg.sender);
         if (msg.sender !== this.userName) { // Avoid persisting our own fallback messages
             this.app?._persistMessage(msg.message);
@@ -200,7 +193,7 @@ class WebRTC {
 
     // --- Peer Connection Management ---
 
-    createPeer(peerName: string, isInitiator: boolean): SimplePeerInstance | null {
+    private createPeer(peerName: string, isInitiator: boolean): SimplePeerInstance | null {
         if (this.peers.has(peerName)) {
             util.log(`Already have a peer connection with ${peerName}`);
             return this.peers.get(peerName) || null;
@@ -287,7 +280,7 @@ class WebRTC {
         }
     }
 
-    closeAllConnections() {
+    private closeAllConnections = () => {
         util.log(`Closing all (${this.peers.size}) peer connections.`);
         this.peers.forEach((peer, name) => {
             util.log(`Destroying connection to ${name}`);
@@ -297,7 +290,7 @@ class WebRTC {
         this.participants.clear(); // Clear participants when fully disconnected
     }
 
-    async _connect(userName: string, roomId: string) {
+    public async _connect(userName: string, roomId: string) {
         util.log(`Connecting to room: ${roomId} as user: ${userName}`);
         if (!userName || !roomId) {
             console.error("Username and Room ID are required to connect.");
@@ -324,7 +317,7 @@ class WebRTC {
         this.initRTC();
     }
 
-    _disconnect() {
+    public _disconnect() {
         util.log('Disconnecting...');
         // Close the signaling socket
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -341,7 +334,7 @@ class WebRTC {
         this.app?._rtcStateChange(); // Notify app
     }
 
-    _sendMessage = (msg: any) => {
+    public _sendMessage = (msg: any) => {
         if (!this.userName || !this.roomId) {
             console.error("Cannot send message: not connected to a room.");
             return;
@@ -388,4 +381,3 @@ class WebRTC {
     }
 }
 
-export default WebRTC;

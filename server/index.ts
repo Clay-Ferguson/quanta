@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import WebRTCSigServer from './WebRTCSigServer.js';
+import WebRTCSigServer_Legacy from './WebRTCSigServer_Legacy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,7 +57,15 @@ app.listen(HTTP_PORT, () => {
     console.log(`Server running on http://${HOST}:${HTTP_PORT}`);
 });
 
+// WARNING: This same variable exists on Client and Server and must match, to determine which WebRTC implementation to use, and these
+// need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
+const useLegacyWebRTC = false;
+
 // Initialize WebRTCSigServer signaling server
-WebRTCSigServer.getInst(HOST, PORT);
+if (useLegacyWebRTC) {
+    WebRTCSigServer_Legacy.getInst(HOST, PORT);}
+else {
+    WebRTCSigServer.getInst(HOST, PORT);
+}
 
 

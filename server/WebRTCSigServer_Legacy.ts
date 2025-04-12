@@ -4,9 +4,8 @@ import { logger } from './Logger.js';
 const log = logger.logInfo;
 const logError = logger.logError;
 
-/* NOTE: See README.md, to unserstand why this Legacy class still exists. */
-class WebRTCSigServer {
-    private static inst: WebRTCSigServer | null = null;
+class WebRTCSigServer_Legacy {
+    private static inst: WebRTCSigServer_Legacy | null = null;
 
     constructor() {
         log('WebRTCSigServer singleton created');
@@ -14,11 +13,11 @@ class WebRTCSigServer {
 
     static getInst(host: string, port: string) {
         // Create instance if it doesn't exist
-        if (!WebRTCSigServer.inst) {
-            WebRTCSigServer.inst = new WebRTCSigServer();
-            WebRTCSigServer.inst.init(host, port);
+        if (!WebRTCSigServer_Legacy.inst) {
+            WebRTCSigServer_Legacy.inst = new WebRTCSigServer_Legacy();
+            WebRTCSigServer_Legacy.inst.init(host, port);
         }
-        return WebRTCSigServer.inst;
+        return WebRTCSigServer_Legacy.inst;
     }
 
     async init(host: string, port: string) {
@@ -195,4 +194,4 @@ class WebRTCSigServer {
     }
 }
 
-export default WebRTCSigServer;
+export default WebRTCSigServer_Legacy;
