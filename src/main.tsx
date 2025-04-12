@@ -7,7 +7,7 @@ import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
-import {AppService} from './AppService';
+import {app} from './AppService';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
@@ -15,8 +15,7 @@ function AppServiceConnector() {
     const gs = useGlobalState();
     
     useEffect(() => {
-        const appService = AppService.getInst();
-        appService.setGlobals(gd, gs);
+        app.setGlobals(gd, gs);
         
         return () => {
             // Optional cleanup if needed
@@ -57,8 +56,3 @@ createRoot(document.getElementById('root')!).render(
         </GlobalStateProvider>
     </StrictMode>,
 );
-
-const appService = AppService.getInst();
-if (appService) {
-    console.log('AppService singleton initialized successfully');
-}

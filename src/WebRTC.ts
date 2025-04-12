@@ -1,8 +1,7 @@
 import SimplePeer, { Instance as SimplePeerInstance, SignalData } from 'simple-peer';
 import {AppServiceIntf} from './AppServiceIntf.ts';
 import IndexedDB from './IndexedDB.ts';
-import Utils from './Util.ts';
-const util = Utils.getInst();
+import {util} from './Util.ts';
 
 /**
  * WebRTC class using simple-peer for handling P2P connections.

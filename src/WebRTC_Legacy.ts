@@ -1,7 +1,6 @@
 import {AppServiceIntf} from './AppServiceIntf.ts';
 import IndexedDB from './IndexedDB.ts';
-import Utils from './Util.ts';
-const util = Utils.getInst();
+import {util} from './Util.ts';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.

@@ -1,9 +1,8 @@
 import WebRTC from './WebRTC';
 import IndexedDB from './IndexedDB.ts';
 
-import Utils from './Util.js';
+import {util} from './Util.js';
 import {AppServiceIntf, ChatMessage, MessageAttachment} from './AppServiceIntf.ts';
-const util = Utils.getInst();
 
 import Crypto from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';

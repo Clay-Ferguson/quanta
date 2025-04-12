@@ -71,4 +71,5 @@ class Util {
     }
 }
 
-export default Util;
+export const util = Util.getInst();
+

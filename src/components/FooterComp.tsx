@@ -2,9 +2,7 @@ import React from 'react';
 import { useGlobalState } from '../GlobalState';
 import { useState, useRef, useEffect } from 'react';
 import {app} from '../AppService';
-import Util from '../Util';
-
-const util = Util.getInst(); 
+import {util} from '../Util';
 
 const FooterComponent: React.FC = () => {
     const gs = useGlobalState();

@@ -1,5 +1,5 @@
 import React from 'react';
-import Util from '../Util';
+import {util} from '../Util';
 import { app } from '../AppService';
 import { MessageAttachment } from '../AppServiceIntf';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,8 +14,6 @@ const AttachmentComp: React.FC<AttachmentCompProps> = ({
     attachment: att,
     index = 0 
 }) => {
-    const util = Util.getInst();
-
     const downloadFile = (attachment: MessageAttachment) => {
         const downloadLink = document.createElement('a');
         downloadLink.href = attachment.data;
