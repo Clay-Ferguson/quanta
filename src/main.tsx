@@ -7,7 +7,7 @@ import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
-import AppService from './AppService';
+import {AppService} from './AppService';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {

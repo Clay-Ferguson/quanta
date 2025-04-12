@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Contact } from '../AppServiceIntf';
 import { useGlobalState } from '../GlobalState';
-import AppService from '../AppService';   
+import {app} from '../AppService';   
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-
-const app = AppService.getInst(); 
 
 const ContactsListComp: React.FC = () => {
     const { contacts = [] } = useGlobalState();

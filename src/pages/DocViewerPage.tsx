@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
-import AppService from '../AppService';
+import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
-
-const app = AppService.getInst(); 
 
 // Cache for the documents content, using a Map to support multiple documents
 const documentCache: Map<string, string> = new Map();

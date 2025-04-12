@@ -1,10 +1,9 @@
 import React from 'react';
 import { useGlobalState } from '../GlobalState';
 import { useState, useRef, useEffect } from 'react';
-import AppService from '../AppService';
+import {app} from '../AppService';
 import Util from '../Util';
 
-const app = AppService.getInst(); 
 const util = Util.getInst(); 
 
 const FooterComponent: React.FC = () => {

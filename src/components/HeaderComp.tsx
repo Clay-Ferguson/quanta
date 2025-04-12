@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import AppService from '../AppService';
+import {app} from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
-
-
-const app = AppService.getInst(); 
 
 const HeaderComp: React.FC = () => {
     const gs = useGlobalState();

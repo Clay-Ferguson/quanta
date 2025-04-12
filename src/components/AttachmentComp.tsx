@@ -1,6 +1,6 @@
 import React from 'react';
 import Util from '../Util';
-import AppService from '../AppService';
+import { app } from '../AppService';
 import { MessageAttachment } from '../AppServiceIntf';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
@@ -9,8 +9,6 @@ interface AttachmentCompProps {
   attachment: MessageAttachment;
   index?: number;
 }
-
-const app = AppService.getInst();
 
 const AttachmentComp: React.FC<AttachmentCompProps> = ({ 
     attachment: att,

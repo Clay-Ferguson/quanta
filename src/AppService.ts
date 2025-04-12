@@ -13,7 +13,7 @@ const crypto = Crypto.getInst();
 declare const RTC_HOST: string;
 declare const RTC_PORT: string;
 
-class AppService implements AppServiceIntf  {
+export class AppService implements AppServiceIntf  {
     private static inst: AppService | null = null;
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
@@ -394,4 +394,6 @@ class AppService implements AppServiceIntf  {
     }
 }
 
-export default AppService;
+// export default AppService;
+
+export const app = AppService.getInst();

@@ -1,8 +1,6 @@
 import React from 'react';
 import { useGlobalState } from '../GlobalState';
-import AppService from '../AppService';
-
-const app = AppService.getInst(); 
+import {app} from '../AppService';
 
 const ImageViewerComp: React.FC = () => {
     const gs = useGlobalState();

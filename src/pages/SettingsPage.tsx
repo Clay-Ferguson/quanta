@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
-import AppService from '../AppService';
+import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
-
-const app = AppService.getInst(); 
 
 const SettingsPage: React.FC = () => {
     const gs = useGlobalState();
