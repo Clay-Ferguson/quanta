@@ -1,0 +1,249 @@
+import sqlite3 from 'sqlite3';
+import { open, Database } from 'sqlite';
+import path from 'path';
+import fs from 'fs';
+
+export interface ChatMessage {
+    id: string;
+    timestamp: number;
+    sender: string;
+    content: string;
+    publicKey?: string;
+    signature?: string;
+    attachments?: MessageAttachment[];
+}
+
+export interface MessageAttachment {
+    name: string;
+    type: string;
+    size: number;
+    data: string;
+}
+
+export class DBManager {
+    private db: Database | null = null;
+    private static instance: DBManager | null = null;
+    private dbPath: string;
+
+    private constructor(dbPath: string) {
+        this.dbPath = dbPath;
+    }
+
+    public static async getInstance(dbPath = './db/quanta-chat.db'): Promise<DBManager> {
+        console.log('DBManager.getInstance', dbPath);
+        if (!DBManager.instance) {
+            DBManager.instance = new DBManager(dbPath);
+            await DBManager.instance.initialize();
+        }
+        return DBManager.instance;
+    }
+
+    private async initialize(): Promise<void> {
+        // Ensure data directory exists
+        const dbDir = path.dirname(this.dbPath);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+
+        // Open and initialize the database
+        console.log('Opening database:', this.dbPath);
+        this.db = await open({
+            filename: this.dbPath,
+            driver: sqlite3.Database
+        });
+
+        // Create tables if they don't exist
+        console.log('Initializing database schema');
+        await this.db.exec(`
+            CREATE TABLE IF NOT EXISTS rooms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS messages (
+                id TEXT PRIMARY KEY,
+                room_id INTEGER NOT NULL,
+                timestamp INTEGER NOT NULL,
+                sender TEXT NOT NULL,
+                content TEXT,
+                public_key TEXT,
+                signature TEXT,
+                FOREIGN KEY (room_id) REFERENCES rooms (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS attachments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                data BLOB,
+                FOREIGN KEY (message_id) REFERENCES messages (id)
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages (room_id);
+            CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
+            CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments (message_id);
+        `);
+    }
+
+    public async persistMessage(roomName: string, message: ChatMessage): Promise<boolean> {
+        console.log('Persisting message:', message);
+        if (!this.db) {
+            console.error('Database not initialized');
+            return false;
+        }
+
+        try {
+            // Begin transaction
+            await this.db.run('BEGIN TRANSACTION');
+
+            // Ensure room exists
+            const roomId = await this.getOrCreateRoom(roomName);
+            console.log('    Room ID:', roomId);
+
+            // Store the message
+            await this.db.run(
+                `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    message.id, 
+                    roomId, 
+                    message.timestamp, 
+                    message.sender, 
+                    message.content,
+                    message.publicKey || null,
+                    message.signature || null
+                ]
+            );
+            console.log('    Message Recored stored');
+
+            // Store attachments if any
+            if (message.attachments && message.attachments.length > 0) {
+                console.log('    Storing attachments:', message.attachments.length);
+                // Store each attachment
+                for (const attachment of message.attachments) {
+                    // Extract the binary data from the data URL
+                    let binaryData = null;
+                    if (attachment.data) {
+                        const matches = attachment.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                        if (matches && matches.length === 3) {
+                            binaryData = Buffer.from(matches[2], 'base64');
+                        }
+                    }
+
+                    await this.db.run(
+                        `INSERT INTO attachments (message_id, name, type, size, data)
+                         VALUES (?, ?, ?, ?, ?)`,
+                        [
+                            message.id,
+                            attachment.name,
+                            attachment.type,
+                            attachment.size,
+                            binaryData
+                        ]
+                    );
+                }
+            }
+
+            // Commit transaction
+            await this.db.run('COMMIT');
+            console.log('    Message persisted successfully');
+            return true;
+
+        } catch (error) {
+            // Rollback on error
+            await this.db.run('ROLLBACK');
+            console.error('Error persisting message:', error);
+            return false;
+        }
+    }
+
+    private async getOrCreateRoom(roomName: string): Promise<number> {
+        // Check if room exists
+        let result = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+        
+        if (result) {
+            return result.id;
+        }
+        
+        // Create new room if it doesn't exist
+        result = await this.db!.run('INSERT INTO rooms (name) VALUES (?)', roomName);
+        return result.lastID;
+    }
+
+    public async getMessagesForRoom(roomName: string, limit = 100, offset = 0): Promise<ChatMessage[]> {
+        if (!this.db) {
+            console.error('Database not initialized');
+            return [];
+        }
+
+        try {
+            // Get the room ID
+            const room = await this.db.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            if (!room) {
+                return [];
+            }
+
+            // Get messages
+            const messages = await this.db.all(`
+                SELECT m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature
+                FROM messages m
+                WHERE m.room_id = ?
+                ORDER BY m.timestamp DESC
+                LIMIT ? OFFSET ?
+            `, [room.id, limit, offset]);
+
+            // For each message, get its attachments
+            for (const message of messages) {
+                const attachments = await this.db.all(`
+                    SELECT name, type, size, data
+                    FROM attachments
+                    WHERE message_id = ?
+                `, [message.id]);
+                
+                // Convert binary data back to data URLs
+                message.attachments = attachments.map(att => {
+                    let dataUrl = '';
+                    if (att.data) {
+                        dataUrl = `data:${att.type};base64,${Buffer.from(att.data).toString('base64')}`;
+                    }
+                    
+                    return {
+                        name: att.name,
+                        type: att.type,
+                        size: att.size,
+                        data: dataUrl
+                    };
+                });
+            }
+
+            return messages;
+        } catch (error) {
+            console.error('Error retrieving messages:', error);
+            return [];
+        }
+    }
+
+    // Add a new method to retrieve message history
+    async getMessageHistory(req: any, res: any) {
+        const { roomName, limit, offset } = req.query;
+            
+        if (!roomName) {
+            return res.status(400).json({ error: 'Room name is required' });
+        }
+            
+        try {
+            const messages = await this.getMessagesForRoom(
+                roomName,
+                limit ? parseInt(limit) : 100,
+                offset ? parseInt(offset) : 0
+            );
+                
+            res.json({ messages });
+        } catch (error) {
+            console.error('Error retrieving message history:', error);
+            res.status(500).json({ error: 'Failed to retrieve message history' });
+        }
+    } 
+}

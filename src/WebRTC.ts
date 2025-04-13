@@ -355,12 +355,14 @@ export default class WebRTC implements WebRTCIntf {
             }
         });
 
-        // Fallback: If no peers are connected, send via signaling server broadcast
-        // Note: In a pure P2P setup, you might *not* want this fallback if delivery
-        // guarantee isn't critical or if you only want messages when peers are directly connected.
-        // Adjust this logic based on your app's requirements.
-        const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
+        // Always persist on server regardless of P2P delivery
+        // todo-0: we will make this an optional checkbox on client side so they can select
+        // wether they want privacy or room persistence
+        this.persistOnServer(msg);
 
+        // If no peers connected, also broadcast via server for real-time delivery
+        const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
+        
         if (connectedPeerCount === 0 && this.participants.size > 0) {
             util.log(`No connected P2P peers (${this.peers.size} total). Sending message via signaling broadcast.`);
             if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -377,6 +379,21 @@ export default class WebRTC implements WebRTCIntf {
             util.log(`Message sent via P2P to ${connectedPeerCount} peers.`);
         } else {
             util.log('No participants in the room to send the message to.');
+        }
+    }
+
+    // New method to persist messages on the server
+    private persistOnServer(msg: any) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'persist', // Use a dedicated type for server-only persistence
+                message: msg,
+                room: this.roomId
+            }));
+            util.log('Message persisted to server database.');
+        } else {
+            console.warn('Cannot persist message: WebSocket not open.');
+            // Could implement a retry mechanism or queue for offline messages
         }
     }
 }

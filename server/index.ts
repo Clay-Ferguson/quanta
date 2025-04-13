@@ -4,12 +4,12 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import WebRTCSigServer from './WebRTCSigServer.js';
 import WebRTCSigServer_Legacy from './WebRTCSigServer_Legacy.js';
+import { DBManager } from './DBManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
 const HOST = process.env.QUANTA_CHAT_HOST || 'localhost';
 const PORT = process.env.QUANTA_CHAT_PORT || '8080';
 const HTTP_PORT = process.env.QUANTA_CHAT_HTTP_PORT || 8000;
@@ -18,6 +18,13 @@ app.use(express.json());
 
 app.get('/api/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// API endpoint to get message history
+app.get('/api/messages', async (req, res) => {
+    console.log('getMessageHistory');
+    const ret = await db.getMessageHistory(req, res);
+    res.json(ret);
 });
 
 const distPath = path.join(__dirname, '../../dist');
@@ -61,11 +68,13 @@ app.listen(HTTP_PORT, () => {
 // need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
 const useLegacyWebRTC = false;
 
+const db = await DBManager.getInstance();
+
 // Initialize WebRTCSigServer signaling server
 if (useLegacyWebRTC) {
-    WebRTCSigServer_Legacy.getInst(HOST, PORT);}
+    await WebRTCSigServer_Legacy.getInst(HOST, PORT);}
 else {
-    WebRTCSigServer.getInst(HOST, PORT);
+    await WebRTCSigServer.getInst(db, HOST, PORT);
 }
 
 

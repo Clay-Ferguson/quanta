@@ -391,22 +391,61 @@ export class AppService implements AppServiceTypes  {
         return msg;
     }
 
-    async loadRoomMessages(roomId: string) {
+    async loadRoomMessages(roomId: string): Promise<ChatMessage[]> {
+        let messages: ChatMessage[] = [];
+        
         if (!this.storage) {
             console.warn('No storage instance available for loading messages');
             return [];
         }
         console.log("Loading messages for room: " + roomId);
+        
+        // First get room messages from local storage
         try {
             const roomData: any = await this.storage.getItem('room_' + roomId);
             if (roomData) {
-                util.log('Loaded ' + roomData.messages.length + ' messages for room: ' + roomId);
-                return roomData.messages || [];
+                util.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
+                messages = roomData.messages;
             }
         } catch (error) {
             util.log('Error loading messages from storage: ' + error);
         }
-        return [];
+
+        // Next get room messages from server
+        try {
+            const response = await fetch(`/api/messages?roomName=${encodeURIComponent(roomId)}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.messages && data.messages.length > 0) {
+                    util.log(`Loaded ${data.messages.length} messages from server for room: ${roomId}`);
+            
+                    // Create a map of existing message IDs for quick lookup
+                    const existingMessageIds = new Set(messages.map(msg => msg.id));
+                    
+                    // Add only new messages from the server
+                    for (const serverMsg of data.messages) {
+                        if (!existingMessageIds.has(serverMsg.id)) {
+                            messages.push(serverMsg);
+                        }
+                    }
+                    
+                    // Sort messages by timestamp to ensure chronological order
+                    messages.sort((a, b) => a.timestamp - b.timestamp);
+                    
+                    // Save the merged messages to local storage
+                    await this.storage.setItem('room_' + roomId, {
+                        messages: messages,
+                        lastUpdated: new Date().toISOString()
+                    });
+                    
+                    util.log(`Merged local and server messages. Total unique messages: ${messages.length}`);
+                }
+            }
+        } catch (error) {
+            util.log('Error loading messages from server, falling back to local storage: ' + error);
+        }
+
+        return messages;
     }
 
     clear = async () => {
