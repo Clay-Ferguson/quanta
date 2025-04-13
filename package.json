@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "cd server && ln -sf ../common ./common",
+    "prebuild": "cd server && ln -sf ../common ./common-shared",
     "build:client": "tsc -b && vite build",
     "build:server": "tsc -p server/tsconfig.json",
     "build": "yarn build:client && yarn build:server",

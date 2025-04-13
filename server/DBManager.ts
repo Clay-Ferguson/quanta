@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
-import {ChatMessageIntf} from './common/CommonTypes.js';
+import {ChatMessageIntf} from './common-shared/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;

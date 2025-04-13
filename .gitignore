@@ -6,4 +6,5 @@ dist/
 db/
 
 # Ignore our symbolic link to the root files common folder
-server/common
+server/common-shared
+
