@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+
+// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
 import WebRTCSigServer_Legacy from './WebRTCSigServer_Legacy.js';
 import { DBManager } from './DBManager.js';

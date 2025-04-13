@@ -411,7 +411,10 @@ export class AppService implements AppServiceTypes  {
             util.log('Error loading messages from storage: ' + error);
         }
 
-        // Next get room messages from server
+        // Next get room messages from server, to update local storage with any we may not have yet.
+        // todo-0: we will be implementing an `/api/messageIds` endpoint to get just the message ids, and then we can
+        // get the messages we don't have, by submitting them all to the server to get the full messages, but for now
+        // we use this simplistic un-optimized method.
         try {
             const response = await fetch(`/api/messages?roomName=${encodeURIComponent(roomId)}`);
             if (response.ok) {
@@ -444,7 +447,6 @@ export class AppService implements AppServiceTypes  {
         } catch (error) {
             util.log('Error loading messages from server, falling back to local storage: ' + error);
         }
-
         return messages;
     }
 

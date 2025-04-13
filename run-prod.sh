@@ -11,6 +11,7 @@ export QUANTA_CHAT_HTTP_PORT="80"
 # Run from Dist folder only
 
 # Note: the -E flag preserves the environment variables
+pushd server && ln -sf ../common ./common && popd
 sudo -E node dist/server/index.js
 
 read -p "Quanta Chat Ended. press ENTER to exit..."

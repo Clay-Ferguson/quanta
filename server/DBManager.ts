@@ -3,22 +3,8 @@ import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
 
-export interface ChatMessage {
-    id: string;
-    timestamp: number;
-    sender: string;
-    content: string;
-    publicKey?: string;
-    signature?: string;
-    attachments?: MessageAttachment[];
-}
-
-export interface MessageAttachment {
-    name: string;
-    type: string;
-    size: number;
-    data: string;
-}
+// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
+import {ChatMessageIntf} from './common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -29,6 +15,7 @@ export class DBManager {
         this.dbPath = dbPath;
     }
 
+    // todo-0: put filename in ENV variable.
     public static async getInstance(dbPath = './db/quanta-chat.db'): Promise<DBManager> {
         console.log('DBManager.getInstance', dbPath);
         if (!DBManager.instance) {
@@ -87,7 +74,7 @@ export class DBManager {
         `);
     }
 
-    public async persistMessage(roomName: string, message: ChatMessage): Promise<boolean> {
+    public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         console.log('Persisting message:', message);
         if (!this.db) {
             console.error('Database not initialized');
@@ -116,11 +103,11 @@ export class DBManager {
                     message.signature || null
                 ]
             );
-            console.log('    Message Recored stored');
+            console.log('Message Recored stored: ', message.id);
 
             // Store attachments if any
             if (message.attachments && message.attachments.length > 0) {
-                console.log('    Storing attachments:', message.attachments.length);
+                console.log('Storing attachments:', message.attachments.length);
                 // Store each attachment
                 for (const attachment of message.attachments) {
                     // Extract the binary data from the data URL
@@ -172,7 +159,7 @@ export class DBManager {
         return result.lastID;
     }
 
-    public async getMessagesForRoom(roomName: string, limit = 100, offset = 0): Promise<ChatMessage[]> {
+    public async getMessagesForRoom(roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> {
         if (!this.db) {
             console.error('Database not initialized');
             return [];

@@ -1,3 +1,4 @@
+import { ChatMessageIntf, MessageAttachmentIntf } from '../common/CommonTypes';
 export interface AppServiceTypes {
     /**
      * Handle RTC state changes
@@ -27,22 +28,11 @@ export enum PageNames{
     quantaChat = 'QuantaChat',
 }
 
-export type MessageAttachment = {
-    name: string;
-    type: string;
-    size: number;
-    data: string;
+export type MessageAttachment = MessageAttachmentIntf & {
 }
 
-export type ChatMessage = {
-    id: string;
-    sender: string;
-    content: string;
-    timestamp: number;
-    attachments?: MessageAttachment[];
-    sigVersion?: string;
-    signature?: string; // signature hex
-    publicKey?: string; // public key hex
+export type ChatMessage = ChatMessageIntf & {
+    sigVersion?: string; // todo-0: need to put this in the case class and have stored on server as well.
     sigOk?: boolean; // signature valid, regardless of presence in our Contact List
     trusted?: boolean; // trusted contact (in our Contact List, at time of receipt)
 }
