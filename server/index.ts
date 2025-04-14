@@ -102,29 +102,20 @@ app.get('*', serveIndexHtml);
 let server = null;
 
 if (SECURE === 'y') {
-    console.log('HTTPS in use. (secure)');
-    // --- HTTPS Configuration ---
-    // todo-0: put the path to these in an env var
-    const privateKeyPath = '/etc/letsencrypt/live/chat.quanta.wiki/privkey.pem';
-    const certificatePath = '/etc/letsencrypt/live/chat.quanta.wiki/fullchain.pem';
-
     try {
-        const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-        const certificate = fs.readFileSync(certificatePath, 'utf8');
-
-        const credentials = {
-            key: privateKey,
-            cert: certificate
-        };
-
-        server = https.createServer(credentials, app);
+        const CERT_PATH = process.env.QUANTA_CHAT_CERT_PATH;
+        if (!CERT_PATH) {
+            throw new Error('QUANTA_CHAT_CERT_PATH environment variable is not set');
+        }
+        const key = fs.readFileSync(`${CERT_PATH}/privkey.pem`, 'utf8');
+        const cert = fs.readFileSync(`${CERT_PATH}/fullchain.pem`, 'utf8');
+        server = https.createServer({key, cert}, app);
     } catch (error: any) {
         console.error('Error setting up HTTPS:', error.message);
         throw error;
     }
 }
 else {
-    console.log('HTTP in use. (insecure)');
     server = http.createServer(app);
 }
 

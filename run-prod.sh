@@ -8,6 +8,7 @@ export QUANTA_CHAT_PORT="443"
 export QUANTA_CHAT_SECURE="y"
 
 export QUANTA_CHAT_DB_FILE_NAME="./db/quanta-chat.db"
+export QUANTA_CHAT_CERT_PATH = "/etc/letsencrypt/live/chat.quanta.wiki"
 
 # yarn build:client
 # yarn build:server

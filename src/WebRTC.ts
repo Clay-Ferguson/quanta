@@ -362,7 +362,7 @@ export default class WebRTC implements WebRTCIntf {
 
         // Always persist on server regardless of P2P delivery
         // todo-0: we will make this an optional checkbox on client side so they can select
-        // wether they want privacy or room persistence
+        // whether they want privacy or room persistence
         this.persistOnServer(msg);
 
         // If no peers connected, also broadcast via server for real-time delivery
