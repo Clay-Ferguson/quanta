@@ -3,8 +3,10 @@ import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
 
-// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
-import {ChatMessageIntf} from './common-shared/CommonTypes.js';
+// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
+// This is correct. The "@common" folder is an alias so we can get access to 
+// the common folder one level above the server folder (see tsconfig.json).
+import {ChatMessageIntf} from '@common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -15,8 +17,7 @@ export class DBManager {
         this.dbPath = dbPath;
     }
 
-    // todo-0: put filename in ENV variable.
-    public static async getInstance(dbPath = './db/quanta-chat.db'): Promise<DBManager> {
+    public static async getInstance(dbPath: string): Promise<DBManager> {
         console.log('DBManager.getInstance', dbPath);
         if (!DBManager.instance) {
             DBManager.instance = new DBManager(dbPath);
@@ -103,10 +104,10 @@ export class DBManager {
                     message.signature || null
                 ]
             );
-            console.log('Message Recored stored: ', message.id);
+            console.log('Message Record stored: ', message.id);
 
             // Store attachments if any
-            if (message.attachments && message.attachments.length > 0) {
+            if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
                 console.log('Storing attachments:', message.attachments.length);
                 // Store each attachment
                 for (const attachment of message.attachments) {
@@ -139,9 +140,16 @@ export class DBManager {
             return true;
 
         } catch (error) {
-            // Rollback on error
-            await this.db.run('ROLLBACK');
             console.error('Error persisting message:', error);
+            // Only try to rollback if we have a database connection
+            try {
+                if (this.db) {
+                    await this.db.run('ROLLBACK');
+                }
+            } catch (rollbackError) {
+                // If rollback fails (e.g., no transaction active), just log it
+                console.error('Rollback failed:', rollbackError);
+            }
             return false;
         }
     }

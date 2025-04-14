@@ -4,6 +4,9 @@ import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 import { WebRTCIntf } from './WebRTCIntf.ts';
 
+// make this an argument passed to the constructor like other props
+declare const SECURE: string;
+
 /**
  * WebRTC class using simple-peer for handling P2P connections.
  * Designed as a singleton.
@@ -37,8 +40,9 @@ export default class WebRTC implements WebRTCIntf {
             return;
         }
 
-        util.log('Starting WebSocket connection for signaling...');
-        const url = `ws://${this.host}:${this.port}`;
+        console.log('Starting WebSocket connection for signaling. Secure=' + SECURE);
+        const url = `${SECURE==='y' ? 'wss' : 'ws'}://${this.host}:${this.port}`;
+        
         console.log('Connecting to signaling server at ' + url);
 
         // Clean up any old socket listeners before creating a new one
@@ -132,6 +136,7 @@ export default class WebRTC implements WebRTCIntf {
         // Initiate connections TO existing users
         existingParticipants.forEach(peerName => {
             if (peerName !== this.userName && !this.peers.has(peerName)) {
+                util.log(`Creating initiator peer connection with ${peerName}`);
                 this.createPeer(peerName, true); // We initiate
             }
         });
@@ -202,6 +207,7 @@ export default class WebRTC implements WebRTCIntf {
         util.log(`Creating ${isInitiator ? 'initiator' : 'non-initiator'} peer connection with ${peerName}`);
 
         try {
+            console.log("Creating a SimplePeer");
             const peer = new SimplePeer({
                 initiator: isInitiator,
                 trickle: true, // Enable trickle ICE for faster connection setup
@@ -308,7 +314,6 @@ export default class WebRTC implements WebRTCIntf {
             // Wait a moment for cleanup before reconnecting
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-
 
         this.userName = userName;
         this.roomId = roomId;

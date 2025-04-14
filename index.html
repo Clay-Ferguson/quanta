@@ -11,8 +11,9 @@
     <script>
       // parameters inserted by server, before this HTML is sent back to the client. This is just a trick for letting the server
       // put information into JavaScript so the client doesn't need to make another request to get it.
-      let RTC_HOST = "{{HOST}}";
-      let RTC_PORT = "{{PORT}}";
+      let HOST = "{{HOST}}";
+      let PORT = "{{PORT}}";
+      let SECURE = "{{SECURE}}";
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

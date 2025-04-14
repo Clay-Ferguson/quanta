@@ -1,8 +1,9 @@
-import {WebSocketServer} from 'ws';
+import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 
 const log = logger.logInfo;
 const logError = logger.logError;
+declare const SECURE: string;
 
 class WebRTCSigServer_Legacy {
     private static inst: WebRTCSigServer_Legacy | null = null;
@@ -26,7 +27,7 @@ class WebRTCSigServer_Legacy {
             port: parseInt(port)
         });
 
-        log(`Signaling Server running on ws://${host}:${port}`);
+        log(`Signaling Server running on ${SECURE=='y' ? 'wss' : 'ws'}://${host}:${port}`);
 
         // Track client connections with more information
         const clients = new Map(); // Map of WebSocket -> {room, name}

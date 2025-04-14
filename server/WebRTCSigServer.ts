@@ -1,4 +1,4 @@
-import {WebSocketServer} from 'ws';
+import {WebSocketServer, WebSocket} from 'ws';
 import {logger} from './Logger.js';
 import { DBManager } from './DBManager.js';
 
@@ -18,23 +18,20 @@ class WebRTCSigServer {
         this.rooms = new Map();   // Map of roomId -> Set of client names in the room
     }
 
-    static getInst(db: DBManager, host: string, port: string) {
+    static getInst(db: DBManager, host: string, port: string, server: any) {
         // Create instance if it doesn't exist
         if (!WebRTCSigServer.inst) {
             WebRTCSigServer.inst = new WebRTCSigServer();
-            WebRTCSigServer.inst.init(db, host, port);
+            WebRTCSigServer.inst.init(db, host, port, server);
         }
         return WebRTCSigServer.inst;
     }
 
-    async init(db: DBManager, host: string, port: string) {
+    async init(db: DBManager, host: string, port: string, server: any) {
         this.db = db;
-        this.wss = new WebSocketServer({
-            host,
-            port: parseInt(port)
-        });
-
-        log(`Signaling Server running on ws://${host}:${port}`);
+        
+        log(`Starging Signaling Server on ${host}:${port}`);
+        this.wss = new WebSocketServer({host, server });
 
         this.wss.on('connection', (ws, req) => {
             const clientIp = req.socket.remoteAddress;

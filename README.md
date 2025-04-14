@@ -1,6 +1,6 @@
 # About QuantaChat
 
-## [Try QuantaChat Now! --> http://chat.quanta.wiki](http://chat.quanta.wiki)
+## [Try QuantaChat Now! --> https://chat.quanta.wiki](https://chat.quanta.wiki)
 
 ### Peer-to-Peer WebRTC-based Chat Web App
 

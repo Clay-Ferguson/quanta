@@ -4,10 +4,13 @@
       "module": "NodeNext",
       "moduleResolution": "NodeNext",
       "esModuleInterop": true,
-      "outDir": "../dist/server",
+      "outDir": "../dist",
       "sourceMap": true,
       "strict": true,
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "paths": {
+        "@common/*": ["../common/*"]
+      }
     },
     "include": ["./**/*.ts"]
   }

@@ -5,6 +5,3 @@ dist/
 .vscode/
 db/
 
-# Ignore our symbolic link to the root files common folder
-server/common-shared
-

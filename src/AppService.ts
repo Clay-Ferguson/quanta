@@ -10,12 +10,13 @@ import WebRTC from './WebRTC.ts';
 import WebRTC_Legacy from './WebRTC_Legacy.ts';
 
 // Vars are injected diretly into HTML by server
-declare const RTC_HOST: string;
-declare const RTC_PORT: string;
+declare const HOST: string;
+declare const PORT: string;
 
 // WARNING: This same variable exists on Client and Server and must match, to determine which WebRTC implementation to use, and these
 // need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
-const useLegacyWebRTC = true;
+// todo-0: After enabling https/wss we need to retest and update the legacy code because it's not not trusted and may not work.
+const useLegacyWebRTC = false;
 
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
@@ -26,8 +27,8 @@ export class AppService implements AppServiceTypes  {
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         this.rtc = useLegacyWebRTC ? //
-            new WebRTC_Legacy(this.storage, this, RTC_HOST, RTC_PORT) :
-            new WebRTC(this.storage, this, RTC_HOST, RTC_PORT);
+            new WebRTC_Legacy(this.storage, this, HOST, PORT) :
+            new WebRTC(this.storage, this, HOST, PORT);
 
         await this.restoreSavedValues();
 

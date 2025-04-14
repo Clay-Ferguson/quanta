@@ -3,6 +3,9 @@ import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 import { WebRTCIntf } from './WebRTCIntf.ts';
 
+// make this an argument passed to the constructor like other props
+declare const SECURE: string;
+
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
  * 
@@ -39,7 +42,7 @@ class WebRTC_Legacy implements WebRTCIntf {
         util.log('Starting WebRTC connection setup...');
 
         // Create WebSocket connection to signaling server. 
-        const url = `ws://${this.host}:${this.port}`;
+        const url = `${SECURE=='y' ? 'wss' : 'ws'}://${this.host}:${this.port}`;
         console.log('Connecting to signaling server at ' + url);
         this.socket = new WebSocket(url);
         this.socket.onopen = this._onopen;
