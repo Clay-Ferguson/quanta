@@ -62,8 +62,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 // API endpoint to get message history
 app.get('/api/messages', async (req, res) => {
     console.log('getMessageHistory');
-    const ret = await db.getMessageHistory(req, res);
-    res.json(ret);
+    await db.getMessageHistory(req, res);
 });
 
 const distPath = path.join(__dirname, '../../dist');
