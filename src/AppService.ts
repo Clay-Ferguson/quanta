@@ -26,9 +26,11 @@ export class AppService implements AppServiceTypes  {
 
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
+        const saveToServer = await this.storage?.getItem(DBKeys.saveToServer);
+
         this.rtc = useLegacyWebRTC ? //
             new WebRTC_Legacy(this.storage, this, HOST, PORT) :
-            new WebRTC(this.storage, this, HOST, PORT);
+            new WebRTC(this.storage, this, HOST, PORT, saveToServer);
 
         await this.restoreSavedValues();
 

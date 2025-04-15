@@ -76,6 +76,20 @@ export default function FooterComp() {
         }
     }
 
+    const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
+    let textareaPlaceholder = '';
+    if (gs.connected) {
+        if (nowhereToDeliver) {
+            textareaPlaceholder = "No one is in this room, to recieve messages. Select 'Save Messages on Server' option in Settings to send now."
+        }
+        else {
+            textareaPlaceholder = "Type your message...";
+        }
+    }
+    else {
+        textareaPlaceholder = "Join a room to start chatting...";
+    }
+
     return (
         <footer className="w-full bg-gray-800 p-4 flex items-center flex-shrink-0 shadow-md border-t border-blue-400/30">
             {/* Hidden file input element */}
@@ -91,9 +105,9 @@ export default function FooterComp() {
                 ref={textareaRef}
                 value={message}
                 onChange={messageChange}
-                placeholder={gs.connected ? "Type your message..." : "Join a room to start chatting..."} 
+                placeholder={textareaPlaceholder} 
                 className="flex-grow rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-800"
-                disabled={!gs.connected}
+                disabled={!gs.connected || nowhereToDeliver}
             />
             <button 
                 className="bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-md px-4 py-2 ml-2 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700"

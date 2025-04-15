@@ -22,15 +22,17 @@ export default class WebRTC implements WebRTCIntf {
     app: AppServiceTypes | null = null;
     host: string = "";
     port: string = "";
+    saveToServer: boolean = true;
 
     participants = new Set<string>(); // Keep track of expected participants in the room
     connected: boolean = false; // WebSocket connection status
     
-    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string) {
+    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string, saveToServer: boolean) {
         this.storage = storage;
         this.app = app;
         this.host = host;
         this.port = port;
+        this.saveToServer = saveToServer;
     }
 
     private initRTC() {
@@ -280,7 +282,9 @@ export default class WebRTC implements WebRTCIntf {
             return peer;
 
         } catch (error) {
+            // todo-0: I'm randomly getting failure to create SimplePeer instance, and I'm really close to just abandon it and use the Legacy code, which we still have.
             console.error(`Failed to create SimplePeer instance for ${peerName}:`, error);
+            alert("We've encountered a problem. Please refresh yor browser, and try again.");
             return null;
         }
     }
@@ -359,13 +363,23 @@ export default class WebRTC implements WebRTCIntf {
             }
         });
 
+        // If no peers connected, also broadcast via server for real-time delivery
+        const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
+
         // Always persist on server regardless of P2P delivery
         // todo-0: we will make this an optional checkbox on client side so they can select
         // whether they want privacy or room persistence
-        this.persistOnServer(msg);
-
-        // If no peers connected, also broadcast via server for real-time delivery
-        const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
+        if (this.saveToServer) {
+            this.persistOnServer(msg);
+        }
+        else {
+            // Note: Theoretically this 'else' should never execute because we block the ability to 
+            // even enter messages in the case of having no peers connected (and no server storage option)
+            if (connectedPeerCount === 0) {
+                util.log('Your message cannot be delivered since no one else is in this room, and you have "Save to Server" disabled.');
+                return;
+            }
+        }
         
         if (connectedPeerCount === 0 && this.participants.size > 0) {
             util.log(`No connected P2P peers (${this.peers.size} total). Sending message via signaling broadcast.`);
