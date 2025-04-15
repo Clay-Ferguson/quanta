@@ -14,6 +14,7 @@ interface GlobalState {
     messages: Array<ChatMessage>; 
     participants: Set<string>;
     fullSizeImage: {src: string, name: string} | null;
+    appInitialized?: boolean;
 }
 
 const initialState: GlobalState = {
@@ -25,7 +26,8 @@ const initialState: GlobalState = {
     messages: [], 
     participants: new Set<string>(),
     contacts: [],
-    fullSizeImage: null
+    fullSizeImage: null,
+    appInitialized: false,
 };
 
 type GlobalAction = { type: string, payload: any};

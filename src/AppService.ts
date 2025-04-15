@@ -43,6 +43,10 @@ export class AppService implements AppServiceTypes  {
             }});
         }
 
+        this.gd({ type: 'setAppInitialized', payload: { 
+            appInitialized: true
+        }});
+
         this.restoreConnection();
     }
 
@@ -51,7 +55,9 @@ export class AppService implements AppServiceTypes  {
         const roomName = await this.storage?.getItem(DBKeys.roomName);
         const connected = await this.storage?.getItem(DBKeys.connected);
 
+
         if (userName && roomName && connected) {
+            // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
             await this._connect(userName, roomName);
         }
     }
@@ -168,7 +174,6 @@ export class AppService implements AppServiceTypes  {
 
         // set connected DB key
         await this.storage?.setItem(DBKeys.connected, true);
-        this.scrollToBottom();
     }
 
     _setContacts = (contacts: any) => {
@@ -221,14 +226,6 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
-    scrollToBottom = () => {
-        setTimeout(() => {
-            const chatLog = document.getElementById('chatLog');
-            if (chatLog) {
-                chatLog.scrollTop = chatLog.scrollHeight;
-            }}, 200);
-    }
-
     _persistMessage = async (msg: ChatMessage) => {
         console.log("Persisting message: ", msg);
 
@@ -268,7 +265,6 @@ export class AppService implements AppServiceTypes  {
         }
 
         this.saveMessages();
-        this.scrollToBottom();
     }
 
     existsInContacts(msg: ChatMessage) {

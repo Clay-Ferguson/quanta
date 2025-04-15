@@ -26,9 +26,29 @@ function AppServiceConnector() {
     return null; // This component doesn't render anything
 }
 
+// Loading indicator component
+// todo-0: put this in it's own file.
+function LoadingIndicator() {
+    return (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+            <div className="text-center">
+                <div className="inline-block relative">
+                    <div className="w-16 h-16 rounded-full border-4 border-blue-400 border-t-transparent animate-spin mb-4"></div>
+                </div>
+                <h2 className="text-xl font-semibold text-blue-400 mt-4">Loading Quanta Chat</h2>
+            </div>
+        </div>
+    );
+}
+
 // Component to handle conditional page rendering
 function PageRouter() {
-    const { page, userName } = useGlobalState();
+    const { page, userName, appInitialized } = useGlobalState();
+
+    // Show loading indicator while app is initializing
+    if (!appInitialized) {
+        return <LoadingIndicator />;
+    }
 
     // Until user enters a username, show the settings page, which will tell them why they're seeing it.
     if (!userName) {

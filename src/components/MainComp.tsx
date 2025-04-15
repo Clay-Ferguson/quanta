@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
@@ -8,7 +8,9 @@ import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-sv
 
 const MainComp: React.FC = () => {
     const gs = useGlobalState();
-
+    const chatLogRef = useRef<HTMLDivElement>(null);
+    const messageCount = gs.messages.length;
+    
     const formatMessageTime = (msg: ChatMessage) => {
         return new Date(msg.timestamp).toLocaleDateString('en-US', { 
             month: '2-digit', 
@@ -17,6 +19,14 @@ const MainComp: React.FC = () => {
         })+" "+
         new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
+
+    // Layout effect ensures scrolling happens before browser paint
+    // This prevents any visible flicker
+    useLayoutEffect(() => {
+        if (gs.connected && chatLogRef.current && messageCount > 0) {
+            chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+        }
+    }, [messageCount, gs.connected]);
 
     // Show not connected message if user is not connected
     if (!gs.connected) {
@@ -32,7 +42,11 @@ const MainComp: React.FC = () => {
     }
 
     return (
-        <main id="chatLog" className="flex-grow overflow-y-auto p-4 bg-gray-900">
+        <main 
+            id="chatLog" 
+            ref={chatLogRef} 
+            className="flex-grow overflow-y-auto p-4 bg-gray-900"
+        >
             <div className="space-y-3 max-w-full">
                 {gs.messages.map((msg, index) => (
                     <div 
