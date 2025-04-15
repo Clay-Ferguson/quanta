@@ -161,6 +161,10 @@ export class AppService implements AppServiceTypes  {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
+        this.gd({ type: 'connect', payload: { 
+            connecting: true
+        }});
+
         const messages = await this.loadRoomMessages(roomName);
         await this.rtc._connect(userName!, roomName);
         await this.setRoomAndUserName(roomName, userName!);
@@ -169,7 +173,8 @@ export class AppService implements AppServiceTypes  {
             userName,
             roomName,
             messages,
-            connected: true  
+            connected: true,
+            connecting: false
         }});
 
         // set connected DB key

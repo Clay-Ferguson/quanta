@@ -30,6 +30,9 @@ const MainComp: React.FC = () => {
 
     // Show not connected message if user is not connected
     if (!gs.connected) {
+        if (!gs.appInitialized || gs.connecting) {
+            return null;
+        }
         return (
             <main id="chatLog" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex items-center justify-center">
                 <div className="text-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-md">

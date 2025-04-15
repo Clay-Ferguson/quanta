@@ -9,6 +9,7 @@ import DocViewerPage from './pages/DocViewerPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import {app} from './AppService';
 import { PageNames } from './AppServiceTypes.ts';
+import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
@@ -24,21 +25,6 @@ function AppServiceConnector() {
     }, [gd, gs]);
     
     return null; // This component doesn't render anything
-}
-
-// Loading indicator component
-// todo-0: put this in it's own file.
-function LoadingIndicator() {
-    return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
-            <div className="text-center">
-                <div className="inline-block relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-blue-400 border-t-transparent animate-spin mb-4"></div>
-                </div>
-                <h2 className="text-xl font-semibold text-blue-400 mt-4">Loading Quanta Chat</h2>
-            </div>
-        </div>
-    );
 }
 
 // Component to handle conditional page rendering

@@ -7,6 +7,7 @@ const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undef
 interface GlobalState {
     keyPair: KeyPairHex;
     page: string,
+    connecting?: boolean;
     connected?: boolean;
     roomName: string; 
     userName: string;
@@ -20,6 +21,7 @@ interface GlobalState {
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
     page: PageNames.quantaChat,
+    connecting: false,
     connected: false, 
     roomName: '',
     userName: '', 
