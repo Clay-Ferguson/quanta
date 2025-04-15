@@ -282,7 +282,8 @@ export default class WebRTC implements WebRTCIntf {
             return peer;
 
         } catch (error) {
-            // todo-0: I'm randomly getting failure to create SimplePeer instance, and I'm really close to just abandon it and use the Legacy code, which we still have.
+            // todo-0: I'm randomly getting failure to create SimplePeer instance here, with a cryoptic error and stack trace
+            // and I'm really close to just abandon it and use the Legacy code, which we still have.
             console.error(`Failed to create SimplePeer instance for ${peerName}:`, error);
             alert("We've encountered a problem. Please refresh yor browser, and try again.");
             return null;
@@ -366,9 +367,6 @@ export default class WebRTC implements WebRTCIntf {
         // If no peers connected, also broadcast via server for real-time delivery
         const connectedPeerCount = Array.from(this.peers.values()).filter(p => p.connected).length;
 
-        // Always persist on server regardless of P2P delivery
-        // todo-0: we will make this an optional checkbox on client side so they can select
-        // whether they want privacy or room persistence
         if (this.saveToServer) {
             this.persistOnServer(msg);
         }
