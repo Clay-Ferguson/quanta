@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
@@ -6,7 +6,7 @@ import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 
-const MainComp: React.FC = () => {
+export default function MainComp() {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
     const messageCount = gs.messages.length;
@@ -98,6 +98,4 @@ const MainComp: React.FC = () => {
             </div>
         </main>
     );
-};
-
-export default MainComp;
+}

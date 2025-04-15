@@ -5,7 +5,7 @@ import { app } from "../AppService";
 
 // We have this component because eventually we'll have a "stack" (history) of pages, and we want to be able to go back to the previous pages in order.
 
-const BackButton: React.FC = () => {
+export default function BackButton() {
     return (
         <button 
             onClick={() => app.goToPage(PageNames.quantaChat)}
@@ -14,6 +14,5 @@ const BackButton: React.FC = () => {
         >
             <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5 mr-1" />Back
         </button>
-    )}
-
-export default BackButton;
+    );
+}

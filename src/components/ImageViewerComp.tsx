@@ -1,8 +1,7 @@
-import React from 'react';
 import { useGlobalState } from '../GlobalState';
 import {app} from '../AppService';
 
-const ImageViewerComp: React.FC = () => {
+export default function ImageViewerComp() {
     const gs = useGlobalState();
 
     return (
@@ -36,4 +35,3 @@ const ImageViewerComp: React.FC = () => {
     );
 };
 
-export default ImageViewerComp;

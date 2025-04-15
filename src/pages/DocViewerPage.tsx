@@ -11,10 +11,10 @@ interface DocViewerPageProps {
     title?: string;
 }
 
-const DocViewerPage: React.FC<DocViewerPageProps> = ({ 
+export default function DocViewerPage({ 
     filename = '/user-guide.md',
     title = 'Document Viewer' 
-}) => {
+}: DocViewerPageProps) {
     const [docContent, setDocContent] = useState<string | null>(documentCache.get(filename) || null);
     const [isLoading, setIsLoading] = useState<boolean>(!documentCache.has(filename));
 
@@ -76,6 +76,4 @@ const DocViewerPage: React.FC<DocViewerPageProps> = ({
             </div>
         </div>
     );
-};
-
-export default DocViewerPage;
+}

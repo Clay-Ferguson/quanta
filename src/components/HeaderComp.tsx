@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {app} from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,7 +6,7 @@ import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
 import { PageNames } from '../AppServiceTypes';
 
-const HeaderComp: React.FC = () => {
+export default function HeaderComp() {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
     
@@ -102,5 +102,3 @@ const HeaderComp: React.FC = () => {
         </header>
     );
 };
-
-export default HeaderComp;

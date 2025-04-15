@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
-import {app} from '../AppService';   
+import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const ContactsListComp: React.FC = () => {
+export default function ContactsListComp() {
     const { contacts = [] } = useGlobalState();
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
     const [editingContact, setEditingContact] = useState<string | null>(null);
@@ -263,5 +263,3 @@ const ContactEditRow: React.FC<{
         </tr>
     );
 };
-
-export default ContactsListComp;

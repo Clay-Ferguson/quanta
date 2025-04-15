@@ -13,7 +13,7 @@ declare const SECURE: string;
  * 
  * NOTE: See README.md, to unserstand why this Legacy class still exists.
  */
-class WebRTC_Legacy implements WebRTCIntf {
+export default class WebRTC_Legacy implements WebRTCIntf {
 
     // maps user names to their RTCPeerConnection objects
     peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -354,5 +354,3 @@ class WebRTC_Legacy implements WebRTCIntf {
         }
     }
 }
-
-export default WebRTC_Legacy;

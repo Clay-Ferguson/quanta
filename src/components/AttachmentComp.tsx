@@ -1,4 +1,3 @@
-import React from 'react';
 import {util} from '../Util';
 import { app } from '../AppService';
 import { MessageAttachment } from '../AppServiceTypes';
@@ -10,10 +9,7 @@ interface AttachmentCompProps {
   index?: number;
 }
 
-const AttachmentComp: React.FC<AttachmentCompProps> = ({ 
-    attachment: att,
-    index = 0 
-}) => {
+export default function AttachmentComp({ attachment: att, index = 0 }: AttachmentCompProps) {
     const downloadFile = (attachment: MessageAttachment) => {
         const downloadLink = document.createElement('a');
         downloadLink.href = attachment.data;
@@ -72,6 +68,4 @@ const AttachmentComp: React.FC<AttachmentCompProps> = ({
             )}
         </div>
     );
-};
-
-export default AttachmentComp;
+}

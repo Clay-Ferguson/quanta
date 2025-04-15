@@ -1,9 +1,8 @@
-import React from 'react';
 import ContactsListComp from '../components/ContactsListComp';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 
-const ContactsPage: React.FC = () => {
+export default function ContactsPage() {
     return (
         <div className="page-container">
             <header className="app-header">
@@ -19,6 +18,4 @@ const ContactsPage: React.FC = () => {
             </div>
         </div>
     );
-};
-
-export default ContactsPage;
+}

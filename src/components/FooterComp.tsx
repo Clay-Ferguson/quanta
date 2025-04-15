@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import {app} from '../AppService';
 import {util} from '../Util';
 
-const FooterComponent: React.FC = () => {
+export default function FooterComp() {
     const gs = useGlobalState();
 
     const [message, setMessage] = useState('');
@@ -113,5 +113,3 @@ const FooterComponent: React.FC = () => {
         </footer>
     );
 };
-
-export default FooterComponent;

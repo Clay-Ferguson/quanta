@@ -4,8 +4,6 @@ interface MarkdownDisplayProps {
   markdownContent: string;
 }
 
-const Markdown = ({ markdownContent }: MarkdownDisplayProps) => {
+export default function Markdown({ markdownContent }: MarkdownDisplayProps) {
     return <ReactMarkdown>{markdownContent}</ReactMarkdown>;
-};
-
-export default Markdown;
+}

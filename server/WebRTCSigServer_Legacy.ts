@@ -5,7 +5,7 @@ const log = logger.logInfo;
 const logError = logger.logError;
 declare const SECURE: string;
 
-class WebRTCSigServer_Legacy {
+export default class WebRTCSigServer_Legacy {
     private static inst: WebRTCSigServer_Legacy | null = null;
 
     constructor() {
@@ -195,4 +195,3 @@ class WebRTCSigServer_Legacy {
     }
 }
 
-export default WebRTCSigServer_Legacy;

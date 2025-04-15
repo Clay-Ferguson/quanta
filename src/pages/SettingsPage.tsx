@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
-import {app} from '../AppService';
+import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 
-const SettingsPage: React.FC = () => {
+export default function SettingsPage() {
     const gs = useGlobalState();
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
@@ -180,6 +180,4 @@ const SettingsPage: React.FC = () => {
             </div>
         </div>
     );
-};
-
-export default SettingsPage;
+}

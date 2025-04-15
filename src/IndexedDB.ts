@@ -2,7 +2,7 @@
  * IndexedDB Storage wrapper class
  * Provides a Promise-based API for using IndexedDB
  */
-class IndexedDB {
+export default class IndexedDB {
     private static inst: IndexedDB | null = null;
     private db: IDBDatabase | null = null;
     private dbName: string = '';
@@ -177,5 +177,3 @@ class IndexedDB {
         }
     }
 }
-
-export default IndexedDB;

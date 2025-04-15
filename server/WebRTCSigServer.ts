@@ -5,7 +5,7 @@ import { DBManager } from './DBManager.js';
 const log = logger.logInfo;
 const logError = logger.logError;
 
-class WebRTCSigServer {
+export default class WebRTCSigServer {
     private static inst: WebRTCSigServer | null = null;
     private db!: DBManager;
     private wss!: WebSocketServer;
@@ -251,4 +251,3 @@ class WebRTCSigServer {
     }
 }
 
-export default WebRTCSigServer;

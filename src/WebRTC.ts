@@ -11,7 +11,6 @@ declare const SECURE: string;
  * WebRTC class using simple-peer for handling P2P connections.
  * Designed as a singleton.
  */
-// todo-0: make all classes do 'export default' right at the class keyword like we do here
 export default class WebRTC implements WebRTCIntf {
     // Map peer names to their SimplePeer instances
     private peers: Map<string, SimplePeerInstance> = new Map();

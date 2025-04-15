@@ -1,15 +1,13 @@
-import React from 'react';
-import {app} from '../AppService';
+import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
 
 interface LogoBlockCompProps {
   subText: string;
 }
 
-const LogoBlockComp: React.FC<LogoBlockCompProps> = ({ 
-    subText = ''
-}) => {
-    const handleLogoClick = () => app.goToPage(PageNames.quantaChat)
+export default function LogoBlockComp({ subText = '' }: LogoBlockCompProps) {
+    const handleLogoClick = () => app.goToPage(PageNames.quantaChat);
+    
     return (
         <div className="flex-1 flex items-center">
             <div className="mr-3 cursor-pointer" onClick={handleLogoClick}>
@@ -25,6 +23,4 @@ const LogoBlockComp: React.FC<LogoBlockCompProps> = ({
             </div>
         </div>
     );
-};
-
-export default LogoBlockComp;
+}
