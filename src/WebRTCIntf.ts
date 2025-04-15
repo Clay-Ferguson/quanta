@@ -8,4 +8,5 @@ export interface WebRTCIntf {
     _connect(userName: string, roomId: string): Promise<void>;
     _disconnect(): void;
     _sendMessage(msg: any): void;
+    setSaveToServer(save: boolean): void;
 }

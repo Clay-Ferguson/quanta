@@ -61,6 +61,10 @@ export default class WebRTC implements WebRTCIntf {
         this.socket.onclose = this._onclose;
     }
 
+    setSaveToServer = (save: boolean) => {
+        this.saveToServer = save;
+    }
+
     // --- WebSocket Event Handlers ---
 
     private _onopen = () => {
@@ -285,7 +289,9 @@ export default class WebRTC implements WebRTCIntf {
             // todo-0: I'm randomly getting failure to create SimplePeer instance here, with a cryoptic error and stack trace
             // and I'm really close to just abandon it and use the Legacy code, which we still have.
             console.error(`Failed to create SimplePeer instance for ${peerName}:`, error);
-            alert("We've encountered a problem. Please refresh yor browser, and try again.");
+
+            // oops. Don't show this. This appears to be happening and not affecting the user experience. Need to learn what's going on here.
+            // alert("We've encountered a problem. Please refresh yor browser, and try again.");
             return null;
         }
     }
@@ -369,14 +375,6 @@ export default class WebRTC implements WebRTCIntf {
 
         if (this.saveToServer) {
             this.persistOnServer(msg);
-        }
-        else {
-            // Note: Theoretically this 'else' should never execute because we block the ability to 
-            // even enter messages in the case of having no peers connected (and no server storage option)
-            if (connectedPeerCount === 0) {
-                util.log('Your message cannot be delivered since no one else is in this room, and you have "Save to Server" disabled.');
-                return;
-            }
         }
         
         if (connectedPeerCount === 0 && this.participants.size > 0) {

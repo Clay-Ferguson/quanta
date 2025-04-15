@@ -38,6 +38,12 @@ export default class WebRTC_Legacy implements WebRTCIntf {
         this.port = port;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setSaveToServer(save: boolean): void {
+        //todo-0: implement this method if needed
+        util.log('setSaveToServer is not implemented in WebRTC_Legacy');
+    }
+
     initRTC() {
         util.log('Starting WebRTC connection setup...');
 

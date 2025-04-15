@@ -77,21 +77,17 @@ export class DBManager {
 
     public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         console.log('Persisting message:', message);
-        if (!this.db) {
-            console.error('Database not initialized');
-            return false;
-        }
 
         try {
             // Begin transaction
-            await this.db.run('BEGIN TRANSACTION');
+            await this.db!.run('BEGIN TRANSACTION');
 
             // Ensure room exists
             const roomId = await this.getOrCreateRoom(roomName);
             console.log('    Room ID:', roomId);
 
             // Store the message
-            await this.db.run(
+            await this.db!.run(
                 `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
@@ -120,7 +116,7 @@ export class DBManager {
                         }
                     }
 
-                    await this.db.run(
+                    await this.db!.run(
                         `INSERT INTO attachments (message_id, name, type, size, data)
                          VALUES (?, ?, ?, ?, ?)`,
                         [
@@ -135,7 +131,7 @@ export class DBManager {
             }
 
             // Commit transaction
-            await this.db.run('COMMIT');
+            await this.db!.run('COMMIT');
             console.log('    Message persisted successfully');
             return true;
 
@@ -168,20 +164,15 @@ export class DBManager {
     }
 
     public async getMessagesForRoom(roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> {
-        if (!this.db) {
-            console.error('Database not initialized');
-            return [];
-        }
-
         try {
             // Get the room ID
-            const room = await this.db.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
             if (!room) {
                 return [];
             }
 
             // Get messages
-            const messages = await this.db.all(`
+            const messages = await this.db!.all(`
                 SELECT m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature
                 FROM messages m
                 WHERE m.room_id = ?
@@ -191,7 +182,7 @@ export class DBManager {
 
             // For each message, get its attachments
             for (const message of messages) {
-                const attachments = await this.db.all(`
+                const attachments = await this.db!.all(`
                     SELECT name, type, size, data
                     FROM attachments
                     WHERE message_id = ?
@@ -241,4 +232,95 @@ export class DBManager {
             res.status(500).json({ error: 'Failed to retrieve message history' });
         }
     } 
+
+    /**
+     * Get all message IDs for a specific room
+     */
+    async getMessageIdsForRoom(roomId: string): Promise<string[]> {
+        try {
+            // First, get the room_id from the name or id
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            if (!room) {
+                return [];
+            }
+            
+            const messages = await this.db!.all('SELECT id FROM messages WHERE room_id = ?', [room.id]);
+            return messages.map(msg => msg.id);
+        } catch (error) {
+            console.error('Error retrieving message IDs for room:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get multiple messages by their IDs (filtering by room for security)
+     */
+    async getMessagesByIds(messageIds: string[], roomId: string): Promise<any[]> {
+        if (!messageIds || messageIds.length === 0) {
+            return [];
+        }
+
+        try {
+            // First, get the room_id from the name or id
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            if (!room) {
+                return [];
+            }
+            
+            // Using parameterized query with placeholders for security
+            const placeholders = messageIds.map(() => '?').join(',');
+            // Add room_id filter for security (ensures users can only fetch messages from rooms they have access to)
+            const query = `SELECT * FROM messages WHERE id IN (${placeholders}) AND room_id = ?`;
+            
+            // Add room_id as the last parameter
+            const params = [...messageIds, room.id];
+            const messages = await this.db!.all(query, params);
+            return messages;
+        } catch (error) {
+            console.error('Error retrieving messages by IDs:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * API handler for getting all message IDs for a specific room
+     */
+    async getMessageIdsForRoomHandler(req: any, res: any): Promise<void> {
+        try {
+            const roomId = req.params?.roomId;
+            if (!roomId) {
+                return res.status(400).json({ error: 'Room ID is required' });
+            }
+            
+            const messageIds = await this.getMessageIdsForRoom(roomId);
+            res.json({ messageIds });
+        } catch (error) {
+            console.error('Error in getMessageIdsForRoom handler:', error);
+            res.status(500).json({ error: 'Failed to retrieve message IDs' });
+        }
+    }
+
+    /**
+     * API handler for getting messages by IDs for a specific room
+     */
+    async getMessagesByIdsHandler(req: any, res: any): Promise<void> {
+        try {
+            const { ids } = req.body || {};
+            const roomId = req.params?.roomId;
+            
+            if (!roomId) {
+                return res.status(400).json({ error: 'Room ID is required' });
+            }
+            
+            if (!ids || !Array.isArray(ids)) {
+                return res.status(400).json({ error: 'Invalid request. Expected array of message IDs' });
+            }
+            
+            const messages = await this.getMessagesByIds(ids, roomId);
+            res.json({ messages });
+        } catch (error) {
+            console.error('Error in getMessagesByIds handler:', error);
+            res.status(500).json({ error: 'Failed to retrieve messages' });
+        }
+    }
 }

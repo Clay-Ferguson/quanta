@@ -59,7 +59,20 @@ app.get('/api/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// API endpoint to get message history
+// API endpoint to get message IDs for a specific room
+app.get('/api/rooms/:roomId/message-ids', async (req, res) => {
+    console.log('getMessageIdsForRoom', req.params.roomId);
+    await db.getMessageIdsForRoomHandler(req, res);
+});
+
+// API endpoint to get messages by their IDs for a specific room
+app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
+    console.log('getMessagesByIds for room', req.params.roomId);
+    await db.getMessagesByIdsHandler(req, res);
+});
+
+// Keep the original endpoint for backward compatibility
+// This can be enhanced later to accept optional roomId parameter
 app.get('/api/messages', async (req, res) => {
     console.log('getMessageHistory');
     await db.getMessageHistory(req, res);

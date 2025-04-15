@@ -80,7 +80,7 @@ export default function FooterComp() {
     let textareaPlaceholder = '';
     if (gs.connected) {
         if (nowhereToDeliver) {
-            textareaPlaceholder = "No one is in this room, to recieve messages. Select 'Save Messages on Server' option in Settings to send now."
+            textareaPlaceholder = "No one is in this room, to send messages. Select 'Save Messages on Server' option in Settings to send now."
         }
         else {
             textareaPlaceholder = "Type your message...";
