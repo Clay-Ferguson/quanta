@@ -4,18 +4,19 @@ import { ChatMessage, Contact, PageNames } from './AppServiceTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
-interface GlobalState {
-    keyPair: KeyPairHex;
-    page: string,
+export interface GlobalState {
+    keyPair?: KeyPairHex;
+    page?: string,
     connecting?: boolean;
     connected?: boolean;
-    roomName: string; 
-    userName: string;
+    roomName?: string; 
+    userName?: string;
     contacts?: Array<Contact>; 
-    messages: Array<ChatMessage>; 
-    participants: Set<string>;
-    fullSizeImage: {src: string, name: string} | null;
+    messages?: Array<ChatMessage>; 
+    participants?: Set<string> | null;
+    fullSizeImage?: {src: string, name: string} | null;
     appInitialized?: boolean;
+    saveToServer?: boolean;
 }
 
 const initialState: GlobalState = {
@@ -30,6 +31,7 @@ const initialState: GlobalState = {
     contacts: [],
     fullSizeImage: null,
     appInitialized: false,
+    saveToServer: true
 };
 
 type GlobalAction = { type: string, payload: any};

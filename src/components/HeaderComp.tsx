@@ -19,11 +19,11 @@ export default function HeaderComp() {
 
     let participants = null;
     if (gs.connected) {
-        if (gs.participants.size === 0) {
+        if (gs.participants && gs.participants.size === 0) {
             participants = `No one else is in this room.`;
         }
         else {
-            participants = `Members: You, ${Array.from(gs.participants).sort().join(', ')}`
+            participants = `Members: You, ${Array.from(gs.participants!).sort().join(', ')}`
         }
     }
     else {

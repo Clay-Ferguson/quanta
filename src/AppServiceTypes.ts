@@ -18,7 +18,8 @@ export enum DBKeys {
     contacts = 'contacts',
     keyPair = 'keyPair',
     roomPrefix = 'room_',
-    connected = 'connected'
+    connected = 'connected',
+    saveToServer = 'saveToServer',
 }
 
 export enum PageNames{

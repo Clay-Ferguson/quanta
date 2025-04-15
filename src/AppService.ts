@@ -1,8 +1,8 @@
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, ChatMessage, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
-
+import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
+import {GlobalState} from './GlobalState.tsx';
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
 import { WebRTCIntf } from './WebRTCIntf.ts';
@@ -33,7 +33,7 @@ export class AppService implements AppServiceTypes  {
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
-        const keyPair: KeyPairHex = await this.storage?.getItem('keyPair');
+        const keyPair: KeyPairHex = await this.storage?.getItem(DBKeys.keyPair);
         if (!keyPair) {
             await this._createIdentity(false);
         }
@@ -64,23 +64,24 @@ export class AppService implements AppServiceTypes  {
 
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
-        const userName = await this.restoreSavedValue(DBKeys.userName);
-        await this.restoreSavedValue('contacts');
-        await this.restoreSavedValue('roomName');
+        const userName: string= await this.storage?.getItem(DBKeys.userName);
+        const contacts: Contact[] = await this.storage?.getItem(DBKeys.contacts);
+        const roomName: string = await this.storage?.getItem(DBKeys.roomName);
+        const saveToServer: boolean = await this.storage?.getItem(DBKeys.saveToServer);
+
+        const state: GlobalState = {
+            userName,
+            contacts,
+            roomName,
+            saveToServer
+        };
 
         // if no username we send to settings page.
         if (!userName) {
-            this.gd({ type: 'setPage', payload: { page: PageNames.settings }});
+            state.page = PageNames.settings;
         }
-    }
 
-    restoreSavedValue = async (key: string): Promise<any> => {
-        const val: any = await this.storage?.getItem(key);
-        if (val) {
-            this.gd({ type: `restoreVal-${val}`, payload: { [key]: val }});
-            // console.log("Restored value: " + key + " = " + val);
-        }
-        return val;
+        this.gd({ type: 'restoreSavedValues', payload: state});
     }
 
     setFullSizeImage = (att: MessageAttachment | null) => {
@@ -100,6 +101,10 @@ export class AppService implements AppServiceTypes  {
 
     setUserName  = async (userName: string) => {
         this.persistGlobalValue(DBKeys.userName, userName);
+    }
+
+    setSaveToServer  = async (saveToServer: boolean) => {
+        this.persistGlobalValue(DBKeys.saveToServer, saveToServer);
     }
 
     // we have this method only for effeciency to do a single state update.
@@ -186,7 +191,7 @@ export class AppService implements AppServiceTypes  {
         this.gd({ type: 'setContacts', payload: { contacts }});
 
         // Save to IndexedDB
-        this.storage?.setItem('contacts', contacts);
+        this.storage?.setItem(DBKeys.contacts, contacts);
     }
 
     _disconnect = async () => {
@@ -404,7 +409,7 @@ export class AppService implements AppServiceTypes  {
         
         // First get room messages from local storage
         try {
-            const roomData: any = await this.storage.getItem('room_' + roomId);
+            const roomData: any = await this.storage.getItem(DBKeys.roomPrefix + roomId);
             if (roomData) {
                 util.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
                 messages = roomData.messages;
@@ -438,7 +443,7 @@ export class AppService implements AppServiceTypes  {
                     messages.sort((a, b) => a.timestamp - b.timestamp);
                     
                     // Save the merged messages to local storage
-                    await this.storage.setItem('room_' + roomId, {
+                    await this.storage.setItem(DBKeys.roomPrefix + roomId, {
                         messages: messages,
                         lastUpdated: new Date().toISOString()
                     });

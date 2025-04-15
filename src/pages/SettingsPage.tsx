@@ -10,16 +10,26 @@ export default function SettingsPage() {
     const gs = useGlobalState();
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
+    const [saveToServer, setSaveToServer] = useState(false);
 
     useEffect(() => {
         // Initialize the userName from global state when component mounts
         if (gs.userName) {
             setUserName(gs.userName);
         }
-    }, [gs.userName]);
+        
+        // Initialize saveToServer from global state
+        setSaveToServer(gs.saveToServer || false);
+    }, [gs.userName, gs.saveToServer]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
+    };
+
+    const handleSaveToServerChange = (e: any) => {
+        const isChecked = e.target.checked;
+        setSaveToServer(isChecked);
+        app.setSaveToServer(isChecked);
     };
 
     return (
@@ -76,7 +86,35 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    {/* Identity Keys Section - with added border */}
+                    {/* Options Section */}
+                    <div className="border border-blue-400/30 rounded-lg p-4">
+                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Options</h3>
+                        
+                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
+                                        Save Messages on Server
+                                    </label>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        When enabled, your messages will be stored on the server. Otherwise, messages are only kept locally.
+                                    </p>
+                                </div>
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="saveToServer"
+                                        name="saveToServer"
+                                        checked={saveToServer}
+                                        onChange={handleSaveToServerChange}
+                                        className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Identity Keys Section */}
                     <div className="border border-blue-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Your Identity Keys</h3>
                         
@@ -136,6 +174,7 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     </div>
+                    
                     {/* Danger Zone Section */}
                     <div className="border border-red-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-red-400 border-b border-red-400/30 pb-2 mb-4">Danger Zone</h3>

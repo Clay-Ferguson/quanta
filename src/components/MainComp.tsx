@@ -9,7 +9,7 @@ import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-sv
 export default function MainComp() {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
-    const messageCount = gs.messages.length;
+    const messageCount = gs.messages ? gs.messages.length : 0;
     
     const formatMessageTime = (msg: ChatMessage) => {
         return new Date(msg.timestamp).toLocaleDateString('en-US', { 
@@ -51,7 +51,7 @@ export default function MainComp() {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {gs.messages.map((msg, index) => (
+                {gs.messages!.map((msg, index) => (
                     <div 
                         key={index} 
                         className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
