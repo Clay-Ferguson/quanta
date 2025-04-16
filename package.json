@@ -22,10 +22,8 @@
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "simple-peer": "^9.11.1",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "webrtc-adapter": "^9.0.1",
     "ws": "^8.18.1"
   },
   "devDependencies": {

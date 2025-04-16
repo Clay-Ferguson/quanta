@@ -7,7 +7,6 @@ import http from 'http';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
-import WebRTCSigServer_Legacy from './WebRTCSigServer_Legacy.js';
 import { DBManager } from './DBManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -135,21 +134,10 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-// WARNING: This same variable exists on Client and Server and must match, to determine which WebRTC implementation to use, and these
-// need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
-const useLegacyWebRTC = false;
-
 const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
 if (!dbPath) {
     throw new Error('Database path is not set');
 }
 
 const db = await DBManager.getInstance(dbPath);
-
-// Initialize WebRTCSigServer signaling server
-if (useLegacyWebRTC) {
-    await WebRTCSigServer_Legacy.getInst(HOST, PORT);
-}
-else {
-    await WebRTCSigServer.getInst(db, HOST, PORT, server);
-}
+await WebRTCSigServer.getInst(db, HOST, PORT, server);

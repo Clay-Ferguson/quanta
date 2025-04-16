@@ -5,22 +5,15 @@ import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNa
 import {GlobalState} from './GlobalState.tsx';
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
-import { WebRTCIntf } from './WebRTCIntf.ts';
 import WebRTC from './WebRTC.ts';
-import WebRTC_Legacy from './WebRTC_Legacy.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
 declare const PORT: string;
 
-// WARNING: This same variable exists on Client and Server and must match, to determine which WebRTC implementation to use, and these
-// need to both match. That is, if you change to Legacy version you need to change on both server code and client code.
-// todo-0: After enabling https/wss we need to retest and update the legacy code because it's not not trusted and may not work.
-const useLegacyWebRTC = false;
-
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
-    public rtc: WebRTCIntf | null = null;
+    public rtc: WebRTC | null = null;
     private gd: any = null; // Global Dispatch Function
     private gs: any = null; // Global State Object
 
@@ -28,10 +21,8 @@ export class AppService implements AppServiceTypes  {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await this.storage?.getItem(DBKeys.saveToServer);
 
-        this.rtc = useLegacyWebRTC ? //
-            new WebRTC_Legacy(this.storage, this, HOST, PORT) :
-            new WebRTC(this.storage, this, HOST, PORT, saveToServer);
-
+       
+        this.rtc = new WebRTC(this.storage, this, HOST, PORT, saveToServer);
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
@@ -248,6 +239,11 @@ export class AppService implements AppServiceTypes  {
             }
             this._persistMessage(msg);
             this.rtc._sendMessage(msg);
+
+            // get 'rtc.saveToServer' out of 'rtc' class.
+            if (this.rtc.saveToServer) {
+                this.rtc.persistOnServer(msg);
+            }
             this.gd({ type: 'send', payload: this.gs});
         }
     }
@@ -290,6 +286,7 @@ export class AppService implements AppServiceTypes  {
             util.log('Error checking storage or saving message: ' + error);
         }
 
+        this.gd({ type: 'persistMessage', payload: this.gs});
         this.saveMessages();
     }
 
