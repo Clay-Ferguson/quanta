@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useEffect, useRef } from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
@@ -6,10 +6,17 @@ import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 
+// Static variable to store scroll position
+let scrollPosition = 0;
+
+// NOTE: This is the main chat log component. It has smart scrolling where it will auto-scroll new messages come in, but if the user  
+// has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
+// so it won't interrupt them while they're reading something at a non-end scroll location.
 export default function MainComp() {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
     const messageCount = gs.messages ? gs.messages.length : 0;
+    const userScrolledRef = useRef(false);
     
     const formatMessageTime = (msg: ChatMessage) => {
         return new Date(msg.timestamp).toLocaleDateString('en-US', { 
@@ -20,11 +27,66 @@ export default function MainComp() {
         new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Layout effect ensures scrolling happens before browser paint
-    // This prevents any visible flicker
+    // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
     useLayoutEffect(() => {
         if (gs.connected && chatLogRef.current && messageCount > 0) {
-            chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+            if (scrollPosition > 0) {
+                // Restore previous scroll position if available
+                chatLogRef.current.scrollTop = scrollPosition;
+            } else {
+                // Default to scrolling to bottom
+                chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+            }
+        }
+    }, [messageCount, gs.connected]);
+
+    // Handle scroll events to save position
+    useEffect(() => {
+        const chatLog = chatLogRef.current;
+        if (!chatLog) return;
+
+        const handleScroll = () => {
+            if (!chatLog) return;
+            
+            // Only save scroll position if user has manually scrolled (not at the bottom)
+            const isAtBottom = chatLog.scrollHeight - chatLog.scrollTop <= chatLog.clientHeight + 50;
+            
+            if (!isAtBottom) {
+                userScrolledRef.current = true;
+                scrollPosition = chatLog.scrollTop;
+            } else {
+                // If user scrolls to bottom, reset the userScrolled flag
+                userScrolledRef.current = false;
+                scrollPosition = 0;
+            }
+        };
+
+        chatLog.addEventListener('scroll', handleScroll);
+        
+        return () => {
+            chatLog.removeEventListener('scroll', handleScroll);
+        };
+    }, [gs.connected]);
+
+    // Additional effect for handling scrollign
+    useEffect(() => {
+        if (gs.connected && chatLogRef.current && messageCount > 0) {
+            // Only scroll to bottom on new messages if user hasn't manually scrolled up
+            if (!userScrolledRef.current) {
+                // Immediate scroll
+                chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+                
+                // Additional scrolls after possible image loads
+                const timeouts = [100, 300, 500, 1000].map(delay => 
+                    setTimeout(() => {
+                        if (chatLogRef.current && !userScrolledRef.current) {
+                            chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+                        }
+                    }, delay)
+                );
+                
+                return () => timeouts.forEach(clearTimeout);
+            }
         }
     }, [messageCount, gs.connected]);
 
