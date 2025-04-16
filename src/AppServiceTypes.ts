@@ -20,6 +20,7 @@ export enum DBKeys {
     roomPrefix = 'room_',
     connected = 'connected',
     saveToServer = 'saveToServer',
+    linkPreview = 'linkPreview',
 }
 
 export enum PageNames{

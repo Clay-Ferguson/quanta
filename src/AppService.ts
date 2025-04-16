@@ -52,6 +52,17 @@ export class AppService implements AppServiceTypes  {
         this.restoreConnection();
     }
 
+    saveLinkPreviewInfo = async (url: string, data: any) => {
+        // Save the link preview data to IndexedDB
+        await this.storage?.setItem(DBKeys.linkPreview + url, data);
+    }
+
+    getLinkPreviewInfo = async (url: string): Promise<any> => {
+        // Retrieve the link preview data from IndexedDB
+        const data = await this.storage?.getItem(DBKeys.linkPreview + url);
+        return data;
+    }
+
     restoreConnection = async () => {
         const userName = await this.storage?.getItem(DBKeys.userName);
         const roomName = await this.storage?.getItem(DBKeys.roomName);

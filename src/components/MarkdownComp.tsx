@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { app } from '../AppService';
 import { useState, useEffect } from 'react';
 import './LinkPreview.css';
 
@@ -41,17 +42,29 @@ export default function Markdown({ markdownContent }: MarkdownDisplayProps) {
             const previews: Record<string, LinkPreviewData | null> = {};
             
             for (const url of urls) {
-                // Skip if we already have this preview
+                // Skip if we already have this preview in state
                 if (linkPreviews[url]) continue;
                 
                 try {
-                    const response = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
-                    const data = await response.json();
+                    // First try to get from IndexedDB cache
+                    const cachedData = await app.getLinkPreviewInfo(url);
                     
-                    if (data.success) {
-                        previews[url] = data.data;
+                    if (cachedData) {
+                        console.log("Got cached link-preview for URL:", url);
+                        // Use cached data if available
+                        previews[url] = cachedData;
                     } else {
-                        previews[url] = null;
+                        // Fetch from API if not in cache
+                        const response = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Store the successful response in IndexedDB
+                            await app.saveLinkPreviewInfo(url, data.data);
+                            previews[url] = data.data;
+                        } else {
+                            previews[url] = null;
+                        }
                     }
                 } catch (error) {
                     console.error('Failed to fetch link preview:', error);
@@ -65,7 +78,7 @@ export default function Markdown({ markdownContent }: MarkdownDisplayProps) {
         if (urls.length > 0) {
             fetchLinkPreviews();
         }
-    }, [urls]);
+    }, [urls, linkPreviews]);
 
     return (
         <>
