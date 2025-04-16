@@ -4,8 +4,6 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import cors from 'cors';
-import ogs from 'open-graph-scraper';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
@@ -44,9 +42,6 @@ console.log(`Environment Variables:
 
 app.use(express.json());
 
-// Only needed so we can have our link-previw endpoint
-app.use(cors());
-
 // Add HTTP to HTTPS redirect if using HTTPS
 if (SECURE === 'y') {
     app.use((req, res, next) => {
@@ -63,35 +58,6 @@ if (SECURE === 'y') {
 app.get('/api/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-const asyncHandler = (fn: (req: Request, res: Response, next: Function) => Promise<any>) => 
-    (req: Request, res: Response, next: any) => {
-        Promise.resolve(fn(req, res, next)).catch(next);
-    };
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.get('/api/link-preview', asyncHandler(async (req: Request, res: Response, next: any) => {
-    const url = req.query.url as string;
-    
-    if (!url) {
-        return res.status(400).json({ error: 'URL parameter is required' });
-    }
-    
-    const options = { url, timeout: 5000 };
-    const { result } = await ogs(options);
-    
-    res.json({
-        success: true,
-        data: {
-            title: result.ogTitle || result.twitterTitle || '',
-            description: result.ogDescription || result.twitterDescription || '',
-            image: result.ogImage?.[0]?.url || result.twitterImage?.[0]?.url || '',
-            siteName: result.ogSiteName || '',
-            url: url
-        }
-    });
-}));
 
 // API endpoint to get message IDs for a specific room
 app.get('/api/rooms/:roomId/message-ids', async (req, res) => {
