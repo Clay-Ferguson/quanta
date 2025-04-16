@@ -238,7 +238,18 @@ export class AppService implements AppServiceTypes  {
                 }
             }
             this._persistMessage(msg);
-            this.rtc._sendMessage(msg);
+            const sentOk = this.rtc._sendMessage(msg);
+            if (!sentOk) {
+                console.warn("Failed to send message immediately, will retry in 20 seconds");
+                // try again in 20 seconds
+                setTimeout(() => {
+                    console.warn("Retrying message send.");
+                    const retryOk = this.rtc?._sendMessage(msg);
+                    if (!retryOk) {
+                        alert("There was a probelm delivering that message, so it may not immediately appear for others.");
+                    }
+                }, 20000);
+            }
 
             // get 'rtc.saveToServer' out of 'rtc' class.
             if (this.rtc.saveToServer) {

@@ -453,7 +453,8 @@ export default class WebRTC {
         };
     }
 
-    _sendMessage = (msg: ChatMessage) => {
+    // Returns false if unable to send to anyone at all, else true of sent to at lest one person.
+    _sendMessage = (msg: ChatMessage): boolean => {
         const jsonMsg = JSON.stringify(msg);
         let sent = false;
         let openChannels = 0;
@@ -471,7 +472,9 @@ export default class WebRTC {
         if (openChannels === 0) {
             util.log('WARNING: No open data channels available');
             this.debugDataChannels();
-            return;
+            // todo-0: We can end up in this state if someone sends a chat message before the connection is established, so we need 
+            // to be able to persist into DB with a state of "not-delivered", so we can chew through them later, an async timer.
+            return false;
         }
         
         // Try to send through all open channels
@@ -482,14 +485,19 @@ export default class WebRTC {
                     util.log(`Successfully sent message to ${peer}`);
                     sent = true;
                 } catch (err) {
+                    // todo-0: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
                     util.log(`Error sending to ${peer}: ${err}`);
                 }
+            }
+            else {
+                util.log(`Channel to ${peer} is not open, skipping send`);
             }
         });
         
         if (!sent) {
             util.log('ERROR: Failed to send message through any channel');
         }
+        return sent;
     }
 
     // New method to persist messages on the server
