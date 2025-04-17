@@ -2,8 +2,6 @@ import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 
-// make this an argument passed to the constructor like other props
-declare const SECURE: string;
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -27,21 +25,23 @@ export default class WebRTC {
     app: AppServiceTypes | null = null;
     host: string = "";
     port: string = "";
+    secure: boolean = false;
     saveToServer: boolean = false;
 
-    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string, saveToServer: boolean) {
+    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.storage = storage;
         this.app = app;
         this.host = host;
         this.port = port;
         this.saveToServer=saveToServer;
+        this.secure = secure;
     }
 
     initRTC() {
         util.log('Starting WebRTC connection setup...');
 
         // Create WebSocket connection to signaling server. 
-        const url = `${SECURE=='y' ? 'wss' : 'ws'}://${this.host}:${this.port}`;
+        const url = `${this.secure ? 'wss' : 'ws'}://${this.host}:${this.port}`;
         console.log('Connecting to signaling server at ' + url);
         this.socket = new WebSocket(url);
         this.socket.onopen = this._onopen;
@@ -170,9 +170,9 @@ export default class WebRTC {
     }
 
     _onAnswer = (evt: any) => {
-        util.log('Received answer from ' + evt.sender + ', signaling state: ' + 
-                 (this.peerConnections.get(evt.sender)?.signalingState || 'no connection'));
         const pc = this.peerConnections.get(evt.sender);
+        util.log('Received answer from ' + evt.sender + ', signaling state: ' + 
+                 (pc?.signalingState || 'no connection'));
         if (pc) {
             // Check the signaling state before setting remote description
             if (pc.signalingState === 'have-local-offer') {
@@ -195,7 +195,6 @@ export default class WebRTC {
     }
 
     _onBroadcast = (evt: any) => {
-        // alert('Received broadcast message from ' + evt.sender + ': ' + evt.message); // todo-0: remove this alert
         util.log('broadcast. Received broadcast message from ' + evt.sender);
         this.app?._persistMessage(evt.message);           
     }
@@ -436,7 +435,7 @@ export default class WebRTC {
             util.log('onMessage. Received message from ' + peerName);
             try {
                 const msg = JSON.parse(event.data);
-                // ignore of a 'ping' message
+                // ignore if a 'ping' message
                 if (msg.type === 'ping') {
                     util.log(`Ping received from ${peerName} at ${msg.timestamp}`);
                 }
@@ -453,33 +452,16 @@ export default class WebRTC {
         };
     }
 
-    // Returns false if unable to send to anyone at all, else true of sent to at lest one person.
+    // Returns false if unable to send to anyone at all, else true of sent to at lest one person. If the user trie to send
+    // chat messages too fast before connections are 'open' we return false here and the calling method can retry.
     _sendMessage = (msg: ChatMessage): boolean => {
-        const jsonMsg = JSON.stringify(msg);
         let sent = false;
-        let openChannels = 0;
         
-        util.log(`Attempting to send message through ${this.dataChannels.size} data channels`);
-        
-        // Check and log channel states
-        this.dataChannels.forEach((channel, peer) => {
-            util.log(`Channel to ${peer}: ${channel.readyState}`);
-            if (channel.readyState === 'open') {
-                openChannels++;
-            }
-        });
-        
-        if (openChannels === 0) {
-            util.log('WARNING: No open data channels available');
-            this.debugDataChannels();
-            // todo-0: We can end up in this state if someone sends a chat message before the connection is established, so we need 
-            // to be able to persist into DB with a state of "not-delivered", so we can chew through them later, an async timer.
-            return false;
-        }
-
-        // alert("Sending to " + openChannels + " open channels: " + Array.from(this.dataChannels.keys()).join(', '));
-        
+        // If Pure P2P mode.
         if (!this.saveToServer) {
+            const jsonMsg = JSON.stringify(msg);
+            util.log(`Attempting to send message through ${this.dataChannels.size} data channels`);
+        
             // Try to send through all open channels
             this.dataChannels.forEach((channel, peer) => {
                 if (channel.readyState === 'open') {
@@ -497,6 +479,7 @@ export default class WebRTC {
                 }
             });
         }
+        // If non-P2P mode, send via signaling server broadcast
         else {
             if (this.socket && this.socket.readyState === WebSocket.OPEN) {
                 this.socket.send(JSON.stringify({

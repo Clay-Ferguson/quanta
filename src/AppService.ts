@@ -10,6 +10,7 @@ import WebRTC from './WebRTC.ts';
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
 declare const PORT: string;
+declare const SECURE: string;
 
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
@@ -20,9 +21,7 @@ export class AppService implements AppServiceTypes  {
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await this.storage?.getItem(DBKeys.saveToServer);
-
-       
-        this.rtc = new WebRTC(this.storage, this, HOST, PORT, saveToServer);
+        this.rtc = new WebRTC(this.storage, this, HOST, PORT, SECURE==='y', saveToServer);
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
@@ -116,7 +115,7 @@ export class AppService implements AppServiceTypes  {
 
     // we have this method only for effeciency to do a single state update.
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
-        this.gd({ type: `setRoomAndUser}`, payload: { 
+        this.gd({ type: `setRoomAndUser`, payload: { 
             roomName, userName
         }});
         // Save the keyPair to IndexedDB
