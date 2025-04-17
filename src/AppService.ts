@@ -2,7 +2,7 @@ import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
 import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
-import {GlobalState} from './GlobalState.tsx';
+import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypto} from './Crypto.ts';  
 import { KeyPairHex } from './CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
@@ -15,8 +15,8 @@ declare const SECURE: string;
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
-    private gd: any = null; // Global Dispatch Function
-    private gs: any = null; // Global State Object
+    gd: React.Dispatch<GlobalAction> | null = null; // Global Dispatch Function
+    gs: GlobalState | null = null; // Global State Object
 
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
@@ -30,12 +30,12 @@ export class AppService implements AppServiceTypes  {
             await this._createIdentity(false);
         }
         else {
-            this.gd({ type: 'setIdentity', payload: { 
+            this.gd!({ type: 'setIdentity', payload: { 
                 keyPair
             }});
         }
 
-        this.gd({ type: 'setAppInitialized', payload: { 
+        this.gd!({ type: 'setAppInitialized', payload: { 
             appInitialized: true
         }});
 
@@ -84,17 +84,17 @@ export class AppService implements AppServiceTypes  {
             state.page = PageNames.settings;
         }
 
-        this.gd({ type: 'restoreSavedValues', payload: state});
+        this.gd!({ type: 'restoreSavedValues', payload: state});
     }
 
     setFullSizeImage = (att: MessageAttachment | null) => {
-        this.gs.fullSizeImage = att ? {src: att.data, name: att.name} : null;
-        this.gd({ type: 'setFullSizeImage', payload: this.gs});
+        this.gs!.fullSizeImage = att ? {src: att.data, name: att.name} : null;
+        this.gd!({ type: 'setFullSizeImage', payload: this.gs});
     }
 
     goToPage = (page: string) => {
-        this.gs.page = page; 
-        this.gd({ type: 'setPage', payload: this.gs });
+        this.gs!.page = page; 
+        this.gd!({ type: 'setPage', payload: this.gs });
     }
 
     setGlobals = (gd: any, gs: any) => {
@@ -115,7 +115,7 @@ export class AppService implements AppServiceTypes  {
 
     // we have this method only for effeciency to do a single state update.
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
-        this.gd({ type: `setRoomAndUser`, payload: { 
+        this.gd!({ type: `setRoomAndUser`, payload: { 
             roomName, userName
         }});
         // Save the keyPair to IndexedDB
@@ -125,7 +125,7 @@ export class AppService implements AppServiceTypes  {
 
     persistGlobalValue = async (key: string, value: any) => {
         // save to global state
-        this.gd({ type: `persistGlobalValue-${key}`, payload: { 
+        this.gd!({ type: `persistGlobalValue-${key}`, payload: { 
             [key]: value
         }});
         // Save the keyPair to IndexedDB
@@ -134,14 +134,14 @@ export class AppService implements AppServiceTypes  {
 
     _createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
-        if (askFirst && this.gs && this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {
+        if (askFirst && this.gs && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
             if (!confirm("Create new Identity Keys?")) {
                 return;
             }
         }
 
         const keyPair: KeyPairHex= crypto.generateKeypair();
-        this.gd({ type: 'creatIdentity', payload: { 
+        this.gd!({ type: 'creatIdentity', payload: { 
             keyPair
         }});
         // Save the keyPair to IndexedDB
@@ -156,7 +156,7 @@ export class AppService implements AppServiceTypes  {
         
         const participants = this.rtc.participants || new Set<string>();
         const connected = this.rtc.connected || false;
-        this.gd({ 
+        this.gd!({ 
             type: 'updateRtcState', 
             payload: { 
                 participants,
@@ -167,12 +167,12 @@ export class AppService implements AppServiceTypes  {
 
     // userName is optional and will default to global state if not provided
     _connect = async (userName: string | null, roomName: string) => {
-        userName = userName || this.gs.userName;
+        userName = userName || this.gs!.userName!;
         if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
-        this.gd({ type: 'connect', payload: { 
+        this.gd!({ type: 'connect', payload: { 
             connecting: true
         }});
 
@@ -180,7 +180,7 @@ export class AppService implements AppServiceTypes  {
         await this.rtc._connect(userName!, roomName);
         await this.setRoomAndUserName(roomName, userName!);
 
-        this.gd({ type: 'connect', payload: { 
+        this.gd!({ type: 'connect', payload: { 
             userName,
             roomName,
             messages,
@@ -194,7 +194,7 @@ export class AppService implements AppServiceTypes  {
 
     _setContacts = (contacts: any) => {
         // Save into global state
-        this.gd({ type: 'setContacts', payload: { contacts }});
+        this.gd!({ type: 'setContacts', payload: { contacts }});
 
         // Save to IndexedDB
         this.storage?.setItem(DBKeys.contacts, contacts);
@@ -202,7 +202,7 @@ export class AppService implements AppServiceTypes  {
 
     _disconnect = async () => {
         this.rtc?._disconnect();
-        this.gd({ type: 'disconnect', payload: { 
+        this.gd!({ type: 'disconnect', payload: { 
             messages: [], 
             participants: new Set<string>(), 
             connected: false, 
@@ -212,13 +212,13 @@ export class AppService implements AppServiceTypes  {
 
     _clearMessages = () => {
         if (confirm("Clear all chat history for room?")) {
-            if (!this.gs || !this.gs.connected) {
+            if (!this.gs || !this.gs!.connected) {
                 console.log("Not connected, cannot clear messages.");
                 return;
             }
-            this.gs.messages = []; 
+            this.gs!.messages = []; 
             this.saveMessages(); 
-            this.gd({ type: 'clearMessages', payload: this.gs });}
+            this.gd!({ type: 'clearMessages', payload: this.gs });}
     }
 
     _send = async (message: string, selectedFiles: any) => {
@@ -227,11 +227,11 @@ export class AppService implements AppServiceTypes  {
             return;
         }
         if (message || selectedFiles.length > 0) {
-            const msg: ChatMessage = this.createMessage(message, this.gs.userName, selectedFiles);
+            const msg: ChatMessage = this.createMessage(message, this.gs!.userName!, selectedFiles);
             
-            if (this.gs.keyPair && this.gs.keyPair.publicKey && this.gs.keyPair.privateKey) {   
+            if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
                 try {
-                    await crypto.signMessage(msg, this.gs.keyPair);
+                    await crypto.signMessage(msg, this.gs!.keyPair);
                 } catch (error) {
                     console.error('Error signing message:', error);
                 }
@@ -254,7 +254,7 @@ export class AppService implements AppServiceTypes  {
             // if (this.rtc.saveToServer) {
             //     this.rtc.persistOnServer(msg);
             // }
-            this.gd({ type: 'send', payload: this.gs});
+            this.gd!({ type: 'send', payload: this.gs});
         }
     }
 
@@ -272,7 +272,7 @@ export class AppService implements AppServiceTypes  {
         if (msg.signature) {
             msg.sigOk = await crypto.verifySignature(msg);
             if (msg.sigOk) {
-                if (msg.publicKey === this.gs.keyPair.publicKey) {
+                if (msg.publicKey === this.gs!.keyPair!.publicKey) {
                     msg.trusted = true;
                 }
                 else {
@@ -289,22 +289,22 @@ export class AppService implements AppServiceTypes  {
             msg.trusted = false;
         }
 
-        this.gs.messages.push(msg);
+        this.gs!.messages!.push(msg);
         try {
             await this.pruneDB(msg);
         } catch (error) {
             util.log('Error checking storage or saving message: ' + error);
         }
 
-        this.gd({ type: 'persistMessage', payload: this.gs});
+        this.gd!({ type: 'persistMessage', payload: this.gs});
         this.saveMessages();
     }
 
     existsInContacts(msg: ChatMessage) {
-        if (!this.gs || !this.gs.contacts) {
+        if (!this.gs || !this.gs!.contacts) {
             return false;
         }
-        return this.gs.contacts.some((contact: any) => contact.publicKey === msg.publicKey);
+        return this.gs!.contacts.some((contact: any) => contact.publicKey === msg.publicKey);
     }
 
     async pruneDB(msg: any) {
@@ -326,9 +326,9 @@ export class AppService implements AppServiceTypes  {
 
                 if (confirm(warningMsg)) {
                     // Sort messages by timestamp and remove oldest 20%
-                    this.gs.messages.sort((a: any, b: any) => a.timestamp - b.timestamp);
-                    const countToRemove = Math.ceil(this.gs.messages.length * 0.20);
-                    this.gs.messages = this.gs.messages.slice(countToRemove);
+                    this.gs!.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
+                    const countToRemove = Math.ceil(this.gs!.messages!.length * 0.20);
+                    this.gs!.messages = this.gs!.messages!.slice(countToRemove);
 
                     // Save the pruned messages
                     this.saveMessages();
@@ -390,19 +390,19 @@ export class AppService implements AppServiceTypes  {
 
         try {
             const roomData = {
-                messages: this.gs.messages,
+                messages: this.gs!.messages,
                 lastUpdated: new Date().toISOString()
             };
 
-            this.storage.setItem(DBKeys.roomPrefix + this.gs.roomName, roomData);
-            util.log('Saved ' + this.gs.messages.length + ' messages for room: ' + this.gs.roomName);
+            this.storage.setItem(DBKeys.roomPrefix + this.gs!.roomName, roomData);
+            util.log('Saved ' + this.gs!.messages!.length + ' messages for room: ' + this.gs!.roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);
         }
     }
 
     messageExists(msg: ChatMessage) {
-        return this.gs.messages.some((message: any) =>
+        return this.gs!.messages!.some((message: any) =>
             message.timestamp === msg.timestamp &&
             message.sender === msg.sender &&
             message.content === msg.content

@@ -34,7 +34,7 @@ const initialState: GlobalState = {
     saveToServer: true
 };
 
-type GlobalAction = { type: string, payload: any};
+export type GlobalAction = { type: string, payload: any};
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
     console.log('Dispatching action: '+ action.type);
@@ -77,4 +77,4 @@ const useGlobalDispatch = (): React.Dispatch<GlobalAction> => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export { GlobalStateProvider, useGlobalState, useGlobalDispatch };
+export { GlobalStateProvider, useGlobalState, useGlobalDispatch};

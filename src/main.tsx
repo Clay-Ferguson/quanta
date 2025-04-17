@@ -18,7 +18,6 @@ function AppServiceConnector() {
     
     useEffect(() => {
         app.setGlobals(gd, gs);
-        
         return () => {
             // Optional cleanup if needed
         };
