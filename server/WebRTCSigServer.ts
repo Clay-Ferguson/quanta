@@ -90,6 +90,7 @@ export default class WebRTCSigServer {
             }
             // Handle broadcast messages to everyone in a room
             else if (data.type === 'broadcast' && data.room) {
+                this.persist(data);
                 const client = this.clients.get(ws);
                 if (client) {
                     data.sender = client.name;
@@ -105,10 +106,13 @@ export default class WebRTCSigServer {
                     });
                 }
             }
+            // todo-0: we can eventually remove type 'persist' because we now let 'broadcast' handle persistence, so we kill two birds
+            // with one stone, which is get message out to everyone in realtime and also persist into room, all done by 'broadcast' now.
             // Handle persist messages (silent, no broadcast)
-            else if (data.type === 'persist' && data.room && data.message) {
-                this.onPersist(ws, data);
-            } else {
+            // else if (data.type === 'persist' && data.room && data.message) {
+            //     this.persist(data);
+            // } 
+            else {
                 logError(`Unknown message type: ${data.type}`);
             }
 
@@ -192,8 +196,7 @@ export default class WebRTCSigServer {
         log("QuantaChatServer initialization complete");
     }
 
-    onPersist = (ws: any, data: any) => {
-        // This is a silent persist-only message (no broadcast)
+    persist = (data: any) => {
         if (data.room && data.message) {
             this.db.persistMessage(data.room, data.message)
                 .then(success => {

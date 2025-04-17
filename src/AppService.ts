@@ -252,9 +252,9 @@ export class AppService implements AppServiceTypes  {
             }
 
             // get 'rtc.saveToServer' out of 'rtc' class.
-            if (this.rtc.saveToServer) {
-                this.rtc.persistOnServer(msg);
-            }
+            // if (this.rtc.saveToServer) {
+            //     this.rtc.persistOnServer(msg);
+            // }
             this.gd({ type: 'send', payload: this.gs});
         }
     }

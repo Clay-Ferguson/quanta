@@ -194,11 +194,11 @@ export default class WebRTC {
         }
     }
 
-    // _onBroadcast = (evt: any) => {
-    //     alert('Received broadcast message: ' + evt.message); // making sure this never happens again.
-    //     util.log('broadcast. Received broadcast message from ' + evt.sender);
-    //     this.app?._persistMessage(evt.message);           
-    // }
+    _onBroadcast = (evt: any) => {
+        // alert('Received broadcast message from ' + evt.sender + ': ' + evt.message); // todo-0: remove this alert
+        util.log('broadcast. Received broadcast message from ' + evt.sender);
+        this.app?._persistMessage(evt.message);           
+    }
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
@@ -221,9 +221,9 @@ export default class WebRTC {
         else if (evt.type === 'ice-candidate' && evt.sender) {
             this._onIceCandidate(evt);
         }
-        // else if (evt.type === 'broadcast' && evt.sender) {
-        //     this._onBroadcast(evt); 
-        // }
+        else if (evt.type === 'broadcast' && evt.sender) {
+            this._onBroadcast(evt); 
+        }
         this.app?._rtcStateChange();
     }
 
@@ -476,24 +476,40 @@ export default class WebRTC {
             // to be able to persist into DB with a state of "not-delivered", so we can chew through them later, an async timer.
             return false;
         }
+
+        // alert("Sending to " + openChannels + " open channels: " + Array.from(this.dataChannels.keys()).join(', '));
         
-        // Try to send through all open channels
-        this.dataChannels.forEach((channel, peer) => {
-            if (channel.readyState === 'open') {
-                try {
-                    channel.send(jsonMsg);
-                    util.log(`Successfully sent message to ${peer}`);
-                    sent = true;
-                } catch (err) {
-                    // todo-0: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
-                    util.log(`Error sending to ${peer}: ${err}`);
+        if (!this.saveToServer) {
+            // Try to send through all open channels
+            this.dataChannels.forEach((channel, peer) => {
+                if (channel.readyState === 'open') {
+                    try {
+                        channel.send(jsonMsg);
+                        util.log(`Successfully sent message to ${peer}`);
+                        sent = true;
+                    } catch (err) {
+                        // todo-0: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
+                        util.log(`Error sending to ${peer}: ${err}`);
+                    }
                 }
+                else {
+                    util.log(`Channel to ${peer} is not open, skipping send`);
+                }
+            });
+        }
+        else {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({
+                    type: 'broadcast',
+                    message: msg, 
+                    room: this.roomId
+                }));
+                util.log('Sent message via signaling server broadcast.');
+                sent = true;
+            } else {
+                console.error('Cannot send broadcast message: WebSocket not open.');
             }
-            else {
-                util.log(`Channel to ${peer} is not open, skipping send`);
-            }
-        });
-        
+        }
         if (!sent) {
             util.log('ERROR: Failed to send message through any channel');
         }
@@ -501,17 +517,18 @@ export default class WebRTC {
     }
 
     // New method to persist messages on the server
-    persistOnServer(msg: any) {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({
-                type: 'persist', // Use a dedicated type for server-only persistence
-                message: msg,
-                room: this.roomId
-            }));
-            util.log('Message persisted to server database.');
-        } else {
-            console.warn('Cannot persist message: WebSocket not open.');
-            // Could implement a retry mechanism or queue for offline messages
-        }
-    }
+    // todo-0: we now use a broadcast for this, so the 'persist' code on the server can be removed.
+    // persistOnServer(msg: any) {
+    //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+    //         this.socket.send(JSON.stringify({
+    //             type: 'persist', // Use a dedicated type for server-only persistence
+    //             message: msg,
+    //             room: this.roomId
+    //         }));
+    //         util.log('Message persisted to server database.');
+    //     } else {
+    //         console.warn('Cannot persist message: WebSocket not open.');
+    //         // Could implement a retry mechanism or queue for offline messages
+    //     }
+    // }
 }
