@@ -17,6 +17,7 @@ export interface GlobalState {
     fullSizeImage?: {src: string, name: string} | null;
     appInitialized?: boolean;
     saveToServer?: boolean;
+    daysOfHistory?: number;
 }
 
 const initialState: GlobalState = {
@@ -31,7 +32,8 @@ const initialState: GlobalState = {
     contacts: [],
     fullSizeImage: null,
     appInitialized: false,
-    saveToServer: true
+    saveToServer: true,
+    daysOfHistory: 30
 };
 
 export type GlobalAction = { type: string, payload: any};

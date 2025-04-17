@@ -21,6 +21,7 @@ export enum DBKeys {
     connected = 'connected',
     saveToServer = 'saveToServer',
     linkPreview = 'linkPreview',
+    daysOfHistory = 'daysOfHistory',
 }
 
 export enum PageNames{

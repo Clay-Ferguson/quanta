@@ -171,6 +171,22 @@ export default class IndexedDB {
         }
     }
 
+    /**
+     * Find all keys that start with a specific prefix
+     * @param {string} prefix - The prefix to search for
+     * @returns {Promise<Array<string>>} Promise that resolves with an array of matching keys
+     */
+    async findKeysByPrefix(prefix: string): Promise<string[]> {
+        this.checkDB();
+        try {
+            const allKeys = await this.keys();
+            return allKeys.filter(key => typeof key === 'string' && key.startsWith(prefix));
+        } catch (error) {
+            console.error(`Error in findKeysByPrefix for '${prefix}':`, error);
+            throw error;
+        }
+    }
+
     checkDB() {
         if (!this.db) {
             throw new Error('Database not initialized. Call initDB() first, and inside getInstance() only.');

@@ -10,6 +10,7 @@ export default function SettingsPage() {
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
     const [saveToServer, setSaveToServer] = useState(false);
+    const [daysOfHistory, setDaysOfHistory] = useState('');
 
     useEffect(() => {
         // Initialize the userName from global state when component mounts
@@ -19,7 +20,12 @@ export default function SettingsPage() {
         
         // Initialize saveToServer from global state
         setSaveToServer(gs.saveToServer || false);
-    }, [gs.userName, gs.saveToServer]);
+        
+        // Initialize daysOfHistory from global state
+        if (gs.daysOfHistory !== undefined) {
+            setDaysOfHistory(gs.daysOfHistory.toString());
+        }
+    }, [gs.userName, gs.saveToServer, gs.daysOfHistory]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -29,6 +35,21 @@ export default function SettingsPage() {
         const isChecked = e.target.checked;
         setSaveToServer(isChecked);
         app.setSaveToServer(isChecked);
+    };
+    
+    const handleDaysOfHistoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setDaysOfHistory(value);
+    };
+    
+    const saveDaysOfHistory = () => {
+        // Convert to number and save to global state
+        const days = parseInt(daysOfHistory);
+        if (!isNaN(days) && days >= 0) {
+            app.setDaysOfHistory(days);
+        } else {
+            alert("Please enter a valid number of days (0 or greater)");
+        }
     };
 
     return (
@@ -108,6 +129,37 @@ export default function SettingsPage() {
                                         onChange={handleSaveToServerChange}
                                         className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
                                     />
+                                </div>
+                            </div>
+                            
+                            {/* Days of History Option */}
+                            <div className="mt-4 pt-4 border-t border-blue-400/20">
+                                <div className="mb-2">
+                                    <label htmlFor="daysOfHistory" className="text-sm font-medium text-blue-300">
+                                        Days of History
+                                    </label>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        Messages older than this many days will be automatically deleted.
+                                    </p>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <input
+                                        type="number"
+                                        id="daysOfHistory"
+                                        name="daysOfHistory"
+                                        value={daysOfHistory}
+                                        onChange={handleDaysOfHistoryChange}
+                                        min="2"
+                                        className="bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                  text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter days to keep"
+                                    />
+                                    <button 
+                                        className="btn-primary"
+                                        onClick={saveDaysOfHistory}
+                                    >
+                                        Save
+                                    </button>
                                 </div>
                             </div>
                         </div>

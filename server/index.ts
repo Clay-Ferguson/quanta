@@ -60,7 +60,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // API endpoint to get message IDs for a specific room
 app.get('/api/rooms/:roomId/message-ids', async (req, res) => {
-    console.log('getMessageIdsForRoom', req.params.roomId);
+    console.log('getMessageIdsForRoom', req.params.roomId, 'daysOfHistory:', req.query.daysOfHistory);
     await db.getMessageIdsForRoomHandler(req, res);
 });
 

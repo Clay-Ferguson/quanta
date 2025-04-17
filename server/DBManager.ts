@@ -292,11 +292,46 @@ export class DBManager {
                 return res.status(400).json({ error: 'Room ID is required' });
             }
             
-            const messageIds = await this.getMessageIdsForRoom(roomId);
+            // Parse daysOfHistory parameter
+            let historyDays = parseInt(req.query.daysOfHistory as string) || Number.MAX_SAFE_INTEGER;
+            if (historyDays < 2) {
+                historyDays = 2; // Ensure at least 2 days of history
+            }
+            
+            // Calculate cutoff timestamp in milliseconds
+            const millisecondsPerDay = 24 * 60 * 60 * 1000;
+            const currentTime = Date.now();
+            const cutoffTimestamp = currentTime - (historyDays * millisecondsPerDay);
+            
+            const messageIds = await this.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
             res.json({ messageIds });
         } catch (error) {
             console.error('Error in getMessageIdsForRoom handler:', error);
             res.status(500).json({ error: 'Failed to retrieve message IDs' });
+        }
+    }
+
+    /**
+     * Get message IDs for a specific room, filtered by timestamp
+     */
+    async getMessageIdsForRoomWithDateFilter(roomId: string, cutoffTimestamp: number): Promise<string[]> {
+        try {
+            // First, get the room_id from the name or id
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
+            if (!room) {
+                return [];
+            }
+            
+            // Add timestamp filter to only get messages after the cutoff date
+            const messages = await this.db!.all(
+                'SELECT id FROM messages WHERE room_id = ? AND timestamp >= ?', 
+                [room.id, cutoffTimestamp]
+            );
+            
+            return messages.map(msg => msg.id);
+        } catch (error) {
+            console.error('Error retrieving filtered message IDs for room:', error);
+            throw error;
         }
     }
 

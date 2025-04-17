@@ -40,6 +40,57 @@ export class AppService implements AppServiceTypes  {
         }});
 
         this.restoreConnection();
+
+        setTimeout(() => {
+            this.runRoomCleanup();
+        }, 10000);
+    }
+
+    runRoomCleanup = async () => {
+    // Get all room keys
+        const roomKeys = await this.storage?.findKeysByPrefix(DBKeys.roomPrefix);
+        if (roomKeys) {
+            // Loop through each room and delete all messages older than gs.daysOfHistory
+            for (const roomKey of roomKeys) {
+                console.log(`Cleaning up room: ${roomKey}`);
+                const roomData: any = await this.storage?.getItem(roomKey);
+                if (roomData?.messages) {
+                    const cleanedSome = await this.cleanRoomMessages(roomData);
+                    if (cleanedSome) {
+                        console.log(`Removed messages from room: ${roomKey} older than ${this.gs?.daysOfHistory || 30} days`);
+                        await this.storage?.setItem(roomKey, roomData);
+                    }
+                }
+            }
+            console.log("Room cleanup complete.");
+        }
+    }
+
+    cleanRoomMessages = async (roomData: any): Promise<boolean> => {
+        if (!roomData || !roomData.messages) {
+            return false; // No messages to clean
+        }
+        const now = new Date().getTime();
+        let days = this.gs?.daysOfHistory || 30; // default to 30 days if not set
+        if (days < 2) {
+            days = 2;
+        }
+        const daysInMs = days * 24 * 60 * 60 * 1000;
+
+        // before we even run this filter let's see if there are any messages older than the threshold using 'any'
+        const hadOldMessages = roomData.messages.some((msg: ChatMessage) => (now - msg.timestamp) >= daysInMs);
+        if (hadOldMessages) {
+            console.log("Initial Message Count: " + roomData.messages.length);
+            roomData.messages = roomData.messages.filter((msg: ChatMessage) => {
+                const keepMsg = (now - msg.timestamp) < daysInMs;
+                if (!keepMsg) {
+                    console.log(`Removing message from ${msg.sender} at ${new Date(msg.timestamp).toLocaleString()}: ${msg.content}`);
+                }
+                return keepMsg;
+            });
+            console.log("Cleaned Message Count: " + roomData.messages.length);
+        }
+        return hadOldMessages; // return true if we removed any messages
     }
 
     saveLinkPreviewInfo = async (url: string, data: any) => {
@@ -71,12 +122,14 @@ export class AppService implements AppServiceTypes  {
         const contacts: Contact[] = await this.storage?.getItem(DBKeys.contacts);
         const roomName: string = await this.storage?.getItem(DBKeys.roomName);
         const saveToServer: boolean = await this.storage?.getItem(DBKeys.saveToServer);
+        const daysOfHistory: number = await this.storage?.getItem(DBKeys.daysOfHistory) || 30;
 
         const state: GlobalState = {
             userName,
             contacts,
             roomName,
-            saveToServer
+            saveToServer,
+            daysOfHistory
         };
 
         // if no username we send to settings page.
@@ -111,6 +164,10 @@ export class AppService implements AppServiceTypes  {
         if (this.rtc) {
             this.rtc.setSaveToServer(saveToServer);
         }
+    }
+
+    setDaysOfHistory  = async (days: number) => {
+        this.persistGlobalValue(DBKeys.daysOfHistory, days);
     }
 
     // we have this method only for effeciency to do a single state update.
@@ -250,10 +307,6 @@ export class AppService implements AppServiceTypes  {
                 }, 20000);
             }
 
-            // get 'rtc.saveToServer' out of 'rtc' class.
-            // if (this.rtc.saveToServer) {
-            //     this.rtc.persistOnServer(msg);
-            // }
             this.gd!({ type: 'send', payload: this.gs});
         }
     }
@@ -434,6 +487,15 @@ export class AppService implements AppServiceTypes  {
         try {
             const roomData: any = await this.storage.getItem(DBKeys.roomPrefix + roomId);
             if (roomData) {
+                const cleanedSome: boolean = await this.cleanRoomMessages(roomData);
+                console.log("cleanedSome = " + cleanedSome);
+                if (cleanedSome) {
+                    console.log("Saving new room data after cleaning old messages for room: " + roomId);
+                    // If we cleaned old messages, save the updated room data
+                    await this.storage.setItem(DBKeys.roomPrefix + roomId, roomData);
+                    util.log(`Cleaned old messages for room: ${roomId}`);
+                }
+
                 util.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
                 messages = roomData.messages;
             }
@@ -444,7 +506,7 @@ export class AppService implements AppServiceTypes  {
         // Next get room messages from server using our new optimized approach
         try {
             // Step 1: Get all message IDs from the server for this room
-            const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids`);
+            const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
             if (!idsResponse.ok) {
                 throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);
             }
