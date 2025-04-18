@@ -65,7 +65,7 @@ if (SECURE === 'y') {
 app.post('/api/admin/create-test-data', crypto.verifyHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Creating test data');
-        // await db.createTestData(); # todo-0: put back soon.
+        await db.createTestData();
         res.json({ success: true, message: 'Test data created successfully' });
     } catch (error) {
         console.error('Error creating test data:', error);

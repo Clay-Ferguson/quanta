@@ -13,7 +13,6 @@ class Crypto {
         this.adminPublicKey = adminPublicKey || null;
     }
         
-
     // Function to generate a new keypair
     generateKeypair(): KeyPairHex {
         // Generate a random private key (32 bytes)
