@@ -504,67 +504,68 @@ export class AppService implements AppServiceTypes  {
         }
 
         // Next get room messages from server using our new optimized approach
-        try {
+        if (this.gs!.saveToServer) {
+            try {
             // Step 1: Get all message IDs from the server for this room
-            const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
-            if (!idsResponse.ok) {
-                throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);
-            }
+                const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
+                if (!idsResponse.ok) {
+                    throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);
+                }
             
-            const idsData = await idsResponse.json();
-            const serverMessageIds: string[] = idsData.messageIds || [];
+                const idsData = await idsResponse.json();
+                const serverMessageIds: string[] = idsData.messageIds || [];
             
-            if (serverMessageIds.length === 0) {
-                util.log(`No messages found on server for room: ${roomId}`);
-                return messages;
-            }
+                if (serverMessageIds.length === 0) {
+                    util.log(`No messages found on server for room: ${roomId}`);
+                    return messages;
+                }
             
-            // Step 2: Create a map of existing message IDs for quick lookup
-            const existingMessageIds = new Set(messages.map(msg => msg.id));
+                // Step 2: Create a map of existing message IDs for quick lookup
+                const existingMessageIds = new Set(messages.map(msg => msg.id));
             
-            // Step 3: Determine which message IDs we're missing locally
-            const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
+                // Step 3: Determine which message IDs we're missing locally
+                const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
             
-            if (missingIds.length === 0) {
-                util.log(`Local message store is up to date for room: ${roomId}`);
-                return messages;
-            }
+                if (missingIds.length === 0) {
+                    util.log(`Local message store is up to date for room: ${roomId}`);
+                    return messages;
+                }
             
-            util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
+                util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
-            // Step 4: Fetch only the missing messages from the server
-            const messagesResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ids: missingIds })
-            });
-            
-            if (!messagesResponse.ok) {
-                throw new Error(`Failed to fetch missing messages: ${messagesResponse.status}`);
-            }
-            
-            const messagesData = await messagesResponse.json();
-            if (messagesData.messages && messagesData.messages.length > 0) {
-                // Step 5: Add the fetched messages to our local array
-                messages = [...messages, ...messagesData.messages];
-                
-                // Step 6: Sort messages by timestamp to ensure chronological order
-                messages.sort((a, b) => a.timestamp - b.timestamp);
-                
-                // Step 7: Save the merged messages to local storage
-                await this.storage.setItem(DBKeys.roomPrefix + roomId, {
-                    messages: messages,
-                    lastUpdated: new Date().toISOString()
+                // Step 4: Fetch only the missing messages from the server
+                const messagesResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: missingIds })
                 });
+            
+                if (!messagesResponse.ok) {
+                    throw new Error(`Failed to fetch missing messages: ${messagesResponse.status}`);
+                }
+            
+                const messagesData = await messagesResponse.json();
+                if (messagesData.messages && messagesData.messages.length > 0) {
+                // Step 5: Add the fetched messages to our local array
+                    messages = [...messages, ...messagesData.messages];
                 
-                util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
+                    // Step 6: Sort messages by timestamp to ensure chronological order
+                    messages.sort((a, b) => a.timestamp - b.timestamp);
+                
+                    // Step 7: Save the merged messages to local storage
+                    await this.storage.setItem(DBKeys.roomPrefix + roomId, {
+                        messages: messages,
+                        lastUpdated: new Date().toISOString()
+                    });
+                
+                    util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
+                }
+            } catch (error) {
+                util.log('Error synchronizing messages with server, falling back to local storage: ' + error);
             }
-        } catch (error) {
-            util.log('Error synchronizing messages with server, falling back to local storage: ' + error);
         }
-        
         return messages;
     }
 
