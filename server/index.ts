@@ -60,6 +60,18 @@ if (SECURE === 'y') {
     });
 }
 
+app.post('/api/admin/create-test-data', async (req, res) => {
+    // todo-0: we need to build a proper authentication mechanism here
+    try {
+        console.log('Admin request: Creating test data');
+        await db.createTestData();
+        res.json({ success: true, message: 'Test data created successfully' });
+    } catch (error) {
+        console.error('Error creating test data:', error);
+        res.status(500).json({ error: 'Failed to create test data' });
+    }
+});
+
 app.get('/api/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });

@@ -75,6 +75,124 @@ export class DBManager {
         `);
     }
 
+    /**
+    * Removes all messages from a specified room
+    */
+    public async wipeRoom(roomName: string): Promise<void> {
+        console.log(`Wiping all messages from room: ${roomName}`);
+    
+        try {
+        // Begin transaction
+            await this.db!.run('BEGIN TRANSACTION');
+        
+            // Get the room ID
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            if (!room) {
+                console.log(`Room '${roomName}' not found, nothing to wipe`);
+                await this.db!.run('COMMIT');
+                return;
+            }
+        
+            // Get all message IDs in this room to delete their attachments
+            const messages = await this.db!.all('SELECT id FROM messages WHERE room_id = ?', room.id);
+            const messageIds = messages.map(msg => msg.id);
+        
+            // If there are messages, delete their attachments first
+            if (messageIds.length > 0) {
+            // Create placeholders for the query
+                const placeholders = messageIds.map(() => '?').join(',');
+            
+                // Delete all attachments associated with these messages
+                await this.db!.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, messageIds);
+            }
+        
+            // Delete all messages in the room
+            const result = await this.db!.run('DELETE FROM messages WHERE room_id = ?', room.id);
+        
+            // Commit transaction
+            await this.db!.run('COMMIT');
+            console.log(`Successfully wiped ${result.changes} messages from room '${roomName}'`);
+        } catch (error) {
+            console.error(`Error wiping room '${roomName}':`, error);
+            // Rollback if error
+            try {
+                if (this.db) {
+                    await this.db.run('ROLLBACK');
+                }
+            } catch (rollbackError) {
+                console.error('Rollback failed:', rollbackError);
+            }
+        }
+    }
+
+    public async createTestData(): Promise<void> {
+        const roomName = 'test';
+        console.log('Creating test data...');
+        
+        try {
+            // First, wipe the test room to ensure we start fresh
+            await this.wipeRoom(roomName);
+
+            // Begin transaction
+            await this.db!.run('BEGIN TRANSACTION');
+            
+            // Get or create the 'test' room
+            const roomId = await this.getOrCreateRoom(roomName);
+            console.log('Test room ID:', roomId);
+            
+            // Generate test messages - 10 messages per day for a week (70 total)
+            const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
+            const now = Date.now();
+            
+            for (let day = 0; day < 7; day++) {
+                // Base timestamp for this day (going back 'day' days from now)
+                const dayTimestamp = now - (day * oneDay);
+                
+                for (let msg = 0; msg < 10; msg++) {
+                    // Generate a random time within this day
+                    const randomHourOffset = Math.floor(Math.random() * 24 * 60 * 60 * 1000);
+                    const timestamp = dayTimestamp - randomHourOffset;
+                    
+                    // Message number from 1-70 (newest to oldest)
+                    const messageNumber = day * 10 + msg + 1;
+                    
+                    // Create a unique ID for the message
+                    const messageId = `test-msg-${messageNumber}-${timestamp}`;
+                    
+                    // Insert the message
+                    await this.db!.run(
+                        `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            messageId,
+                            roomId,
+                            timestamp,
+                            'clay',
+                            `Chat message number ${messageNumber}`,
+                            null,
+                            null
+                        ]
+                    );
+                }
+            }
+            
+            // Commit transaction
+            await this.db!.run('COMMIT');
+            console.log('Successfully created 70 test messages in the "test" room');
+            
+        } catch (error) {
+            console.error('Error creating test data:', error);
+            // Rollback if error
+            try {
+                if (this.db) {
+                    await this.db.run('ROLLBACK');
+                }
+            } catch (rollbackError) {
+                console.error('Rollback failed:', rollbackError);
+            }
+        }
+    }
+
     public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         console.log('Persisting message:', message);
 

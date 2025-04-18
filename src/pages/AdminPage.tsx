@@ -11,6 +11,27 @@ export default function AdminPage() {
         return null;
     }
 
+    const createTestData = async () => {
+        try {
+            const response = await fetch('/api/admin/create-test-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ publicKey: ADMIN_PUBLIC_KEY }),
+            });
+            
+            if (response.ok) {
+                alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
+            } else {
+                alert('Failed to create test data');
+            }
+        } catch (error) {
+            console.error('Error creating test data:', error);
+            alert('An error occurred while creating test data');
+        }
+    };
+
     return (
         <div className="page-container">
             <header className="app-header">
@@ -26,7 +47,15 @@ export default function AdminPage() {
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Test Data</h3>
                         
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                        Awesome admin page.
+                            <p className="text-gray-300 mb-4">
+                                Create test data for development and testing purposes.
+                            </p>
+                            <button 
+                                onClick={createTestData}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                            >
+                                Create Test Data
+                            </button>
                         </div>
                     </div>
                 </div>
