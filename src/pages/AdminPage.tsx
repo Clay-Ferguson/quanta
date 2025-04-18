@@ -1,32 +1,24 @@
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
+import { crypto } from '../../common/Crypto';
+import { useGlobalState } from '../GlobalState';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
 export default function AdminPage() {
+    const gs = useGlobalState();
+    
     if (!ADMIN_PUBLIC_KEY) {
         console.error('Admin public key is not set. Please set the QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable.');
         return null;
     }
 
     const createTestData = async () => {
-        try {
-            const response = await fetch('/api/admin/create-test-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ publicKey: ADMIN_PUBLIC_KEY }),
-            });
-            
-            if (response.ok) {
-                alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
-            } else {
-                alert('Failed to create test data');
-            }
-        } catch (error) {
-            console.error('Error creating test data:', error);
-            alert('An error occurred while creating test data');
+        const success = await crypto.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
+        if (success) {
+            alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
+        } else {
+            alert(`Failed to create test data`);
         }
     };
 

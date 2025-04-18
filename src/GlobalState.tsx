@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer } from 'react';
-import { KeyPairHex } from './CryptoIntf';
+import { KeyPairHex } from '../common/CryptoIntf';
 import { ChatMessage, Contact, PageNames } from './AppServiceTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);

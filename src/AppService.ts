@@ -3,8 +3,8 @@ import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.js';
 import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
-import {crypto} from './Crypto.ts';  
-import { KeyPairHex } from './CryptoIntf.ts';
+import {crypto} from '../common/Crypto.ts';  
+import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
 
 // Vars are injected diretly into HTML by server

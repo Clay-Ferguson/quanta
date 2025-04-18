@@ -1,4 +1,4 @@
-import { ChatMessageIntf, MessageAttachmentIntf } from '../common/CommonTypes';
+import { ChatMessageIntf, MessageAttachmentIntf } from '../common/CommonTypes.js';
 export interface AppServiceTypes {
     /**
      * Handle RTC state changes

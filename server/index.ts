@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
+import {crypto} from '../common/Crypto.js'
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
@@ -36,6 +37,7 @@ const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 if (!ADMIN_PUBLIC_KEY) {
     console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
 }
+crypto.setAdminPublicKey(ADMIN_PUBLIC_KEY);
 
 // print out all env vars above that we just used
 console.log(`Environment Variables:
@@ -60,11 +62,10 @@ if (SECURE === 'y') {
     });
 }
 
-app.post('/api/admin/create-test-data', async (req, res) => {
-    // todo-0: we need to build a proper authentication mechanism here
+app.post('/api/admin/create-test-data', crypto.verifyHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Creating test data');
-        await db.createTestData();
+        // await db.createTestData(); # todo-0: put back soon.
         res.json({ success: true, message: 'Test data created successfully' });
     } catch (error) {
         console.error('Error creating test data:', error);

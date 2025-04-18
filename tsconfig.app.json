@@ -22,5 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  /* todo-0: IDE did these common inclusions. Can we just make it include all of common? */
+  "include": ["src", "common"]
 }
