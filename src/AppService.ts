@@ -16,8 +16,6 @@ export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     gd: React.Dispatch<GlobalAction> | null = null; // Global Dispatch Function
-
-    // todo-0: this is BAD. Need to make all methods accept 'gs' as an argument instead of having this here.
     gs: GlobalState | null = null; // Global State Object
 
     async init() {

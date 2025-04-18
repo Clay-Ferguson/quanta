@@ -46,7 +46,7 @@ export default function AdminPage() {
                         
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
                             <p className="text-gray-300 mb-4">
-                                Create test data for development and testing purposes.
+                                Restore test data, in room named 'test', for development and testing purposes. All existing data in the 'test' room will be deleted.
                             </p>
                             <button 
                                 onClick={createTestData}
