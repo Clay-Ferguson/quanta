@@ -16,6 +16,8 @@ export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     gd: React.Dispatch<GlobalAction> | null = null; // Global Dispatch Function
+
+    // todo-0: this is BAD. Need to make all methods accept 'gs' as an argument instead of having this here.
     gs: GlobalState | null = null; // Global State Object
 
     async init() {
@@ -189,9 +191,35 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(key, value);
     }
 
+    _importKeyPair = async () => {
+        if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
+            if (!confirm("Are you sure? This will overwrite your existing key pair.")) {
+                return;
+            }
+        }
+
+        const privateKey = prompt("Enter Private Key String:");
+        console.log("Importing Key Pair: " + privateKey);
+
+        if (!privateKey) {
+            return;
+        }
+
+        const keyPair = crypto.makeKeysFromPrivateKeyHex(privateKey);
+        if (!keyPair) {
+            console.error("Invalid private key provided.");
+            return;
+        }
+        this.gd!({ type: 'importIdentity', payload: { 
+            keyPair
+        }});
+        // Save the keyPair to IndexedDB
+        await this.storage?.setItem(DBKeys.keyPair, keyPair);
+    }
+
     _createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
-        if (askFirst && this.gs && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
+        if (askFirst && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
             if (!confirm("Create new Identity Keys?")) {
                 return;
             }

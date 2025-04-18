@@ -4,9 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
+import { useGlobalState } from '../GlobalState';
 
 export default function SettingsPage() {
-    const gs = app.gs!;
+    const gs = useGlobalState();
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
     const [saveToServer, setSaveToServer] = useState(false);
@@ -222,6 +223,7 @@ export default function SettingsPage() {
                         <div className="space-y-3 mt-4">
                             <div className="flex space-x-4">
                                 <button className="btn-primary" onClick={() => app._createIdentity(true)}>Create New Keys</button>
+                                <button className="btn-primary" onClick={app._importKeyPair}>Import Keys</button>
                             </div>
                         </div>
                     </div>

@@ -4,8 +4,6 @@ import BackButton from '../components/BackButton';
 declare const ADMIN_PUBLIC_KEY: string;
 
 export default function AdminPage() {
-    // const gs = app.gs!;
-
     if (!ADMIN_PUBLIC_KEY) {
         console.error('Admin public key is not set. Please set the QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable.');
         return null;

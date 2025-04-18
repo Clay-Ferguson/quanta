@@ -2,13 +2,14 @@ import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import {app} from '../AppService';
 import {util} from '../Util';
+import { useGlobalState } from '../GlobalState';
 
 export default function FooterComp() {
     const [message, setMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const gs = app.gs!; // Global state from AppService
+    const gs = useGlobalState();
 
     // Auto-resize function for textarea
     useEffect(() => {

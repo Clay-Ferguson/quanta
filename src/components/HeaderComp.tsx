@@ -4,11 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle, faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
 import { PageNames } from '../AppServiceTypes';
+import { useGlobalState } from '../GlobalState';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
 export default function HeaderComp() {
-    const gs = app.gs!;
+    const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
     
     useEffect(() => {

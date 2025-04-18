@@ -2,9 +2,9 @@ import { useLayoutEffect, useEffect, useRef } from 'react';
 import AttachmentComp from './AttachmentComp';
 import { ChatMessage } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
-import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
+import { useGlobalState } from '../GlobalState';
 
 // Static variable to store scroll position
 let scrollPosition = 0;
@@ -13,7 +13,7 @@ let scrollPosition = 0;
 // has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
 // so it won't interrupt them while they're reading something at a non-end scroll location.
 export default function MainComp() {
-    const gs = app.gs!;
+    const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
     const messageCount = gs.messages ? gs.messages.length : 0;
     const userScrolledRef = useRef(false);

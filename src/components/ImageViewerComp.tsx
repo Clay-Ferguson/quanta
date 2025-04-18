@@ -1,7 +1,8 @@
 import {app} from '../AppService';
+import { useGlobalState } from '../GlobalState';
 
 export default function ImageViewerComp() {
-    const gs = app.gs!;
+    const gs = useGlobalState();
 
     return (
         <>

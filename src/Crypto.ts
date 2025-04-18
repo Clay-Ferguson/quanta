@@ -22,6 +22,32 @@ class Crypto {
             publicKey: publicKeyHex,
         };
     }
+
+    // Function to create a KeyPairHex object from a private key hex string
+    makeKeysFromPrivateKeyHex(privateKeyHex: string): KeyPairHex | null {
+        try {
+            // Convert hex to bytes
+            const privateKeyBytes = hexToBytes(privateKeyHex);
+            
+            // Validate private key
+            if (!secp.utils.isValidPrivateKey(privateKeyBytes)) {
+                console.error("Invalid private key");
+                return null;
+            }
+            
+            // Derive public key from private key
+            const publicKeyBytes = secp.getPublicKey(privateKeyBytes);
+            const publicKeyHex = bytesToHex(publicKeyBytes);
+            
+            return {
+                privateKey: privateKeyHex,
+                publicKey: publicKeyHex,
+            };
+        } catch (error) {
+            console.error("Error creating key pair from private key:", error);
+            return null;
+        }
+    }
   
     // Function to export a key (already as hex in this example)
     exportKey(keyHex: any) {
