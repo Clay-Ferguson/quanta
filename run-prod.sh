@@ -10,11 +10,8 @@ export QUANTA_CHAT_SECURE="y"
 export QUANTA_CHAT_DB_FILE_NAME="./db/quanta-chat.db"
 export QUANTA_CHAT_CERT_PATH="/etc/letsencrypt/live/chat.quanta.wiki"
 
-# yarn build:client
-# yarn build:server
-# yarn start
-
-# Run from Dist folder only
+# todo-0: Don't forget
+export QUANTA_CHAT_ADMIN_PUBLIC_KEY=""
 
 # Note: the -E flag preserves the environment variables
 sudo -E node dist/server/index.js

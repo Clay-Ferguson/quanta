@@ -32,11 +32,17 @@ if (!SECURE) {
     throw new Error('QUANTA_CHAT_SECURE environment variable is not set');
 }
 
+const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
+if (!ADMIN_PUBLIC_KEY) {
+    console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
+}
+
 // print out all env vars above that we just used
 console.log(`Environment Variables:
     QUANTA_CHAT_HOST: ${HOST}
     QUANTA_CHAT_PORT: ${PORT}
     QUANTA_CHAT_SECURE: ${SECURE}
+    QUANTA_CHAT_ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY}
 `);
 
 app.use(express.json());
@@ -92,7 +98,8 @@ const serveIndexHtml = (req: Request, res: Response) => {
         const result = data
             .replace('{{HOST}}', process.env.QUANTA_CHAT_HOST || '')
             .replace('{{PORT}}', process.env.QUANTA_CHAT_PORT || '')
-            .replace('{{SECURE}}', process.env.QUANTA_CHAT_SECURE || '');
+            .replace('{{SECURE}}', process.env.QUANTA_CHAT_SECURE || '')
+            .replace('{{ADMIN_PUBLIC_KEY}}', process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY || '');
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');

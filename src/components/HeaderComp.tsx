@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faQuestionCircle, faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
 import { PageNames } from '../AppServiceTypes';
+
+declare const ADMIN_PUBLIC_KEY: string;
 
 export default function HeaderComp() {
     const gs = app.gs!;
@@ -90,6 +92,14 @@ export default function HeaderComp() {
                 >
                     <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
                 </button>
+                { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
+                <button 
+                    onClick={() => app.goToPage(PageNames.admin)}
+                    className="btn-icon"
+                    title="Admin"
+                >
+                    <FontAwesomeIcon icon={faScrewdriverWrench} className="h-5 w-5" />
+                </button>}
                 <button 
                     onClick={() => app.goToPage(PageNames.userGuide)}
                     className="btn-icon"
