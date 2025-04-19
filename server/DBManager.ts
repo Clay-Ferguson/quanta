@@ -68,6 +68,10 @@ export class DBManager {
                 data BLOB,
                 FOREIGN KEY (message_id) REFERENCES messages (id)
             );
+
+            CREATE TABLE IF NOT EXISTS blocked_keys (
+                pub_key TEXT PRIMARY KEY
+            );
             
             CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages (room_id);
             CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
@@ -607,6 +611,7 @@ export class DBManager {
                         a.size, 
                         a.message_id,
                         m.sender,
+                        m.public_key,
                         m.timestamp,
                         r.name as room_name
                     FROM attachments a
@@ -621,6 +626,50 @@ export class DBManager {
         } catch (error) {
             console.error('Error getting recent attachments:', error);
             return [];
+        }
+    }
+
+    public async isUserBlocked(pub_key: string): Promise<boolean> {
+        try {
+            if (!pub_key) {
+                return false; // Can't check an empty key
+            }
+        
+            const result = await this.db!.get(
+                'SELECT pub_key FROM blocked_keys WHERE pub_key = ?',
+                [pub_key]
+            );
+        
+            return !!result; // Convert to boolean - true if found, false if not found
+        } catch (error) {
+            console.error('Error checking if user is blocked:', error);
+            return false; // Default to not blocked on error
+        }
+    }
+
+    public async blockUser(pub_key: string): Promise<boolean> {
+        try {
+            if (!pub_key) {
+                console.error('Cannot block an empty public key');
+                return false;
+            }
+        
+            // Use INSERT OR IGNORE to avoid errors if the key is already blocked
+            const result: any = await this.db!.run(
+                'INSERT OR IGNORE INTO blocked_keys (pub_key) VALUES (?)',
+                [pub_key]
+            );
+        
+            if (result.changes > 0) {
+                console.log(`Public key blocked: ${pub_key}`);
+                return true;
+            } else {
+                console.log(`Public key already blocked or blocking failed: ${pub_key}`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error blocking user:', error);
+            return false;
         }
     }
 }

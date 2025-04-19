@@ -1,6 +1,7 @@
 import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 import { DBManager } from './DBManager.js';
+import {crypto} from '../common/Crypto.js'
 
 const log = logger.logInfo;
 const logError = logger.logError;
@@ -196,8 +197,20 @@ export default class WebRTCSigServer {
         log("QuantaChatServer initialization complete");
     }
 
-    persist = (data: any) => {
+    persist = async (data: any) => {
         if (data.room && data.message) {
+            const sigOk = await crypto.verifySignature(data.message);
+            if (!sigOk) {
+                logError("Signature verification failed for message:", data.message);
+                return;
+            }
+
+            const userBlocked = await this.db.isUserBlocked(data.message.publicKey);
+            if (userBlocked) {
+                console.log("User is blocked. Not persisting.");
+                return;
+            }
+          
             this.db.persistMessage(data.room, data.message)
                 .then(success => {
                     if (success) {

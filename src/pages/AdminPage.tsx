@@ -57,8 +57,10 @@ export default function AdminPage() {
                     <BackButton/>
                 </div>
             </header>
+
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">            
                 <div className="space-y-6 max-w-2xl mx-auto">
+
                     {/* Test Data Section */}
                     <div className="border border-blue-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Test Data</h3>
@@ -69,7 +71,7 @@ export default function AdminPage() {
                             </p>
                             <button 
                                 onClick={createTestData}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                className="btn-secondary"
                             >
                                 Create Test Data
                             </button>
@@ -86,7 +88,7 @@ export default function AdminPage() {
                             </p>
                             <button 
                                 onClick={getRoomInfo}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md mb-4"
+                                className="btn-secondary"
                                 disabled={loading}
                             >
                                 {loading ? 'Loading...' : 'Get Room Info'}
@@ -114,6 +116,47 @@ export default function AdminPage() {
                                     </table>
                                 </div>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="admin-section">
+                        <h2>Manage Users</h2>
+                        <div className="admin-controls">
+                            <button 
+                                className="btn-secondary"
+                                onClick={async () => {
+                                    const pubKey = prompt("Enter User Public Key to block:");
+                                    if (!pubKey || pubKey.trim() === '') {
+                                        alert("No public key provided");
+                                        return;
+                                    }
+        
+                                    try {
+                                        // Show loading state
+                                        setLoading(true);
+          
+                                        // Make the secure POST request with body
+                                        const response = await crypto.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
+                                            pub_key: pubKey.trim()
+                                        });
+          
+                                        if (response) {
+                                            if (response.success) {
+                                                alert(`Success: ${response.message}`);
+                                            } else {
+                                                alert(`Operation completed but failed: ${response.message}`);
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.error('Error blocking user:', error);
+                                        alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                            >
+      Block User
+                            </button>
                         </div>
                     </div>
                 </div>

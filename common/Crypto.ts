@@ -127,7 +127,7 @@ class Crypto {
 
         try {
             const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
-            console.log("verifySignature(1) Verified: "+isVerified);
+            console.log("verifySignature Verified: "+isVerified);
             return isVerified;
         } catch (error) {
             console.error("Error verifying signature:", error);
@@ -251,10 +251,6 @@ class Crypto {
         
             // Remove trailing newline
             signatureBase = signatureBase.slice(0, -1);
-        
-            // todo-0: our crypto.getMessageHashBytes for getting hash of a chat message might be better off
-            // using this way of encoding instead. Look into it.
-            // Create message hash similar to how we do it in Crypto.ts
             const messageHash = sha256(new TextEncoder().encode(signatureBase));
         
             // DO NOT DELETE: Keep for future debugging purposes
@@ -327,16 +323,26 @@ class Crypto {
         };
     }
 
-    // Eventually we'll need to support a BODY to send, but we don't need it for now.
-    secureHttpPost = async (url: string, keyPair: KeyPairHex): Promise<any> => {
+    secureHttpPost = async (url: string, keyPair: KeyPairHex, body?: any): Promise<any> => {
         let response: any | null = null;
         try {
             const headers = await crypto.buildSecureHeaders(url, keyPair!);
-            const res = await fetch(url, {
+            const requestOptions: RequestInit = {
                 method: 'POST',
                 headers
-            }); 
-            
+            };
+        
+            // Add body if provided
+            if (body) {
+                requestOptions.headers = {
+                    ...requestOptions.headers,
+                    'Content-Type': 'application/json'
+                };
+                requestOptions.body = JSON.stringify(body);
+            }
+        
+            const res = await fetch(url, requestOptions); 
+        
             if (res.ok) {
                 response = await res.json();
             }
