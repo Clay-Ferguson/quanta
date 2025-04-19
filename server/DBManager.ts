@@ -459,7 +459,7 @@ export class DBManager {
      */
     async getMessageIdsForRoomWithDateFilter(roomId: string, cutoffTimestamp: number): Promise<string[]> {
         try {
-            // First, get the room_id from the name or id
+            // First, get the room_id from the room name
             const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
             if (!room) {
                 return [];
@@ -499,6 +499,36 @@ export class DBManager {
         } catch (error) {
             console.error('Error in getMessagesByIds handler:', error);
             res.status(500).json({ error: 'Failed to retrieve messages' });
+        }
+    }
+
+    /**
+ * Gets information about all rooms including their message counts
+ * @returns An array of room information objects
+ */
+    async getAllRoomsInfo() {
+        try {
+        // Query to get all rooms and join with messages to count messages per room
+            const query = `
+        SELECT 
+            r.id as id,
+            r.name as name,
+            COUNT(m.id) as messageCount
+        FROM rooms r
+        LEFT JOIN messages m ON r.id = m.room_id
+        GROUP BY r.id
+        ORDER BY r.name ASC
+    `;
+    
+            const rooms = await this.db!.all(query);
+            return rooms.map(room => ({
+                id: room.id,
+                name: room.name,
+                messageCount: room.messageCount
+            }));
+        } catch (error) {
+            console.error('Error getting all rooms info:', error);
+            throw error;
         }
     }
 }

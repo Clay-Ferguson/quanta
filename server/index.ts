@@ -89,6 +89,19 @@ app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
     await db.getMessagesByIdsHandler(req, res);
 });
 
+// Add this after the create-test-data endpoint (around line 70)
+
+app.post('/api/admin/get-room-info', crypto.verifyHTTPSignature, async (req, res) => {
+    try {
+        console.log('Admin request: Getting room information');
+        const roomsInfo = await db.getAllRoomsInfo();
+        res.json({ success: true, rooms: roomsInfo });
+    } catch (error) {
+        console.error('Error getting room information:', error);
+        res.status(500).json({ success: false, error: 'Failed to get room information' });
+    }
+});
+
 // Keep the original endpoint for backward compatibility
 // This can be enhanced later to accept optional roomId parameter
 app.get('/api/messages', async (req, res) => {
