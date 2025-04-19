@@ -150,7 +150,7 @@ class Crypto {
             
             // Verify the signature
             const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
-            console.log("verifySignatureBytes2 Verified: "+isVerified);
+            // console.log("Sig Bytes Verified: "+isVerified);
             return isVerified;
         } catch (error) {
             console.error("Error verifying signature:", error);
@@ -328,26 +328,26 @@ class Crypto {
     }
 
     // Eventually we'll need to support a BODY to send, but we don't need it for now.
-    secureHttpPost = async (url: string, keyPair: KeyPairHex): Promise<boolean> => {
-        let success = false;
+    secureHttpPost = async (url: string, keyPair: KeyPairHex): Promise<any> => {
+        let response: any | null = null;
         try {
             const headers = await crypto.buildSecureHeaders(url, keyPair!);
-            const response = await fetch(url, {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers
             }); 
             
-            if (response.ok) {
-                success = true;
+            if (res.ok) {
+                response = await res.json();
             }
             else {
-                const errorData = await response.json();
+                const errorData = await res.json();
                 alert(`Failed to post to ${url}: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error(`Error posting to ${url}:`, error);
         }
-        return success;
+        return response;
     }
 }
 
