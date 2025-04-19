@@ -15,6 +15,7 @@ declare const SECURE: string;
 export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
+    private static initComplete: boolean = false;
     gd: React.Dispatch<GlobalAction> | null = null; // Global Dispatch Function
     gs: GlobalState | null = null; // Global State Object
 
@@ -44,6 +45,21 @@ export class AppService implements AppServiceTypes  {
         setTimeout(() => {
             this.runRoomCleanup();
         }, 10000);
+    }
+
+    setGlobals = (gd: any, gs: any) => {
+        if (!gd || !gs) {
+            console.warn('Global dispatch or state not yet available');
+            return;
+        }
+
+        this.gd = gd;
+        this.gs = gs;
+
+        if (!AppService.initComplete) {
+            AppService.initComplete = true;
+            this.init();
+        }
     }
 
     runRoomCleanup = async () => {
@@ -148,11 +164,6 @@ export class AppService implements AppServiceTypes  {
     goToPage = (page: string) => {
         this.gs!.page = page; 
         this.gd!({ type: 'setPage', payload: this.gs });
-    }
-
-    setGlobals = (gd: any, gs: any) => {
-        this.gd = gd;
-        this.gs = gs;
     }
 
     setUserName  = async (userName: string) => {
@@ -609,4 +620,4 @@ export class AppService implements AppServiceTypes  {
 }
 
 export const app = new AppService();
-app.init();
+
