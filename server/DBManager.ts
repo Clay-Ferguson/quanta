@@ -531,4 +531,96 @@ export class DBManager {
             throw error;
         }
     }
+
+    /**
+     * Retrieves an attachment by its ID
+     * @param id The ID of the attachment
+     * @returns The attachment data with type information
+     */
+    async getAttachmentById(id: number): Promise<{data: Buffer, type: string, name: string} | null> {
+        try {
+            const attachment = await this.db!.get(
+                'SELECT data, type, name FROM attachments WHERE id = ?',
+                [id]
+            );
+                
+            if (!attachment) {
+                return null;
+            }
+                
+            return {
+                data: attachment.data,
+                type: attachment.type,
+                name: attachment.name
+            };
+        } catch (error) {
+            console.error('Error retrieving attachment:', error);
+            return null;
+        }
+    }
+    
+    /**
+         * Express handler for serving attachment files
+         * @param req Express request object
+         * @param res Express response object
+         */
+    async serveAttachment(req: any, res: any): Promise<void> {
+        try {
+            const attachmentId = parseInt(req.params.attachmentId);
+                
+            if (isNaN(attachmentId)) {
+                return res.status(400).send('Invalid attachment ID');
+            }
+                
+            const attachment = await this.getAttachmentById(attachmentId);
+                
+            if (!attachment) {
+                return res.status(404).send('Attachment not found');
+            }
+                
+            // Set the appropriate content type
+            res.set('Content-Type', attachment.type);
+                
+            // Set content disposition for downloads (optional)
+            res.set('Content-Disposition', `inline; filename="${attachment.name}"`);
+                
+            // Send the binary data
+            res.send(attachment.data);
+        } catch (error) {
+            console.error('Error serving attachment:', error);
+            res.status(500).send('Server error');
+        }
+    }
+
+    /**
+     * Gets the most recent attachments
+     * @param limit Maximum number of attachments to return
+     * @returns Array of recent attachments with their details
+     */
+    async getRecentAttachments(limit = 100): Promise<any[]> {
+        try {
+            const query = `
+                    SELECT 
+                        a.id, 
+                        a.name, 
+                        a.type, 
+                        a.size, 
+                        a.message_id,
+                        m.sender,
+                        m.timestamp,
+                        r.name as room_name
+                    FROM attachments a
+                    JOIN messages m ON a.message_id = m.id
+                    JOIN rooms r ON m.room_id = r.id
+                    ORDER BY m.timestamp DESC
+                    LIMIT ?
+                `;
+                
+            const attachments = await this.db!.all(query, [limit]);
+            return attachments;
+        } catch (error) {
+            console.error('Error getting recent attachments:', error);
+            return [];
+        }
+    }
 }
