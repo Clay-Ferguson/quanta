@@ -574,7 +574,12 @@ export class AppService implements AppServiceTypes  {
             
                 const messagesData = await messagesResponse.json();
                 if (messagesData.messages && messagesData.messages.length > 0) {
-                // Step 5: Add the fetched messages to our local array
+                    // log all the messages content we got back along with number of attachments for each message
+                    messagesData.messages.forEach((msg: ChatMessage) => {
+                        console.log(`Fetched message: ${msg.content} with ${msg.attachments ? msg.attachments.length : 0} attachments`);
+                    });
+
+                    // Step 5: Add the fetched messages to our local array
                     messages = [...messages, ...messagesData.messages];
                 
                     // Step 6: Sort messages by timestamp to ensure chronological order
@@ -582,7 +587,7 @@ export class AppService implements AppServiceTypes  {
                 
                     // Step 7: Save the merged messages to local storage
                     await this.storage.setItem(DBKeys.roomPrefix + roomId, {
-                        messages: messages,
+                        messages,
                         lastUpdated: new Date().toISOString()
                     });
                 

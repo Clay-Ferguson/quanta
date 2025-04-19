@@ -393,6 +393,31 @@ export class DBManager {
             // Add room_id as the last parameter
             const params = [...messageIds, room.id];
             const messages = await this.db!.all(query, params);
+            
+            // For each message, fetch its attachments
+            for (const message of messages) {
+                const attachments = await this.db!.all(`
+                    SELECT name, type, size, data
+                    FROM attachments
+                    WHERE message_id = ?
+                `, [message.id]);
+                
+                // Convert binary data back to data URLs
+                message.attachments = attachments.map(att => {
+                    let dataUrl = '';
+                    if (att.data) {
+                        dataUrl = `data:${att.type};base64,${Buffer.from(att.data).toString('base64')}`;
+                    }
+                    
+                    return {
+                        name: att.name,
+                        type: att.type,
+                        size: att.size,
+                        data: dataUrl
+                    };
+                });
+            }
+            
             return messages;
         } catch (error) {
             console.error('Error retrieving messages by IDs:', error);
