@@ -1,3 +1,5 @@
+import { ChatMessage } from "./AppServiceTypes";
+
 class Util {
     log(message: string) {
         console.log(message);
@@ -14,6 +16,15 @@ class Util {
     getUrlParameter(name: string) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
+    }
+
+    formatMessageTime = (msg: ChatMessage) => {
+        return new Date(msg.timestamp).toLocaleDateString('en-US', { 
+            month: '2-digit', 
+            day: '2-digit', 
+            year: '2-digit' 
+        })+" "+
+        new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     fileToBase64(file: File): Promise<{
