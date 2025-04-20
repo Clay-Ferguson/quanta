@@ -321,7 +321,7 @@ class Crypto {
         }
 
         try {
-        // Make sure timestamp is not too old (e.g., 5 minutes)
+            // Make sure timestamp is not too old (e.g., 5 minutes)
             const curTime = Date.now();
             const reqTime = parseInt(timestamp.toString(), 10);
     
@@ -422,24 +422,20 @@ class Crypto {
     /**
     * Opens the recent attachments page in a new tab with admin authentication
     */
-    openRecentAttachments = (keyPair: KeyPairHex) => {
+    openRecentAttachments = async (keyPair: KeyPairHex) => {
         // Current timestamp
         const timestamp = Date.now().toString();
-    
-        // Sign the timestamp with the admin private key
-        // todo-0: change this to an 'await' style call.
-        this.signWithPrivateKey(timestamp, keyPair)
-            .then((signature: any) => {
-            // Construct the URL with authentication parameters
-                const url = `/recent-attachments?timestamp=${timestamp}&signature=${signature}`;
+
+        const sig = await this.signWithPrivateKey(timestamp, keyPair);
+        if (!sig) {
+            console.error('Failed to sign the timestamp');
+            alert('Failed to authenticate. Please check your admin credentials.');
+            return;
+        }
+        const url = `/recent-attachments?timestamp=${timestamp}&signature=${sig}`;
             
-                // Open in new tab
-                window.open(url, '_blank');
-            })
-            .catch((error: any) => {
-                console.error('Error signing URL:', error);
-                alert('Failed to authenticate. Please check your admin credentials.');
-            });
+        // Open in new tab
+        window.open(url, '_blank');
     }
 
     signWithPrivateKey = async (data: string, keyPair: KeyPairHex) => {
