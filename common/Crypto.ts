@@ -192,7 +192,7 @@ class Crypto {
 
     // Note: This is AI-Generated implementation for "RFC 9421 - HTTP Message Signatures" which looks ok to me
     // and is working but I haven't fully scrutenized it yet.
-    verifyHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
+    verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         try {
             if (!this.adminPublicKey) {
                 res.status(500).json({ error: 'Admin public key is not set' });

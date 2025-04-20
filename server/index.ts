@@ -63,7 +63,7 @@ if (SECURE === 'y') {
     });
 }
 
-app.post('/api/admin/create-test-data', crypto.verifyHTTPSignature, async (req, res) => {
+app.post('/api/admin/create-test-data', crypto.verifyAdminHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Creating test data');
         await db.createTestData();
@@ -74,7 +74,7 @@ app.post('/api/admin/create-test-data', crypto.verifyHTTPSignature, async (req, 
     }
 });
 
-app.post('/api/admin/block-user', crypto.verifyHTTPSignature, async (req: any, res: any) => {
+app.post('/api/admin/block-user', crypto.verifyAdminHTTPSignature, async (req: any, res: any) => {
     try {
         const { pub_key } = req.body;
         
@@ -123,7 +123,7 @@ app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
     await db.getMessagesByIdsHandler(req, res);
 });
 
-app.post('/api/admin/get-room-info', crypto.verifyHTTPSignature, async (req, res) => {
+app.post('/api/admin/get-room-info', crypto.verifyAdminHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Getting room information');
         const roomsInfo = await db.getAllRoomsInfo();
@@ -141,7 +141,7 @@ app.get('/api/messages', async (req, res) => {
     await db.getMessageHistory(req, res);
 });
 
-// This is intnetionally not doing any React, but just serving a plain HTML page, as an admin
+// This is intentionally not doing any React, but just serving a plain HTML page, as an admin
 // monitoring capability, but for now we allow public access to this page.
 app.get('/recent-attachments', (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
 
