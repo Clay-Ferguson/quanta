@@ -1,7 +1,7 @@
 import FooterComp from '../components/FooterComp';
 import HeaderComp from '../components/HeaderComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import MainComp from '../components/MainComp';
+import MessagesComp from '../components/MessagesComp';
 import { useGlobalState } from '../GlobalState';
 
 export default function QuantaChatPage() {
@@ -27,7 +27,7 @@ export default function QuantaChatPage() {
     }
     else {
         mainComp = (
-            <MainComp id="chatLog" tag="main"/>
+            <MessagesComp id="chatLog" tag="main"/>
         )
     }
 
