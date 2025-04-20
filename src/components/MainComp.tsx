@@ -9,10 +9,14 @@ import { useGlobalState } from '../GlobalState';
 // Static variable to store scroll position
 let scrollPosition = 0;
 
+interface MainCompProps {
+    id: string;
+}
+
 // NOTE: This is the main chat log component. It has smart scrolling where it will auto-scroll new messages come in, but if the user  
 // has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
 // so it won't interrupt them while they're reading something at a non-end scroll location.
-export default function MainComp() {
+export default function MainComp({ id }: MainCompProps) {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
     const messageCount = gs.messages ? gs.messages.length : 0;
@@ -68,27 +72,6 @@ export default function MainComp() {
         };
     }, [gs.connected]);
 
-    // Additional effect for handling scrollign
-    useEffect(() => {
-        if (gs.connected && chatLogRef.current && messageCount > 0) {
-            // Only scroll to bottom on new messages if user hasn't manually scrolled up
-            if (!userScrolledRef.current) {
-                // Immediate scroll
-                chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
-                
-                // Additional scrolls after possible image loads
-                const timeouts = [100, 300, 500, 1000].map(delay => 
-                    setTimeout(() => {
-                        if (chatLogRef.current && !userScrolledRef.current) {
-                            chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
-                        }
-                    }, delay)
-                );
-                
-                return () => timeouts.forEach(clearTimeout);
-            }
-        }
-    }, [messageCount, gs.connected]);
 
     // Show not connected message if user is not connected
     if (!gs.connected) {
@@ -96,7 +79,7 @@ export default function MainComp() {
             return null;
         }
         return (
-            <main id="chatLog" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex items-center justify-center">
+            <main id={id} className="flex-grow overflow-y-auto p-4 bg-gray-900 flex items-center justify-center">
                 <div className="text-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-md">
                     <h2 className="text-2xl font-bold text-blue-400 mb-4">Not Connected</h2>
                     <p className="text-gray-300 mb-2">Enter a room name in the field above and click "Join" to get started chatting.</p>
@@ -108,7 +91,7 @@ export default function MainComp() {
 
     return (
         <main 
-            id="chatLog" 
+            id={id} 
             ref={chatLogRef} 
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >

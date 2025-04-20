@@ -123,7 +123,7 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* All Rooms Section todo-0: Make this room info table a component */}
+                    {/* All Rooms Section todo-0: Make this room info table into a component */}
                     <div className="border border-blue-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">All Rooms</h3>
                         

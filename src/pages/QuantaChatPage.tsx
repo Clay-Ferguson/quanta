@@ -7,7 +7,7 @@ export default function QuantaChatPage() {
     return (
         <div className="page-container">
             <HeaderComp/>
-            <MainComp />
+            <MainComp id="chatLog"/>
             <FooterComp/>
             <ImageViewerComp />
         </div>
