@@ -33,7 +33,7 @@ export default function MainComp({ id }: MainCompProps) {
 
     // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
     useLayoutEffect(() => {
-        if (gs.connected && chatLogRef.current && messageCount > 0) {
+        if (chatLogRef.current && messageCount > 0) {
             const savedPosition = scrollPositions.get(id);
             if (savedPosition !== undefined) {
                 // Restore previous scroll position if available
@@ -43,7 +43,7 @@ export default function MainComp({ id }: MainCompProps) {
                 chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
             }
         }
-    }, [messageCount, gs.connected, id]);
+    }, [messageCount, id]);
 
     // Handle scroll events to save position
     useEffect(() => {
@@ -71,24 +71,7 @@ export default function MainComp({ id }: MainCompProps) {
         return () => {
             chatLog.removeEventListener('scroll', handleScroll);
         };
-    }, [gs.connected, id]);
-
-
-    // Show not connected message if user is not connected
-    if (!gs.connected) {
-        if (!gs.appInitialized || gs.connecting) {
-            return null;
-        }
-        return (
-            <main id={id} className="flex-grow overflow-y-auto p-4 bg-gray-900 flex items-center justify-center">
-                <div className="text-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-md">
-                    <h2 className="text-2xl font-bold text-blue-400 mb-4">Not Connected</h2>
-                    <p className="text-gray-300 mb-2">Enter a room name in the field above and click "Join" to get started chatting.</p>
-                    <p className="text-gray-400 text-sm">You'll be able to see messages and share files once you're connected to a room.</p>
-                </div>
-            </main>
-        );
-    }
+    }, [id]);
 
     return (
         <main 
