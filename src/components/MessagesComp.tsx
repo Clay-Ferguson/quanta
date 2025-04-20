@@ -21,49 +21,43 @@ interface MainCompProps {
 // so it won't interrupt them while they're reading something at a non-end scroll location.
 export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     const gs = useGlobalState();
-    const chatLogRef = useRef<HTMLDivElement>(null);
+    const elmRef = useRef<HTMLDivElement>(null);
     const messageCount = messages ? messages.length : 0;
-    const userScrolledRef = useRef(false);
 
     // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
     useLayoutEffect(() => {
-        if (chatLogRef.current) {
-            const savedPosition = scrollPositions.get(id);
-            if (savedPosition !== undefined) {
+        if (elmRef.current) {
+            const savedPos = scrollPositions.get(id);
+            if (savedPos !== undefined) {
                 // Restore previous scroll position if available
-                chatLogRef.current.scrollTop = savedPosition;
+                elmRef.current.scrollTop = savedPos;
             } else {
                 // Default to scrolling to bottom
-                chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+                elmRef.current.scrollTop = elmRef.current.scrollHeight;
             }
         }
     }, [messageCount, id]);
 
     // Handle scroll events to save position
     useEffect(() => {
-        const chatLog = chatLogRef.current;
-        if (!chatLog) return;
+        const elm = elmRef.current;
+        if (!elm) return;
 
         const handleScroll = () => {
-            if (!chatLog) return;
+            if (!elm) return;
             
             // Only save scroll position if user has manually scrolled (not at the bottom)
-            const isAtBottom = chatLog.scrollHeight - chatLog.scrollTop <= chatLog.clientHeight + 50;
+            const isAtBottom = elm.scrollHeight - elm.scrollTop <= elm.clientHeight + 50;
             
             if (!isAtBottom) {
-                userScrolledRef.current = true;
-                scrollPositions.set(id, chatLog.scrollTop);
+                scrollPositions.set(id, elm.scrollTop);
             } else {
-                // If user scrolls to bottom, reset the userScrolled flag
-                userScrolledRef.current = false;
                 scrollPositions.delete(id);
             }
         };
-
-        chatLog.addEventListener('scroll', handleScroll);
-        
+        elm.addEventListener('scroll', handleScroll);
         return () => {
-            chatLog.removeEventListener('scroll', handleScroll);
+            elm.removeEventListener('scroll', handleScroll);
         };
     }, [id]);
 
@@ -73,7 +67,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     return (
         <Tag 
             id={id} 
-            ref={chatLogRef} 
+            ref={elmRef} 
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
