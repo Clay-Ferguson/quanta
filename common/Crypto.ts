@@ -7,47 +7,47 @@ import { ChatMessage } from '../src/AppServiceTypes.js';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
-    adminPublicKey: string | null = null;
+    adminPubKey: string | null = null;
 
-    setAdminPublicKey(adminPublicKey: string | undefined) {
-        this.adminPublicKey = adminPublicKey || null;
+    setAdminPublicKey(adminPubKey: string | undefined) {
+        this.adminPubKey = adminPubKey || null;
     }
         
     // Function to generate a new keypair
     generateKeypair(): KeyPairHex {
         // Generate a random private key (32 bytes)
-        const privateKeyBytes = secp.utils.randomPrivateKey();
-        const privateKeyHex = bytesToHex(privateKeyBytes);
+        const privKeyBytes = secp.utils.randomPrivateKey();
+        const privKeyHex = bytesToHex(privKeyBytes);
   
         // Get the corresponding public key (compressed format, 33 bytes)
-        const publicKeyBytes = secp.getPublicKey(privateKeyBytes);
-        const publicKeyHex = bytesToHex(publicKeyBytes);
+        const pubKeyBytes = secp.getPublicKey(privKeyBytes);
+        const pubKeyHex = bytesToHex(pubKeyBytes);
   
         return {
-            privateKey: privateKeyHex,
-            publicKey: publicKeyHex,
+            privateKey: privKeyHex,
+            publicKey: pubKeyHex,
         };
     }
 
     // Function to create a KeyPairHex object from a private key hex string
-    makeKeysFromPrivateKeyHex(privateKeyHex: string): KeyPairHex | null {
+    makeKeysFromPrivateKeyHex(privKeyHex: string): KeyPairHex | null {
         try {
             // Convert hex to bytes
-            const privateKeyBytes = hexToBytes(privateKeyHex);
+            const privKeyBytes = hexToBytes(privKeyHex);
             
             // Validate private key
-            if (!secp.utils.isValidPrivateKey(privateKeyBytes)) {
+            if (!secp.utils.isValidPrivateKey(privKeyBytes)) {
                 console.error("Invalid private key");
                 return null;
             }
             
             // Derive public key from private key
-            const publicKeyBytes = secp.getPublicKey(privateKeyBytes);
-            const publicKeyHex = bytesToHex(publicKeyBytes);
+            const pubKeyBytes = secp.getPublicKey(privKeyBytes);
+            const pubKeyHex = bytesToHex(pubKeyBytes);
             
             return {
-                privateKey: privateKeyHex,
-                publicKey: publicKeyHex,
+                privateKey: privKeyHex,
+                publicKey: pubKeyHex,
             };
         } catch (error) {
             console.error("Error creating key pair from private key:", error);
@@ -64,13 +64,13 @@ class Crypto {
     }
 
     async signMessage(msg: ChatMessage, keyPair: KeyPairHex) {
-        const privateKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
-        if (!privateKeyBytes) {
+        const privKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
+        if (!privKeyBytes) {
             throw new Error("Invalid private key");
         }
         
         const canonicalString: string = this.getCanonicalMessageString(msg);
-        msg.signature = await this.getSigHexOfString(canonicalString, privateKeyBytes);
+        msg.signature = await this.getSigHexOfString(canonicalString, privKeyBytes);
         msg.publicKey = keyPair.publicKey;
         console.log("Signature Hex:", msg.signature);
 
@@ -78,13 +78,13 @@ class Crypto {
         // this.verifySignature(msg);
     }
 
-    importPrivateKey(privateKeyHex: string): Uint8Array | null {
-        if (!privateKeyHex || privateKeyHex.length !== 64) {
+    importPrivateKey(privKeyHex: string): Uint8Array | null {
+        if (!privKeyHex || privKeyHex.length !== 64) {
             console.log("Invalid private key hex string.");
             return null;
         }
         try {
-            return hexToBytes(privateKeyHex);
+            return hexToBytes(privKeyHex);
         } catch (error) {
             console.error("Error importing private key:", error);
             return null;
@@ -98,21 +98,21 @@ class Crypto {
         }
 
         const msgHash: Uint8Array = this.getHashBytesOfMessage(msg);
-        const publicKeyBytes: Uint8Array = hexToBytes(msg.publicKey);
-        const signatureBytes: Uint8Array = hexToBytes(msg.signature);
+        const pubKeyBytes: Uint8Array = hexToBytes(msg.publicKey);
+        const sigBytes: Uint8Array = hexToBytes(msg.signature);
 
         // The `@noble/secp256k1` library expects a Signature object, not just the raw bytes for verification.
         // Since we used `toCompactHex()` during signing, we should use `Signature.fromCompact()` here.
-        let signature: secp.Signature;
+        let sig: secp.Signature;
         try {
-            signature = secp.Signature.fromCompact(signatureBytes);
+            sig = secp.Signature.fromCompact(sigBytes);
         } catch (error) {
             console.error("Error parsing signature:", error);
             return false;
         }
 
         try {
-            const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
+            const isVerified: boolean = await secp.verify(sig, msgHash, pubKeyBytes);
             console.log("verifySignature Verified: "+isVerified);
             return isVerified;
         } catch (error) {
@@ -121,21 +121,21 @@ class Crypto {
         }
     }
 
-    async verifySignatureBytes(msgHash: Uint8Array, signatureBytes: Uint8Array, publicKeyHex: string): Promise<boolean> {
+    async verifySignatureBytes(msgHash: Uint8Array, sigBytes: Uint8Array, pubKeyHex: string): Promise<boolean> {
         try {
-            const publicKeyBytes = hexToBytes(publicKeyHex);
+            const pubKeyBytes = hexToBytes(pubKeyHex);
             
             // Convert the signature bytes to a Signature object
-            let signature: secp.Signature;
+            let sig: secp.Signature;
             try {
-                signature = secp.Signature.fromCompact(signatureBytes);
+                sig = secp.Signature.fromCompact(sigBytes);
             } catch (error) {
                 console.error("Error parsing signature:", error);
                 return false;
             }
             
             // Verify the signature
-            const isVerified: boolean = await secp.verify(signature, msgHash, publicKeyBytes);
+            const isVerified: boolean = await secp.verify(sig, msgHash, pubKeyBytes);
             // console.log("Sig Bytes Verified: "+isVerified);
             return isVerified;
         } catch (error) {
@@ -180,21 +180,21 @@ class Crypto {
     // and is working but I haven't fully scrutenized it yet.
     verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         try {
-            if (!this.adminPublicKey) {
+            if (!this.adminPubKey) {
                 res.status(500).json({ error: 'Admin public key is not set' });
                 return;
             }
-            const signature = req.headers['signature'];
-            const signatureInput = req.headers['signature-input'];
+            const sig = req.headers['signature'];
+            const sigInput = req.headers['signature-input'];
         
-            if (!signature || !signatureInput) {
+            if (!sig || !sigInput) {
                 res.status(401).json({ error: ' headers' });
                 return;
             }
         
             // Parse the signature-input header
             // Format: sig1=("@method" "@target-uri" "@created" "content-type");created=1618884475;keyid="admin-key"
-            const sigInputMatch = /sig1=\(([^)]+)\);created=(\d+);keyid="([^"]+)"/.exec(signatureInput as string);
+            const sigInputMatch = /sig1=\(([^)]+)\);created=(\d+);keyid="([^"]+)"/.exec(sigInput as string);
             if (!sigInputMatch) {
                 res.status(401).json({ error: 'Invalid signature-input format' });
                 return;
@@ -218,26 +218,26 @@ class Crypto {
             }
         
             // Build the signature base
-            let signatureBase = '';
+            let sigBase = '';
         
             // Add covered components to the signature base
             for (const component of coveredComponents.split(' ').map(c => c.replace(/"/g, ''))) {
                 if (component === '@method') {
-                    signatureBase += `"@method": ${req.method.toLowerCase()}\n`;
+                    sigBase += `"@method": ${req.method.toLowerCase()}\n`;
                 } else if (component === '@target-uri') {
                     const targetUri = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
-                    signatureBase += `"@target-uri": ${targetUri}\n`;
+                    sigBase += `"@target-uri": ${targetUri}\n`;
                 } else if (component === '@created') {
-                    signatureBase += `"@created": ${created}\n`;
+                    sigBase += `"@created": ${created}\n`;
                 } else if (component === 'content-type') {
-                    signatureBase += `"content-type": ${req.get('content-type')}\n`;
+                    sigBase += `"content-type": ${req.get('content-type')}\n`;
                 }
             // Add other components as needed
             }
         
             // Remove trailing newline
-            signatureBase = signatureBase.slice(0, -1);
-            const messageHash = this.getHashBytesOfString(signatureBase);
+            sigBase = sigBase.slice(0, -1);
+            const msgHash = this.getHashBytesOfString(sigBase);
         
             // DO NOT DELETE: Keep for future debugging purposes
             // console.log('Server signatureBase:['+ JSON.stringify(signatureBase)+"]");
@@ -247,10 +247,10 @@ class Crypto {
 
             // Verify the signature using our crypto utility
             const isValid = await crypto.verifySignatureBytes(
-                messageHash,
+                msgHash,
                 // AI got itself confused about which of these two lines is best.
-                Buffer.from(signature as string, 'hex'),            
-                this.adminPublicKey!
+                Buffer.from(sig as string, 'hex'),            
+                this.adminPubKey!
             );
         
             if (!isValid) {
@@ -272,26 +272,26 @@ class Crypto {
         const created = Math.floor(Date.now() / 1000);
                     
         // Create the signature-input string
-        const signatureInput = `sig1=("@method" "@target-uri" "@created" "content-type");created=${created};keyid="admin-key"`;
+        const sigInput = `sig1=("@method" "@target-uri" "@created" "content-type");created=${created};keyid="admin-key"`;
                     
         // Build the signature base
-        let signatureBase = '';
-        signatureBase += `"@method": post\n`;
-        signatureBase += `"@target-uri": ${window.location.origin}${url}\n`;
-        signatureBase += `"@created": ${created}\n`;
-        signatureBase += `"content-type": application/json`;  
+        let sigBase = '';
+        sigBase += `"@method": post\n`;
+        sigBase += `"@target-uri": ${window.location.origin}${url}\n`;
+        sigBase += `"@created": ${created}\n`;
+        sigBase += `"content-type": application/json`;  
         
         if (!keyPair || !keyPair.privateKey) {
             throw new Error("No private key available");
         }
                     
         // Sign the message hash
-        const privateKeyBytes = crypto.importPrivateKey(keyPair.privateKey);
-        if (!privateKeyBytes) {
+        const privKeyBytes = crypto.importPrivateKey(keyPair.privateKey);
+        if (!privKeyBytes) {
             throw new Error("Invalid private key");
         }
                     
-        const signatureHex: string = await this.getSigHexOfString(signatureBase, privateKeyBytes);
+        const signatureHex: string = await this.getSigHexOfString(sigBase, privKeyBytes);
                     
         // DO NOT DELETE: Keep for future debugging.
         // console.log('Client signatureBase:['+JSON.stringify(signatureBase)+']');
@@ -301,7 +301,7 @@ class Crypto {
 
         return {
             'Content-Type': 'application/json',
-            'Signature-Input': signatureInput,
+            'Signature-Input': sigInput,
             'Signature': signatureHex
         };
     }
@@ -322,11 +322,11 @@ class Crypto {
 
         try {
         // Make sure timestamp is not too old (e.g., 5 minutes)
-            const currentTime = Date.now();
-            const requestTime = parseInt(timestamp.toString(), 10);
+            const curTime = Date.now();
+            const reqTime = parseInt(timestamp.toString(), 10);
     
             // Check if timestamp is valid
-            if (isNaN(requestTime)) {
+            if (isNaN(reqTime)) {
                 console.error('Invalid timestamp format');
                 res.status(401).json({ 
                     success: false, 
@@ -337,7 +337,7 @@ class Crypto {
     
             // Check if request is not too old (5 minute window)
             const fiveMinutes = 5 * 60 * 1000;
-            if (currentTime - requestTime > fiveMinutes) {
+            if (curTime - reqTime > fiveMinutes) {
                 console.error('Request timestamp too old');
                 res.status(401).json({ 
                     success: false, 
@@ -347,7 +347,7 @@ class Crypto {
             }
     
             // Verify the signature using the admin public key
-            if (!this.adminPublicKey) {
+            if (!this.adminPubKey) {
                 console.error('Admin public key not set');
                 res.status(401).json({ 
                     success: false, 
@@ -360,10 +360,10 @@ class Crypto {
             const msgHash = this.getHashBytesOfString(timestamp.toString());
         
             // Convert the base64 signature to buffer
-            const signatureBuffer = Buffer.from(signature.toString(), 'hex');
+            const sigBuf = Buffer.from(signature.toString(), 'hex');
         
             // Use your existing verifySignatureBytes method
-            const isValid = await this.verifySignatureBytes(msgHash, signatureBuffer, this.adminPublicKey);
+            const isValid = await this.verifySignatureBytes(msgHash, sigBuf, this.adminPubKey);
     
             if (!isValid) {
                 console.error('Invalid admin signature');
@@ -390,21 +390,21 @@ class Crypto {
         let response: any | null = null;
         try {
             const headers = await crypto.buildSecureHeaders(url, keyPair!);
-            const requestOptions: RequestInit = {
+            const opts: RequestInit = {
                 method: 'POST',
                 headers
             };
         
             // Add body if provided
             if (body) {
-                requestOptions.headers = {
-                    ...requestOptions.headers,
+                opts.headers = {
+                    ...opts.headers,
                     'Content-Type': 'application/json'
                 };
-                requestOptions.body = JSON.stringify(body);
+                opts.body = JSON.stringify(body);
             }
         
-            const res = await fetch(url, requestOptions); 
+            const res = await fetch(url, opts); 
         
             if (res.ok) {
                 response = await res.json();
