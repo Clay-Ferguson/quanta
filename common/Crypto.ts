@@ -54,22 +54,13 @@ class Crypto {
             return null;
         }
     }
-  
-    // Function to export a key (already as hex in this example)
-    exportKey(keyHex: any) {
-        return keyHex; // In this case, it's already a hex string
-    }
-    
-    // Function to import a public key from a hex string
-    importPublicKey(publicKeyHex: any) {
-        try {
-            const publicKeyBytes = hexToBytes(publicKeyHex);
-            // You might want to add validation here to ensure it's a valid public key
-            return publicKeyBytes;
-        } catch (error) {
-            console.error("Invalid public key hex string:", error);
-            return null;
-        }
+
+    getCanonicalMessageString(msg: ChatMessage): string {
+        return this.getCanonicalJSON({
+            sender: msg.sender,
+            content: msg.content,
+            timestamp: msg.timestamp
+        });
     }
 
     async signMessage(msg: ChatMessage, keyPair: KeyPairHex) {
@@ -78,13 +69,8 @@ class Crypto {
             throw new Error("Invalid private key");
         }
         
-        const msgHash: Uint8Array = this.getMessageHashBytes(msg);
-
-        // Now the sign function will work because hmacSha256Sync is set
-        const signature: secp.SignatureWithRecovery = await secp.signAsync(msgHash, privateKeyBytes);
-
-        // Convert the signature to compact format and then to hex
-        msg.signature = signature.toCompactHex();
+        const canonicalString: string = this.getCanonicalMessageString(msg);
+        msg.signature = await this.getSigHexOfString(canonicalString, privateKeyBytes);
         msg.publicKey = keyPair.publicKey;
         console.log("Signature Hex:", msg.signature);
 
@@ -111,7 +97,7 @@ class Crypto {
             return false;
         }
 
-        const msgHash: Uint8Array = this.getMessageHashBytes(msg);
+        const msgHash: Uint8Array = this.getHashBytesOfMessage(msg);
         const publicKeyBytes: Uint8Array = hexToBytes(msg.publicKey);
         const signatureBytes: Uint8Array = hexToBytes(msg.signature);
 
@@ -158,15 +144,15 @@ class Crypto {
         }
     }
 
-    getMessageHashBytes(msg: any): Uint8Array {
-        const canonicalMsg = {
-            sender: msg.sender,
-            content: msg.content,
-            timestamp: msg.timestamp
-        };
-        const canonicalString: string = this.getCanonicalJSON(canonicalMsg);
-        const canonicalBytes: Uint8Array = new TextEncoder().encode(canonicalString);
-        const msgHash: Uint8Array = sha256(canonicalBytes);
+    getHashBytesOfString(str: string): Uint8Array {
+        const strBytes: Uint8Array = new TextEncoder().encode(str);
+        const hashBytes: Uint8Array = sha256(strBytes);
+        return hashBytes;
+    }
+
+    getHashBytesOfMessage(msg: ChatMessage): Uint8Array {
+        const canonicalString: string = this.getCanonicalMessageString(msg);
+        const msgHash : Uint8Array = this.getHashBytesOfString(canonicalString);
         return msgHash;
     }
 
@@ -251,7 +237,7 @@ class Crypto {
         
             // Remove trailing newline
             signatureBase = signatureBase.slice(0, -1);
-            const messageHash = sha256(new TextEncoder().encode(signatureBase));
+            const messageHash = this.getHashBytesOfString(signatureBase);
         
             // DO NOT DELETE: Keep for future debugging purposes
             // console.log('Server signatureBase:['+ JSON.stringify(signatureBase)+"]");
@@ -293,9 +279,7 @@ class Crypto {
         signatureBase += `"@method": post\n`;
         signatureBase += `"@target-uri": ${window.location.origin}${url}\n`;
         signatureBase += `"@created": ${created}\n`;
-        signatureBase += `"content-type": application/json`;
-                    
-        const messageHash = sha256(new TextEncoder().encode(signatureBase));    
+        signatureBase += `"content-type": application/json`;  
         
         if (!keyPair || !keyPair.privateKey) {
             throw new Error("No private key available");
@@ -307,8 +291,7 @@ class Crypto {
             throw new Error("Invalid private key");
         }
                     
-        const signature = await secp.signAsync(messageHash, privateKeyBytes);
-        const signatureHex = signature.toCompactHex();
+        const signatureHex: string = await this.getSigHexOfString(signatureBase, privateKeyBytes);
                     
         // DO NOT DELETE: Keep for future debugging.
         // console.log('Client signatureBase:['+JSON.stringify(signatureBase)+']');
@@ -323,6 +306,86 @@ class Crypto {
         };
     }
 
+    // Middleware for verifying admin signature in query parameters (for GET requests)
+    verifyAdminHTTPQuerySig = async (req: Request, res: Response, next: any): Promise<void> => {
+        const { timestamp, signature } = req.query;
+
+        // Validate required parameters
+        if (!timestamp || !signature) {
+            console.error('Missing authentication parameters');
+            res.status(401).json({ 
+                success: false, 
+                error: 'Unauthorized: Missing authentication parameters' 
+            });
+            return;
+        }
+
+        try {
+        // Make sure timestamp is not too old (e.g., 5 minutes)
+            const currentTime = Date.now();
+            const requestTime = parseInt(timestamp.toString(), 10);
+    
+            // Check if timestamp is valid
+            if (isNaN(requestTime)) {
+                console.error('Invalid timestamp format');
+                res.status(401).json({ 
+                    success: false, 
+                    error: 'Unauthorized: Invalid timestamp' 
+                });
+                return;
+            }
+    
+            // Check if request is not too old (5 minute window)
+            const fiveMinutes = 5 * 60 * 1000;
+            if (currentTime - requestTime > fiveMinutes) {
+                console.error('Request timestamp too old');
+                res.status(401).json({ 
+                    success: false, 
+                    error: 'Unauthorized: Request expired' 
+                });
+                return;
+            }
+    
+            // Verify the signature using the admin public key
+            if (!this.adminPublicKey) {
+                console.error('Admin public key not set');
+                res.status(401).json({ 
+                    success: false, 
+                    error: 'Server configuration error: Admin public key not set' 
+                });
+                return;
+            }
+        
+            // Create the hash of the timestamp
+            const msgHash = this.getHashBytesOfString(timestamp.toString());
+        
+            // Convert the base64 signature to buffer
+            const signatureBuffer = Buffer.from(signature.toString(), 'hex');
+        
+            // Use your existing verifySignatureBytes method
+            const isValid = await this.verifySignatureBytes(msgHash, signatureBuffer, this.adminPublicKey);
+    
+            if (!isValid) {
+                console.error('Invalid admin signature');
+                res.status(401).json({ 
+                    success: false, 
+                    error: 'Unauthorized: Invalid signature' 
+                });
+                return;
+            }
+    
+            // If signature is valid, proceed to the next middleware or route handler
+            next();
+        } catch (error) {
+            console.error('Error verifying admin signature:', error);
+            res.status(401).json({ 
+                success: false, 
+                error: 'Unauthorized: Authentication failed' 
+            });
+            return;
+        }
+    }
+    
     secureHttpPost = async (url: string, keyPair: KeyPairHex, body?: any): Promise<any> => {
         let response: any | null = null;
         try {
@@ -354,6 +417,51 @@ class Crypto {
             console.error(`Error posting to ${url}:`, error);
         }
         return response;
+    }
+
+    /**
+    * Opens the recent attachments page in a new tab with admin authentication
+    */
+    openRecentAttachments = (keyPair: KeyPairHex) => {
+        // Current timestamp
+        const timestamp = Date.now().toString();
+    
+        // Sign the timestamp with the admin private key
+        // todo-0: change this to an 'await' style call.
+        this.signWithPrivateKey(timestamp, keyPair)
+            .then((signature: any) => {
+            // Construct the URL with authentication parameters
+                const url = `/recent-attachments?timestamp=${timestamp}&signature=${signature}`;
+            
+                // Open in new tab
+                window.open(url, '_blank');
+            })
+            .catch((error: any) => {
+                console.error('Error signing URL:', error);
+                alert('Failed to authenticate. Please check your admin credentials.');
+            });
+    }
+
+    signWithPrivateKey = async (data: string, keyPair: KeyPairHex) => {
+        if (!keyPair || !keyPair.privateKey) {
+            throw new Error("No private key available");
+        }
+                    
+        // Sign the message hash
+        const keyBytes: Uint8Array | null = crypto.importPrivateKey(keyPair.privateKey);
+        if (!keyBytes) {
+            throw new Error("Invalid private key");
+        }
+    
+        const sigHex = await this.getSigHexOfString(data, keyBytes);
+        return sigHex;
+    }
+
+    // Takes the hash of 's' and signs it with the private key, returnign the hex of the signature
+    getSigHexOfString = async (s: string, keyBytes: Uint8Array) => {
+        const hash = this.getHashBytesOfString(s);    
+        const sig = await secp.signAsync(hash, keyBytes);    
+        return sig.toCompactHex();
     }
 }
 

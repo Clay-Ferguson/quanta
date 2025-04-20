@@ -92,6 +92,20 @@ export default function AdminPage() {
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">            
                 <div className="space-y-6 max-w-2xl mx-auto">
 
+                    {/* Server Data Section */}
+                    <div className="border border-blue-400/30 rounded-lg p-4">
+                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Server Data</h3>
+                        
+                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
+                            <button 
+                                onClick={() => crypto.openRecentAttachments(gs.keyPair!)}
+                                className="btn-secondary"
+                            >
+                                Open Recent Attachments
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Test Data Section */}
                     <div className="border border-blue-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Test Data</h3>
@@ -150,7 +164,7 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* Test Data Section */}
+                    {/* User Admin */}
                     <div className="border border-blue-400/30 rounded-lg p-4">
                         <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Manage Users</h3>
                         

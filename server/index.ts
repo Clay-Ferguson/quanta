@@ -143,7 +143,7 @@ app.get('/api/messages', async (req, res) => {
 
 // This is intentionally not doing any React, but just serving a plain HTML page, as an admin
 // monitoring capability, but for now we allow public access to this page.
-app.get('/recent-attachments', (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
+app.get('/recent-attachments', crypto.verifyAdminHTTPQuerySig, (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
 
 const distPath = path.join(__dirname, '../../dist');
 
