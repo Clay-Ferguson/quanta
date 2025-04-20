@@ -49,6 +49,37 @@ export default function AdminPage() {
         }
     };
 
+    const blockUser = async () => {
+        const pubKey = prompt("Enter User Public Key to block:");
+        if (!pubKey || pubKey.trim() === '') {
+            alert("No public key provided");
+            return;
+        }
+
+        try {
+            // Show loading state
+            setLoading(true);
+
+            // Make the secure POST request with body
+            const response = await crypto.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
+                pub_key: pubKey.trim()
+            });
+
+            if (response) {
+                if (response.success) {
+                    alert(`Success: ${response.message}`);
+                } else {
+                    alert(`Operation completed but failed: ${response.message}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error blocking user:', error);
+            alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className="page-container">
             <header className="app-header">
@@ -119,43 +150,16 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    <div className="admin-section">
-                        <h2>Manage Users</h2>
-                        <div className="admin-controls">
+                    {/* Test Data Section */}
+                    <div className="border border-blue-400/30 rounded-lg p-4">
+                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Manage Users</h3>
+                        
+                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
                             <button 
                                 className="btn-secondary"
-                                onClick={async () => {
-                                    const pubKey = prompt("Enter User Public Key to block:");
-                                    if (!pubKey || pubKey.trim() === '') {
-                                        alert("No public key provided");
-                                        return;
-                                    }
-        
-                                    try {
-                                        // Show loading state
-                                        setLoading(true);
-          
-                                        // Make the secure POST request with body
-                                        const response = await crypto.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
-                                            pub_key: pubKey.trim()
-                                        });
-          
-                                        if (response) {
-                                            if (response.success) {
-                                                alert(`Success: ${response.message}`);
-                                            } else {
-                                                alert(`Operation completed but failed: ${response.message}`);
-                                            }
-                                        }
-                                    } catch (error) {
-                                        console.error('Error blocking user:', error);
-                                        alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                                    } finally {
-                                        setLoading(false);
-                                    }
-                                }}
+                                onClick={blockUser}
                             >
-      Block User
+                            Block User
                             </button>
                         </div>
                     </div>

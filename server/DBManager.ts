@@ -647,29 +647,46 @@ export class DBManager {
         }
     }
 
-    public async blockUser(pub_key: string): Promise<boolean> {
+    public async deleteUserContent(pub_key: string): Promise<boolean> {
         try {
             if (!pub_key) {
-                console.error('Cannot block an empty public key');
+                console.error('Cannot delete content for an empty public key');
                 return false;
             }
-        
-            // Use INSERT OR IGNORE to avoid errors if the key is already blocked
-            const result: any = await this.db!.run(
-                'INSERT OR IGNORE INTO blocked_keys (pub_key) VALUES (?)',
+
+            await this.db!.run(
+                'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = ?)',
+                [pub_key]
+            );
+
+            // Delete messages and attachments associated with the public key
+            await this.db!.run(
+                'DELETE FROM messages WHERE public_key = ?',
                 [pub_key]
             );
         
-            if (result.changes > 0) {
-                console.log(`Public key blocked: ${pub_key}`);
-                return true;
-            } else {
-                console.log(`Public key already blocked or blocking failed: ${pub_key}`);
-                return false;
+            console.log(`Deleted content for public key: ${pub_key}`);
+            return true;
+        } catch (error) {
+            console.error('Error deleting user content:', error);
+            return false;
+        }
+    }
+
+    public async blockUser(pub_key: string) {
+        try {
+            if (!pub_key) {
+                console.error('Cannot block an empty public key');
             }
+        
+            // Use INSERT OR IGNORE to avoid errors if the key is already blocked
+            await this.db!.run(
+                'INSERT OR IGNORE INTO blocked_keys (pub_key) VALUES (?)',
+                [pub_key]
+            );
+            console.log(`Public key blocked: ${pub_key}`);
         } catch (error) {
             console.error('Error blocking user:', error);
-            return false;
         }
     }
 }

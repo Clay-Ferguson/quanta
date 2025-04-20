@@ -86,19 +86,14 @@ app.post('/api/admin/block-user', crypto.verifyHTTPSignature, async (req: any, r
         }
         
         console.log('Admin request: Blocking user with public key:', pub_key);
-        const result = await db.blockUser(pub_key);
-        
-        if (result) {
-            res.json({ 
-                success: true, 
-                message: `User with public key ${pub_key} has been blocked` 
-            });
-        } else {
-            res.json({ 
-                success: false, 
-                message: 'Failed to block user (key may already be blocked)' 
-            });
-        }
+        await db.deleteUserContent(pub_key);
+        await db.blockUser(pub_key);
+                
+        res.json({ 
+            success: true, 
+            message: `User was blocked successfully.` 
+        });
+
     } catch (error) {
         console.error('Error blocking user:', error);
         res.status(500).json({ 
@@ -127,10 +122,6 @@ app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
     console.log('getMessagesByIds for room', req.params.roomId);
     await db.getMessagesByIdsHandler(req, res);
 });
-
-
-
-// Add this after the create-test-data endpoint (around line 70)
 
 app.post('/api/admin/get-room-info', crypto.verifyHTTPSignature, async (req, res) => {
     try {
