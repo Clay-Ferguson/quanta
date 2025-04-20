@@ -6,8 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
 
-// Static variable to store scroll position
-let scrollPosition = 0;
+// Static map to store scroll positions for different instances
+const scrollPositions = new Map<string, number>();
 
 interface MainCompProps {
     id: string;
@@ -34,15 +34,16 @@ export default function MainComp({ id }: MainCompProps) {
     // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
     useLayoutEffect(() => {
         if (gs.connected && chatLogRef.current && messageCount > 0) {
-            if (scrollPosition > 0) {
+            const savedPosition = scrollPositions.get(id);
+            if (savedPosition !== undefined) {
                 // Restore previous scroll position if available
-                chatLogRef.current.scrollTop = scrollPosition;
+                chatLogRef.current.scrollTop = savedPosition;
             } else {
                 // Default to scrolling to bottom
                 chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
             }
         }
-    }, [messageCount, gs.connected]);
+    }, [messageCount, gs.connected, id]);
 
     // Handle scroll events to save position
     useEffect(() => {
@@ -57,11 +58,11 @@ export default function MainComp({ id }: MainCompProps) {
             
             if (!isAtBottom) {
                 userScrolledRef.current = true;
-                scrollPosition = chatLog.scrollTop;
+                scrollPositions.set(id, chatLog.scrollTop);
             } else {
                 // If user scrolls to bottom, reset the userScrolled flag
                 userScrolledRef.current = false;
-                scrollPosition = 0;
+                scrollPositions.delete(id);
             }
         };
 
@@ -70,7 +71,7 @@ export default function MainComp({ id }: MainCompProps) {
         return () => {
             chatLog.removeEventListener('scroll', handleScroll);
         };
-    }, [gs.connected]);
+    }, [gs.connected, id]);
 
 
     // Show not connected message if user is not connected
