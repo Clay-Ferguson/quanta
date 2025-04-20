@@ -11,12 +11,13 @@ const scrollPositions = new Map<string, number>();
 
 interface MainCompProps {
     id: string;
+    tag: any; // keyof JSX.IntrinsicElements; // Add this property to specify the HTML element type
 }
 
 // NOTE: This is the main chat log component. It has smart scrolling where it will auto-scroll new messages come in, but if the user  
 // has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
 // so it won't interrupt them while they're reading something at a non-end scroll location.
-export default function MainComp({ id }: MainCompProps) {
+export default function MainComp({ id, tag }: MainCompProps) {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
     const messageCount = gs.messages ? gs.messages.length : 0;
@@ -73,8 +74,11 @@ export default function MainComp({ id }: MainCompProps) {
         };
     }, [id]);
 
+    // Note; This looks silly but it's required to have the upper case tag name.
+    const Tag = tag; // Define the dynamic component
+    
     return (
-        <main 
+        <Tag 
             id={id} 
             ref={chatLogRef} 
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
@@ -125,6 +129,6 @@ export default function MainComp({ id }: MainCompProps) {
                     </div>
                 ))}
             </div>
-        </main>
+        </Tag>
     );
 }

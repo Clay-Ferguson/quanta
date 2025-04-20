@@ -27,7 +27,7 @@ export default function QuantaChatPage() {
     }
     else {
         mainComp = (
-            <MainComp id="chatLog"/>
+            <MainComp id="chatLog" tag="main"/>
         )
     }
 
