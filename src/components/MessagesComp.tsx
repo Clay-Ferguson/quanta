@@ -5,6 +5,7 @@ import Markdown from './MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
+import {util} from '../Util';
 
 // Static map to store scroll positions for different instances
 const scrollPositions = new Map<string, number>();
@@ -12,29 +13,21 @@ const scrollPositions = new Map<string, number>();
 interface MainCompProps {
     id: string;
     tag: any;
+    messages: ChatMessage[] | undefined;
 }
 
 // NOTE: This is the main chat log component. It has smart scrolling where it will auto-scroll new messages come in, but if the user  
 // has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
 // so it won't interrupt them while they're reading something at a non-end scroll location.
-export default function MessagesComp({ id, tag }: MainCompProps) {
+export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     const gs = useGlobalState();
     const chatLogRef = useRef<HTMLDivElement>(null);
-    const messageCount = gs.messages ? gs.messages.length : 0;
+    const messageCount = messages ? messages.length : 0;
     const userScrolledRef = useRef(false);
-    
-    const formatMessageTime = (msg: ChatMessage) => {
-        return new Date(msg.timestamp).toLocaleDateString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: '2-digit' 
-        })+" "+
-        new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
 
     // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
     useLayoutEffect(() => {
-        if (chatLogRef.current && messageCount > 0) {
+        if (chatLogRef.current) {
             const savedPosition = scrollPositions.get(id);
             if (savedPosition !== undefined) {
                 // Restore previous scroll position if available
@@ -75,7 +68,7 @@ export default function MessagesComp({ id, tag }: MainCompProps) {
     }, [id]);
 
     // Note; This looks silly but it's required to have the upper case tag name.
-    const Tag = tag; // Define the dynamic component
+    const Tag = tag;
     
     return (
         <Tag 
@@ -84,7 +77,7 @@ export default function MessagesComp({ id, tag }: MainCompProps) {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {gs.messages!.map((msg, index) => (
+                {messages!.map((msg, index) => (
                     <div 
                         key={index} 
                         className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
@@ -103,7 +96,7 @@ export default function MessagesComp({ id, tag }: MainCompProps) {
                                     <span className="font-semibold text-sm text-blue-400">{msg.sender}</span>
                                 </div>
                                 <span className="text-xs text-gray-400">
-                                    {formatMessageTime(msg)}
+                                    {util.formatMessageTime(msg)}
                                 </span>
                             </div>
                             <div className="w-0.5 bg-gray-400 self-stretch mx-2"></div>

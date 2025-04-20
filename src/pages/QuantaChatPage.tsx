@@ -27,7 +27,7 @@ export default function QuantaChatPage() {
     }
     else {
         mainComp = (
-            <MessagesComp id="chatLog" tag="main"/>
+            <MessagesComp id="chatLog" tag="main" messages={gs.messages}/>
         )
     }
 
