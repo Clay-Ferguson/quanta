@@ -6,9 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
-
-// Static map to store scroll positions for different instances
-const scrollPositions = new Map<string, number>();
+import { scrollEffects } from '../ScrollEffects';
 
 interface MainCompProps {
     id: string;
@@ -16,54 +14,16 @@ interface MainCompProps {
     messages: ChatMessage[] | undefined;
 }
 
-const scrollLayoutEffect = (elmRef: any) => {
-    if (elmRef.current) {
-        const savedPos = scrollPositions.get(elmRef.current?.id);
-        if (savedPos !== undefined) {
-            // Restore previous scroll position if available
-            elmRef.current.scrollTop = savedPos;
-        } else {
-            // Default to scrolling to bottom
-            elmRef.current.scrollTop = elmRef.current.scrollHeight;
-        }
-    }
-}
-
-const scrollEffect = (elmRef: any) => {
-    const elm = elmRef.current;
-    if (!elm) return;
-
-    const handleScroll = () => {
-        if (!elm) return;
-        
-        // Only save scroll position if user has manually scrolled (not at the bottom)
-        const isAtBottom = elm.scrollHeight - elm.scrollTop <= elm.clientHeight + 50;
-        
-        if (!isAtBottom) {
-            scrollPositions.set(elmRef.current?.id, elm.scrollTop);
-        } else {
-            scrollPositions.delete(elmRef.current?.id);
-        }
-    };
-    elm.addEventListener('scroll', handleScroll);
-    return () => {
-        elm.removeEventListener('scroll', handleScroll);
-    };
-}
-
 // NOTE: This is the main chat log component. It has smart scrolling where it will auto-scroll new messages come in, but if the user  
 // has scrolled up to read some text, and it not currently end-scrolled, then when new messages come in it will not scroll down automatically,
 // so it won't interrupt them while they're reading something at a non-end scroll location.
 export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     const gs = useGlobalState();
-    const elmRef = useRef<HTMLDivElement>(null);
     const messageCount = messages ? messages.length : 0;
 
-    // Layout effect ensures scrolling happens before browser paint, which prevents any visible flicker
-    useLayoutEffect(() => scrollLayoutEffect(elmRef), [messageCount]);
-
-    // Handle scroll events to save position
-    useEffect(() => scrollEffect(elmRef), []);
+    const elmRef = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, true), [messageCount]);
+    useEffect(() => scrollEffects.effect(elmRef), []);
 
     // Note; This looks silly but it's required to have the upper case tag name.
     const Tag = tag;

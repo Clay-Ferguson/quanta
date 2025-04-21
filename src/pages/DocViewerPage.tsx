@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
+import { scrollEffects } from '../ScrollEffects';
 
 // Cache for the documents content, using a Map to support multiple documents
 const documentCache: Map<string, string> = new Map();
@@ -53,6 +54,10 @@ export default function DocViewerPage({
         fetchDoc();
     }, [filename]);
 
+    const elmRef = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
+    useEffect(() => scrollEffects.effect(elmRef), []);
+
     return (
         <div className="page-container">
             <header className="app-header">
@@ -61,7 +66,7 @@ export default function DocViewerPage({
                     <BackButton/>
                 </div>
             </header>
-            <div id="docContent" className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
+            <div id="docContent" ref={elmRef}  className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
                 <div className="max-w-2xl w-full">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-64">
