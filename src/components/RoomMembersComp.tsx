@@ -13,16 +13,16 @@ export default function RoomMembersComp() {
                     <thead className="bg-gray-800">
                         <tr>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Name
+                                Name
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Alias
+                                Alias
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Public Key
+                                Public Key
                             </th>
                             <th scope="col" className="w-20 px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Actions
+                                Actions
                             </th>
                         </tr>
                     </thead>

@@ -95,16 +95,16 @@ export default function ContactsListComp() {
                                 />
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Name
+                                Alias
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Alias
+                                Name
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Public Key
+                                Public Key
                             </th>
                             <th scope="col" className="w-20 px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Actions
+                                Actions
                             </th>
                         </tr>
                     </thead>
@@ -152,8 +152,8 @@ export default function ContactsListComp() {
                                                 onChange={() => toggleContactSelection(contact.publicKey)}
                                             />
                                         </td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{contact.name}</td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>
+                                        <td className="px-3 py-2 whitespace-nowrap">{contact.name}</td>
                                         <td className="px-3 py-2">
                                             <div className="flex items-center">
                                                 <span className="font-mono text-sm truncate max-w-[200px]" title={contact.publicKey}>
@@ -223,18 +223,13 @@ const ContactEditRow: React.FC<{
             <td className="px-3 py-2 whitespace-nowrap">
                 <input
                     className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
-                    value={editedContact.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Name"
-                />
-            </td>
-            <td className="px-3 py-2 whitespace-nowrap">
-                <input
-                    className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white"
                     value={editedContact.alias || ''}
                     onChange={(e) => handleChange('alias', e.target.value)}
                     placeholder="Alias (optional)"
                 />
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap">
+                <span className="w-full">{editedContact.name}</span>
             </td>
             <td className="px-3 py-2 whitespace-nowrap">
                 <input
