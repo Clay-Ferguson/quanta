@@ -257,7 +257,7 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanel>
 
-                    <TitledPanel title="Danger Zoner">
+                    <TitledPanel title="Danger Zone">
                         <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>

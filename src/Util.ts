@@ -1,4 +1,4 @@
-import { ChatMessage } from "./AppServiceTypes";
+import { ChatMessage, MessageAttachment } from "./AppServiceTypes";
 
 class Util {
     log(message: string) {
@@ -67,6 +67,15 @@ class Util {
             return (bytes / Math.pow(1024, i)).toFixed(0) + ' ' + units[i];
         }
     }
+
+    downloadFile(attachment: MessageAttachment) {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = attachment.data;
+        downloadLink.download = attachment.name;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
 }
 
 export const util = new Util();

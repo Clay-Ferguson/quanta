@@ -10,15 +10,6 @@ interface AttachmentCompProps {
 }
 
 export default function AttachmentComp({ attachment: att, index = 0 }: AttachmentCompProps) {
-    const downloadFile = (attachment: MessageAttachment) => {
-        const downloadLink = document.createElement('a');
-        downloadLink.href = attachment.data;
-        downloadLink.download = attachment.name;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    };
-
     return (
         <div key={index} className="attachment-container border border-gray-600 rounded p-2 flex flex-col bg-gray-800">
             {att.type.startsWith('image/') ? (
@@ -36,7 +27,7 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
                             className="btn-secondary absolute top-2 right-2"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                downloadFile(att);
+                                util.downloadFile(att);
                             }}
                             title={`Download ${att.name}`}
                         >
@@ -57,7 +48,7 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
                         <button 
                             className="btn-secondary"
                             onClick={() => {
-                                downloadFile(att);
+                                util.downloadFile(att);
                             }}
                             title={`Download ${att.name}`}
                         >
