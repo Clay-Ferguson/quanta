@@ -56,7 +56,7 @@ export default class WebRTCSigServer {
                     if (client !== ws && client.readyState === WebSocket.OPEN && this.clients.get(client)?.room === room) {
                         client.send(JSON.stringify({
                             type: 'user-joined',
-                            name: name,
+                            user: {name},
                             room
                         }));
                     }
@@ -143,7 +143,7 @@ export default class WebRTCSigServer {
                             this.clients.get(c)?.room === room) {
                             c.send(JSON.stringify({
                                 type: 'user-left',
-                                name: name,
+                                user: {name},
                                 room
                             }));
                         }

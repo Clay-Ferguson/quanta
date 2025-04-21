@@ -14,3 +14,8 @@ export interface MessageAttachmentIntf {
     size: number;
     data: string;
 }
+
+export interface User {
+    name: string;
+    publiKey: string;
+}

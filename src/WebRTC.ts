@@ -1,7 +1,7 @@
+import { User } from '../common/CommonTypes.ts';
 import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
-
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -113,28 +113,30 @@ export default class WebRTC {
     }
 
     _onUserJoined = (evt: any) => {
-        util.log('User joined: ' + evt.name);
-        this.participants.add(evt.name);
+        const user: User = evt.user;
+        util.log('User joined: ' + user.name);
+        this.participants.add(user.name);
 
         // Create a connection with the new user (we are initiator)
-        if (!this.peerConnections.has(evt.name)) {
-            this.createPeerConnection(evt.name, true);
+        if (!this.peerConnections.has(user.name)) {
+            this.createPeerConnection(user.name, true);
         }
     }
 
     _onUserLeft = (evt: any) => {
-        util.log('User left: ' + evt.name);
-        this.participants.delete(evt.name);
+        const user: User = evt.user;
+        util.log('User left: ' + user.name);
+        this.participants.delete(user.name);
 
         // Clean up connections
-        const pc = this.peerConnections.get(evt.name);
+        const pc = this.peerConnections.get(user.name);
         if (pc) {
             pc.close();
-            this.peerConnections.delete(evt.name);
+            this.peerConnections.delete(user.name);
         }
 
-        if (this.dataChannels.has(evt.name)) {
-            this.dataChannels.delete(evt.name);
+        if (this.dataChannels.has(user.name)) {
+            this.dataChannels.delete(user.name);
         }
     }
 
