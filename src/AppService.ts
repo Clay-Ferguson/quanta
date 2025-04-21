@@ -412,7 +412,7 @@ export class AppService implements AppServiceTypes  {
             // If we're within 10% of storage limit
             if (remainingStorage < msgSize || usagePercentage > 90 || forceClean) {
                 const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
-                    `Would you like to remove the oldest 20% of messages to free up space?`;
+                    `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
 
                 if (confirm(warningMsg)) {
                     // Sort messages by timestamp and remove oldest 20%
