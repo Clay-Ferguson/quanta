@@ -65,9 +65,7 @@ export default function ContactsListComp() {
             <div className="mb-4 flex justify-between items-center">
                 <div className="flex space-x-2">
                     <button 
-                        className={`px-3 py-1 rounded text-sm ${selectedContacts.size === 0 
-                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                            : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                        className={`${selectedContacts.size === 0 ? 'btn-secondary' : 'btn-danger'}`}
                         disabled={selectedContacts.size === 0}
                         onClick={handleDeleteSelected}
                     >
@@ -76,7 +74,7 @@ export default function ContactsListComp() {
                 </div>
                 <div>
                     <button 
-                        className="px-3 py-1 rounded text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                        className="btn-primary"
                         onClick={handleAddContact}
                     >
             Add Contact
@@ -174,13 +172,13 @@ export default function ContactsListComp() {
                                         <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                             <button
                                                 onClick={() => handleEdit(contact.publicKey)}
-                                                className="text-blue-400 hover:text-blue-300 mr-2"
+                                                className="text-blue-400 hover:text-blue-300 border border-gray-400 mr-2"
                                             >
                                                 <FontAwesomeIcon icon={faUserEdit} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(contact)}
-                                                className="text-red-400 hover:text-red-300"
+                                                className="text-red-400 hover:text-red-300 border border-gray-400"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </button>

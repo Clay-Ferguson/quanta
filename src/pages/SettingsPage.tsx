@@ -225,7 +225,7 @@ export default function SettingsPage() {
                                 This will permanently delete all your chat data, contacts, and identity keys.
                             </p>
                             <button 
-                                className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
+                                className="btn-danger"
                                 onClick={() => {
                                     if (window.confirm("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
                                         app.clear();
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                                     This will permanently delete all messages in the current room, from your device. Other users will still have their messages.
                                 </p>
                                 <button 
-                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors duration-200"
+                                    className="btn-danger"
                                     onClick={() => app._clearMessages()}
                                 >
                                     Wipe Room Data
