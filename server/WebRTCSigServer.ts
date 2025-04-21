@@ -107,7 +107,7 @@ export default class WebRTCSigServer {
                     });
                 }
             }
-            // todo-0: we can eventually remove type 'persist' because we now let 'broadcast' handle persistence, so we kill two birds
+            // todo-1: we can eventually remove type 'persist' because we now let 'broadcast' handle persistence, so we kill two birds
             // with one stone, which is get message out to everyone in realtime and also persist into room, all done by 'broadcast' now.
             // Handle persist messages (silent, no broadcast)
             // else if (data.type === 'persist' && data.room && data.message) {

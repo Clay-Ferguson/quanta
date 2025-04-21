@@ -3,6 +3,7 @@ import BackButton from '../components/BackButton';
 import { crypto } from '../../common/Crypto';
 import { useGlobalState } from '../GlobalState';
 import { useState } from 'react';
+import TitledPanel from '../components/TitledPanel';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -92,91 +93,72 @@ export default function AdminPage() {
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">            
                 <div className="space-y-6 max-w-2xl mx-auto">
 
-                    {/* Server Data Section */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Server Data</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <button 
-                                onClick={() => crypto.openRecentAttachments(gs.keyPair!)}
-                                className="btn-secondary"
-                            >
-                                Open Recent Attachments
-                            </button>
-                        </div>
-                    </div>
+                    <TitledPanel title="Server Data">
+                        <button 
+                            onClick={() => crypto.openRecentAttachments(gs.keyPair!)}
+                            className="btn-secondary"
+                        >
+                                    Open Recent Attachments
+                        </button>
+                    </TitledPanel>
 
-                    {/* Test Data Section */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Test Data</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <p className="text-gray-300 mb-4">
+
+                    <TitledPanel title="Test Data">
+                        <p className="text-gray-300 mb-4">
                                 Restore test data, in room named 'test', for development and testing purposes. All existing data in the 'test' room will be deleted.
-                            </p>
-                            <button 
-                                onClick={createTestData}
-                                className="btn-secondary"
-                            >
+                        </p>
+                        <button 
+                            onClick={createTestData}
+                            className="btn-secondary"
+                        >
                                 Create Test Data
-                            </button>
-                        </div>
-                    </div>
+                        </button>
+                    </TitledPanel> 
 
-                    {/* All Rooms Section todo-0: Make this room info table into a component */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">All Rooms</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <p className="text-gray-300 mb-4">
+                    <TitledPanel title="All Rooms">
+                        <p className="text-gray-300 mb-4">
                                 View information about all rooms stored on the server.
-                            </p>
-                            <button 
-                                onClick={getRoomInfo}
-                                className="btn-secondary"
-                                disabled={loading}
-                            >
-                                {loading ? 'Loading...' : 'Get Room Info'}
-                            </button>
+                        </p>
+                        <button 
+                            onClick={getRoomInfo}
+                            className="btn-secondary"
+                            disabled={loading}
+                        >
+                            {loading ? 'Loading...' : 'Get Room Info'}
+                        </button>
 
-                            {roomsData.length > 0 && (
-                                <div className="mt-4 overflow-x-auto">
-                                    <table className="min-w-full bg-gray-800 border border-gray-700 rounded-lg">
-                                        <thead className="bg-gray-700">
-                                            <tr>
-                                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room Name</th>
-                                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room ID</th>
-                                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Message Count</th>
+                        {roomsData.length > 0 && (
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full bg-gray-800 border border-gray-700 rounded-lg">
+                                    <thead className="bg-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room Name</th>
+                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room ID</th>
+                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Message Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-700">
+                                        {roomsData.map((room) => (
+                                            <tr key={room.id}>
+                                                <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
+                                                <td className="px-4 py-2 text-sm text-gray-300">{room.id}</td>
+                                                <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-700">
-                                            {roomsData.map((room) => (
-                                                <tr key={room.id}>
-                                                    <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
-                                                    <td className="px-4 py-2 text-sm text-gray-300">{room.id}</td>
-                                                    <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </TitledPanel>
 
-                    {/* User Admin */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Manage Users</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <button 
-                                className="btn-secondary"
-                                onClick={blockUser}
-                            >
+                    <TitledPanel title="Manage Users">
+                        <button 
+                            className="btn-secondary"
+                            onClick={blockUser}
+                        >
                             Block User
-                            </button>
-                        </div>
-                    </div>
+                        </button>
+                    </TitledPanel>
                 </div>
             </div>
         </div>

@@ -470,7 +470,7 @@ export default class WebRTC {
                         util.log(`Successfully sent message to ${peer}`);
                         sent = true;
                     } catch (err) {
-                        // todo-0: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
+                        // todo-1: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
                         util.log(`Error sending to ${peer}: ${err}`);
                     }
                 }

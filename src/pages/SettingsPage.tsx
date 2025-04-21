@@ -5,6 +5,7 @@ import { faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 import { useGlobalState } from '../GlobalState';
+import TitledPanel from '../components/TitledPanel';
 
 export default function SettingsPage() {
     const gs = useGlobalState();
@@ -72,103 +73,90 @@ export default function SettingsPage() {
                 )} 
                 
                 <div className="space-y-6 max-w-2xl mx-auto">
-                    {/* About You Section */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">About You</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <div className="mb-4">
-                                <label htmlFor="userName" className="block text-sm font-medium text-blue-300 mb-2">
+                    <TitledPanel title="About You">
+                        <div className="mb-4">
+                            <label htmlFor="userName" className="block text-sm font-medium text-blue-300 mb-2">
                                     User Name
-                                </label>
-                                <input
-                                    type="text"
-                                    id="userName"
-                                    name="userName"
-                                    value={userName}
-                                    onChange={(e) => setUserName(e.target.value)}
-                                    className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                            </label>
+                            <input
+                                type="text"
+                                id="userName"
+                                name="userName"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
                                               text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Enter your username"
+                                placeholder="Enter your username"
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <button 
+                                className="btn-primary"
+                                onClick={() => {
+                                    app.setUserName(userName);
+                                    alert("Username saved successfully!");
+                                }}
+                            >
+                                    Save
+                            </button>
+                        </div>
+                    </TitledPanel>
+
+                    <TitledPanel title="Options">               
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
+                                        Save Messages on Server
+                                </label>
+                                <p className="text-xs text-gray-400 mt-1">
+                                        When enabled, your messages will be stored on the server. Otherwise, messages are only kept locally.
+                                </p>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    id="saveToServer"
+                                    name="saveToServer"
+                                    checked={saveToServer}
+                                    onChange={handleSaveToServerChange}
+                                    className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
                                 />
                             </div>
+                        </div>
                             
-                            <div className="flex justify-end">
+                        {/* Days of History Option */}
+                        <div className="mt-4 pt-4 border-t border-blue-400/20">
+                            <div className="mb-2">
+                                <label htmlFor="daysOfHistory" className="text-sm font-medium text-blue-300">
+                                        Days of History
+                                </label>
+                                <p className="text-xs text-gray-400 mt-1">
+                                        Messages older than this many days will be automatically deleted.
+                                </p>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <input
+                                    type="number"
+                                    id="daysOfHistory"
+                                    name="daysOfHistory"
+                                    value={daysOfHistory}
+                                    onChange={handleDaysOfHistoryChange}
+                                    min="2"
+                                    className="bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                  text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Enter days to keep"
+                                />
                                 <button 
                                     className="btn-primary"
-                                    onClick={() => {
-                                        app.setUserName(userName);
-                                        alert("Username saved successfully!");
-                                    }}
+                                    onClick={saveDaysOfHistory}
                                 >
-                                    Save
+                                        Save
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </TitledPanel>
 
-                    {/* Options Section */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Options</h3>
-                        
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
-                                        Save Messages on Server
-                                    </label>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        When enabled, your messages will be stored on the server. Otherwise, messages are only kept locally.
-                                    </p>
-                                </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="saveToServer"
-                                        name="saveToServer"
-                                        checked={saveToServer}
-                                        onChange={handleSaveToServerChange}
-                                        className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
-                                    />
-                                </div>
-                            </div>
-                            
-                            {/* Days of History Option */}
-                            <div className="mt-4 pt-4 border-t border-blue-400/20">
-                                <div className="mb-2">
-                                    <label htmlFor="daysOfHistory" className="text-sm font-medium text-blue-300">
-                                        Days of History
-                                    </label>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Messages older than this many days will be automatically deleted.
-                                    </p>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <input
-                                        type="number"
-                                        id="daysOfHistory"
-                                        name="daysOfHistory"
-                                        value={daysOfHistory}
-                                        onChange={handleDaysOfHistoryChange}
-                                        min="2"
-                                        className="bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
-                                                  text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Enter days to keep"
-                                    />
-                                    <button 
-                                        className="btn-primary"
-                                        onClick={saveDaysOfHistory}
-                                    >
-                                        Save
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Identity Keys Section */}
-                    <div className="border border-blue-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-blue-400 border-b border-blue-400/30 pb-2 mb-4">Your Identity Keys</h3>
+                    <TitledPanel title="Your Identity Keys">
                         
                         {/* Public Key Section */}
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
@@ -226,12 +214,9 @@ export default function SettingsPage() {
                                 <button className="btn-primary" onClick={app._importKeyPair}>Import Keys</button>
                             </div>
                         </div>
-                    </div>
-                    
-                    {/* Danger Zone Section */}
-                    <div className="border border-red-400/30 rounded-lg p-4">
-                        <h3 className="text-xl font-medium text-red-400 border-b border-red-400/30 pb-2 mb-4">Danger Zone</h3>
-                        
+                    </TitledPanel>
+
+                    <TitledPanel title="Danger Zoner">
                         <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>
@@ -267,7 +252,7 @@ export default function SettingsPage() {
                                 </button>
                             </div>
                         )}
-                    </div>
+                    </TitledPanel>
                 </div>
             </div>
         </div>
