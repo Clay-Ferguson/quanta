@@ -500,7 +500,7 @@ export default class WebRTC {
     }
 
     // New method to persist messages on the server
-    // todo-0: we now use a broadcast for this, so the 'persist' code on the server can be removed.
+    // todo-1: we now use a broadcast for this, so the 'persist' code on the server can be removed.
     // persistOnServer(msg: any) {
     //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
     //         this.socket.send(JSON.stringify({

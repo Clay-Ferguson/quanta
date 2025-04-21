@@ -25,7 +25,7 @@ export default function HeaderComp() {
             participants = `No one else is in this room.`;
         }
         else {
-            participants = `Members: You, ${Array.from(gs.participants!).sort().join(', ')}`
+            participants = `Members: You and ${gs.participants!.size} other${gs.participants!.size > 1 ? 's' : ''}`;
         }
     }
     else {
@@ -76,6 +76,12 @@ export default function HeaderComp() {
                                 className="btn-danger"
                             >
                                 Leave
+                            </button>
+                            <button 
+                                onClick={() => app.goToPage(PageNames.roomMembers)}
+                                className="btn-secondary"
+                            >
+                                Info
                             </button>
                         </>
                     )}

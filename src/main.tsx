@@ -6,6 +6,7 @@ import QuantaChatPage from './pages/QuantaChatPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
+import RoomInfoPage from './pages/RoomInfoPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import {app} from './AppService';
@@ -51,6 +52,8 @@ function PageRouter() {
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
     case PageNames.admin:
         return <AdminPage />;
+    case PageNames.roomMembers:
+        return <RoomInfoPage />;
     case PageNames.quantaChat: // fall thru. to default
     default:
         return <QuantaChatPage />;

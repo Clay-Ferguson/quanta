@@ -30,6 +30,7 @@ export enum PageNames{
     userGuide = 'UserGuidePage',
     quantaChat = 'QuantaChat',
     admin  = 'AdminPage',
+    roomMembers = 'RoomInfoPage',
 }
 
 export type MessageAttachment = MessageAttachmentIntf & {
