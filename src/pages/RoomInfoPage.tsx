@@ -22,7 +22,7 @@ export default function RoomInfoPage() {
             </header>
             <div id="roomInfo" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="roomInfoComp" className="space-y-3">
-                    <h3  className="font-semibold">
+                    <h3 className="font-semibold">
                         Room: {roomName}
                     </h3>   
                     
@@ -30,7 +30,7 @@ export default function RoomInfoPage() {
                         className="btn-danger"
                         onClick={() => app._clearMessages()}
                     >
-                                    Wipe Room Data
+                        Wipe Room Data
                     </button>
                         
                     <TitledPanel title="Room Members">

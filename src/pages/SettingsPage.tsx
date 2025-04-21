@@ -6,6 +6,7 @@ import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 import { useGlobalState } from '../GlobalState';
 import TitledPanel from '../components/TitledPanel';
+import { util } from '../Util';
 
 export default function SettingsPage() {
     const gs = useGlobalState();
@@ -13,6 +14,33 @@ export default function SettingsPage() {
     const [userName, setUserName] = useState('');
     const [saveToServer, setSaveToServer] = useState(false);
     const [daysOfHistory, setDaysOfHistory] = useState('');
+    const [storageInfo, setStorageInfo] = useState({
+        usagePercentage: 0,
+        quota: 0,
+        usage: 0,
+        remainingStorage: 0
+    });
+    
+    useEffect(() => {
+        const fetchStorageInfo = async () => {
+            if (navigator.storage && navigator.storage.estimate) {
+                const estimate: any = await navigator.storage.estimate();
+                const remainingStorage = estimate.quota - estimate.usage;
+                const usagePercentage = (estimate.usage / estimate.quota) * 100;
+                
+                setStorageInfo({
+                    usagePercentage,
+                    quota: estimate.quota,
+                    usage: estimate.usage,
+                    remainingStorage
+                });
+                
+                console.log(`Storage: (${Math.round(usagePercentage)}% used). Quota: ${util.formatStorageSize(estimate.quota)}`);
+            }
+        };
+        
+        fetchStorageInfo();
+    }, []);
 
     useEffect(() => {
         // Initialize the userName from global state when component mounts
@@ -89,6 +117,7 @@ export default function SettingsPage() {
                                 placeholder="Enter your username"
                             />
                         </div>
+                        
                         <div className="flex justify-end">
                             <button 
                                 className="btn-primary"
@@ -99,6 +128,18 @@ export default function SettingsPage() {
                             >
                                     Save
                             </button>
+                        </div>
+                    </TitledPanel>
+
+                    <TitledPanel title="Storage Space">
+                        <div className="text-sm space-y-1">
+                            <p className="flex items-center">
+                                <span>Usage: </span>
+                                <span className="text-lg font-bold ml-1">{Math.round(storageInfo.usagePercentage)}%</span>
+                            </p>
+                            <p>Total Space: {util.formatStorageSize(storageInfo.quota)}</p>
+                            <p>Used Space: {util.formatStorageSize(storageInfo.usage)}</p>
+                            <p>Remaining: {util.formatStorageSize(storageInfo.remainingStorage)}</p>
                         </div>
                     </TitledPanel>
 
