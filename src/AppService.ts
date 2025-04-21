@@ -1,7 +1,7 @@
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames} from './AppServiceTypes.ts';
+import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypto} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
@@ -139,13 +139,15 @@ export class AppService implements AppServiceTypes  {
         const roomName: string = await this.storage?.getItem(DBKeys.roomName);
         const saveToServer: boolean = await this.storage?.getItem(DBKeys.saveToServer);
         const daysOfHistory: number = await this.storage?.getItem(DBKeys.daysOfHistory) || 30;
+        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
 
         const state: GlobalState = {
             userName,
             contacts,
             roomName,
             saveToServer,
-            daysOfHistory
+            daysOfHistory,
+            roomHistory,
         };
 
         // if no username we send to settings page.
@@ -273,17 +275,36 @@ export class AppService implements AppServiceTypes  {
         const messages = await this.loadRoomMessages(roomName);
         await this.rtc._connect(userName!, roomName);
         await this.setRoomAndUserName(roomName, userName!);
+        
+        const roomHistory: RoomHistoryItem[] = await this.updateRoomHistory(roomName);
 
         this.gd!({ type: 'connect', payload: { 
             userName,
             roomName,
             messages,
             connected: true,
-            connecting: false
+            connecting: false,
+            roomHistory,
+            page: PageNames.quantaChat
         }});
 
         // set connected DB key
         await this.storage?.setItem(DBKeys.connected, true);
+    }
+
+    updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {
+        // Get the current room history from IndexedDB
+        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
+
+        // Check if the room is already in the history
+        const roomExists = roomHistory.some((item) => item.name === roomName);
+
+        if (!roomExists) {
+            // Add the new room to the history
+            roomHistory.push({ name: roomName });
+            await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
+        }
+        return roomHistory;
     }
 
     _setContacts = (contacts: any) => {
@@ -304,15 +325,33 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(DBKeys.connected, false);
     }
 
-    _clearMessages = () => {
+    _forgetRoom = async (roomName: string) => {
         if (confirm("Clear all chat history for room?")) {
             if (!this.gs || !this.gs!.connected) {
                 console.log("Not connected, cannot clear messages.");
                 return;
             }
-            this.gs!.messages = []; 
-            this.saveMessages(); 
-            this.gd!({ type: 'clearMessages', payload: this.gs });}
+
+            // if deleting current room disconnect
+            if (roomName===this.gs!.roomName) {
+                await this._disconnect();
+                this.gs!.messages = []; 
+            }
+
+            // remove room from history
+            const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
+            const roomIndex = roomHistory.findIndex((item) => item.name === roomName);
+            if (roomIndex !== -1) {
+                roomHistory.splice(roomIndex, 1);
+                await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
+            }
+            this.gs.roomHistory = roomHistory;
+
+            // remove room from IndexedDB
+            await this.storage?.removeItem(DBKeys.roomPrefix + roomName);
+            console.log("Cleared messages for room: " + roomName);
+
+            this.gd!({ type: 'forgetRoom', payload: this.gs });}
     }
 
     _send = async (message: string, selectedFiles: any) => {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
-import { ChatMessage, Contact, PageNames } from './AppServiceTypes';
+import { ChatMessage, Contact, PageNames, RoomHistoryItem } from './AppServiceTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -18,6 +18,7 @@ export interface GlobalState {
     appInitialized?: boolean;
     saveToServer?: boolean;
     daysOfHistory?: number;
+    roomHistory?: Array<RoomHistoryItem>;
 }
 
 const initialState: GlobalState = {
@@ -33,7 +34,8 @@ const initialState: GlobalState = {
     fullSizeImage: null,
     appInitialized: false,
     saveToServer: true,
-    daysOfHistory: 30
+    daysOfHistory: 30,
+    roomHistory: [],
 };
 
 export type GlobalAction = { type: string, payload: any};

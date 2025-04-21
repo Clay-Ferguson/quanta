@@ -12,6 +12,10 @@ export interface AppServiceTypes {
     _persistMessage(msg: ChatMessage): Promise<void>;
 }
 
+export interface RoomHistoryItem {
+    name: string;
+}
+
 export enum DBKeys {
     userName = 'userName',
     roomName = 'roomName',
@@ -22,6 +26,7 @@ export enum DBKeys {
     saveToServer = 'saveToServer',
     linkPreview = 'linkPreview',
     daysOfHistory = 'daysOfHistory',
+    roomHistory = 'roomHistory',
 }
 
 export enum PageNames{
@@ -31,6 +36,7 @@ export enum PageNames{
     quantaChat = 'QuantaChat',
     admin  = 'AdminPage',
     roomMembers = 'RoomInfoPage',
+    rooms = 'RoomsPage',
 }
 
 export type MessageAttachment = MessageAttachmentIntf & {

@@ -3,7 +3,6 @@ import BackButton from '../components/BackButton';
 import RoomMembersComp from '../components/RoomMembersComp';
 import TitledPanel from '../components/TitledPanel';
 import { useGlobalState } from '../GlobalState';
-import { app } from '../AppService';
 
 export default function RoomInfoPage() {
     const { roomName = "" } = useGlobalState();
@@ -25,15 +24,8 @@ export default function RoomInfoPage() {
                     <h3 className="font-semibold">
                         Room: {roomName}
                     </h3>   
-                    
-                    <button 
-                        className="btn-danger"
-                        onClick={() => app._clearMessages()}
-                    >
-                        Wipe Room Data
-                    </button>
                         
-                    <TitledPanel title="Room Members">
+                    <TitledPanel title="Members in Room Now...">
                         <RoomMembersComp />
                     </TitledPanel>
                 </div>

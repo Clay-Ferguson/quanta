@@ -54,10 +54,11 @@ export default function HeaderComp() {
                                     className="input-field" 
                                 />
                             </div>
+                            
                             <button 
                                 disabled={!gs.userName || !roomName}
                                 onClick={() => app._connect(null, roomName)}
-                                className="bg-green-600 hover:bg-green-700 text-gray-100 font-medium py-1 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="btn-green"
                             >
                                 Join
                             </button>
@@ -85,6 +86,12 @@ export default function HeaderComp() {
                             </button>
                         </>
                     )}
+                    <button 
+                        onClick={() => app.goToPage(PageNames.rooms)}
+                        className="btn-secondary"
+                    >
+                                Rooms
+                    </button>
                 </div>
                 <button 
                     onClick={() => app.goToPage(PageNames.contacts)}

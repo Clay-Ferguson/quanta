@@ -124,6 +124,10 @@
     @apply bg-orange-600 text-white py-2 px-4 rounded hover:bg-gray-600 h-10;
   }
 
+  .btn-green {
+    @apply bg-green-600 text-white py-2 px-4 rounded hover:bg-gray-600 h-10;
+  }
+  
   .btn-icon {
     @apply bg-gray-600 text-white rounded-md flex items-center justify-center h-10 w-10;
   }
