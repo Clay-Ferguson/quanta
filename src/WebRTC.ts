@@ -162,39 +162,36 @@ export default class WebRTC {
     }
 
     _onOffer = (evt: any) => {
-        let pc = this.peerConnections.get(evt.senderPublicKey);
-        util.log('Received offer from ' + evt.sender + ', signaling state: ' + 
+        let pc = this.peerConnections.get(evt.sender.publicKey);
+        util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection yet'));
 
         // Create a connection if it doesn't exist
         // let pc: RTCPeerConnection | undefined;
         if (!pc) {
-            util.log('Creating connection with ' + evt.sender+' because of onOffer');
-
-            const user = {name: evt.sender, publicKey: evt.senderPublicKey}; // for now we have to BUILD a user, because we didn't get it from the server.
-            pc = this.createPeerConnection(user, false);
+            util.log('Creating connection with ' + evt.sender.name+' because of onOffer');
+            pc = this.createPeerConnection(evt.sender, false);
         } 
        
         // todo-0: convert this to await style calls
         pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
             .then(() => {
                 const answer = pc.createAnswer();
-                util.log('Creating answer for ' + evt.sender);
+                util.log('Creating answer for ' + evt.sender.name);
                 return answer;
             })
             .then((answer: any) => {
                 const desc = pc.setLocalDescription(answer);
-                util.log('Setting local description for ' + evt.sender);
+                util.log('Setting local description for ' + evt.sender.name);
                 return desc;
             })
             .then(() => {
                 if (this.socket) {
-                    console.log('Sending answer to ' + evt.sender);
+                    console.log('Sending answer to ' + evt.sender.name);
                     this.socket.send(JSON.stringify({
                         type: 'answer',
                         answer: pc.localDescription,
                         target: evt.sender,
-                        targetPublicKey: evt.senderPublicKey,
                         room: this.roomId
                     }));
                 }
@@ -206,8 +203,8 @@ export default class WebRTC {
     }
 
     _onAnswer = (evt: any) => {
-        const pc = this.peerConnections.get(evt.senderPublicKey);
-        util.log('Received answer from ' + evt.sender + ', signaling state: ' + 
+        const pc = this.peerConnections.get(evt.sender.publicKey);
+        util.log('Received answer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection'));
         if (pc) {
             // Check the signaling state before setting remote description
@@ -220,24 +217,24 @@ export default class WebRTC {
             }
         }
         else {
-            util.log('No peer connection found for ' + evt.sender);
+            util.log('No peer connection found for ' + evt.sender.name);
         }
     }
 
     _onIceCandidate = (evt: any) => {
-        util.log('Received ICE candidate from ' + evt.sender);
-        const pc = this.peerConnections.get(evt.senderPublicKey);
+        util.log('Received ICE candidate from ' + evt.sender.name);
+        const pc = this.peerConnections.get(evt.sender.publicKey);
         if (pc) {
             pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
                 .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
         }
         else {
-            util.log('No peer connection found for ' + evt.sender);
+            util.log('No peer connection found for ' + evt.sender.name);
         }
     }
 
     _onBroadcast = (evt: any) => {
-        util.log('broadcast. Received broadcast message from ' + evt.sender);
+        util.log('broadcast. Received broadcast message from ' + evt.sender.name);
         this.app?._persistMessage(evt.message);           
     }
 
@@ -321,12 +318,10 @@ export default class WebRTC {
         // Set up ICE candidate handling
         pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
             if (event.candidate && this.socket) {
-                // &&& we can eventually make this have just 'target' as a User object
                 this.socket.send(JSON.stringify({
                     type: 'ice-candidate',
                     candidate: event.candidate,
-                    target: user.name,
-                    targetPublicKey: user.publicKey,
+                    target: user,
                     room: this.roomId
                 }));
                 util.log('Sent ICE candidate to ' + user.name);
@@ -375,8 +370,7 @@ export default class WebRTC {
                             this.socket.send(JSON.stringify({
                                 type: 'offer',
                                 offer: pc.localDescription,
-                                target: user.name,
-                                targetPublicKey: user.publicKey,
+                                target: user,
                                 room: this.roomId
                             }));
                             util.log('Sent offer to ' + user.name);

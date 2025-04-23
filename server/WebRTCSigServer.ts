@@ -91,8 +91,7 @@ export default class WebRTCSigServer {
 
         if (fromClientInfo) {
             // Add sender info to the message
-            msg.sender = fromClientInfo.name;
-            msg.senderPublicKey = fromClientInfo.publicKey;
+            msg.sender = {user: fromClientInfo.name, publicKey: fromClientInfo.publicKey};
             msg.room = fromClientInfo.room;
             const payload = JSON.stringify(msg);
 
@@ -101,10 +100,9 @@ export default class WebRTCSigServer {
                 const clientInfo = this.clientsMap.get(cws);
                 if (cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === clientInfo.room &&
-                    clientInfo.name === msg.target
-                // we need targetPublicKey here right?
+                    clientInfo.publicKey === msg.target.publicKey
                 ) {
-                    log(`Sending ${msg.type} from ${clientInfo.name} to ${msg.target} in room ${clientInfo.room}`);
+                    log(`Sending ${msg.type} from ${clientInfo.name} to ${msg.target.name} in room ${clientInfo.room}`);
 
                     // todo-0: how to make this forEach abort/stop after this send.
                     cws.send(payload);
@@ -120,11 +118,10 @@ export default class WebRTCSigServer {
         // First save message to DB
         this.persist(msg);
 
-        const clientInfo = this.clientsMap.get(ws);
-        if (clientInfo) {
+        const senderClientInfo = this.clientsMap.get(ws);
+        if (senderClientInfo) {
             // put the 'from' (i.e. sender) name in the message
-            msg.sender = clientInfo.name;
-            msg.senderPublicKey = clientInfo.publicKey;
+            msg.sender = {user: senderClientInfo.name, publicKey: senderClientInfo.publicKey};
             const payload = JSON.stringify(msg);
 
             // Send the message to all clients in the same room, except the sender
