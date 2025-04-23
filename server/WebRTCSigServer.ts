@@ -10,13 +10,15 @@ const logError = logger.logError;
 // Represents a room, it's name and participants
 interface RoomInfo {
     name: string;
-    // all Users in the room keyed by username. Eventually we'll use publicKey as the key
+    // all Users in the room by publicKey.
     participants: Map<string, User>;
 }
 
 // Represents a specific user+room per WebSocket connection
 interface ClientInfo {
     room: string;
+
+    // todo-0: eventually we need just a "User" value in here.
     name: string;
     publicKey: string;
 }
@@ -90,6 +92,7 @@ export default class WebRTCSigServer {
         if (fromClientInfo) {
             // Add sender info to the message
             msg.sender = fromClientInfo.name;
+            msg.senderPublicKey = fromClientInfo.publicKey;
             msg.room = fromClientInfo.room;
             const payload = JSON.stringify(msg);
 
@@ -98,7 +101,9 @@ export default class WebRTCSigServer {
                 const clientInfo = this.clientsMap.get(cws);
                 if (cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === clientInfo.room &&
-                    clientInfo.name === msg.target) {
+                    clientInfo.name === msg.target
+                // we need targetPublicKey here right?
+                ) {
                     log(`Sending ${msg.type} from ${clientInfo.name} to ${msg.target} in room ${clientInfo.room}`);
 
                     // todo-0: how to make this forEach abort/stop after this send.
@@ -119,6 +124,7 @@ export default class WebRTCSigServer {
         if (clientInfo) {
             // put the 'from' (i.e. sender) name in the message
             msg.sender = clientInfo.name;
+            msg.senderPublicKey = clientInfo.publicKey;
             const payload = JSON.stringify(msg);
 
             // Send the message to all clients in the same room, except the sender
@@ -151,8 +157,7 @@ export default class WebRTCSigServer {
         const user = {name: msg.name, publicKey: msg.publicKey};
         
         // Add to participants if not already present
-        // &&& make participants key off publicKey instead of name
-        roomInfo.participants.set(msg.name, user); 
+        roomInfo.participants.set(msg.publicKey, user); 
         log(`Client ${msg.name} joined room: ${msg.room}`);
         
         // Build an array of Users objects from the map for all users in roomInfo except for msg.name.
@@ -190,7 +195,7 @@ export default class WebRTCSigServer {
 
             // Remove user from room participants
             if (roomInfo) {
-                roomInfo.participants.delete(name);
+                roomInfo.participants.delete(publicKey);
 
                 // If room is empty, remove it, and there's no one to notify either
                 if (roomInfo.participants.size === 0) {

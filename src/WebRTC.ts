@@ -10,8 +10,7 @@ import {util} from './Util.ts';
  * Designed as a singleton that can be instantiated once and reused
  */
 export default class WebRTC {
-
-    // maps user names to their RTCPeerConnection objects
+    // Maps RTCPeerConnection by PublicKey
     peerConnections: Map<string, RTCPeerConnection> = new Map();
 
     // maps user names to their RTCDataChannel objects
@@ -68,12 +67,9 @@ export default class WebRTC {
             util.log('    User in room: ' + user.name);
             this.participants.set(user.publicKey, user);
       
-            // &&& peerConnections keeds to be keyed by publicKey too.
-            if (!this.peerConnections.has(user.name)) {
+            if (!this.peerConnections.has(user.publicKey)) {
                 util.log('Initiate a connection with ' + user.name+' because he is in room');
-
-                // &&&: make this accept publicKey not name
-                this.createPeerConnection(user.name, true);
+                this.createPeerConnection(user, true);
             }
             else {
                 util.log('Already have connection with ' + user.name);
@@ -110,13 +106,13 @@ export default class WebRTC {
         
     //     // Close any stalled connections and recreate them
     //     this.participants.forEach(participant => {
-    //         const pc = this.peerConnections.get(participant);
+    //         const pc = this.peerConnections.get(participant); <--- this obsolete, we key peeConnsctions by publicKey now.
     //         if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant))) {
     //             util.log(`Recreating connection with ${participant}`);
                 
     //             // Close old connection
     //             pc.close();
-    //             this.peerConnections.delete(participant);
+    //             this.peerConnections.delete(participant); <--- ditto warning above
                 
     //             // Create a new connection
     //             this.createPeerConnection(participant, true);
@@ -139,9 +135,9 @@ export default class WebRTC {
         this.participants.set(user.publicKey, user);
 
         // Initiate a connection with the new user
-        if (!this.peerConnections.has(user.name)) {
+        if (!this.peerConnections.has(user.publicKey)) {
             util.log('Creating connection with ' + user.name+' because of onUserJoined');
-            this.createPeerConnection(user.name, true);
+            this.createPeerConnection(user, true); 
         }
         else {
             util.log('Already have connection with ' + user.name);
@@ -154,10 +150,10 @@ export default class WebRTC {
         this.participants.delete(user.publicKey);
 
         // Clean up connections
-        const pc = this.peerConnections.get(user.name);
+        const pc = this.peerConnections.get(user.publicKey);
         if (pc) {
             pc.close();
-            this.peerConnections.delete(user.name);
+            this.peerConnections.delete(user.publicKey);
         }
 
         if (this.dataChannels.has(user.name)) {
@@ -166,7 +162,7 @@ export default class WebRTC {
     }
 
     _onOffer = (evt: any) => {
-        let pc = this.peerConnections.get(evt.sender);
+        let pc = this.peerConnections.get(evt.senderPublicKey);
         util.log('Received offer from ' + evt.sender + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection yet'));
 
@@ -174,7 +170,9 @@ export default class WebRTC {
         // let pc: RTCPeerConnection | undefined;
         if (!pc) {
             util.log('Creating connection with ' + evt.sender+' because of onOffer');
-            pc = this.createPeerConnection(evt.sender, false);
+
+            const user = {name: evt.sender, publicKey: evt.senderPublicKey}; // for now we have to BUILD a user, because we didn't get it from the server.
+            pc = this.createPeerConnection(user, false);
         } 
        
         // todo-0: convert this to await style calls
@@ -196,6 +194,7 @@ export default class WebRTC {
                         type: 'answer',
                         answer: pc.localDescription,
                         target: evt.sender,
+                        targetPublicKey: evt.senderPublicKey,
                         room: this.roomId
                     }));
                 }
@@ -207,7 +206,7 @@ export default class WebRTC {
     }
 
     _onAnswer = (evt: any) => {
-        const pc = this.peerConnections.get(evt.sender);
+        const pc = this.peerConnections.get(evt.senderPublicKey);
         util.log('Received answer from ' + evt.sender + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection'));
         if (pc) {
@@ -227,7 +226,7 @@ export default class WebRTC {
 
     _onIceCandidate = (evt: any) => {
         util.log('Received ICE candidate from ' + evt.sender);
-        const pc = this.peerConnections.get(evt.sender);
+        const pc = this.peerConnections.get(evt.senderPublicKey);
         if (pc) {
             pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
                 .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
@@ -301,62 +300,65 @@ export default class WebRTC {
         this.app?._rtcStateChange();
     }
 
-    createPeerConnection(peerName: string, isInitiator: boolean) {
-        util.log('Creating peer connection with ' + peerName + (isInitiator ? ' (as initiator)' : ''));
+    //peerName = user.name
+    createPeerConnection(user: User, isInitiator: boolean) {
+        util.log('Creating peer connection with ' + user.name + (isInitiator ? ' (as initiator)' : ''));
         const pc = new RTCPeerConnection({
             iceCandidatePoolSize: 10 // Increase candidate gathering
         });
-        this.peerConnections.set(peerName, pc);
+        this.peerConnections.set(user.publicKey, pc);
 
         // Add monitoring for ICE gathering state
         pc.onicegatheringstatechange = () => {
-            util.log(`ICE gathering state with ${peerName}: ${pc.iceGatheringState}`);
+            util.log(`ICE gathering state with ${user.name}: ${pc.iceGatheringState}`);
         };
 
         // Add monitoring for signaling state
         pc.onsignalingstatechange = () => {
-            util.log(`Signaling state with ${peerName}: ${pc.signalingState}`);
+            util.log(`Signaling state with ${user.name}: ${pc.signalingState}`);
         };
 
         // Set up ICE candidate handling
         pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
             if (event.candidate && this.socket) {
+                // &&& we can eventually make this have just 'target' as a User object
                 this.socket.send(JSON.stringify({
                     type: 'ice-candidate',
                     candidate: event.candidate,
-                    target: peerName,
+                    target: user.name,
+                    targetPublicKey: user.publicKey,
                     room: this.roomId
                 }));
-                util.log('Sent ICE candidate to ' + peerName);
+                util.log('Sent ICE candidate to ' + user.name);
             }
         };
 
         // Connection state changes
         pc.onconnectionstatechange = () => {
-            util.log('Connection state with ' + peerName + ': ' + pc.connectionState);
+            util.log('Connection state with ' + user.name + ': ' + pc.connectionState);
             if (pc.connectionState === 'connected') {
-                util.log('WebRTC connected with ' + peerName + '!');
+                util.log('WebRTC connected with ' + user.name + '!');
             } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                util.log('WebRTC disconnected from ' + peerName);
+                util.log('WebRTC disconnected from ' + user.name);
             }
         };
 
         // Handle incoming data channels
         pc.ondatachannel = (event: RTCDataChannelEvent) => {
-            util.log('Received data channel from ' + peerName);
-            this.setupDataChannel(event.channel, peerName);
+            util.log('Received data channel from ' + user.name);
+            this.setupDataChannel(event.channel, user.name);
         };
 
         // If we're the initiator, create a data channel
         if (isInitiator) {
             try {
-                util.log('Creating data channel as initiator for ' + peerName);
+                util.log('Creating data channel as initiator for ' + user.name);
                 
                 const channel = pc.createDataChannel('chat', {
                     ordered: true,        // Guaranteed delivery order
                     negotiated: false     // Let WebRTC handle negotiation
                 });
-                this.setupDataChannel(channel, peerName);
+                this.setupDataChannel(channel, user.name);
                 
                 // todo-0: convert this to async/await pattern
                 pc.createOffer({
@@ -373,10 +375,11 @@ export default class WebRTC {
                             this.socket.send(JSON.stringify({
                                 type: 'offer',
                                 offer: pc.localDescription,
-                                target: peerName,
+                                target: user.name,
+                                targetPublicKey: user.publicKey,
                                 room: this.roomId
                             }));
-                            util.log('Sent offer to ' + peerName);
+                            util.log('Sent offer to ' + user.name);
                         }
                     })
                     .catch(error => util.log('Error creating offer: ' + error));
