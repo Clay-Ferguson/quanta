@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
 import { ChatMessage, Contact, PageNames, RoomHistoryItem } from './AppServiceTypes';
+import { User } from '../common/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -13,7 +14,7 @@ export interface GlobalState {
     userName?: string;
     contacts?: Array<Contact>; 
     messages?: Array<ChatMessage>; 
-    participants?: Set<string> | null;
+    participants?: Map<string, User> | null;
     fullSizeImage?: {src: string, name: string} | null;
     appInitialized?: boolean;
     saveToServer?: boolean;
@@ -29,7 +30,7 @@ const initialState: GlobalState = {
     roomName: '',
     userName: '', 
     messages: [], 
-    participants: new Set<string>(),
+    participants: new Map<string, User>(),
     contacts: [],
     fullSizeImage: null,
     appInitialized: false,

@@ -1,11 +1,13 @@
+import { User } from '../../common/CommonTypes';
 import { useGlobalState } from '../GlobalState';
 
 export default function RoomMembersComp() {
-    const { participants = [] } = useGlobalState();
+    // get 'participants' which is a type of Map<string, User> | null
+    const { participants } = useGlobalState();
 
     // Sort contacts alphabetically by name
-    const sortedContacts = [...participants!].sort((a, b) => a.localeCompare(b));
-
+    const sortedContacts: User[] = participants ? Array.from(participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
+    
     return (
         <div className="w-full">
             <div className="w-full overflow-x-auto border border-gray-700 rounded-md">
@@ -29,9 +31,9 @@ export default function RoomMembersComp() {
                     <tbody className="bg-gray-800 divide-y divide-gray-700">
 
                         {sortedContacts.length > 0 ? (
-                            sortedContacts.map((member) => (
-                                <tr key={member} className="hover:bg-gray-750">
-                                    <td className="px-3 py-2 whitespace-nowrap">{member}</td>
+                            sortedContacts.map((member: User) => (
+                                <tr key={member.publicKey} className="hover:bg-gray-750">
+                                    <td className="px-3 py-2 whitespace-nowrap">{member.name}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">TBD</td>
                                     <td className="px-3 py-2">
                                         TBD

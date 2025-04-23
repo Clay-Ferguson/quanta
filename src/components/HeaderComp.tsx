@@ -19,27 +19,27 @@ export default function HeaderComp() {
         }
     }, [gs.roomName]);
 
-    let participants = null;
+    let participantMsg = null;
     if (gs.connected) {
         if (gs.participants && gs.participants.size === 0) {
-            participants = `No one else is in this room.`;
+            participantMsg = `No one else is in this room.`;
         }
         else {
-            participants = `Members: You and ${gs.participants!.size} other${gs.participants!.size > 1 ? 's' : ''}`;
+            participantMsg = `Members: You and ${gs.participants!.size} other${gs.participants!.size > 1 ? 's' : ''}`;
         }
     }
     else {
         if (gs.userName) {
-            participants = `Hi ${gs.userName}, Enter a room name and click Join.`;
+            participantMsg = `Hi ${gs.userName}, Enter a room name and click Join.`;
         }
         else {
-            participants = 'You should go to the settings page to set your username.';
+            participantMsg = 'You should go to the settings page to set your username.';
         }
     }
     
     return (
         <header className="app-header">
-            <LogoBlockComp subText={participants}/>
+            <LogoBlockComp subText={participantMsg}/>
             <div className="flex items-center space-x-4">
                 <div className="border border-gray-600 rounded px-3 py-1 bg-gray-700/50 flex items-center space-x-3">
                     {!gs.connected ? (
@@ -57,7 +57,7 @@ export default function HeaderComp() {
                             
                             <button 
                                 disabled={!gs.userName || !roomName}
-                                onClick={() => app._connect(null, roomName)}
+                                onClick={() => app._connect(null, null, roomName)}
                                 className="btn-green"
                             >
                                 Join

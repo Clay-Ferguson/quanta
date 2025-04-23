@@ -1,4 +1,5 @@
 import { User } from '../common/CommonTypes.ts';
+import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
@@ -19,7 +20,10 @@ export default class WebRTC {
     socket: WebSocket | null = null;
     roomId = "";
     userName = "";
-    participants = new Set<string>();
+    keyPair: KeyPairHex | null = null;
+
+    // all room participants by publicKey
+    participants = new Map<string, User>();
     connected: boolean = false;
     storage: IndexedDB | null = null;
     app: AppServiceTypes | null = null;
@@ -57,26 +61,22 @@ export default class WebRTC {
     // todo-0: this is not yet updated to handle User objects as the participants
     _onRoomInfo = (evt: any) => {
         util.log('Room info received with participants');
-        
-        // server is sending back array of User objects, but we currently expect a set of strings on client
-        // so we build the list into a set of strings.
-        // todo-0: we will be refactoring this client side code to also have participants as User[].
-        const participantsList: User[] = evt.participants;
+        this.participants = new Map<string, User>();
 
         // build up a list of strings which is what 'this.participants' currently is.
-        this.participants = new Set<string>();
-        participantsList.forEach((user: User) => {
+        evt.participants.forEach((user: User) => {
             util.log('    User in room: ' + user.name);
-            this.participants.add(user.name);
-        });
+            this.participants.set(user.publicKey, user);
+      
+            // &&& peerConnections keeds to be keyed by publicKey too.
+            if (!this.peerConnections.has(user.name)) {
+                util.log('Initiate a connection with ' + user.name+' because he is in room');
 
-        this.participants.forEach((participant: string) => {
-            if (!this.peerConnections.has(participant)) {
-                util.log('Initiate a connection with ' + participant+' because he is in room');
-                this.createPeerConnection(participant, true);
+                // &&&: make this accept publicKey not name
+                this.createPeerConnection(user.name, true);
             }
             else {
-                util.log('Already have connection with ' + participant);
+                util.log('Already have connection with ' + user.name);
             }
         });
         
@@ -105,24 +105,24 @@ export default class WebRTC {
     }
 
     // Recovery method
-    attemptConnectionRecovery() {
-        util.log('Attempting connection recovery');
+    // attemptConnectionRecovery() {
+    //     util.log('Attempting connection recovery');
         
-        // Close any stalled connections and recreate them
-        this.participants.forEach(participant => {
-            const pc = this.peerConnections.get(participant);
-            if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant))) {
-                util.log(`Recreating connection with ${participant}`);
+    //     // Close any stalled connections and recreate them
+    //     this.participants.forEach(participant => {
+    //         const pc = this.peerConnections.get(participant);
+    //         if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant))) {
+    //             util.log(`Recreating connection with ${participant}`);
                 
-                // Close old connection
-                pc.close();
-                this.peerConnections.delete(participant);
+    //             // Close old connection
+    //             pc.close();
+    //             this.peerConnections.delete(participant);
                 
-                // Create a new connection
-                this.createPeerConnection(participant, true);
-            }
-        });
-    }
+    //             // Create a new connection
+    //             this.createPeerConnection(participant, true);
+    //         }
+    //     });
+    // }
 
     hasOpenChannelFor(peerName: string) {
         const channel = this.dataChannels.get(peerName);
@@ -131,8 +131,12 @@ export default class WebRTC {
 
     _onUserJoined = (evt: any) => {
         const user: User = evt.user;
+        if (!user.publicKey) {
+            util.log('User joined without a public key, ignoring.');
+            return;
+        }
         util.log('User joined: ' + user.name);
-        this.participants.add(user.name);
+        this.participants.set(user.publicKey, user);
 
         // Initiate a connection with the new user
         if (!this.peerConnections.has(user.name)) {
@@ -147,7 +151,7 @@ export default class WebRTC {
     _onUserLeft = (evt: any) => {
         const user: User = evt.user;
         util.log('User left: ' + user.name);
-        this.participants.delete(user.name);
+        this.participants.delete(user.publicKey);
 
         // Clean up connections
         const pc = this.peerConnections.get(user.name);
@@ -276,7 +280,8 @@ export default class WebRTC {
             this.socket.send(JSON.stringify({
                 type: 'join',
                 room: this.roomId,
-                name: this.userName
+                name: this.userName,
+                publicKey: this.keyPair?.publicKey
             }));
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
@@ -382,9 +387,10 @@ export default class WebRTC {
         return pc;
     }
 
-    _connect = async (userName: string, roomName: string) => {
+    _connect = async (userName: string, keyPair: KeyPairHex, roomName: string) => {
         console.log( 'WebRTC Connecting to room: ' + roomName + ' as user: ' + userName);
         this.userName = userName;
+        this.keyPair = keyPair;
         this.roomId = roomName;
 
         // If already connected, reset connection with new name and room
@@ -395,10 +401,13 @@ export default class WebRTC {
             this.socket.send(JSON.stringify({
                 type: 'join',
                 room: this.roomId,
-                name: this.userName
+                name: this.userName,
+                publicKey: this.keyPair?.publicKey
             }));
             util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         } else {
+            // todo-0: this seems odd to run init here, when we're actually trying to connect to a room, because
+            // this connect doesn't result in creation of the room does it?????
             this.initRTC();
         }
     }

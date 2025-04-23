@@ -59,7 +59,7 @@ export default function RoomsPage() {
                                                             </button>
                                                         ) : (
                                                             <button 
-                                                                onClick={() => app._connect(null, room.name)}
+                                                                onClick={() => app._connect(null, null, room.name)}
                                                                 className="btn-green mr-2"
                                                                 aria-label={`Join ${room.name}`}
                                                             >

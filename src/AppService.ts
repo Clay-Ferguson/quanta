@@ -6,6 +6,7 @@ import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypto} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
+import { User } from '../common/CommonTypes.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -122,13 +123,14 @@ export class AppService implements AppServiceTypes  {
 
     restoreConnection = async () => {
         const userName = await this.storage?.getItem(DBKeys.userName);
+        const keyPair = await this.storage?.getItem(DBKeys.keyPair);
         const roomName = await this.storage?.getItem(DBKeys.roomName);
         const connected = await this.storage?.getItem(DBKeys.connected);
 
 
         if (userName && roomName && connected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
-            await this._connect(userName, roomName);
+            await this._connect(userName, keyPair, roomName);
         }
     }
 
@@ -250,7 +252,7 @@ export class AppService implements AppServiceTypes  {
             return;
         }
         
-        const participants = this.rtc.participants || new Set<string>();
+        const participants = this.rtc.participants || new Map<string, User>();
         const connected = this.rtc.connected || false;
         this.gd!({ 
             type: 'updateRtcState', 
@@ -262,8 +264,10 @@ export class AppService implements AppServiceTypes  {
     }
 
     // userName is optional and will default to global state if not provided
-    _connect = async (userName: string | null, roomName: string) => {
+    _connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
         userName = userName || this.gs!.userName!;
+        keyPair = keyPair || this.gs!.keyPair!;
+
         if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
@@ -273,7 +277,7 @@ export class AppService implements AppServiceTypes  {
         }});
 
         const messages = await this.loadRoomMessages(roomName);
-        await this.rtc._connect(userName!, roomName);
+        await this.rtc._connect(userName!, keyPair, roomName);
         await this.setRoomAndUserName(roomName, userName!);
         
         const roomHistory: RoomHistoryItem[] = await this.updateRoomHistory(roomName);
@@ -319,7 +323,7 @@ export class AppService implements AppServiceTypes  {
         this.rtc?._disconnect();
         this.gd!({ type: 'disconnect', payload: { 
             messages: [], 
-            participants: new Set<string>(), 
+            participants: new Map<string, User>(), 
             connected: false, 
         }});
         await this.storage?.setItem(DBKeys.connected, false);
