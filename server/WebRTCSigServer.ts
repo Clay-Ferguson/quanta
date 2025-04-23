@@ -2,16 +2,32 @@ import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 import { DBManager } from './DBManager.js';
 import {crypto} from '../common/Crypto.js'
+import { User } from '@common/CommonTypes.js';
 
 const log = logger.logInfo;
 const logError = logger.logError;
+
+// Represents a room, it's name and participants
+interface RoomInfo {
+    name: string;
+    // all Users in the room keyed by username. Eventually we'll use publicKey as the key
+    participants: Map<string, User>;
+}
+
+// Represents a specific user+room per WebSocket connection
+interface ClientInfo {
+    room: string;
+    name: string;
+}
 
 export default class WebRTCSigServer {
     private static inst: WebRTCSigServer | null = null;
     private db!: DBManager;
     private wss: WebSocketServer | null = null;
-    private clients = new Map(); // Map of WebSocket -> {room, name}
-    private rooms = new Map();   // Map of roomId -> Set of client names in the room
+    private clientsMap = new Map<WebSocket, ClientInfo>(); 
+
+    // map of RoomInfo objects, keyed by room name
+    private roomsMap = new Map<string, RoomInfo>(); 
 
     static getInst(db: DBManager,host: string, port: string, server: any) {
         // Create instance if it doesn't exist
@@ -22,90 +38,34 @@ export default class WebRTCSigServer {
         return WebRTCSigServer.inst;
     }
 
+    // Get room by room name
+    getOrCreateRoom = (name: string): RoomInfo => {
+        // Check if the room already exists
+        let room = this.roomsMap.get(name);
+        if (!room) {
+            // If not, create a new RoomInfo object
+            room = { name, participants: new Map<string, User>() };
+            this.roomsMap.set(name, room);
+        }
+        return room;
+    }
+
     onMessage = (ws: WebSocket, message: any) => {
         try {
-            const data = JSON.parse(message);
-            log(`Received message: ${data.type} from ${this.clients.get(ws)?.name || 'unknown'}`);
+            const msg = JSON.parse(message);
+            log(`Received message: ${msg.type}`);
 
             // Handle join message
-            if (data.type === 'join') {
-                const room = data.room;
-                const name = data.name || `user-${Math.floor(Math.random() * 10000)}`;
-
-                // Store client info
-                this.clients.set(ws, { room, name });
-
-                // Update room participants
-                if (!this.rooms.has(room)) {
-                    this.rooms.set(room, new Set());
-                }
-                this.rooms.get(room).add(name);
-
-                log(`Client ${name} joined room: ${room}`);
-
-                // Send the current participants list to the new client
-                const participants = Array.from(this.rooms.get(room));
-                ws.send(JSON.stringify({
-                    type: 'room-info',
-                    participants: participants.filter(p => p !== name),
-                    room
-                }));
-
-                // Notify others about the new participant
-                this.wss!.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && this.clients.get(client)?.room === room) {
-                        client.send(JSON.stringify({
-                            type: 'user-joined',
-                            user: {name},
-                            room
-                        }));
-                    }
-                });
+            if (msg.type === 'join') {
+                this.onJoin(ws, msg);
             }
-
             // For WebRTC signaling messages (offer, answer, ice-candidate)
-            else if ((data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') && data.target) {
-                const client = this.clients.get(ws);
-
-                if (client) {
-                    const room = client.room;
-                    const sender = client.name;
-
-                    // Add sender info to the message
-                    data.sender = sender;
-                    data.room = room;
-
-                    // Find the target client and send the message
-                    this.wss!.clients.forEach((client) => {
-                        const clientInfo = this.clients.get(client);
-                        if (client.readyState === WebSocket.OPEN && clientInfo &&
-                            clientInfo.room === room &&
-                            clientInfo.name === data.target) {
-                            log(`Sending ${data.type} from ${sender} to ${data.target} in room ${room}`);
-                            client.send(JSON.stringify(data));
-                        }
-                    });
-                } else {
-                    log("Received signaling message but client not in a room");
-                }
+            else if ((msg.type === 'offer' || msg.type === 'answer' || msg.type === 'ice-candidate') && msg.target) {
+                this.onSignaling(ws, msg);
             }
             // Handle broadcast messages to everyone in a room
-            else if (data.type === 'broadcast' && data.room) {
-                this.persist(data);
-                const client = this.clients.get(ws);
-                if (client) {
-                    data.sender = client.name;
-                    this.wss!.clients.forEach((c) => {
-                        const clientInfo = this.clients.get(c);
-                        if (c !== ws &&
-                            c.readyState === WebSocket.OPEN &&
-                            clientInfo &&
-                            clientInfo.room === data.room) {
-                            log(`Broadcasting message in room ${data.room} from ${client.name}`);
-                            c.send(JSON.stringify(data));
-                        }
-                    });
-                }
+            else if (msg.type === 'broadcast' && msg.room) {
+                this.onBroadcast(ws, msg);
             }
             // todo-1: we can eventually remove type 'persist' because we now let 'broadcast' handle persistence, so we kill two birds
             // with one stone, which is get message out to everyone in realtime and also persist into room, all done by 'broadcast' now.
@@ -114,44 +74,135 @@ export default class WebRTCSigServer {
             //     this.persist(data);
             // } 
             else {
-                logError(`Unknown message type: ${data.type}`);
+                logError(`Unknown message type: ${msg.type}`);
             }
 
         } catch (error) {
             logError("Error processing WebSocket message", error);
         }
     }
+    
+    // Finds the target client for this msg and sends the message to them
+    onSignaling = (ws: WebSocket, msg: any) => {
+        const fromClientInfo = this.clientsMap.get(ws);
+
+        if (fromClientInfo) {
+            // Add sender info to the message
+            msg.sender = fromClientInfo.name;
+            msg.room = fromClientInfo.room;
+            const payload = JSON.stringify(msg);
+
+            // Find the target the message is targeted to and end the message
+            this.wss!.clients.forEach((cws) => {
+                const clientInfo = this.clientsMap.get(cws);
+                if (cws.readyState === WebSocket.OPEN && clientInfo &&
+                    clientInfo.room === clientInfo.room &&
+                    clientInfo.name === msg.target) {
+                    log(`Sending ${msg.type} from ${clientInfo.name} to ${msg.target} in room ${clientInfo.room}`);
+
+                    // todo-0: how to make this forEach abort/stop after this send.
+                    cws.send(payload);
+                }
+            });
+        } else {
+            log("Received signaling message but client not in a room");
+        }
+    }
+
+    // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
+    onBroadcast = (ws: WebSocket, msg: any) => {
+        // First save message to DB
+        this.persist(msg);
+
+        const clientInfo = this.clientsMap.get(ws);
+        if (clientInfo) {
+            // put the 'from' (i.e. sender) name in the message
+            msg.sender = clientInfo.name;
+            const payload = JSON.stringify(msg);
+
+            // Send the message to all clients in the same room, except the sender
+            this.wss!.clients.forEach((cws) => {
+                const clientInfo = this.clientsMap.get(cws);
+                if (cws !== ws && cws.readyState === WebSocket.OPEN && clientInfo &&
+                    clientInfo.room === msg.room) {
+                    log(`Broadcasting message in room ${msg.room} from ${clientInfo.name}`);
+                    cws.send(payload);
+                }
+            });
+        }
+        else {
+            log("Received broadcast message from unknown client WebSocket");
+        }
+    }
+
+    onJoin = (ws: WebSocket, msg: any) => {
+        // Store client info
+        this.clientsMap.set(ws, { room: msg.room, name: msg.name });
+
+        // lookup the Room by this name
+        const roomInfo = this.getOrCreateRoom(msg.room);
+        
+        // Add to participants if not already present
+        // todo-0: add publicKey value here, and we'll be doing the 'find' based on publicKey too, as the true 'uniqueness' (identity)
+        roomInfo.participants.set(msg.name, {name: msg.name, publicKey: ""}); 
+        log(`Client ${msg.name} joined room: ${msg.room}`);
+        
+        // Build an array of Users objects from the map for all users in roomInfo except for msg.name.
+        const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.name !== msg.name);
+
+        // Send the current participants list to the new client
+        ws.send(JSON.stringify({
+            type: 'room-info',
+            participants,
+            room: msg.room
+        }));
+        
+        // build message to send to all OTHER clients.
+        const payload = JSON.stringify({
+            type: 'user-joined',
+            user: {name: msg.name},
+            room: msg.room
+        });
+        
+        // Notify others about the new participant
+        this.wss!.clients.forEach((cws) => {
+            if (cws !== ws && cws.readyState === WebSocket.OPEN && this.clientsMap.get(cws)?.room === msg.room) {
+                cws.send(payload);
+            }
+        });
+    }
 
     onClose = (ws: WebSocket, code: any, reason: any) => {
-        const client = this.clients.get(ws);
-        if (client) {
-            const { room, name } = client;
+        const msgClientInfo = this.clientsMap.get(ws);
+        if (msgClientInfo) {
+            const { room, name } = msgClientInfo;
             log(`Client ${name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
 
-            // Remove from room participants
-            if (this.rooms.has(room)) {
-                this.rooms.get(room).delete(name);
+            const roomInfo = this.roomsMap.get(room);
 
-                // If room is empty, remove it
-                if (this.rooms.get(room).size === 0) {
-                    this.rooms.delete(room);
+            // Remove user from room participants
+            if (roomInfo) {
+                roomInfo.participants.delete(name);
+
+                // If room is empty, remove it, and there's no one to notify either
+                if (roomInfo.participants.size === 0) {
+                    this.roomsMap.delete(room);
                     log(`Room ${room} deleted as it's now empty`);
                 } else {
-                    // Notify others about the participant leaving
-                    this.wss!.clients.forEach((c: any) => {
-                        if (c.readyState === WebSocket.OPEN &&
-                            this.clients.get(c)?.room === room) {
-                            c.send(JSON.stringify({
-                                type: 'user-left',
-                                user: {name},
-                                room
-                            }));
+                    // Else, notify others about the participant leaving
+                    const payload = JSON.stringify({type: 'user-left', user: {name}, room});
+                    this.wss!.clients.forEach((cws) => {
+                        const clientInfo = this.clientsMap.get(cws);
+
+                        // Send to all clients in the same room except the one that left
+                        if (clientInfo && cws.readyState === WebSocket.OPEN && clientInfo.room === room) {
+                            cws.send(payload);
                         }
                     });
                 }
             }
 
-            this.clients.delete(ws);
+            this.clientsMap.delete(ws);
         } else {
             log(`Unknown client disconnected (Code: ${code})`);
         }
@@ -161,7 +212,7 @@ export default class WebRTCSigServer {
         logError("WebSocket client error", error);
 
         // Try to get client info for better logging
-        const client = this.clients.get(ws);
+        const client = this.clientsMap.get(ws);
         if (client) {
             logError(`Error for client ${client.name} in room ${client.room}`);
         }

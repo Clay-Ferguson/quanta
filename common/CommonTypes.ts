@@ -17,5 +17,5 @@ export interface MessageAttachmentIntf {
 
 export interface User {
     name: string;
-    publiKey: string;
+    publicKey: string;
 }

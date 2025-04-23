@@ -54,31 +54,48 @@ export default class WebRTC {
         this.saveToServer = save;
     }
 
+    // todo-0: this is not yet updated to handle User objects as the participants
     _onRoomInfo = (evt: any) => {
-        util.log('Room info received with participants: ' + evt.participants.join(', '));
-        this.participants = new Set(evt.participants);
+        util.log('Room info received with participants');
+        
+        // server is sending back array of User objects, but we currently expect a set of strings on client
+        // so we build the list into a set of strings.
+        // todo-0: we will be refactoring this client side code to also have participants as User[].
+        const participantsList: User[] = evt.participants;
 
-        evt.participants.forEach((participant: any) => {
+        // build up a list of strings which is what 'this.participants' currently is.
+        this.participants = new Set<string>();
+        participantsList.forEach((user: User) => {
+            util.log('    User in room: ' + user.name);
+            this.participants.add(user.name);
+        });
+
+        this.participants.forEach((participant: string) => {
             if (!this.peerConnections.has(participant)) {
+                util.log('Initiate a connection with ' + participant+' because he is in room');
                 this.createPeerConnection(participant, true);
+            }
+            else {
+                util.log('Already have connection with ' + participant);
             }
         });
         
         // Schedule a debug check after connections should be established
-        setTimeout(() => {
-            this.debugDataChannels();
-            
-            // If still no working channels, try to recreate them
-            if (!this.hasWorkingDataChannels()) {
-                util.log('No working data channels after timeout, attempting recovery');
-                this.attemptConnectionRecovery();
-            }
-        }, 5000);
+        // todo-0: Not sure if this is needed or not.
+        // setTimeout(() => {
+        //     this.debugDataChannels();
+        //     // If still no working channels, try to recreate them
+        //     if (!this.hasWorkingDataChannels()) {
+        //         util.log('No working data channels after timeout, attempting recovery');
+        //         this.attemptConnectionRecovery();
+        //     }
+        // }, 5000);
     }
 
     // Helper method to check for any working data channels
     hasWorkingDataChannels() {
         let hasWorking = false;
+        // todo-0: We could've used an 'any' call here instead of 'forEach' right?
         this.dataChannels.forEach(channel => {
             if (channel.readyState === 'open') {
                 hasWorking = true;
@@ -117,9 +134,13 @@ export default class WebRTC {
         util.log('User joined: ' + user.name);
         this.participants.add(user.name);
 
-        // Create a connection with the new user (we are initiator)
+        // Initiate a connection with the new user
         if (!this.peerConnections.has(user.name)) {
+            util.log('Creating connection with ' + user.name+' because of onUserJoined');
             this.createPeerConnection(user.name, true);
+        }
+        else {
+            util.log('Already have connection with ' + user.name);
         }
     }
 
@@ -141,34 +162,44 @@ export default class WebRTC {
     }
 
     _onOffer = (evt: any) => {
+        let pc = this.peerConnections.get(evt.sender);
         util.log('Received offer from ' + evt.sender + ', signaling state: ' + 
-                 (this.peerConnections.get(evt.sender)?.signalingState || 'no connection'));
+                 (pc?.signalingState || 'no connection yet'));
 
         // Create a connection if it doesn't exist
-        let pc: RTCPeerConnection | undefined;
-        if (!this.peerConnections.has(evt.sender)) {
+        // let pc: RTCPeerConnection | undefined;
+        if (!pc) {
+            util.log('Creating connection with ' + evt.sender+' because of onOffer');
             pc = this.createPeerConnection(evt.sender, false);
-        } else {
-            pc = this.peerConnections.get(evt.sender);
-        }
-
-        if (pc) {
-            pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
-                .then(() => pc.createAnswer())
-                .then((answer: any) => pc.setLocalDescription(answer))
-                .then(() => {
-                    if (this.socket) {
-                        this.socket.send(JSON.stringify({
-                            type: 'answer',
-                            answer: pc.localDescription,
-                            target: evt.sender,
-                            room: this.roomId
-                        }));
-                    }
-                    util.log('Sent answer to ' + evt.sender);
-                })
-                .catch((error: any) => util.log('Error creating answer: ' + error));
-        }
+        } 
+       
+        // todo-0: convert this to await style calls
+        pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
+            .then(() => {
+                const answer = pc.createAnswer();
+                util.log('Creating answer for ' + evt.sender);
+                return answer;
+            })
+            .then((answer: any) => {
+                const desc = pc.setLocalDescription(answer);
+                util.log('Setting local description for ' + evt.sender);
+                return desc;
+            })
+            .then(() => {
+                if (this.socket) {
+                    console.log('Sending answer to ' + evt.sender);
+                    this.socket.send(JSON.stringify({
+                        type: 'answer',
+                        answer: pc.localDescription,
+                        target: evt.sender,
+                        room: this.roomId
+                    }));
+                }
+                else {
+                    console.error('Error: WebSocket not open. Cannot send answer.');
+                }
+            })
+            .catch((error: any) => util.log('Error creating answer: ' + error));
     }
 
     _onAnswer = (evt: any) => {
@@ -185,6 +216,9 @@ export default class WebRTC {
                 // Optionally implement recovery logic here
             }
         }
+        else {
+            util.log('No peer connection found for ' + evt.sender);
+        }
     }
 
     _onIceCandidate = (evt: any) => {
@@ -193,6 +227,9 @@ export default class WebRTC {
         if (pc) {
             pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
                 .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
+        }
+        else {
+            util.log('No peer connection found for ' + evt.sender);
         }
     }
 
@@ -203,6 +240,8 @@ export default class WebRTC {
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
+
+        util.log('>>>> Received message from signaling server: ' + event.data);
 
         if (evt.type === 'room-info') {
             this._onRoomInfo(evt);
@@ -238,7 +277,8 @@ export default class WebRTC {
                 type: 'join',
                 room: this.roomId,
                 name: this.userName
-            }));}
+            }));
+        }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?._rtcStateChange();
     }
@@ -307,22 +347,17 @@ export default class WebRTC {
             try {
                 util.log('Creating data channel as initiator for ' + peerName);
                 
-                // Configure data channel for reliability
-                const channelOptions = {
+                const channel = pc.createDataChannel('chat', {
                     ordered: true,        // Guaranteed delivery order
                     negotiated: false     // Let WebRTC handle negotiation
-                };
-                
-                const channel = pc.createDataChannel('chat', channelOptions);
+                });
                 this.setupDataChannel(channel, peerName);
-
-                // Create and send offer with modified SDP for better connectivity
-                const offerOptions = {
+                
+                // todo-0: convert this to async/await pattern
+                pc.createOffer({
                     offerToReceiveAudio: false,
                     offerToReceiveVideo: false
-                };
-                
-                pc.createOffer(offerOptions)
+                })
                     .then(offer => {
                         // Log the offer SDP for debugging
                         util.log(`Created offer SDP type: ${offer.type}`);
@@ -347,15 +382,10 @@ export default class WebRTC {
         return pc;
     }
 
-    _connect = async (userName: string, roomId: string) => {
-        console.log( 'WebRTC Connecting to room: ' + roomId + ' as user: ' + userName);
+    _connect = async (userName: string, roomName: string) => {
+        console.log( 'WebRTC Connecting to room: ' + roomName + ' as user: ' + userName);
         this.userName = userName;
-        this.roomId = roomId;
-
-        if (!this.storage) {
-            util.log('Storage not initialized. Cannot connect.');
-            return;
-        }
+        this.roomId = roomName;
 
         // If already connected, reset connection with new name and room
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -477,6 +507,7 @@ export default class WebRTC {
                     }
                 }
                 else {
+                    // todo-0: looks like if P2P mode is enabled (no save to server) the channels are failing and we end up here.
                     util.log(`Channel to ${peer} is not open, skipping send`);
                 }
             });
@@ -501,7 +532,6 @@ export default class WebRTC {
         return sent;
     }
 
-    // New method to persist messages on the server
     // todo-1: we now use a broadcast for this, so the 'persist' code on the server can be removed.
     // persistOnServer(msg: any) {
     //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
