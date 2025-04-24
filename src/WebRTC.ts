@@ -15,6 +15,7 @@ export default class WebRTC {
     peerConnections: Map<string, RTCPeerConnection> = new Map();
 
     // maps user names to their RTCDataChannel objects
+    // todo-0: need to make these key on publicKey, not user name.
     dataChannels: Map<string, RTCDataChannel> = new Map();
 
     socket: WebSocket | null = null;
@@ -80,18 +81,15 @@ export default class WebRTC {
         });
         
         // Schedule a debug check after connections should be established
-        // todo-0: Not sure if this is needed or not.
-        // setTimeout(() => {
-        //     this.debugDataChannels();
-        //     // If still no working channels, try to recreate them
-        //     if (!this.hasWorkingDataChannels()) {
-        //         util.log('No working data channels after timeout, attempting recovery');
-        //         this.attemptConnectionRecovery();
-        //     }
-        // }, 5000);
+        setTimeout(() => {
+            console.log("Verifying data channels and connection states, after 5s wait...");
+            this.debugDataChannels();
+            this.attemptConnectionRecovery();
+        }, 5000);
     }
 
     // Helper method to check for any working data channels
+    // todo-0: rename to hasOpenChannels.
     hasWorkingDataChannels() {
         let hasWorking = false;
         // use forEach instead of 'any' so we can use this to check other channel details too later.
@@ -103,26 +101,25 @@ export default class WebRTC {
         return hasWorking;
     }
 
-    // todo-0: was this worth keeping?
     // Recovery method
-    // attemptConnectionRecovery() {
-    //     util.log('Attempting connection recovery');
+    attemptConnectionRecovery() {
+        util.log('Checking participant connectivity');
         
-    //     // Close any stalled connections and recreate them
-    //     this.participants.forEach(participant => {
-    //         const pc = this.peerConnections.get(participant); <--- this obsolete, we key peeConnsctions by publicKey now.
-    //         if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant))) {
-    //             util.log(`Recreating connection with ${participant}`);
+        // Close any stalled connections and recreate them
+        this.participants.forEach(participant => {
+            const pc = this.peerConnections.get(participant.publicKey);
+            if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant.name))) {
+                util.log(`>>>>>> Recreating connection with ${participant}`);
                 
-    //             // Close old connection
-    //             pc.close();
-    //             this.peerConnections.delete(participant); <--- ditto warning above
+                // Close old connection
+                pc.close();
+                this.peerConnections.delete(participant.publicKey); 
                 
-    //             // Create a new connection
-    //             this.createPeerConnection(participant, true);
-    //         }
-    //     });
-    // }
+                // Create a new connection
+                this.createPeerConnection(participant, true);
+            }
+        });
+    }
 
     hasOpenChannelFor(peerName: string) {
         const channel = this.dataChannels.get(peerName);
@@ -170,12 +167,22 @@ export default class WebRTC {
             util.log('Received offer without sender, ignoring.');
             return;
         }
+        if (evt.sender.publicKey != evt.publicKey) {
+            util.log('Received offer with event of a mismatchec publicKey. ignoring.');
+            return;
+        }
+        const sigOk = crypto.verifySignature(evt, crypto.canonical_WebRTCOffer); 
+        if (!sigOk) {
+            console.error("Signature verification failed for offer message:", evt);
+            return;
+        }
+
         let pc = this.peerConnections.get(evt.sender.publicKey);
+        // todo-0: this code path is untested. need pure P2P mode to test it?
         util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection yet'));
 
         // Create a connection if it doesn't exist
-        // let pc: RTCPeerConnection | undefined;
         if (!pc) {
             util.log('Creating connection with ' + evt.sender.name+' because of onOffer');
             pc = this.createPeerConnection(evt.sender, false);
@@ -298,9 +305,7 @@ export default class WebRTC {
                 }
             };
 
-            // todo-0: put these together into a 'signedSocketSend' method.
-            await crypto.signObject(joinMessage, crypto.canonical_WebRTCJoin, this.keyPair!);
-            this.socketSend(joinMessage);
+            this.signedSocketSend(joinMessage, crypto.canonical_WebRTCJoin);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?._rtcStateChange();
@@ -396,7 +401,7 @@ export default class WebRTC {
                                 target: user,
                                 room: this.roomId
                             };
-                            this.socketSend(offer);
+                            this.signedSocketSend(offer, crypto.canonical_WebRTCOffer);
                             util.log('Sent offer to ' + user.name);
                         }
                     })
@@ -427,8 +432,7 @@ export default class WebRTC {
                 }
             };
 
-            // Rejoin with new name and room
-            this.socketSend(joinMessage);
+            this.signedSocketSend(joinMessage, crypto.canonical_WebRTCJoin);
             util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         } else {
             // todo-0: this seems odd to run init here, when we're actually trying to connect to a room, because
@@ -443,14 +447,47 @@ export default class WebRTC {
             this.socket.close();
         }
         this.closeAllConnections();
+        this.zombieCheck();
 
         // Reset participants
         this.participants.clear();
         this.connected = false;
     }
 
+    // todo-0: need to either test this or delete it.
+    // NOTE: AI suggested this method, but I never tested it, although the one time I ran with it things DID break so
+    // this zombi check might have a null pointer or something. I don't trust it. But I'm leaving it here for now, for the short term.
+    zombieCheck = () => {
+        // // Add this after closeAllConnections in your _disconnect method
+        // setTimeout(() => {
+        //     if (this.dataChannels.size > 0 || this.peerConnections.size > 0) {
+        //         util.log('WARNING: Found zombie connections after disconnect:');
+        //         util.log(`- ${this.dataChannels.size} data channels`);
+        //         util.log(`- ${this.peerConnections.size} peer connections`);
+        //         // Force clearing again
+        //         this.dataChannels.clear();
+        //         this.peerConnections.clear();
+        //     }
+        //     else {
+        //         util.log('No zombie connections found.');
+        //     }
+        // }, 1000);
+    }
+
     closeAllConnections() {
-        // Clean up all connections
+        // Close all data channels first
+        this.dataChannels.forEach((channel, peer) => {
+            if (channel.readyState !== 'closed') {
+                util.log(`Explicitly closing data channel to ${peer}`);
+                try {
+                    channel.close();
+                } catch (err) {
+                    util.log(`Error closing channel to ${peer}: ${err}`);
+                }
+            }
+        });
+    
+        // Clean up all peer connections
         this.peerConnections.forEach(pc => pc.close());
         this.peerConnections.clear();
         this.dataChannels.clear();
@@ -571,6 +608,11 @@ export default class WebRTC {
             util.log('ERROR: Failed to send message through any channel');
         }
         return sent;
+    }
+
+    signedSocketSend = async (msg: any, canonicalizr: (obj: any) => string) => {
+        await crypto.signObject(msg, canonicalizr, this.keyPair!);
+        this.socketSend(msg);
     }
 
     socketSend(msg: any) {

@@ -169,6 +169,7 @@ export default class WebRTCSigServer {
         // todo-0: this "except for" needs to be done by checking the publicKey, not the name.
         const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.name !== msg.user.name);
 
+        // NOTE: We don't sign this message becasue, comming fom the server, we trust it.
         const roomInfoMsg: WebRTCRoomInfo = {
             type: 'room-info',
             participants,
@@ -178,6 +179,7 @@ export default class WebRTCSigServer {
         // Send the current participants list to the new client
         ws.send(JSON.stringify(roomInfoMsg));
         
+        // NOTE: We don't sign this message because, comming fom the server, we trust it.
         const userJoined: WebRTCUserJoined = {
             type: 'user-joined',
             user: msg.user,

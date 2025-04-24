@@ -4,7 +4,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyPairHex } from './CryptoIntf.js';
 import { ChatMessage } from '../src/AppServiceTypes.js';
-import { SignableObject, WebRTCJoin } from './CommonTypes.js';
+import { SignableObject, WebRTCJoin, WebRTCOffer } from './CommonTypes.js';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
@@ -54,21 +54,6 @@ class Crypto {
             console.error("Error creating key pair from private key:", error);
             return null;
         }
-    }
-
-    canonical_ChatMessage = (msg: ChatMessage): string => {
-        return this.getCanonicalJSON({
-            sender: msg.sender,
-            content: msg.content,
-            timestamp: msg.timestamp
-        });
-    }
-
-    canonical_WebRTCJoin = (msg: WebRTCJoin): string => {
-        return this.getCanonicalJSON({
-            room: msg.room,
-            userName: msg.user.name
-        });
     }
 
     signObject = async (obj: SignableObject, canonicalizr: (obj: any) => string, keyPair: KeyPairHex) => {
@@ -460,6 +445,35 @@ class Crypto {
         const hash = this.getHashBytesOfString(s);    
         const sig = await secp.signAsync(hash, keyBytes);    
         return sig.toCompactHex();
+    }
+
+    // Canonicalizers for different message types. These generate strings that are deterministic and can be hashed.
+
+    canonical_ChatMessage = (msg: ChatMessage): string => {
+        return this.getCanonicalJSON({
+            clz: 'ChatMessage',
+            sender: msg.sender,
+            content: msg.content,
+            timestamp: msg.timestamp
+        });
+    }
+
+    canonical_WebRTCJoin = (msg: WebRTCJoin): string => {
+        return this.getCanonicalJSON({
+            clz: 'WebRTCJoin',
+            room: msg.room,
+            userName: msg.user.name
+        });
+    }
+
+    canonical_WebRTCOffer = (msg: WebRTCOffer): string => {
+        return this.getCanonicalJSON({
+            clz: 'WebRTCOffer',
+            targetUserName: msg.target.name,
+            room: msg.room,
+            type: msg.offer.type,
+            sdp: msg.offer.sdp
+        });
     }
 }
 

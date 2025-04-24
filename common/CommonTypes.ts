@@ -49,9 +49,13 @@ export interface WebRTCSignal {
     room?: string;
 }
 
-export interface WebRTCOffer extends WebRTCSignal {
+export interface WebRTCOffer extends WebRTCSignal, SignableObject {
     type: 'offer';
     offer: RTCSessionDescription;
+    target: User;
+    room: string;
+    publicKey?: string;
+    signature?: string;
 }
 
 export interface WebRTCAnswer extends WebRTCSignal {    
@@ -70,12 +74,16 @@ export interface WebRTCRoomInfo {
     room: string;
 }
 
-export interface WebRTCUserJoined {
+// NOTE: This object not signed because it only originates from server, not peers
+export interface WebRTCUserJoined  {
     type: 'user-joined';
     user: User;
     room: string;
+    publicKey?: string;
+    signature?: string;
 }
 
+// NOTE: This object not signed because it only originates from server, not peers
 export interface WebRTCUserLeft {
     type: 'user-left';
     user: User;
