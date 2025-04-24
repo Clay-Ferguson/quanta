@@ -11,11 +11,11 @@ import {crypto} from '../common/Crypto.ts';
  * Designed as a singleton that can be instantiated once and reused
  */
 export default class WebRTC {
+    disconnectTime: number = 0;
     // Maps RTCPeerConnection by PublicKey
     peerConnections: Map<string, RTCPeerConnection> = new Map();
 
     // maps user names to their RTCDataChannel objects
-    // todo-0: need to make these key on publicKey, not user name.
     dataChannels: Map<string, RTCDataChannel> = new Map();
 
     socket: WebSocket | null = null;
@@ -46,6 +46,10 @@ export default class WebRTC {
     }
 
     initRTC() {
+        if (this.socket) {
+            console.error('******** WebRTC ran with existing socket. Should be closed first.');
+            return;
+        }
         util.log('Starting WebRTC connection setup...');
 
         // Create WebSocket connection to signaling server. 
@@ -88,19 +92,6 @@ export default class WebRTC {
         }, 5000);
     }
 
-    // Helper method to check for any working data channels
-    // todo-0: rename to hasOpenChannels.
-    hasWorkingDataChannels() {
-        let hasWorking = false;
-        // use forEach instead of 'any' so we can use this to check other channel details too later.
-        this.dataChannels.forEach(channel => {
-            if (channel.readyState === 'open') {
-                hasWorking = true;
-            }
-        });
-        return hasWorking;
-    }
-
     // Recovery method
     attemptConnectionRecovery() {
         util.log('Checking participant connectivity');
@@ -108,8 +99,8 @@ export default class WebRTC {
         // Close any stalled connections and recreate them
         this.participants.forEach(participant => {
             const pc = this.peerConnections.get(participant.publicKey);
-            if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant.name))) {
-                util.log(`>>>>>> Recreating connection with ${participant}`);
+            if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant.publicKey))) {
+                util.log(`Recreating connection with ${participant}`);
                 
                 // Close old connection
                 pc.close();
@@ -121,8 +112,8 @@ export default class WebRTC {
         });
     }
 
-    hasOpenChannelFor(peerName: string) {
-        const channel = this.dataChannels.get(peerName);
+    hasOpenChannelFor(publicKey: string) {
+        const channel = this.dataChannels.get(publicKey);
         return channel && channel.readyState === 'open';
     }
 
@@ -157,8 +148,8 @@ export default class WebRTC {
             this.peerConnections.delete(user.publicKey);
         }
 
-        if (this.dataChannels.has(user.name)) {
-            this.dataChannels.delete(user.name);
+        if (this.dataChannels.has(user.publicKey)) {
+            this.dataChannels.delete(user.publicKey);
         }
     }
 
@@ -369,7 +360,7 @@ export default class WebRTC {
         // Handle incoming data channels
         pc.ondatachannel = (event: RTCDataChannelEvent) => {
             util.log('Received data channel from ' + user.name);
-            this.setupDataChannel(event.channel, user.name);
+            this.setupDataChannel(event.channel, user);
         };
 
         // If we're the initiator, create a data channel
@@ -381,7 +372,7 @@ export default class WebRTC {
                     ordered: true,        // Guaranteed delivery order
                     negotiated: false     // Let WebRTC handle negotiation
                 });
-                this.setupDataChannel(channel, user.name);
+                this.setupDataChannel(channel, user);
                 
                 // todo-0: convert this to async/await pattern
                 pc.createOffer({
@@ -413,45 +404,51 @@ export default class WebRTC {
         return pc;
     }
 
-    _connect = async (userName: string, keyPair: KeyPairHex, roomName: string) => {
+    _connect = async (userName: string, keyPair: KeyPairHex, roomName: string): Promise<boolean> => {
+        if (this.disconnectTime > 0) {
+            const timeSinceDisconnect = Date.now() - this.disconnectTime;
+            if (timeSinceDisconnect < 5000) {
+                util.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
+                alert('Too soon after disconnect. Please wait a few seconds before reconnecting.');
+                return false;
+            }
+        }
+
         console.log( 'WebRTC Connecting to room: ' + roomName + ' as user: ' + userName);
+        // If already connected, reset connection with new name and room
+        this._disconnect();
+
         this.userName = userName;
         this.keyPair = keyPair;
         this.roomId = roomName;
 
-        // If already connected, reset connection with new name and room
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.closeAllConnections();
-
-            const joinMessage: WebRTCJoin = {
-                type: 'join',
-                room: this.roomId,
-                user: {
-                    name: this.userName,
-                    publicKey: this.keyPair!.publicKey
-                }
-            };
-
-            this.signedSocketSend(joinMessage, crypto.canonical_WebRTCJoin);
-            util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        } else {
-            // todo-0: this seems odd to run init here, when we're actually trying to connect to a room, because
-            // this connect doesn't result in creation of the room does it?????
-            this.initRTC();
-        }
+        this.initRTC();
+        return true;
     }
 
     _disconnect = () => {
-        // Close the signaling socket
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.close();
+        // Close the signaling socket if it exists and is open
+        if (this.socket) {
+            if (this.socket.readyState === WebSocket.OPEN) {
+                util.log('Closing WebSocket connection...');
+                this.socket.close();
+            } else if (this.socket.readyState === WebSocket.CONNECTING) {
+                util.log('Aborting connection attempt...');
+                this.socket.close();
+            }
+            // Clear the socket reference
+            this.socket = null;
         }
+    
+        // Close all peer connections
         this.closeAllConnections();
-        this.zombieCheck();
-
-        // Reset participants
+    
+        // Reset other state
         this.participants.clear();
         this.connected = false;
+    
+        util.log('Disconnected from WebRTC session');
+        this.app?._rtcStateChange();
     }
 
     // todo-0: need to either test this or delete it.
@@ -476,13 +473,13 @@ export default class WebRTC {
 
     closeAllConnections() {
         // Close all data channels first
-        this.dataChannels.forEach((channel, peer) => {
+        this.dataChannels.forEach((channel, publicKey) => {
             if (channel.readyState !== 'closed') {
-                util.log(`Explicitly closing data channel to ${peer}`);
+                util.log(`Explicitly closing data channel to ${publicKey}`);
                 try {
                     channel.close();
                 } catch (err) {
-                    util.log(`Error closing channel to ${peer}: ${err}`);
+                    util.log(`Error closing channel to ${publicKey}: ${err}`);
                 }
             }
         });
@@ -491,6 +488,8 @@ export default class WebRTC {
         this.peerConnections.forEach(pc => pc.close());
         this.peerConnections.clear();
         this.dataChannels.clear();
+
+        this.disconnectTime = Date.now();
     }
 
     // Add this new method to help diagnose channel issues
@@ -507,41 +506,41 @@ export default class WebRTC {
                 });
             }
         } else {
-            this.dataChannels.forEach((channel, peer) => {
-                util.log(`Channel to ${peer}: state=${channel.readyState}, ordered=${channel.ordered}, reliable=${!channel.maxRetransmits && !channel.maxPacketLifeTime}`);
+            this.dataChannels.forEach((channel, publicKey) => {
+                util.log(`Channel to ${publicKey}: state=${channel.readyState}, ordered=${channel.ordered}, reliable=${!channel.maxRetransmits && !channel.maxPacketLifeTime}`);
             });
         }
         util.log('------------------------------------------');
     }
 
-    setupDataChannel(channel: RTCDataChannel, peerName: string) {
-        util.log('Setting up data channel for ' + peerName);
-        this.dataChannels.set(peerName, channel);
+    setupDataChannel(channel: RTCDataChannel, user: User) {
+        util.log('Setting up data channel for ' + user.name);
+        this.dataChannels.set(user.publicKey, channel);
 
         channel.onopen = () => {
-            util.log(`Data channel OPENED with ${peerName}`);
+            util.log(`Data channel OPENED with ${user.name}`);
             if (this.pingChecks) {
                 // Try sending a test message to confirm functionality
                 try {
                     channel.send(JSON.stringify({type: 'ping', timestamp: Date.now()}));
-                    util.log(`Test message sent to ${peerName}`);
+                    util.log(`Test message sent to ${user.name}`);
                 } catch (err) {
                     util.log(`Error sending test message: ${err}`);
                 }}
         };
 
         channel.onclose = () => {
-            util.log('Data channel closed with ' + peerName);
-            this.dataChannels.delete(peerName);
+            util.log('Data channel closed with ' + user.name);
+            this.dataChannels.delete(user.publicKey);
         };
 
         channel.onmessage = (event: MessageEvent) => {
-            util.log('onMessage. Received message from ' + peerName);
+            util.log('onMessage. Received message from ' + user.name);
             try {
                 const msg = JSON.parse(event.data);
                 // ignore if a 'ping' message
                 if (msg.type === 'ping') {
-                    util.log(`Ping received from ${peerName} at ${msg.timestamp}`);
+                    util.log(`Ping received from ${user.name} at ${msg.timestamp}`);
                 }
                 else {
                     if (!msg.signature) {
@@ -556,7 +555,7 @@ export default class WebRTC {
         };
 
         channel.onerror = (error: any) => {
-            util.log('Data channel error with ' + peerName + ': ' + error);
+            util.log('Data channel error with ' + user.name + ': ' + error);
         };
     }
 
@@ -571,20 +570,20 @@ export default class WebRTC {
             util.log(`Attempting to send message through ${this.dataChannels.size} data channels`);
         
             // Try to send through all open channels
-            this.dataChannels.forEach((channel, peer) => {
+            this.dataChannels.forEach((channel, publicKey) => {
                 if (channel.readyState === 'open') {
                     try {
                         channel.send(jsonMsg);
-                        util.log(`Successfully sent message to ${peer}`);
+                        util.log(`Successfully sent message to ${publicKey}`);
                         sent = true;
                     } catch (err) {
                         // todo-1: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
-                        util.log(`Error sending to ${peer}: ${err}`);
+                        util.log(`Error sending to ${publicKey}: ${err}`);
                     }
                 }
                 else {
                     // todo-0: looks like if P2P mode is enabled (no save to server) the channels are failing and we end up here.
-                    util.log(`Channel to ${peer} is not open, skipping send`);
+                    util.log(`Channel to ${publicKey} is not open, skipping send`);
                 }
             });
         }
