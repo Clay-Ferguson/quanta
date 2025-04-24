@@ -159,7 +159,7 @@ export default class WebRTC {
             return;
         }
         if (evt.sender.publicKey != evt.publicKey) {
-            util.log('Received offer with event of a mismatchec publicKey. ignoring.');
+            util.log('Received offer with event of a mismatched publicKey. ignoring.');
             return;
         }
         const sigOk = crypto.verifySignature(evt, crypto.canonical_WebRTCOffer); 
@@ -169,17 +169,37 @@ export default class WebRTC {
         }
 
         let pc = this.peerConnections.get(evt.sender.publicKey);
-        // todo-0: this code path is untested. need pure P2P mode to test it?
-        util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
-                 (pc?.signalingState || 'no connection yet'));
-
+        
+        // Handle the "glare" condition - two peers creating offers simultaneously
+        if (pc && pc.signalingState === 'have-local-offer') {
+            // Use a tie-breaker mechanism based on public keys
+            const localKeyIsLower = this.keyPair!.publicKey.localeCompare(evt.sender.publicKey) < 0;
+            
+            if (localKeyIsLower) {
+                // Local peer wins - ignore the remote offer and wait for our offer to be accepted
+                util.log(`Received competing offer from ${evt.sender.name}, but we'll prioritize our local offer based on key comparison`);
+                return;
+            } else {
+                // Remote peer wins - rollback our offer and accept the remote one
+                util.log(`Resolving signaling conflict with ${evt.sender.name} by rolling back our offer`);
+                pc.close();
+                this.peerConnections.delete(evt.sender.publicKey);
+                // Create a new connection as a non-initiator
+                pc = this.createPeerConnection(evt.sender, false);
+            }
+        }
+        
         // Create a connection if it doesn't exist
         if (!pc) {
             util.log('Creating connection with ' + evt.sender.name+' because of onOffer');
             pc = this.createPeerConnection(evt.sender, false);
-        } 
-       
-        // todo-0: convert this to await style calls
+        }
+        
+        // Rest of the existing code for handling the offer...
+        util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
+                 (pc?.signalingState || 'no connection yet'));
+
+        // Continue with existing code to set remote description and create answer
         pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
             .then(() => {
                 const answer = pc.createAnswer();
