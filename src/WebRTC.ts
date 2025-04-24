@@ -57,7 +57,6 @@ export default class WebRTC {
         this.saveToServer = save;
     }
 
-    // todo-0: this is not yet updated to handle User objects as the participants
     _onRoomInfo = (evt: any) => {
         util.log('Room info received with participants');
         this.participants = new Map<string, User>();

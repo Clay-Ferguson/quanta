@@ -17,10 +17,7 @@ interface RoomInfo {
 // Represents a specific user+room per WebSocket connection
 interface ClientInfo {
     room: string;
-
-    // todo-0: eventually we need just a "User" value in here.
-    name: string;
-    publicKey: string;
+    user: User;
 }
 
 export default class WebRTCSigServer {
@@ -91,7 +88,7 @@ export default class WebRTCSigServer {
 
         if (fromClientInfo) {
             // Add sender info to the message
-            msg.sender = {user: fromClientInfo.name, publicKey: fromClientInfo.publicKey};
+            msg.sender = fromClientInfo.user;
             msg.room = fromClientInfo.room;
             const payload = JSON.stringify(msg);
 
@@ -100,9 +97,9 @@ export default class WebRTCSigServer {
                 const clientInfo = this.clientsMap.get(cws);
                 if (cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === clientInfo.room &&
-                    clientInfo.publicKey === msg.target.publicKey
+                    clientInfo.user.publicKey === msg.target.publicKey
                 ) {
-                    log(`Sending ${msg.type} from ${clientInfo.name} to ${msg.target.name} in room ${clientInfo.room}`);
+                    log(`Sending ${msg.type} from ${clientInfo.user.name} to ${msg.target.name} in room ${clientInfo.room}`);
 
                     // todo-0: how to make this forEach abort/stop after this send.
                     cws.send(payload);
@@ -121,7 +118,7 @@ export default class WebRTCSigServer {
         const senderClientInfo = this.clientsMap.get(ws);
         if (senderClientInfo) {
             // put the 'from' (i.e. sender) name in the message
-            msg.sender = {user: senderClientInfo.name, publicKey: senderClientInfo.publicKey};
+            msg.sender = senderClientInfo.user;
             const payload = JSON.stringify(msg);
 
             // Send the message to all clients in the same room, except the sender
@@ -129,7 +126,7 @@ export default class WebRTCSigServer {
                 const clientInfo = this.clientsMap.get(cws);
                 if (cws !== ws && cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === msg.room) {
-                    log(`Broadcasting message in room ${msg.room} from ${clientInfo.name}`);
+                    log(`Broadcasting message in room ${msg.room} from ${clientInfo.user.name}`);
                     cws.send(payload);
                 }
             });
@@ -146,11 +143,10 @@ export default class WebRTCSigServer {
         }
 
         // Store client info
-        this.clientsMap.set(ws, { room: msg.room, name: msg.name, publicKey: msg.publicKey });
+        this.clientsMap.set(ws, { room: msg.room, user: {name: msg.name, publicKey: msg.publicKey }});
 
         // lookup the Room by this name
         const roomInfo = this.getOrCreateRoom(msg.room);
-
         const user = {name: msg.name, publicKey: msg.publicKey};
         
         // Add to participants if not already present
@@ -176,7 +172,8 @@ export default class WebRTCSigServer {
         
         // Notify others about the new participant
         this.wss!.clients.forEach((cws) => {
-            if (cws !== ws && cws.readyState === WebSocket.OPEN && this.clientsMap.get(cws)?.room === msg.room) {
+            const clientInfo = this.clientsMap.get(cws);
+            if (cws !== ws && cws.readyState === WebSocket.OPEN && clientInfo &&  clientInfo.room === msg.room) {
                 cws.send(payload);
             }
         });
@@ -185,14 +182,14 @@ export default class WebRTCSigServer {
     onClose = (ws: WebSocket, code: any, reason: any) => {
         const msgClientInfo = this.clientsMap.get(ws);
         if (msgClientInfo) {
-            const { room, name, publicKey } = msgClientInfo;
-            log(`Client ${name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
+            const { room, user } = msgClientInfo;
+            log(`Client ${user.name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
 
             const roomInfo = this.roomsMap.get(room);
 
             // Remove user from room participants
             if (roomInfo) {
-                roomInfo.participants.delete(publicKey);
+                roomInfo.participants.delete(user.publicKey);
 
                 // If room is empty, remove it, and there's no one to notify either
                 if (roomInfo.participants.size === 0) {
@@ -200,7 +197,7 @@ export default class WebRTCSigServer {
                     log(`Room ${room} deleted as it's now empty`);
                 } else {
                     // Else, notify others about the participant leaving
-                    const payload = JSON.stringify({type: 'user-left', user: {name, publicKey}, room});
+                    const payload = JSON.stringify({type: 'user-left', user, room});
                     this.wss!.clients.forEach((cws) => {
                         const clientInfo = this.clientsMap.get(cws);
 
@@ -222,9 +219,9 @@ export default class WebRTCSigServer {
         logError("WebSocket client error", error);
 
         // Try to get client info for better logging
-        const client = this.clientsMap.get(ws);
-        if (client) {
-            logError(`Error for client ${client.name} in room ${client.room}`);
+        const clientInfo = this.clientsMap.get(ws);
+        if (clientInfo) {
+            logError(`Error for client ${clientInfo.user.name} in room ${clientInfo.room}`);
         }
     }
 
