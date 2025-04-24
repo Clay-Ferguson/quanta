@@ -165,9 +165,8 @@ export default class WebRTCSigServer {
         roomInfo.participants.set(msg.user.publicKey, msg.user); 
         log(`Client ${msg.user.name} joined room: ${msg.room}`);
         
-        // Build an array of Users objects from the map for all users in roomInfo except for msg.name.
-        // todo-0: this "except for" needs to be done by checking the publicKey, not the name.
-        const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.name !== msg.user.name);
+        // Build an array of Users objects from the map for all users in roomInfo except for msg.user.
+        const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.publicKey !== msg.user.publicKey);
 
         // NOTE: We don't sign this message becasue, comming fom the server, we trust it.
         const roomInfoMsg: WebRTCRoomInfo = {

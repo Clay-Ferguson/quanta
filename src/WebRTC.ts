@@ -471,26 +471,6 @@ export default class WebRTC {
         this.app?._rtcStateChange();
     }
 
-    // todo-0: need to either test this or delete it.
-    // NOTE: AI suggested this method, but I never tested it, although the one time I ran with it things DID break so
-    // this zombi check might have a null pointer or something. I don't trust it. But I'm leaving it here for now, for the short term.
-    zombieCheck = () => {
-        // // Add this after closeAllConnections in your _disconnect method
-        // setTimeout(() => {
-        //     if (this.dataChannels.size > 0 || this.peerConnections.size > 0) {
-        //         util.log('WARNING: Found zombie connections after disconnect:');
-        //         util.log(`- ${this.dataChannels.size} data channels`);
-        //         util.log(`- ${this.peerConnections.size} peer connections`);
-        //         // Force clearing again
-        //         this.dataChannels.clear();
-        //         this.peerConnections.clear();
-        //     }
-        //     else {
-        //         util.log('No zombie connections found.');
-        //     }
-        // }, 1000);
-    }
-
     closeAllConnections() {
         // Close all data channels first
         this.dataChannels.forEach((channel, publicKey) => {
@@ -602,7 +582,6 @@ export default class WebRTC {
                     }
                 }
                 else {
-                    // todo-0: looks like if P2P mode is enabled (no save to server) the channels are failing and we end up here.
                     util.log(`Channel to ${publicKey} is not open, skipping send`);
                 }
             });

@@ -3,15 +3,4 @@ export type KeyPairHex = {
     publicKey: string
 };
 
-// &&&
-// export interface SignableObject {
-//     signature?: string;
-//     publicKey?: string;
-// }
-
-// export interface SecureHeaders {
-//     'Content-Type': string;
-//     'Signature-Input': string;
-//     'Signature': string;
-// };
 
