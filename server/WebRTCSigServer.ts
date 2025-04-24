@@ -2,7 +2,7 @@ import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 import { DBManager } from './DBManager.js';
 import {crypto} from '../common/Crypto.js'
-import { User } from '@common/CommonTypes.js';
+import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 
 const log = logger.logInfo;
 const logError = logger.logError;
@@ -83,7 +83,7 @@ export default class WebRTCSigServer {
     }
     
     // Finds the target client for this msg and sends the message to them
-    onSignaling = (ws: WebSocket, msg: any) => {
+    onSignaling = (ws: WebSocket, msg: WebRTCSignal) => {
         const fromClientInfo = this.clientsMap.get(ws);
 
         if (fromClientInfo) {
@@ -111,13 +111,13 @@ export default class WebRTCSigServer {
     }
 
     // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
-    onBroadcast = (ws: WebSocket, msg: any) => {
+    onBroadcast = (ws: WebSocket, msg: WebRTCBroadcast) => {
         // First save message to DB
         this.persist(msg);
 
         const senderClientInfo = this.clientsMap.get(ws);
         if (senderClientInfo) {
-            // put the 'from' (i.e. sender) name in the message
+            // put the 'from' (i.e. sender) name in the message. The sender itself doesn't do this. Not sure why, bc AI wrote that piece.
             msg.sender = senderClientInfo.user;
             const payload = JSON.stringify(msg);
 
@@ -136,39 +136,44 @@ export default class WebRTCSigServer {
         }
     }
 
-    onJoin = (ws: WebSocket, msg: any) => {
-        if (!msg.publicKey) {
+    onJoin = (ws: WebSocket, msg: WebRTCJoin) => {
+        if (!msg.user.publicKey) {
             logError("No publicKey in join message");
             return;
         }
 
         // Store client info
-        this.clientsMap.set(ws, { room: msg.room, user: {name: msg.name, publicKey: msg.publicKey }});
+        this.clientsMap.set(ws, { room: msg.room, user: msg.user});
 
         // lookup the Room by this name
         const roomInfo = this.getOrCreateRoom(msg.room);
-        const user = {name: msg.name, publicKey: msg.publicKey};
+        // const user = {name: msg.name, publicKey: msg.publicKey};
         
         // Add to participants if not already present
-        roomInfo.participants.set(msg.publicKey, user); 
-        log(`Client ${msg.name} joined room: ${msg.room}`);
+        roomInfo.participants.set(msg.user.publicKey, msg.user); 
+        log(`Client ${msg.user.name} joined room: ${msg.room}`);
         
         // Build an array of Users objects from the map for all users in roomInfo except for msg.name.
-        const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.name !== msg.name);
+        // todo-0: this "except for" needs to be done by checking the publicKey, not the name.
+        const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.name !== msg.user.name);
 
-        // Send the current participants list to the new client
-        ws.send(JSON.stringify({
+        const roomInfoMsg: WebRTCRoomInfo = {
             type: 'room-info',
             participants,
             room: msg.room
-        }));
+        };
+
+        // Send the current participants list to the new client
+        ws.send(JSON.stringify(roomInfoMsg));
         
-        // build message to send to all OTHER clients.
-        const payload = JSON.stringify({
+        const userJoined: WebRTCUserJoined = {
             type: 'user-joined',
-            user,
+            user: msg.user,
             room: msg.room
-        });
+        };
+
+        // build message to send to all OTHER clients.
+        const payload = JSON.stringify(userJoined);
         
         // Notify others about the new participant
         this.wss!.clients.forEach((cws) => {
@@ -196,8 +201,9 @@ export default class WebRTCSigServer {
                     this.roomsMap.delete(room);
                     log(`Room ${room} deleted as it's now empty`);
                 } else {
+                    const userLeft: WebRTCUserLeft = {type: 'user-left', user, room};
                     // Else, notify others about the participant leaving
-                    const payload = JSON.stringify({type: 'user-left', user, room});
+                    const payload = JSON.stringify(userLeft);
                     this.wss!.clients.forEach((cws) => {
                         const clientInfo = this.clientsMap.get(cws);
 
@@ -255,7 +261,7 @@ export default class WebRTCSigServer {
         log("QuantaChatServer initialization complete");
     }
 
-    persist = async (data: any) => {
+    persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
             const sigOk = await crypto.verifySignature(data.message);
             if (!sigOk) {
@@ -263,7 +269,7 @@ export default class WebRTCSigServer {
                 return;
             }
 
-            const userBlocked = await this.db.isUserBlocked(data.message.publicKey);
+            const userBlocked = await this.db.isUserBlocked(data.message.publicKey!);
             if (userBlocked) {
                 console.log("User is blocked. Not persisting.");
                 return;

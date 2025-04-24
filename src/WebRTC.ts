@@ -1,4 +1,4 @@
-import { User } from '../common/CommonTypes.ts';
+import { User, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
@@ -57,7 +57,7 @@ export default class WebRTC {
         this.saveToServer = save;
     }
 
-    _onRoomInfo = (evt: any) => {
+    _onRoomInfo = (evt: WebRTCRoomInfo) => {
         util.log('Room info received with participants');
         this.participants = new Map<string, User>();
 
@@ -124,7 +124,7 @@ export default class WebRTC {
         return channel && channel.readyState === 'open';
     }
 
-    _onUserJoined = (evt: any) => {
+    _onUserJoined = (evt: WebRTCUserJoined) => {
         const user: User = evt.user;
         if (!user.publicKey) {
             util.log('User joined without a public key, ignoring.');
@@ -143,7 +143,7 @@ export default class WebRTC {
         }
     }
 
-    _onUserLeft = (evt: any) => {
+    _onUserLeft = (evt: WebRTCUserLeft) => {
         const user: User = evt.user;
         util.log('User left: ' + user.name);
         this.participants.delete(user.publicKey);
@@ -160,7 +160,11 @@ export default class WebRTC {
         }
     }
 
-    _onOffer = (evt: any) => {
+    _onOffer = (evt: WebRTCOffer) => {
+        if (!evt.sender) {
+            util.log('Received offer without sender, ignoring.');
+            return;
+        }
         let pc = this.peerConnections.get(evt.sender.publicKey);
         util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection yet'));
@@ -176,23 +180,24 @@ export default class WebRTC {
         pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
             .then(() => {
                 const answer = pc.createAnswer();
-                util.log('Creating answer for ' + evt.sender.name);
+                util.log('Creating answer for ' + evt.sender!.name);
                 return answer;
             })
             .then((answer: any) => {
                 const desc = pc.setLocalDescription(answer);
-                util.log('Setting local description for ' + evt.sender.name);
+                util.log('Setting local description for ' + evt.sender!.name);
                 return desc;
             })
             .then(() => {
                 if (this.socket) {
-                    console.log('Sending answer to ' + evt.sender.name);
-                    this.socket.send(JSON.stringify({
+                    console.log('Sending answer to ' + evt.sender!.name);
+                    const answer: WebRTCAnswer = {
                         type: 'answer',
-                        answer: pc.localDescription,
-                        target: evt.sender,
+                        answer: pc.localDescription!,
+                        target: evt.sender!,
                         room: this.roomId
-                    }));
+                    }
+                    this.socket.send(JSON.stringify(answer));
                 }
                 else {
                     console.error('Error: WebSocket not open. Cannot send answer.');
@@ -201,7 +206,11 @@ export default class WebRTC {
             .catch((error: any) => util.log('Error creating answer: ' + error));
     }
 
-    _onAnswer = (evt: any) => {
+    _onAnswer = (evt: WebRTCAnswer) => {
+        if (!evt.sender) {
+            util.log('Received answer without sender, ignoring.');
+            return;
+        }
         const pc = this.peerConnections.get(evt.sender.publicKey);
         util.log('Received answer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection'));
@@ -220,20 +229,20 @@ export default class WebRTC {
         }
     }
 
-    _onIceCandidate = (evt: any) => {
-        util.log('Received ICE candidate from ' + evt.sender.name);
-        const pc = this.peerConnections.get(evt.sender.publicKey);
+    _onIceCandidate = (evt: WebRTCICECandidate) => {
+        util.log('Received ICE candidate from ' + evt.sender!.name);
+        const pc = this.peerConnections.get(evt.sender!.publicKey);
         if (pc) {
             pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
                 .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
         }
         else {
-            util.log('No peer connection found for ' + evt.sender.name);
+            util.log('No peer connection found for ' + evt.sender!.name);
         }
     }
 
-    _onBroadcast = (evt: any) => {
-        util.log('broadcast. Received broadcast message from ' + evt.sender.name);
+    _onBroadcast = (evt: WebRTCBroadcast) => {
+        util.log('broadcast. Received broadcast message from ' + evt.sender!.name);
         this.app?._persistMessage(evt.message);           
     }
 
@@ -272,12 +281,15 @@ export default class WebRTC {
 
         // Join a room with user name
         if (this.socket) {
-            this.socket.send(JSON.stringify({
+            const joinMessage: WebRTCJoin = {
                 type: 'join',
                 room: this.roomId,
-                name: this.userName,
-                publicKey: this.keyPair?.publicKey
-            }));
+                user: {
+                    name: this.userName,
+                    publicKey: this.keyPair!.publicKey
+                }
+            };
+            this.socket.send(JSON.stringify(joinMessage));
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?._rtcStateChange();
@@ -317,12 +329,13 @@ export default class WebRTC {
         // Set up ICE candidate handling
         pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
             if (event.candidate && this.socket) {
-                this.socket.send(JSON.stringify({
+                const iceCandidate: WebRTCICECandidate = {
                     type: 'ice-candidate',
                     candidate: event.candidate,
                     target: user,
                     room: this.roomId
-                }));
+                };
+                this.socket.send(JSON.stringify(iceCandidate));
                 util.log('Sent ICE candidate to ' + user.name);
             }
         };
@@ -366,12 +379,13 @@ export default class WebRTC {
                     })
                     .then(() => {
                         if (this.socket && pc.localDescription) {
-                            this.socket.send(JSON.stringify({
+                            const offer: WebRTCOffer = {
                                 type: 'offer',
                                 offer: pc.localDescription,
                                 target: user,
                                 room: this.roomId
-                            }));
+                            };
+                            this.socket.send(JSON.stringify(offer));
                             util.log('Sent offer to ' + user.name);
                         }
                     })
@@ -393,13 +407,17 @@ export default class WebRTC {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.closeAllConnections();
 
-            // Rejoin with new name and room
-            this.socket.send(JSON.stringify({
+            const joinMessage: WebRTCJoin = {
                 type: 'join',
                 room: this.roomId,
-                name: this.userName,
-                publicKey: this.keyPair?.publicKey
-            }));
+                user: {
+                    name: this.userName,
+                    publicKey: this.keyPair!.publicKey
+                }
+            };
+
+            // Rejoin with new name and room
+            this.socket.send(JSON.stringify(joinMessage));
             util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         } else {
             // todo-0: this seems odd to run init here, when we're actually trying to connect to a room, because
@@ -520,11 +538,13 @@ export default class WebRTC {
         // If non-P2P mode, send via signaling server broadcast
         else {
             if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(JSON.stringify({
+                // Send the message to the signaling server for broadcast, note there's no 'sender' on it yet.
+                const broadcastMessage = {
                     type: 'broadcast',
                     message: msg, 
                     room: this.roomId
-                }));
+                }
+                this.socket.send(JSON.stringify(broadcastMessage));
                 util.log('Sent message via signaling server broadcast.');
                 sent = true;
             } else {
