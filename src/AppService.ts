@@ -277,7 +277,14 @@ export class AppService implements AppServiceTypes  {
         }});
 
         const messages = await this.loadRoomMessages(roomName);
-        await this.rtc._connect(userName!, keyPair, roomName);
+        const success = await this.rtc._connect(userName!, keyPair, roomName);
+        if (!success) {
+            this.gd!({ type: 'connectTooSoon', payload: { 
+                connected: false,
+                connecting: false
+            }});
+            return;
+        }
         await this.setRoomAndUserName(roomName, userName!);
         
         const roomHistory: RoomHistoryItem[] = await this.updateRoomHistory(roomName);
