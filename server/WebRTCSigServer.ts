@@ -55,28 +55,25 @@ export default class WebRTCSigServer {
             const msg = JSON.parse(message);
             log(`Received message: ${msg.type}`);
 
-            // Handle join message
-            if (msg.type === 'join') {
+            switch (msg.type) {
+            case 'join':
                 this.onJoin(ws, msg);
-            }
-            // For WebRTC signaling messages (offer, answer, ice-candidate)
-            else if ((msg.type === 'offer' || msg.type === 'answer' || msg.type === 'ice-candidate') && msg.target) {
+                break;
+            case 'offer':
+            case 'answer':
+            case 'ice-candidate':
                 this.onSignaling(ws, msg);
-            }
-            // Handle broadcast messages to everyone in a room
-            else if (msg.type === 'broadcast' && msg.room) {
+                break;
+            case 'broadcast':
                 this.onBroadcast(ws, msg);
-            }
-            // todo-1: we can eventually remove type 'persist' because we now let 'broadcast' handle persistence, so we kill two birds
-            // with one stone, which is get message out to everyone in realtime and also persist into room, all done by 'broadcast' now.
-            // Handle persist messages (silent, no broadcast)
-            // else if (data.type === 'persist' && data.room && data.message) {
-            //     this.persist(data);
-            // } 
-            else {
+                break;
+            // case 'persist':
+            //     this.persist(msg);
+            //     break;
+            default:
                 logError(`Unknown message type: ${msg.type}`);
+                break;
             }
-
         } catch (error) {
             logError("Error processing WebSocket message", error);
         }
@@ -84,6 +81,10 @@ export default class WebRTCSigServer {
     
     // Finds the target client for this msg and sends the message to them
     onSignaling = (ws: WebSocket, msg: WebRTCSignal) => {
+        if (!msg.target) {
+            logError("No target in signaling message");
+            return;
+        }
         const fromClientInfo = this.clientsMap.get(ws);
 
         if (fromClientInfo) {
@@ -112,6 +113,10 @@ export default class WebRTCSigServer {
 
     // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
     onBroadcast = (ws: WebSocket, msg: WebRTCBroadcast) => {
+        if (!msg.room) {
+            logError("No room in broadcast message");
+            return;
+        }
         // First save message to DB
         this.persist(msg);
 

@@ -31,6 +31,9 @@ export default class WebRTC {
     secure: boolean = false;
     saveToServer: boolean = false;
 
+    // for debugging
+    pingChecks = false;
+
     constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.storage = storage;
         this.app = app;
@@ -90,7 +93,7 @@ export default class WebRTC {
     // Helper method to check for any working data channels
     hasWorkingDataChannels() {
         let hasWorking = false;
-        // todo-0: We could've used an 'any' call here instead of 'forEach' right?
+        // use forEach instead of 'any' so we can use this to check other channel details too later.
         this.dataChannels.forEach(channel => {
             if (channel.readyState === 'open') {
                 hasWorking = true;
@@ -99,6 +102,7 @@ export default class WebRTC {
         return hasWorking;
     }
 
+    // todo-0: was this worth keeping?
     // Recovery method
     // attemptConnectionRecovery() {
     //     util.log('Attempting connection recovery');
@@ -197,7 +201,7 @@ export default class WebRTC {
                         target: evt.sender!,
                         room: this.roomId
                     }
-                    this.socket.send(JSON.stringify(answer));
+                    this.socketSend(answer);
                 }
                 else {
                     console.error('Error: WebSocket not open. Cannot send answer.');
@@ -248,30 +252,33 @@ export default class WebRTC {
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
-
         util.log('>>>> Received message from signaling server: ' + event.data);
 
-        if (evt.type === 'room-info') {
+        switch (evt.type) {
+        case 'room-info':
             this._onRoomInfo(evt);
-        }
-        else if (evt.type === 'user-joined') {
+            break;
+        case 'user-joined':
             this._onUserJoined(evt);
-        }
-        else if (evt.type === 'user-left') {
+            break;
+        case 'user-left':
             this._onUserLeft(evt);
-        }
-        else if (evt.type === 'offer' && evt.sender) {
+            break;
+        case 'offer':
             this._onOffer(evt);
-        }
-        else if (evt.type === 'answer' && evt.sender) {
+            break;
+        case 'answer':
             this._onAnswer(evt);
-        }
-        else if (evt.type === 'ice-candidate' && evt.sender) {
+            break;
+        case 'ice-candidate':
             this._onIceCandidate(evt);
-        }
-        else if (evt.type === 'broadcast' && evt.sender) {
-            this._onBroadcast(evt); 
-        }
+            break;
+        case 'broadcast':
+            this._onBroadcast(evt);
+            break;
+        default:
+            util.log('Unknown message type: ' + evt.type);
+        } 
         this.app?._rtcStateChange();
     }
 
@@ -289,7 +296,7 @@ export default class WebRTC {
                     publicKey: this.keyPair!.publicKey
                 }
             };
-            this.socket.send(JSON.stringify(joinMessage));
+            this.socketSend(joinMessage);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?._rtcStateChange();
@@ -335,7 +342,7 @@ export default class WebRTC {
                     target: user,
                     room: this.roomId
                 };
-                this.socket.send(JSON.stringify(iceCandidate));
+                this.socketSend(iceCandidate);
                 util.log('Sent ICE candidate to ' + user.name);
             }
         };
@@ -385,7 +392,7 @@ export default class WebRTC {
                                 target: user,
                                 room: this.roomId
                             };
-                            this.socket.send(JSON.stringify(offer));
+                            this.socketSend(offer);
                             util.log('Sent offer to ' + user.name);
                         }
                     })
@@ -417,7 +424,7 @@ export default class WebRTC {
             };
 
             // Rejoin with new name and room
-            this.socket.send(JSON.stringify(joinMessage));
+            this.socketSend(joinMessage);
             util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         } else {
             // todo-0: this seems odd to run init here, when we're actually trying to connect to a room, because
@@ -472,13 +479,14 @@ export default class WebRTC {
 
         channel.onopen = () => {
             util.log(`Data channel OPENED with ${peerName}`);
-            // Try sending a test message to confirm functionality
-            try {
-                channel.send(JSON.stringify({type: 'ping', timestamp: Date.now()}));
-                util.log(`Test message sent to ${peerName}`);
-            } catch (err) {
-                util.log(`Error sending test message: ${err}`);
-            }
+            if (this.pingChecks) {
+                // Try sending a test message to confirm functionality
+                try {
+                    channel.send(JSON.stringify({type: 'ping', timestamp: Date.now()}));
+                    util.log(`Test message sent to ${peerName}`);
+                } catch (err) {
+                    util.log(`Error sending test message: ${err}`);
+                }}
         };
 
         channel.onclose = () => {
@@ -495,6 +503,10 @@ export default class WebRTC {
                     util.log(`Ping received from ${peerName} at ${msg.timestamp}`);
                 }
                 else {
+                    if (!msg.signature) {
+                        console.log('Received message without signature, ignoring.');
+                        return;
+                    }
                     this.app?._persistMessage(msg);
                 }
             } catch (error) {
@@ -544,7 +556,7 @@ export default class WebRTC {
                     message: msg, 
                     room: this.roomId
                 }
-                this.socket.send(JSON.stringify(broadcastMessage));
+                this.socketSend(broadcastMessage);
                 util.log('Sent message via signaling server broadcast.');
                 sent = true;
             } else {
@@ -555,6 +567,10 @@ export default class WebRTC {
             util.log('ERROR: Failed to send message through any channel');
         }
         return sent;
+    }
+
+    socketSend(msg: any) {
+        this.socket!.send(JSON.stringify(msg));
     }
 
     // todo-1: we now use a broadcast for this, so the 'persist' code on the server can be removed.
