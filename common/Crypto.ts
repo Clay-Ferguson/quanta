@@ -4,6 +4,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyPairHex } from './CryptoIntf.js';
 import { ChatMessage } from '../src/AppServiceTypes.js';
+import { SignableObject, WebRTCJoin } from './CommonTypes.js';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
@@ -55,7 +56,7 @@ class Crypto {
         }
     }
 
-    getCanonicalMessageString(msg: ChatMessage): string {
+    canonical_ChatMessage = (msg: ChatMessage): string => {
         return this.getCanonicalJSON({
             sender: msg.sender,
             content: msg.content,
@@ -63,19 +64,25 @@ class Crypto {
         });
     }
 
-    async signMessage(msg: ChatMessage, keyPair: KeyPairHex) {
+    canonical_WebRTCJoin = (msg: WebRTCJoin): string => {
+        return this.getCanonicalJSON({
+            room: msg.room,
+            userName: msg.user.name
+        });
+    }
+
+    signObject = async (obj: SignableObject, canonicalizr: (obj: any) => string, keyPair: KeyPairHex) => {
         const privKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
         if (!privKeyBytes) {
             throw new Error("Invalid private key");
         }
         
-        const canonicalString: string = this.getCanonicalMessageString(msg);
-        msg.signature = await this.getSigHexOfString(canonicalString, privKeyBytes);
-        msg.publicKey = keyPair.publicKey;
-        console.log("Signature Hex:", msg.signature);
+        const canonical: string = canonicalizr(obj);
+        obj.signature = await this.getSigHexOfString(canonical, privKeyBytes);
+        obj.publicKey = keyPair.publicKey;
 
         // Optionally, you can verify the signature here
-        // this.verifySignature(msg);
+        // this.verifySignature(msg, canonicalizr);
     }
 
     importPrivateKey(privKeyHex: string): Uint8Array | null {
@@ -91,13 +98,14 @@ class Crypto {
         }
     }
 
-    async verifySignature(msg: ChatMessage): Promise<boolean> {
+    verifySignature = async (msg: SignableObject, canonicalizr: (obj: any) => string): Promise<boolean> => {
         if (!msg.signature || !msg.publicKey) {
             console.warn("Message is missing signature or public key.");
             return false;
         }
 
-        const msgHash: Uint8Array = this.getHashBytesOfMessage(msg);
+        const canonicalString: string = canonicalizr(msg);
+        const msgHash : Uint8Array = this.getHashBytesOfString(canonicalString);
         const pubKeyBytes: Uint8Array = hexToBytes(msg.publicKey);
         const sigBytes: Uint8Array = hexToBytes(msg.signature);
 
@@ -121,7 +129,7 @@ class Crypto {
         }
     }
 
-    async verifySignatureBytes(msgHash: Uint8Array, sigBytes: Uint8Array, pubKeyHex: string): Promise<boolean> {
+    verifySignatureBytes = async (msgHash: Uint8Array, sigBytes: Uint8Array, pubKeyHex: string): Promise<boolean> => {
         try {
             const pubKeyBytes = hexToBytes(pubKeyHex);
             
@@ -150,14 +158,8 @@ class Crypto {
         return hashBytes;
     }
 
-    getHashBytesOfMessage(msg: ChatMessage): Uint8Array {
-        const canonicalString: string = this.getCanonicalMessageString(msg);
-        const msgHash : Uint8Array = this.getHashBytesOfString(canonicalString);
-        return msgHash;
-    }
-
     // Helper function for deterministic JSON serialization
-    getCanonicalJSON(obj: any): string {
+    getCanonicalJSON = (obj: any): string => {
         if (typeof obj !== 'object' || obj === null) {
             return JSON.stringify(obj);
         }
@@ -461,4 +463,5 @@ class Crypto {
     }
 }
 
+// todo-0: need to change this to 'cry', so it doesn't conflict with the JS crypto object
 export const crypto = new Crypto();

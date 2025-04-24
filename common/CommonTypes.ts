@@ -1,4 +1,9 @@
-export interface ChatMessageIntf {
+export interface SignableObject {
+    signature?: string;
+    publicKey?: string;
+}
+
+export interface ChatMessageIntf extends SignableObject {
     id: string;
     timestamp: number;
     sender: string;
@@ -20,17 +25,21 @@ export interface User {
     publicKey: string;
 }
 
-export interface WebRTCJoin {
+export interface WebRTCJoin extends SignableObject {
     type: 'join';
     room: string,
     user: User;
+    publicKey?: string;
+    signature?: string;
 }
 
-export interface WebRTCBroadcast {
+export interface WebRTCBroadcast extends SignableObject{
     type: 'broadcast',
     message: ChatMessageIntf, // currently we make this scrict as a messge, but probably will be a polymorphic base-type later on.
     room: string,
     sender?: User,
+    publicKey?: string;
+    signature?: string;
 }
 
 export interface WebRTCSignal {

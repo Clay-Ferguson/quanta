@@ -368,7 +368,7 @@ export class AppService implements AppServiceTypes  {
             
             if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
                 try {
-                    await crypto.signMessage(msg, this.gs!.keyPair);
+                    await crypto.signObject(msg, crypto.canonical_ChatMessage, this.gs!.keyPair);
                 } catch (error) {
                     console.error('Error signing message:', error);
                 }
@@ -403,7 +403,7 @@ export class AppService implements AppServiceTypes  {
         }
 
         if (msg.signature) {
-            msg.sigOk = await crypto.verifySignature(msg);
+            msg.sigOk = await crypto.verifySignature(msg, crypto.canonical_ChatMessage);
             if (msg.sigOk) {
                 if (msg.publicKey === this.gs!.keyPair!.publicKey) {
                     msg.trusted = true;

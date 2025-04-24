@@ -3,6 +3,7 @@ import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
+import {crypto} from '../common/Crypto.ts';  
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -252,7 +253,7 @@ export default class WebRTC {
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
-        util.log('>>>> Received message from signaling server: ' + event.data);
+        util.log('Received message from signaling server: ' + event.data);
 
         switch (evt.type) {
         case 'room-info':
@@ -282,7 +283,7 @@ export default class WebRTC {
         this.app?._rtcStateChange();
     }
 
-    _onopen = () => {
+    _onopen = async () => {
         util.log('Connected to signaling server.');
         this.connected = true;
 
@@ -296,6 +297,9 @@ export default class WebRTC {
                     publicKey: this.keyPair!.publicKey
                 }
             };
+
+            // todo-0: put these together into a 'signedSocketSend' method.
+            await crypto.signObject(joinMessage, crypto.canonical_WebRTCJoin, this.keyPair!);
             this.socketSend(joinMessage);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);

@@ -147,6 +147,13 @@ export default class WebRTCSigServer {
             return;
         }
 
+        // validate the signature
+        const sigOk = crypto.verifySignature(msg, crypto.canonical_WebRTCJoin); 
+        if (!sigOk) {
+            logError("Signature verification failed for join message:", msg);
+            return;
+        }
+
         // Store client info
         this.clientsMap.set(ws, { room: msg.room, user: msg.user});
 
@@ -268,7 +275,8 @@ export default class WebRTCSigServer {
 
     persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
-            const sigOk = await crypto.verifySignature(data.message);
+            // todo-0: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
+            const sigOk = await crypto.verifySignature(data.message, crypto.canonical_ChatMessage);
             if (!sigOk) {
                 logError("Signature verification failed for message:", data.message);
                 return;
