@@ -40,7 +40,11 @@ export default function FooterComp() {
         return () => {
             newPreviews.forEach(preview => URL.revokeObjectURL(preview.url));
         };
-    }, [selectedFiles, filePreviews]);
+    }, 
+    // WARNING: Do not let the linter convince you to add selectedFiles to the dependency array,
+    // as this will cause an infinite loop (mainly only failing on Firefox, but it's a problem)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFiles]);
     
     const messageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
