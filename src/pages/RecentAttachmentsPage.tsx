@@ -62,13 +62,18 @@ export default function RecentAttachmentsPage() {
 
     // Format timestamp to readable date
     const formatDate = (timestamp: number): string => {
-        return ""+new Date(timestamp); //todo-0: format date
+        return new Date(timestamp).toLocaleString();
     };
 
     // Truncate long text with ellipsis
     const truncateText = (text: string, maxLength: number): string => {
         if (!text) return '';
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
+    // Check if attachment is an image
+    const isImage = (type: string): boolean => {
+        return type.startsWith('image/');
     };
 
     return (
@@ -98,9 +103,8 @@ export default function RecentAttachmentsPage() {
                             <table className="min-w-full bg-gray-800 text-gray-200 rounded-lg overflow-hidden">
                                 <thead className="bg-gray-700">
                                     <tr>
-                                        <th className="px-4 py-3 text-left">Attachment</th>
-                                        <th className="px-4 py-3 text-left">Type</th>
-                                        <th className="px-4 py-3 text-left">Size</th>
+                                        <th className="px-4 py-3 text-left">Preview</th>
+                                        <th className="px-4 py-3 text-left">Details</th>
                                         <th className="px-4 py-3 text-left">Room</th>
                                         <th className="px-4 py-3 text-left">Sender</th>
                                         <th className="px-4 py-3 text-left">Date</th>
@@ -110,21 +114,35 @@ export default function RecentAttachmentsPage() {
                                 <tbody className="divide-y divide-gray-600">
                                     {attachments.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-4 text-center text-gray-400">
+                                            <td colSpan={6} className="px-4 py-4 text-center text-gray-400">
                                                 No attachments found
                                             </td>
                                         </tr>
                                     ) : (
                                         attachments.map((attachment) => (
                                             <tr key={attachment.id} className="hover:bg-gray-700">
+                                                <td className="px-4 py-3 w-40">
+                                                    {isImage(attachment.type) ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <img 
+                                                                src={`/api/attachments/${attachment.id}`} 
+                                                                alt={attachment.name}
+                                                                style={{ width: '150px', height: 'auto', objectFit: 'contain' }}
+                                                                className="mb-1 rounded border border-gray-600"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-center px-3 py-2 bg-gray-700 rounded w-32 h-24">
+                                                            <span className="text-center text-gray-300">{attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}</span>
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="font-medium">{truncateText(attachment.name, 30)}</span>
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-300">
-                                                    {attachment.type}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-300">
-                                                    {formatFileSize(attachment.size)}
+                                                    <div className="space-y-1">
+                                                        <div className="font-medium">{truncateText(attachment.name, 30)}</div>
+                                                        <div className="text-sm text-gray-400">{attachment.type}</div>
+                                                        <div className="text-sm text-gray-400">{formatFileSize(attachment.size)}</div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="bg-blue-900 text-blue-200 px-2 py-1 rounded">
@@ -143,21 +161,23 @@ export default function RecentAttachmentsPage() {
                                                     {formatDate(attachment.timestamp)}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <a 
-                                                        href={`/api/attachments/${attachment.id}`} 
-                                                        target="_blank"
-                                                        rel="noopener noreferrer" 
-                                                        className="text-blue-400 hover:text-blue-300 mr-3"
-                                                    >
-                                                        View
-                                                    </a>
-                                                    <a 
-                                                        href={`/api/attachments/${attachment.id}`} 
-                                                        download={attachment.name}
-                                                        className="text-green-400 hover:text-green-300"
-                                                    >
-                                                        Download
-                                                    </a>
+                                                    <div className="flex flex-col space-y-2">
+                                                        <a 
+                                                            href={`/api/attachments/${attachment.id}`} 
+                                                            target="_blank"
+                                                            rel="noopener noreferrer" 
+                                                            className="text-blue-400 hover:text-blue-300"
+                                                        >
+                                                            View
+                                                        </a>
+                                                        <a 
+                                                            href={`/api/attachments/${attachment.id}`} 
+                                                            download={attachment.name}
+                                                            className="text-green-400 hover:text-green-300"
+                                                        >
+                                                            Download
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
