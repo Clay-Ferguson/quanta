@@ -77,6 +77,10 @@ export class DBManager {
             CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
             CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments (message_id);
         `);
+
+        // I'm not skilled with SQLite, but followed the advice of Claude to add these two PRAGMAs.
+        await this.db!.exec('PRAGMA journal_mode = WAL;');
+        await this.db!.exec('PRAGMA busy_timeout = 5000;'); // 5 second timeout
     }
 
     /**
