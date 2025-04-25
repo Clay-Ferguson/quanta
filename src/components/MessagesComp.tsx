@@ -1,6 +1,6 @@
 import { useLayoutEffect, useEffect, useRef } from 'react';
 import AttachmentComp from './AttachmentComp';
-import { ChatMessage } from '../AppServiceTypes';
+import { ChatMessage, Contact } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +20,36 @@ interface MainCompProps {
 export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     const gs = useGlobalState();
     const messageCount = messages ? messages.length : 0;
+
+    // For efficiency, we create a map of contacts by public key, so we can quickly look them up by public key.
+    const contactsByPublicKey = new Map<string, Contact>();
+    if (gs.contacts) {
+        gs.contacts.forEach((contact) => {
+            contactsByPublicKey.set(contact.publicKey, contact);
+        });
+    }
+
+    const getDisplayName = (msg: ChatMessage) => {
+        // If the message is from us, return our name.
+        if (msg.sender === gs.userName) {
+            return gs.userName;
+        } 
+        // If the sender is in our contact list, use their alias. Otherwise, use their public key.
+        const contact = contactsByPublicKey.get(msg.publicKey!);
+        if (contact) {
+            return contact.alias;
+        }
+        return msg.sender
+    }
+
+    const isTrusted = (msg: ChatMessage) => {
+        // If the message is from us, return true.
+        if (msg.sender === gs.userName) {
+            return true;
+        } 
+        // If the sender is in our contact list, return true. Otherwise, return false.
+        return contactsByPublicKey.has(msg.publicKey!);
+    }
 
     const elmRef = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, true), [messageCount]);
@@ -42,16 +72,16 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                             : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
                     >
                         <div className="flex">
-                            <div className="flex flex-col mr-3 min-w-[100px] text-left">
+                            <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
                                 <div className="flex items-center">
-                                    <span className={`flex items-center ${msg.trusted ? 'text-yellow-400' : 'text-orange-500'}`}>
-                                        {msg.trusted ? (
+                                    <span className={`flex items-center ${isTrusted(msg) ? 'text-yellow-400' : 'text-orange-500'}`}>
+                                        {isTrusted(msg) ? (
                                             <FontAwesomeIcon icon={faCertificate} className="h-4 w-4 mr-1.5" />
                                         ) : (
                                             <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4 mr-1.5" />
                                         )}
                                     </span>
-                                    <span className="font-semibold text-sm text-blue-400">{msg.sender}</span>
+                                    <span className="font-semibold text-sm text-blue-400">{getDisplayName(msg)}</span>
                                 </div>
                                 <span className="text-xs text-gray-400">
                                     {util.formatMessageTime(msg)}

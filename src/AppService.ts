@@ -411,22 +411,10 @@ export class AppService implements AppServiceTypes  {
 
         if (msg.signature) {
             msg.sigOk = await crypt.verifySignature(msg, crypt.canonical_ChatMessage);
-            if (msg.sigOk) {
-                if (msg.publicKey === this.gs!.keyPair!.publicKey) {
-                    msg.trusted = true;
-                }
-                else {
-                    msg.trusted = this.existsInContacts(msg);
-                }
-            }
-            else {
-                // console.log("Invalid Signature on: "+ msg.content);
-            }
         }
         else {
             // console.log("No signature found on message: "+ msg.content);
             msg.sigOk = false;
-            msg.trusted = false;
         }
 
         this.gs!.messages!.push(msg);

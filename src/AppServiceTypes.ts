@@ -46,7 +46,6 @@ export type MessageAttachment = MessageAttachmentIntf & {
 export type ChatMessage = ChatMessageIntf & {
     sigVersion?: string; // todo-1: need to put this in the base class and have stored on server as well.
     sigOk?: boolean; // signature valid, regardless of presence in our Contact List
-    trusted?: boolean; // trusted contact (in our Contact List, at time of receipt)
 }
 
 export type Contact = {
