@@ -511,9 +511,9 @@ export class DBManager {
     }
 
     /**
- * Gets information about all rooms including their message counts
- * @returns An array of room information objects
- */
+     * Gets information about all rooms including their message counts
+     * @returns An array of room information objects
+     */
     async getAllRoomsInfo() {
         try {
         // Query to get all rooms and join with messages to count messages per room
@@ -568,10 +568,10 @@ export class DBManager {
     }
     
     /**
-         * Express handler for serving attachment files
-         * @param req Express request object
-         * @param res Express response object
-         */
+     * Express handler for serving attachment files
+     * @param req Express request object
+     * @param res Express response object
+     */
     async serveAttachment(req: any, res: any): Promise<void> {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
