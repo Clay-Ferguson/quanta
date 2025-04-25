@@ -12,7 +12,7 @@ export default function ContactsListComp() {
     const [newContact, setNewContact] = useState<Contact | null>(null);
 
     // Sort contacts alphabetically by name
-    const sortedContacts = [...contacts].sort((a, b) => a.name.localeCompare(b.name));
+    const sortedContacts = [...contacts].sort((a, b) => a.alias.localeCompare(b.alias));
 
     const toggleContactSelection = (publicKey: string) => {
         const newSelected = new Set(selectedContacts);
@@ -40,7 +40,6 @@ export default function ContactsListComp() {
 
     const handleAddContact = () => {
         const emptyContact: Contact = {
-            name: '',
             alias: '',
             publicKey: ''
         };
@@ -59,6 +58,30 @@ export default function ContactsListComp() {
         app._setContacts(updatedContacts);
         setSelectedContacts(new Set());
     };
+
+    const saveContact = (contact: Contact) => {
+        if (!contact.publicKey || !contact.alias) {
+            alert('Public Key and Alias is required');
+            return;
+        }
+        contact.publicKey = contact.publicKey.trim();
+        contact.alias = contact.alias.trim();
+
+        // If alias exists show error about that
+        if (contacts.some(c => c.alias === contact.alias)) {
+            alert('Alias already exists');
+            return;
+        }
+
+        // If alias exists show error about that
+        if (contacts.some(c => c.publicKey === contact.publicKey)) {
+            alert('Alias already exists');
+            return;
+        }
+        
+        app._setContacts([...contacts, contact]);
+        setNewContact(null);
+    }
 
     return (
         <div className="w-full">
@@ -98,9 +121,6 @@ export default function ContactsListComp() {
                                 Alias
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Name
-                            </th>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                                 Public Key
                             </th>
                             <th scope="col" className="w-20 px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -113,16 +133,7 @@ export default function ContactsListComp() {
                             <ContactEditRow 
                                 contact={newContact}
                                 isNew={true}
-                                onSave={(contact) => {
-                                    if (!contact.publicKey) {
-                                        alert('Public key is required');
-                                        return;
-                                    }
-                                    if (contact.name) {
-                                        app._setContacts([...contacts, contact]);
-                                    }
-                                    setNewContact(null);
-                                }}
+                                onSave={saveContact}
                                 onCancel={() => setNewContact(null)}
                             />
                         )}
@@ -153,7 +164,6 @@ export default function ContactsListComp() {
                                             />
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>
-                                        <td className="px-3 py-2 whitespace-nowrap">{contact.name}</td>
                                         <td className="px-3 py-2">
                                             <div className="flex items-center">
                                                 <span className="font-mono text-sm truncate max-w-[200px]" title={contact.publicKey}>
@@ -165,7 +175,7 @@ export default function ContactsListComp() {
                                                     className="ml-2 text-xs bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
                                                     onClick={() => navigator.clipboard.writeText(contact.publicKey)}
                                                 >
-                          Copy
+                                                    Copy
                                                 </button>
                                             </div>
                                         </td>
@@ -227,9 +237,6 @@ const ContactEditRow: React.FC<{
                     onChange={(e) => handleChange('alias', e.target.value)}
                     placeholder="Alias (optional)"
                 />
-            </td>
-            <td className="px-3 py-2 whitespace-nowrap">
-                <span className="w-full">{editedContact.name}</span>
             </td>
             <td className="px-3 py-2 whitespace-nowrap">
                 <input

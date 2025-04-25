@@ -1,12 +1,22 @@
-import { User } from '../../common/CommonTypes';
+import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 
 export default function RoomMembersComp() {
     // get 'participants' which is a type of Map<string, User> | null
-    const { participants } = useGlobalState();
+    const { participants, contacts } = useGlobalState();
 
     // Sort contacts alphabetically by name
-    const sortedContacts: User[] = participants ? Array.from(participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const sortedParticipants: any[] = participants ? Array.from(participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
+
+    if (contacts) {
+        // scan all sorted participants and for each one that's a known contact (looked up by public key) add a property 'alias' to it for display below.
+        for (const member of sortedParticipants) {;
+            const contact = contacts.find((contact: Contact) => contact.publicKey === member.publicKey);
+            if (contact) {
+                member.alias = contact.alias;
+            }
+        }
+    }
     
     return (
         <div className="w-full">
@@ -15,10 +25,10 @@ export default function RoomMembersComp() {
                     <thead className="bg-gray-800">
                         <tr>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Name
+                                Alias
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Alias
+                                Name
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                                 Public Key
@@ -30,13 +40,25 @@ export default function RoomMembersComp() {
                     </thead>
                     <tbody className="bg-gray-800 divide-y divide-gray-700">
 
-                        {sortedContacts.length > 0 ? (
-                            sortedContacts.map((member: User) => (
+                        {sortedParticipants.length > 0 ? (
+                            sortedParticipants.map((member: any) => (
                                 <tr key={member.publicKey} className="hover:bg-gray-750">
+                                    <td className="px-3 py-2 whitespace-nowrap">{member.alias || ''}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.name}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap">TBD</td>
                                     <td className="px-3 py-2">
-                                        TBD
+                                        <div className="flex items-center">
+                                            <span className="font-mono text-sm truncate max-w-[200px]" title={member.publicKey}>
+                                                {member.publicKey.length > 20
+                                                    ? `${member.publicKey.substring(0, 10)}...${member.publicKey.substring(member.publicKey.length - 10)}`
+                                                    : member.publicKey}
+                                            </span>
+                                            <button 
+                                                className="ml-2 text-xs bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
+                                                onClick={() => navigator.clipboard.writeText(member.publicKey)}
+                                            >
+                                                Copy
+                                            </button>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                         TBD

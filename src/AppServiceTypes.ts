@@ -49,8 +49,7 @@ export type ChatMessage = ChatMessageIntf & {
 }
 
 export type Contact = {
-    name: string;
-    alias?: string;
+    alias: string;
     publicKey: string;
 }
 
