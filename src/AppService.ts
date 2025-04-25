@@ -183,6 +183,7 @@ export class AppService implements AppServiceTypes  {
 
     setDaysOfHistory  = async (days: number) => {
         this.persistGlobalValue(DBKeys.daysOfHistory, days);
+        this.runRoomCleanup();
     }
 
     // we have this method only for effeciency to do a single state update.
