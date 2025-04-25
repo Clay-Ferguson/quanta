@@ -408,6 +408,9 @@ class Crypto {
 
     /**
     * Opens the recent attachments page in a new tab with admin authentication
+    * 
+    * DO NOT DELETE: This is no longer being used but this and the server-side code are being kept
+    * as a reference for how to implement admin authentication for HTTP GET requests.
     */
     openRecentAttachments = async (keyPair: KeyPairHex) => {
         // Current timestamp

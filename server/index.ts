@@ -9,7 +9,6 @@ import {crypt} from '../common/Crypto.js'
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
 import { DBManager } from './DBManager.js';
-import { adminServices } from './AdminServices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -141,11 +140,9 @@ app.get('/api/messages', async (req, res) => {
     await db.getMessageHistory(req, res);
 });
 
-// This is intentionally not doing any React, but just serving a plain HTML page, as an admin
-// monitoring capability, but for now we allow public access to this page.
-app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
+// DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
+// app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
-// add '/api/admin/get-recent-attachments' endpoint that returns just the attachments data so we can render this on the client
 app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
     try {
         console.log('Admin request: Getting recent attachments');
