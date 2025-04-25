@@ -3,7 +3,7 @@ import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
-import {crypto} from '../common/Crypto.ts';  
+import {crypt} from '../common/Crypto.ts';  
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -66,23 +66,23 @@ export default class WebRTC {
         this.saveToServer = save;
     }
 
-    _onRoomInfo = (evt: WebRTCRoomInfo) => {
+    _onRoomInfo = async (evt: WebRTCRoomInfo) => {
         util.log('Room info received with participants');
         this.participants = new Map<string, User>();
 
         // build up a list of strings which is what 'this.participants' currently is.
-        evt.participants.forEach((user: User) => {
+        for (const user of evt.participants) {
             util.log('    User in room: ' + user.name);
             this.participants.set(user.publicKey, user);
       
             if (!this.peerConnections.has(user.publicKey)) {
                 util.log('Initiate a connection with ' + user.name+' because he is in room');
-                this.createPeerConnection(user, true);
+                await this.createPeerConnection(user, true);
             }
             else {
                 util.log('Already have connection with ' + user.name);
             }
-        });
+        }
         
         // Schedule a debug check after connections should be established
         setTimeout(() => {
@@ -153,7 +153,7 @@ export default class WebRTC {
         }
     }
 
-    _onOffer = (evt: WebRTCOffer) => {
+    _onOffer = async (evt: WebRTCOffer) => {
         if (!evt.sender) {
             util.log('Received offer without sender, ignoring.');
             return;
@@ -162,7 +162,7 @@ export default class WebRTC {
             util.log('Received offer with event of a mismatched publicKey. ignoring.');
             return;
         }
-        const sigOk = crypto.verifySignature(evt, crypto.canonical_WebRTCOffer); 
+        const sigOk = crypt.verifySignature(evt, crypt.canonical_WebRTCOffer); 
         if (!sigOk) {
             console.error("Signature verification failed for offer message:", evt);
             return;
@@ -185,14 +185,14 @@ export default class WebRTC {
                 pc.close();
                 this.peerConnections.delete(evt.sender.publicKey);
                 // Create a new connection as a non-initiator
-                pc = this.createPeerConnection(evt.sender, false);
+                pc = await this.createPeerConnection(evt.sender, false);
             }
         }
         
         // Create a connection if it doesn't exist
         if (!pc) {
             util.log('Creating connection with ' + evt.sender.name+' because of onOffer');
-            pc = this.createPeerConnection(evt.sender, false);
+            pc = await this.createPeerConnection(evt.sender, false);
         }
         
         // Rest of the existing code for handling the offer...
@@ -316,7 +316,7 @@ export default class WebRTC {
                 }
             };
 
-            this.signedSocketSend(joinMessage, crypto.canonical_WebRTCJoin);
+            this.signedSocketSend(joinMessage, crypt.canonical_WebRTCJoin);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?._rtcStateChange();
@@ -336,7 +336,7 @@ export default class WebRTC {
     }
 
     //peerName = user.name
-    createPeerConnection(user: User, isInitiator: boolean) {
+    createPeerConnection = async (user: User, isInitiator: boolean): Promise<RTCPeerConnection> => {
         util.log('Creating peer connection with ' + user.name + (isInitiator ? ' (as initiator)' : ''));
         const pc = new RTCPeerConnection({
             iceCandidatePoolSize: 10 // Increase candidate gathering
@@ -385,6 +385,7 @@ export default class WebRTC {
 
         // If we're the initiator, create a data channel
         if (isInitiator) {
+            // Convert promise chains to async/await pattern
             try {
                 util.log('Creating data channel as initiator for ' + user.name);
                 
@@ -394,29 +395,30 @@ export default class WebRTC {
                 });
                 this.setupDataChannel(channel, user);
                 
-                // todo-0: convert this to async/await pattern
-                pc.createOffer({
+               
+                // Create the offer with specific options
+                const offer = await pc.createOffer({
                     offerToReceiveAudio: false,
                     offerToReceiveVideo: false
-                })
-                    .then(offer => {
-                        // Log the offer SDP for debugging
-                        util.log(`Created offer SDP type: ${offer.type}`);
-                        return pc.setLocalDescription(offer);
-                    })
-                    .then(() => {
-                        if (this.socket && pc.localDescription) {
-                            const offer: WebRTCOffer = {
-                                type: 'offer',
-                                offer: pc.localDescription,
-                                target: user,
-                                room: this.roomId
-                            };
-                            this.signedSocketSend(offer, crypto.canonical_WebRTCOffer);
-                            util.log('Sent offer to ' + user.name);
-                        }
-                    })
-                    .catch(error => util.log('Error creating offer: ' + error));
+                });
+                    
+                // Log the offer SDP for debugging
+                util.log(`Created offer SDP type: ${offer.type}`);
+                    
+                // Set the local description
+                await pc.setLocalDescription(offer);
+                    
+                // Send the offer if socket is available and local description is set
+                if (this.socket && pc.localDescription) {
+                    const offer: WebRTCOffer = {
+                        type: 'offer',
+                        offer: pc.localDescription,
+                        target: user,
+                        room: this.roomId
+                    };
+                    this.signedSocketSend(offer, crypt.canonical_WebRTCOffer);
+                    util.log('Sent offer to ' + user.name);
+                }
             } catch (err) {
                 util.log('Error creating data channel: ' + err);
             }
@@ -609,7 +611,7 @@ export default class WebRTC {
     }
 
     signedSocketSend = async (msg: any, canonicalizr: (obj: any) => string) => {
-        await crypto.signObject(msg, canonicalizr, this.keyPair!);
+        await crypt.signObject(msg, canonicalizr, this.keyPair!);
         this.socketSend(msg);
     }
 

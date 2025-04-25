@@ -233,7 +233,7 @@ class Crypto {
             // console.log('Admin public key:', ADMIN_PUBLIC_KEY);        
 
             // Verify the signature using our crypto utility
-            const isValid = await crypto.verifySignatureBytes(
+            const isValid = await crypt.verifySignatureBytes(
                 msgHash,
                 // AI got itself confused about which of these two lines is best.
                 Buffer.from(sig as string, 'hex'),            
@@ -273,7 +273,7 @@ class Crypto {
         }
                     
         // Sign the message hash
-        const privKeyBytes = crypto.importPrivateKey(keyPair.privateKey);
+        const privKeyBytes = crypt.importPrivateKey(keyPair.privateKey);
         if (!privKeyBytes) {
             throw new Error("Invalid private key");
         }
@@ -376,7 +376,7 @@ class Crypto {
     secureHttpPost = async (url: string, keyPair: KeyPairHex, body?: any): Promise<any> => {
         let response: any | null = null;
         try {
-            const headers = await crypto.buildSecureHeaders(url, keyPair!);
+            const headers = await crypt.buildSecureHeaders(url, keyPair!);
             const opts: RequestInit = {
                 method: 'POST',
                 headers
@@ -431,7 +431,7 @@ class Crypto {
         }
                     
         // Sign the message hash
-        const keyBytes: Uint8Array | null = crypto.importPrivateKey(keyPair.privateKey);
+        const keyBytes: Uint8Array | null = crypt.importPrivateKey(keyPair.privateKey);
         if (!keyBytes) {
             throw new Error("Invalid private key");
         }
@@ -477,5 +477,4 @@ class Crypto {
     }
 }
 
-// todo-0: need to change this to 'cry', so it doesn't conflict with the JS crypto object
-export const crypto = new Crypto();
+export const crypt = new Crypto();

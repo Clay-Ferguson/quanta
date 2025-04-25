@@ -3,7 +3,7 @@ import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.js';
 import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
-import {crypto} from '../common/Crypto.ts';  
+import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
 import { User } from '../common/CommonTypes.ts';
@@ -218,7 +218,7 @@ export class AppService implements AppServiceTypes  {
             return;
         }
 
-        const keyPair = crypto.makeKeysFromPrivateKeyHex(privateKey);
+        const keyPair = crypt.makeKeysFromPrivateKeyHex(privateKey);
         if (!keyPair) {
             console.error("Invalid private key provided.");
             return;
@@ -238,7 +238,7 @@ export class AppService implements AppServiceTypes  {
             }
         }
 
-        const keyPair: KeyPairHex= crypto.generateKeypair();
+        const keyPair: KeyPairHex= crypt.generateKeypair();
         this.gd!({ type: 'creatIdentity', payload: { 
             keyPair
         }});
@@ -375,7 +375,7 @@ export class AppService implements AppServiceTypes  {
             
             if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
                 try {
-                    await crypto.signObject(msg, crypto.canonical_ChatMessage, this.gs!.keyPair);
+                    await crypt.signObject(msg, crypt.canonical_ChatMessage, this.gs!.keyPair);
                 } catch (error) {
                     console.error('Error signing message:', error);
                 }
@@ -410,7 +410,7 @@ export class AppService implements AppServiceTypes  {
         }
 
         if (msg.signature) {
-            msg.sigOk = await crypto.verifySignature(msg, crypto.canonical_ChatMessage);
+            msg.sigOk = await crypt.verifySignature(msg, crypt.canonical_ChatMessage);
             if (msg.sigOk) {
                 if (msg.publicKey === this.gs!.keyPair!.publicKey) {
                     msg.trusted = true;

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import {crypto} from '../common/Crypto.js'
+import {crypt} from '../common/Crypto.js'
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
@@ -38,7 +38,7 @@ const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 if (!ADMIN_PUBLIC_KEY) {
     console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
 }
-crypto.setAdminPublicKey(ADMIN_PUBLIC_KEY);
+crypt.setAdminPublicKey(ADMIN_PUBLIC_KEY);
 
 // print out all env vars above that we just used
 console.log(`Environment Variables:
@@ -63,7 +63,7 @@ if (SECURE === 'y') {
     });
 }
 
-app.post('/api/admin/create-test-data', crypto.verifyAdminHTTPSignature, async (req, res) => {
+app.post('/api/admin/create-test-data', crypt.verifyAdminHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Creating test data');
         await db.createTestData();
@@ -74,7 +74,7 @@ app.post('/api/admin/create-test-data', crypto.verifyAdminHTTPSignature, async (
     }
 });
 
-app.post('/api/admin/block-user', crypto.verifyAdminHTTPSignature, async (req: any, res: any) => {
+app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
     try {
         const { pub_key } = req.body;
         
@@ -123,7 +123,7 @@ app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
     await db.getMessagesByIdsHandler(req, res);
 });
 
-app.post('/api/admin/get-room-info', crypto.verifyAdminHTTPSignature, async (req, res) => {
+app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, async (req, res) => {
     try {
         console.log('Admin request: Getting room information');
         const roomsInfo = await db.getAllRoomsInfo();
@@ -143,7 +143,7 @@ app.get('/api/messages', async (req, res) => {
 
 // This is intentionally not doing any React, but just serving a plain HTML page, as an admin
 // monitoring capability, but for now we allow public access to this page.
-app.get('/recent-attachments', crypto.verifyAdminHTTPQuerySig, (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
+app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
 
 const distPath = path.join(__dirname, '../../dist');
 

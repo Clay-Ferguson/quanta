@@ -1,7 +1,7 @@
 import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 import { DBManager } from './DBManager.js';
-import {crypto} from '../common/Crypto.js'
+import {crypt} from '../common/Crypto.js'
 import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 
 const log = logger.logInfo;
@@ -101,8 +101,6 @@ export default class WebRTCSigServer {
                     clientInfo.user.publicKey === msg.target.publicKey
                 ) {
                     log(`Sending ${msg.type} from ${clientInfo.user.name} to ${msg.target.name} in room ${clientInfo.room}`);
-
-                    // todo-0: how to make this forEach abort/stop after this send.
                     cws.send(payload);
                 }
             });
@@ -148,7 +146,7 @@ export default class WebRTCSigServer {
         }
 
         // validate the signature
-        const sigOk = crypto.verifySignature(msg, crypto.canonical_WebRTCJoin); 
+        const sigOk = crypt.verifySignature(msg, crypt.canonical_WebRTCJoin); 
         if (!sigOk) {
             logError("Signature verification failed for join message:", msg);
             return;
@@ -276,8 +274,8 @@ export default class WebRTCSigServer {
 
     persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
-            // todo-0: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
-            const sigOk = await crypto.verifySignature(data.message, crypto.canonical_ChatMessage);
+            // todo-1: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
+            const sigOk = await crypt.verifySignature(data.message, crypt.canonical_ChatMessage);
             if (!sigOk) {
                 logError("Signature verification failed for message:", data.message);
                 return;

@@ -1,6 +1,6 @@
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
-import { crypto } from '../../common/Crypto';
+import { crypt } from '../../common/Crypto';
 import { useGlobalState } from '../GlobalState';
 import { useState } from 'react';
 import TitledPanel from '../components/TitledPanel';
@@ -25,7 +25,7 @@ export default function AdminPage() {
     }
 
     const createTestData = async () => {
-        const success = await crypto.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
+        const success = await crypt.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
         if (success) {
             alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
         } else {
@@ -36,7 +36,7 @@ export default function AdminPage() {
     const getRoomInfo = async () => {
         setLoading(true);
         try {
-            const response: any = await crypto.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
+            const response: any = await crypt.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
             } else {
@@ -62,7 +62,7 @@ export default function AdminPage() {
             setLoading(true);
 
             // Make the secure POST request with body
-            const response = await crypto.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
+            const response = await crypt.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
                 pub_key: pubKey.trim()
             });
 
@@ -95,7 +95,7 @@ export default function AdminPage() {
 
                     <TitledPanel title="Server Data">
                         <button 
-                            onClick={() => crypto.openRecentAttachments(gs.keyPair!)}
+                            onClick={() => crypt.openRecentAttachments(gs.keyPair!)}
                             className="btn-secondary"
                         >
                                     Open Recent Attachments
