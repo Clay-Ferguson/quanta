@@ -9,6 +9,7 @@ import DocViewerPage from './pages/DocViewerPage.tsx';
 import RoomInfoPage from './pages/RoomInfoPage.tsx';
 import RoomsPage from './pages/RoomsPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
+import RecentAttachmentsPage from './pages/RecentAttachmentsPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import {app} from './AppService';
 import { PageNames } from './AppServiceTypes.ts';
@@ -51,6 +52,8 @@ function PageRouter() {
         return <ContactsPage />;
     case PageNames.userGuide:
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
+    case PageNames.recentAttachments:
+        return <RecentAttachmentsPage />;
     case PageNames.admin:
         return <AdminPage />;
     case PageNames.roomMembers:

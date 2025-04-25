@@ -35,6 +35,7 @@ export enum PageNames{
     userGuide = 'UserGuidePage',
     quantaChat = 'QuantaChat',
     admin  = 'AdminPage',
+    recentAttachments = 'RecentAttachmentsPage',
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
 }

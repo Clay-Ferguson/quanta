@@ -145,6 +145,18 @@ app.get('/api/messages', async (req, res) => {
 // monitoring capability, but for now we allow public access to this page.
 app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => adminServices.getRecentAttachments(db, req, res));
 
+// add '/api/admin/get-recent-attachments' endpoint that returns just the attachments data so we can render this on the client
+app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
+    try {
+        console.log('Admin request: Getting recent attachments');
+        const attachments = await db.getRecentAttachments();
+        res.json({ success: true, attachments });
+    } catch (error) {
+        console.error('Error getting recent attachments:', error);
+        res.status(500).json({ success: false, error: 'Failed to get recent attachments' });
+    }
+});
+
 const distPath = path.join(__dirname, '../../dist');
 
 const serveIndexHtml = (req: Request, res: Response) => {
