@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
 import { ChatMessage, Contact, PageNames, RoomHistoryItem } from './AppServiceTypes';
-import { User } from '../common/CommonTypes';
+import { FileBase64Intf, User } from '../common/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -21,7 +21,7 @@ export interface GlobalState {
     daysOfHistory?: number;
     roomHistory?: Array<RoomHistoryItem>;
     userDescription?: string;
-    userAvatar?: any; // todo-0: what kind is this?
+    userAvatar?: FileBase64Intf | null;
 }
 
 const initialState: GlobalState = {

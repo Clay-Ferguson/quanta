@@ -1,11 +1,11 @@
 import {util} from '../Util';
 import { app } from '../AppService';
-import { MessageAttachment } from '../AppServiceTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
+import { FileBase64Intf } from '../../common/CommonTypes';
 
 interface AttachmentCompProps {
-  attachment: MessageAttachment;
+  attachment: FileBase64Intf;
   index?: number;
 }
 

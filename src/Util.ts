@@ -1,4 +1,5 @@
-import { ChatMessage, MessageAttachment } from "./AppServiceTypes";
+import { FileBase64Intf } from "../common/CommonTypes";
+import { ChatMessage } from "./AppServiceTypes";
 
 class Util {
     log(message: string) {
@@ -27,12 +28,7 @@ class Util {
         new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    fileToBase64(file: File): Promise<{
-        name: string;
-        type: string;
-        size: number;
-        data: string;
-    }> {
+    fileToBase64(file: File): Promise<FileBase64Intf> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -68,7 +64,7 @@ class Util {
         }
     }
 
-    downloadFile(attachment: MessageAttachment) {
+    downloadFile(attachment: FileBase64Intf) {
         const downloadLink = document.createElement('a');
         downloadLink.href = attachment.data;
         downloadLink.download = attachment.name;

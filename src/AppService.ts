@@ -1,12 +1,12 @@
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, ChatMessage, Contact, DBKeys, MessageAttachment, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
+import {AppServiceTypes, ChatMessage, Contact, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { User } from '../common/CommonTypes.ts';
+import { FileBase64Intf, User } from '../common/CommonTypes.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -143,15 +143,7 @@ export class AppService implements AppServiceTypes  {
         const daysOfHistory: number = await this.storage?.getItem(DBKeys.daysOfHistory) || 30;
         const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
         const userDescription: string = await this.storage?.getItem(DBKeys.userDescription);
-
-        // todo-0: need to define a type for this if there's no such type, but I bet there's a type already
-        // in the JS api itself
-        const userAvatar: {
-            name: string;
-            type: string;
-            size: number;
-            data: string;
-        } | null = await this.storage?.getItem(DBKeys.userAvatar);
+        const userAvatar: FileBase64Intf = await this.storage?.getItem(DBKeys.userAvatar);
 
         const state: GlobalState = {
             userName,
@@ -172,7 +164,7 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'restoreSavedValues', payload: state});
     }
     
-    setFullSizeImage = (att: MessageAttachment | null) => {
+    setFullSizeImage = (att: FileBase64Intf | null) => {
         this.gs!.fullSizeImage = att ? {src: att.data, name: att.name} : null;
         this.gd!({ type: 'setFullSizeImage', payload: this.gs});
     }
@@ -182,12 +174,7 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setPage', payload: this.gs });
     }
 
-    saveUserInfo = async (userName: string, userDescription: string, userAvatar: {
-        name: string;
-        type: string;
-        size: number;
-        data: string;
-    } | null) => {
+    saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
         this.gd!({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
         }});

@@ -10,20 +10,22 @@ export interface ChatMessageIntf extends SignableObject {
     content: string;
     publicKey?: string;
     signature?: string;
-    attachments?: MessageAttachmentIntf[];
-}
-
-export interface MessageAttachmentIntf {
-    name: string;
-    type: string;
-    size: number;
-    data: string;
+    attachments?: FileBase64Intf[];
 }
 
 export interface User {
     name: string;
     publicKey: string;
 }
+
+export interface FileBase64Intf {
+    name: string;
+    type: string;
+    size: number;
+    data: string; // base64 encoded
+}
+
+// todo-0: move all these below into an RTCTypes file.
 
 export interface WebRTCJoin extends SignableObject {
     type: 'join';

@@ -1,4 +1,4 @@
-import { ChatMessageIntf, MessageAttachmentIntf } from '../common/CommonTypes.js';
+import { ChatMessageIntf } from '../common/CommonTypes.js';
 export interface AppServiceTypes {
     /**
      * Handle RTC state changes
@@ -40,9 +40,6 @@ export enum PageNames{
     recentAttachments = 'RecentAttachmentsPage',
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
-}
-
-export type MessageAttachment = MessageAttachmentIntf & {
 }
 
 export type ChatMessage = ChatMessageIntf & {

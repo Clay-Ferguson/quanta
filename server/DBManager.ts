@@ -6,7 +6,7 @@ import fs from 'fs';
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
 // This is correct. The "@common" folder is an alias so we can get access to 
 // the common folder one level above the server folder (see tsconfig.json).
-import {ChatMessageIntf} from '@common/CommonTypes.js';
+import {ChatMessageIntf, FileBase64Intf} from '@common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -393,7 +393,7 @@ export class DBManager {
     /**
      * Get multiple messages by their IDs (filtering by room for security)
      */
-    async getMessagesByIds(messageIds: string[], roomId: string): Promise<any[]> {
+    async getMessagesByIds(messageIds: string[], roomId: string): Promise<FileBase64Intf[]> {
         if (!messageIds || messageIds.length === 0) {
             return [];
         }
@@ -416,7 +416,7 @@ export class DBManager {
             
             // For each message, fetch its attachments
             for (const message of messages) {
-                const attachments = await this.db!.all(`
+                const attachments: FileBase64Intf[] = await this.db!.all(`
                     SELECT name, type, size, data
                     FROM attachments
                     WHERE message_id = ?
@@ -718,12 +718,7 @@ export class DBManager {
         pubKey: string, 
         userName: string, 
         userDesc: string, 
-        avatar: {
-            name: string;
-            type: string;
-            size: number;
-            data: string;
-        } | null): Promise<boolean> {
+        avatar: FileBase64Intf | null): Promise<boolean> {
         try {
             if (!pubKey) {
                 console.error('Cannot save user info without a public key');
@@ -770,12 +765,7 @@ export class DBManager {
     public async getUserInfo(pubKey: string): Promise<{
             userName: string;
             userDesc: string;
-            avatar: {
-                name: string;
-                type: string;
-                size: number;
-                data: string;
-            } | null;
+            avatar: FileBase64Intf | null;
         } | null> {
         try {
             if (!pubKey) {

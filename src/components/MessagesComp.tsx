@@ -51,7 +51,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         return contactsByPublicKey.has(msg.publicKey!);
     }
 
-    const getAvatarUrl = (msg: ChatMessage) => {
+    const getAvatarUrl = (msg: ChatMessage): string | null => {
         // If the message is from us and we have an avatar, use our own avatar
         if (msg.sender === gs.userName && gs.userAvatar) {
             return gs.userAvatar.data;
@@ -78,73 +78,77 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {messages!.map((msg, index) => (
-                    <div 
-                        key={index} 
-                        className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
-                            : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
-                    >
-                        <div className="flex">
-                            <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
-                                <div className="flex items-center">
-                                    {/* Avatar */}
-                                    <div className="mr-2 flex-shrink-0">
-                                        {getAvatarUrl(msg) ? (
-                                            <img 
-                                                src={getAvatarUrl(msg)} 
-                                                alt={`${getDisplayName(msg)}'s avatar`} 
-                                                className="w-12 h-12 rounded-full object-cover border border-gray-600"
-                                                onError={(e) => {
-                                                    // Replace with icon if image fails to load
-                                                    e.currentTarget.style.display = 'none';
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                                                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center">
-                                            <span className={`flex items-center ${isTrusted(msg) ? 'text-yellow-400' : 'text-orange-500'}`}>
-                                                {isTrusted(msg) ? (
-                                                    <FontAwesomeIcon icon={faCertificate} className="h-4 w-4 mr-1.5" />
-                                                ) : (
-                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4 mr-1.5" />
-                                                )}
-                                            </span>
-                                            <span className="font-semibold text-sm text-blue-400">{getDisplayName(msg)}</span>
+                {messages!.map((msg, index) => {
+                    const avatarUrl = getAvatarUrl(msg);
+                    
+                    return (
+                        <div 
+                            key={index} 
+                            className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 border-blue-500' 
+                                : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
+                        >
+                            <div className="flex">
+                                <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
+                                    <div className="flex items-center">
+                                        {/* Avatar */}
+                                        <div className="mr-2 flex-shrink-0">
+                                            {avatarUrl ? (
+                                                <img 
+                                                    src={avatarUrl} 
+                                                    alt={`${getDisplayName(msg)}'s avatar`} 
+                                                    className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                                    onError={(e) => {
+                                                        // Replace with icon if image fails to load
+                                                        e.currentTarget.style.display = 'none';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                                                    <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="text-xs text-gray-400">
-                                            {util.formatMessageTime(msg)}
-                                        </span>
+                                        
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center">
+                                                <span className={`flex items-center ${isTrusted(msg) ? 'text-yellow-400' : 'text-orange-500'}`}>
+                                                    {isTrusted(msg) ? (
+                                                        <FontAwesomeIcon icon={faCertificate} className="h-4 w-4 mr-1.5" />
+                                                    ) : (
+                                                        <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4 mr-1.5" />
+                                                    )}
+                                                </span>
+                                                <span className="font-semibold text-sm text-blue-400">{getDisplayName(msg)}</span>
+                                            </div>
+                                            <span className="text-xs text-gray-400">
+                                                {util.formatMessageTime(msg)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="w-0.5 bg-gray-400 self-stretch mx-2"></div>
-                            <div className="flex-1 text-left text-gray-200">
-                                <Markdown markdownContent={msg.content} />
-                            </div>
-                        </div>
-            
-                        {/* Attachments section */}
-                        {msg.attachments && msg.attachments.length > 0 && (
-                            <div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                                    {msg.attachments.map((att, idx) => (
-                                        <AttachmentComp 
-                                            key={idx}
-                                            attachment={att} 
-                                            index={idx} 
-                                        />
-                                    ))}
+                                <div className="w-0.5 bg-gray-400 self-stretch mx-2"></div>
+                                <div className="flex-1 text-left text-gray-200">
+                                    <Markdown markdownContent={msg.content} />
                                 </div>
                             </div>
-                        )}
-                    </div>
-                ))}
+                    
+                            {/* Attachments section */}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                                <div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                        {msg.attachments.map((att, idx) => (
+                                            <AttachmentComp 
+                                                key={idx}
+                                                attachment={att} 
+                                                index={idx} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
         </Tag>
     );
