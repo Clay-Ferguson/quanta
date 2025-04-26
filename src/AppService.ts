@@ -171,7 +171,7 @@ export class AppService implements AppServiceTypes  {
 
         this.gd!({ type: 'restoreSavedValues', payload: state});
     }
-
+    
     setFullSizeImage = (att: MessageAttachment | null) => {
         this.gs!.fullSizeImage = att ? {src: att.data, name: att.name} : null;
         this.gd!({ type: 'setFullSizeImage', payload: this.gs});
@@ -182,7 +182,7 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setPage', payload: this.gs });
     }
 
-    saveUserInfo  = async (userName: string, userDescription: string, userAvatar: {
+    saveUserInfo = async (userName: string, userDescription: string, userAvatar: {
         name: string;
         type: string;
         size: number;
@@ -194,6 +194,35 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(DBKeys.userName, userName);
         await this.storage?.setItem(DBKeys.userDescription, userDescription);
         await this.storage?.setItem(DBKeys.userAvatar, userAvatar);
+
+        // Save user info to server if saving to server is enabled
+        if (this.gs?.saveToServer && this.gs?.keyPair?.publicKey) {
+            try {
+                const postData = {
+                    pubKey: this.gs.keyPair.publicKey,
+                    userName: userName,
+                    userDesc: userDescription,
+                    avatar: userAvatar
+                };
+
+                // Make API call to persist user info to server
+                const response = await fetch('/api/users/info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Failed to save user info to server:', errorData.error);
+                } else {
+                    console.log('User info successfully saved to server');
+                }
+            } catch (error) {
+                console.error('Error saving user info to server:', error);
+            }
+        }
     }
 
     setSaveToServer  = async (saveToServer: boolean) => {

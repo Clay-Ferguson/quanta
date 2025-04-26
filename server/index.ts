@@ -47,7 +47,8 @@ console.log(`Environment Variables:
     QUANTA_CHAT_ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY}
 `);
 
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));  // Increase the limit to 10MB
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // Add HTTP to HTTPS redirect if using HTTPS
 if (SECURE === 'y') {
@@ -153,6 +154,10 @@ app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, as
         res.status(500).json({ success: false, error: 'Failed to get recent attachments' });
     }
 });
+
+app.post('/api/users/info', (req, res) => db.saveUserInfoHandler(req, res));
+app.get('/api/users/:pubKey/info', (req, res) => db.getUserInfoHandler(req, res));
+app.get('/api/users/:pubKey/avatar', (req, res) => db.serveAvatar(req, res));
 
 const distPath = path.join(__dirname, '../../dist');
 

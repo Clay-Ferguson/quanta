@@ -120,24 +120,18 @@ export default function SettingsPage() {
     
     const saveUserInfo = async () => {
         let userAvatar = null;
-    
+
         if (avatarFile) {
-        // User selected a new file, convert it
-            const base64Data = await util.fileToBase64(avatarFile);
-            userAvatar = {
-                name: avatarFile.name,
-                type: avatarFile.type,
-                size: avatarFile.size,
-                data: base64Data
-            };
+            // User selected a new file, convert it
+            userAvatar = await util.fileToBase64(avatarFile);
         
             // Clean up the object URL
             if (avatarPreview) {
                 URL.revokeObjectURL(avatarPreview);
             }
         } else if (gs.userAvatar) {
-        // No new file, but preserve existing avatar
-            userAvatar = gs.userAvatar;
+            // Create a new clean object with just the base properties
+            userAvatar = gs.userAvatar
         }
 
         app.saveUserInfo(userName, userDescription, userAvatar);

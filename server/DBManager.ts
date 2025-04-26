@@ -73,9 +73,21 @@ export class DBManager {
                 pub_key TEXT PRIMARY KEY
             );
             
+            CREATE TABLE IF NOT EXISTS user_info (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pub_key TEXT UNIQUE NOT NULL,
+                user_name TEXT,
+                user_desc TEXT,
+                avatar_name TEXT,
+                avatar_type TEXT,
+                avatar_size INTEGER,
+                avatar_data BLOB
+            );
+            
             CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages (room_id);
             CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
             CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments (message_id);
+            CREATE INDEX IF NOT EXISTS idx_user_info_pub_key ON user_info (pub_key);
         `);
 
         // I'm not skilled with SQLite, but followed the advice of Claude to add these two PRAGMAs.
@@ -693,4 +705,199 @@ export class DBManager {
             console.error('Error blocking user:', error);
         }
     }
+
+    /**
+     * Saves or updates user information in the database
+     * @param pubKey The user's public key
+     * @param userName The user's display name
+     * @param userDesc The user's description/bio
+     * @param avatar User's avatar information (optional)
+     * @returns Whether the operation was successful
+     */
+    public async saveUserInfo(
+        pubKey: string, 
+        userName: string, 
+        userDesc: string, 
+        avatar: {
+            name: string;
+            type: string;
+            size: number;
+            data: string;
+        } | null): Promise<boolean> {
+        try {
+            if (!pubKey) {
+                console.error('Cannot save user info without a public key');
+                return false;
+            }
+            let avatarBinaryData: Buffer | null = null;
+        
+            // Extract binary data from data URL if avatar exists
+            if (avatar && avatar.data) {
+                const matches = avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                if (matches && matches.length === 3) {
+                    avatarBinaryData = Buffer.from(matches[2], 'base64');
+                }
+            }
+
+            // Use INSERT OR REPLACE to handle both insert and update cases
+            await this.db!.run(
+                `INSERT OR REPLACE INTO user_info 
+            (pub_key, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    pubKey,
+                    userName,
+                    userDesc,
+                    avatar?.name || null,
+                    avatar?.type || null,
+                    avatar?.size || null,
+                    avatarBinaryData
+                ]
+            );
+            console.log(`User info saved for public key: ${pubKey}`);
+            return true;
+        } catch (error) {
+            console.error('Error saving user info:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Retrieves user information from the database
+     * @param pubKey The user's public key
+     * @returns The user information or null if not found
+     */
+    public async getUserInfo(pubKey: string): Promise<{
+            userName: string;
+            userDesc: string;
+            avatar: {
+                name: string;
+                type: string;
+                size: number;
+                data: string;
+            } | null;
+        } | null> {
+        try {
+            if (!pubKey) {
+                console.error('Cannot get user info without a public key');
+                return null;
+            }
+
+            const userInfo = await this.db!.get(
+                `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
+             FROM user_info 
+             WHERE pub_key = ?`,
+                [pubKey]
+            );
+
+            if (!userInfo) {
+                return null;
+            }
+
+            // Convert binary avatar data back to data URL if it exists
+            let avatar = null;
+            if (userInfo.avatar_data) {
+                avatar = {
+                    name: userInfo.avatar_name,
+                    type: userInfo.avatar_type,
+                    size: userInfo.avatar_size,
+                    data: `data:${userInfo.avatar_type};base64,${Buffer.from(userInfo.avatar_data).toString('base64')}`
+                };
+            }
+
+            return {
+                userName: userInfo.user_name,
+                userDesc: userInfo.user_desc,
+                avatar
+            };
+        } catch (error) {
+            console.error('Error retrieving user info:', error);
+            return null;
+        }
+    }
+
+    /**
+     * API handler for saving user information
+     * @param req Express request object
+     * @param res Express response object
+     */
+    public async saveUserInfoHandler(req: any, res: any): Promise<void> {
+        try {
+            const { pubKey, userName, userDesc, avatar } = req.body;
+            if (!pubKey) {
+                return res.status(400).json({ error: 'Public key is required' });
+            }
+            const success = await this.saveUserInfo(pubKey, userName, userDesc, avatar);
+            if (success) {
+                res.json({ success: true });
+            } else {
+                res.status(500).json({ error: 'Failed to save user information' });
+            }
+        } catch (error) {
+            console.error('Error in saveUserInfo handler:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    /**
+     * API handler for retrieving user information
+     * @param req Express request object
+     * @param res Express response object
+     */
+    public async getUserInfoHandler(req: any, res: any): Promise<void> {
+        try {
+            const pubKey = req.params.pubKey;
+        
+            if (!pubKey) {
+                return res.status(400).json({ error: 'Public key is required' });
+            }
+            const userInfo = await this.getUserInfo(pubKey);
+            if (userInfo) {
+                res.json(userInfo);
+            } else {
+                res.status(404).json({ error: 'User information not found' });
+            }
+        } catch (error) {
+            console.error('Error in getUserInfo handler:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    public async serveAvatar(req: any, res: any): Promise<void> {
+        try {
+            const pubKey = req.params.pubKey;
+            if (!pubKey) {
+                return res.status(400).json({ error: 'Public key is required' });
+            }
+                
+            // Get user info from the database
+            const userInfo = await this.getUserInfo(pubKey);
+            if (!userInfo || !userInfo.avatar || !userInfo.avatar.data) {
+                // Return a 404 for missing avatars
+                return res.status(404).send('Avatar not found');
+            }
+                
+            // Extract content type and base64 data
+            const matches = userInfo.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+            if (!matches || matches.length !== 3) {
+                return res.status(400).send('Invalid avatar data format');
+            }
+                
+            const contentType = matches[1];
+            const base64Data = matches[2];
+            const binaryData = Buffer.from(base64Data, 'base64');
+                
+            // Set appropriate headers
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Length', binaryData.length);
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                
+            // Send the binary image data
+            res.send(binaryData);
+        } catch (error) {
+            console.error('Error serving avatar:', error);
+            res.status(500).send('Server error');
+        }
+    }    
 }
+

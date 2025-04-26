@@ -3,7 +3,7 @@ import AttachmentComp from './AttachmentComp';
 import { ChatMessage, Contact } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation, faCertificate, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
@@ -51,6 +51,19 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         return contactsByPublicKey.has(msg.publicKey!);
     }
 
+    const getAvatarUrl = (msg: ChatMessage) => {
+        // If the message is from us and we have an avatar, use our own avatar
+        if (msg.sender === gs.userName && gs.userAvatar) {
+            return gs.userAvatar.data;
+        }
+        // Otherwise use the server endpoint to get avatar by public key
+        if (msg.publicKey) {
+            return `/api/users/${encodeURIComponent(msg.publicKey)}/avatar`;
+        }
+        // Return null if no avatar is available
+        return null;
+    }
+
     const elmRef = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, true), [messageCount]);
     useEffect(() => scrollEffects.effect(elmRef), []);
@@ -74,18 +87,41 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                         <div className="flex">
                             <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
                                 <div className="flex items-center">
-                                    <span className={`flex items-center ${isTrusted(msg) ? 'text-yellow-400' : 'text-orange-500'}`}>
-                                        {isTrusted(msg) ? (
-                                            <FontAwesomeIcon icon={faCertificate} className="h-4 w-4 mr-1.5" />
+                                    {/* Avatar */}
+                                    <div className="mr-2 flex-shrink-0">
+                                        {getAvatarUrl(msg) ? (
+                                            <img 
+                                                src={getAvatarUrl(msg)} 
+                                                alt={`${getDisplayName(msg)}'s avatar`} 
+                                                className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                                onError={(e) => {
+                                                    // Replace with icon if image fails to load
+                                                    e.currentTarget.style.display = 'none';
+                                                }}
+                                            />
                                         ) : (
-                                            <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4 mr-1.5" />
+                                            <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                                                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
+                                            </div>
                                         )}
-                                    </span>
-                                    <span className="font-semibold text-sm text-blue-400">{getDisplayName(msg)}</span>
+                                    </div>
+                                    
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center">
+                                            <span className={`flex items-center ${isTrusted(msg) ? 'text-yellow-400' : 'text-orange-500'}`}>
+                                                {isTrusted(msg) ? (
+                                                    <FontAwesomeIcon icon={faCertificate} className="h-4 w-4 mr-1.5" />
+                                                ) : (
+                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4 mr-1.5" />
+                                                )}
+                                            </span>
+                                            <span className="font-semibold text-sm text-blue-400">{getDisplayName(msg)}</span>
+                                        </div>
+                                        <span className="text-xs text-gray-400">
+                                            {util.formatMessageTime(msg)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span className="text-xs text-gray-400">
-                                    {util.formatMessageTime(msg)}
-                                </span>
                             </div>
                             <div className="w-0.5 bg-gray-400 self-stretch mx-2"></div>
                             <div className="flex-1 text-left text-gray-200">
