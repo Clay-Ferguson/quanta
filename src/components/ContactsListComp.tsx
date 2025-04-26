@@ -4,6 +4,7 @@ import { useGlobalState } from '../GlobalState';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
+import { util } from '../Util';
 
 export default function ContactsListComp() {
     const { contacts = [] } = useGlobalState();
@@ -172,12 +173,7 @@ export default function ContactsListComp() {
                                                     src={`/api/users/${encodeURIComponent(contact.publicKey)}/avatar`} 
                                                     alt={`${contact.alias}'s avatar`} 
                                                     className="w-10 h-10 rounded-full object-cover border border-gray-600"
-                                                    onError={(e) => {
-                                                        // Replace with icon if image fails to load
-                                                        const target = e.currentTarget as HTMLImageElement;
-                                                        target.style.display = 'none';
-                                                        // target.nextElementSibling!.style.display = 'flex'; //todo-0: figure this out IDE is showing error
-                                                    }}
+                                                    onError={util.onAvatarError}
                                                 />
                                                 <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
                                                     <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />

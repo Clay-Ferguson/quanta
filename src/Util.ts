@@ -42,6 +42,13 @@ class Util {
         });
     };
 
+    onAvatarError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        // Replace with icon if image fails to load
+        const target = e.currentTarget as HTMLImageElement;
+        target.style.display = 'none';
+        (target.nextElementSibling! as any).style.display = 'flex';
+    }
+
     formatFileSize(bytes: number): string {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;

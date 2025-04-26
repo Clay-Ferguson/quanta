@@ -2,6 +2,7 @@ import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { util } from '../Util';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();
@@ -64,12 +65,7 @@ export default function RoomMembersComp() {
                                                 src={`/api/users/${encodeURIComponent(member.publicKey)}/avatar`} 
                                                 alt={`${member.name}'s avatar`} 
                                                 className="w-10 h-10 rounded-full object-cover border border-gray-600"
-                                                onError={(e) => {
-                                                    // Replace with icon if image fails to load
-                                                    const target = e.currentTarget as HTMLImageElement;
-                                                    target.style.display = 'none';
-                                                    // target.nextElementSibling!.style.display = 'flex'; // todo-0: AI keeps adding this line but IDE shows error
-                                                }}
+                                                onError={util.onAvatarError}
                                             />
                                             <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
                                                 <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />

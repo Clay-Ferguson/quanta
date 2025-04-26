@@ -97,10 +97,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                                     src={avatarUrl} 
                                                     alt={`${getDisplayName(msg)}'s avatar`} 
                                                     className="w-12 h-12 rounded-full object-cover border border-gray-600"
-                                                    onError={(e) => {
-                                                        // Replace with icon if image fails to load
-                                                        e.currentTarget.style.display = 'none';
-                                                    }}
+                                                    onError={util.onAvatarError}
                                                 />
                                             ) : (
                                                 <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
