@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faLock, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 import { useGlobalState } from '../GlobalState';
@@ -12,6 +12,9 @@ export default function SettingsPage() {
     const gs = useGlobalState();
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
+    const [userDescription, setUserDescription] = useState('');
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [saveToServer, setSaveToServer] = useState(false);
     const [daysOfHistory, setDaysOfHistory] = useState('');
     const [storageInfo, setStorageInfo] = useState({
@@ -20,6 +23,8 @@ export default function SettingsPage() {
         usage: 0,
         remainingStorage: 0
     });
+    
+    const avatarInputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => {
         const fetchStorageInfo = async () => {
@@ -48,6 +53,16 @@ export default function SettingsPage() {
             setUserName(gs.userName);
         }
         
+        // Initialize userDescription from global state
+        if (gs.userDescription) {
+            setUserDescription(gs.userDescription);
+        }
+        
+        // Initialize avatar preview if available
+        if (gs.userAvatar) {
+            setAvatarPreview(gs.userAvatar.data);
+        }
+        
         // Initialize saveToServer from global state
         setSaveToServer(gs.saveToServer || false);
         
@@ -55,7 +70,7 @@ export default function SettingsPage() {
         if (gs.daysOfHistory !== undefined) {
             setDaysOfHistory(gs.daysOfHistory.toString());
         }
-    }, [gs.userName, gs.saveToServer, gs.daysOfHistory]);
+    }, [gs.userName, gs.userDescription, gs.userAvatar, gs.saveToServer, gs.daysOfHistory]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -81,6 +96,53 @@ export default function SettingsPage() {
             alert("Please enter a valid number of days (0 or greater)");
         }
     };
+    
+    const handleAvatarSelect = () => {
+        if (avatarInputRef.current) {
+            avatarInputRef.current.click();
+        }
+    };
+    
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            // Only accept image files
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file for your avatar');
+                return;
+            }
+            
+            setAvatarFile(file);
+            const previewUrl = URL.createObjectURL(file);
+            setAvatarPreview(previewUrl);
+        }
+    };
+    
+    const saveUserInfo = async () => {
+        let userAvatar = null;
+    
+        if (avatarFile) {
+        // User selected a new file, convert it
+            const base64Data = await util.fileToBase64(avatarFile);
+            userAvatar = {
+                name: avatarFile.name,
+                type: avatarFile.type,
+                size: avatarFile.size,
+                data: base64Data
+            };
+        
+            // Clean up the object URL
+            if (avatarPreview) {
+                URL.revokeObjectURL(avatarPreview);
+            }
+        } else if (gs.userAvatar) {
+        // No new file, but preserve existing avatar
+            userAvatar = gs.userAvatar;
+        }
+
+        app.saveUserInfo(userName, userDescription, userAvatar);
+        alert("Profile information saved successfully!");
+    };
 
     return (
         <div className="page-container">
@@ -102,31 +164,84 @@ export default function SettingsPage() {
                 
                 <div className="space-y-6 max-w-2xl mx-auto">
                     <TitledPanel title="About You">
-                        <div className="mb-4">
-                            <label htmlFor="userName" className="block text-sm font-medium text-blue-300 mb-2">
-                                    User Name
-                            </label>
-                            <input
-                                type="text"
-                                id="userName"
-                                name="userName"
-                                value={userName}
-                                onChange={(e) => setUserName(e.target.value)}
-                                className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
-                                              text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your username"
-                            />
+                        <div className="flex flex-col md:flex-row gap-6 mb-4">
+                            {/* Avatar section */}
+                            <div className="flex flex-col items-center">
+                                <div className="mb-3 w-36 h-36 relative">
+                                    {avatarPreview ? (
+                                        <img 
+                                            src={avatarPreview} 
+                                            alt="Your avatar" 
+                                            className="w-36 h-36 object-cover rounded-full border-2 border-blue-400/30"
+                                        />
+                                    ) : (
+                                        <div className="w-36 h-36 flex items-center justify-center bg-gray-800 rounded-full border-2 border-blue-400/30 text-gray-400">
+                                            <FontAwesomeIcon icon={faUser} className="h-16 w-16" />
+                                        </div>
+                                    )}
+                                    
+                                    <button 
+                                        onClick={handleAvatarSelect}
+                                        className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg"
+                                        title="Upload new avatar"
+                                    >
+                                        <FontAwesomeIcon icon={faUpload} className="h-4 w-4" />
+                                    </button>
+                                    
+                                    {/* Hidden file input */}
+                                    <input 
+                                        type="file"
+                                        ref={avatarInputRef}
+                                        onChange={handleAvatarChange}
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                    />
+                                </div>
+                                <span className="text-xs text-gray-400">Click to upload an avatar</span>
+                            </div>
+                            
+                            {/* User details section */}
+                            <div className="flex-1">
+                                <div className="mb-4">
+                                    <label htmlFor="userName" className="block text-sm font-medium text-blue-300 mb-2">
+                                        User Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="userName"
+                                        name="userName"
+                                        value={userName}
+                                        onChange={(e) => setUserName(e.target.value)}
+                                        className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your username"
+                                    />
+                                </div>
+                                
+                                <div className="mb-4">
+                                    <label htmlFor="userDescription" className="block text-sm font-medium text-blue-300 mb-2">
+                                        About Me
+                                    </label>
+                                    <textarea
+                                        id="userDescription"
+                                        name="userDescription"
+                                        value={userDescription}
+                                        onChange={(e) => setUserDescription(e.target.value)}
+                                        rows={4}
+                                        className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                                        placeholder="Tell others about yourself..."
+                                    />
+                                </div>
+                            </div>
                         </div>
                         
                         <div className="flex justify-end">
                             <button 
                                 className="btn-primary"
-                                onClick={() => {
-                                    app.setUserName(userName);
-                                    alert("Username saved successfully!");
-                                }}
+                                onClick={saveUserInfo}
                             >
-                                    Save
+                                Save
                             </button>
                         </div>
                     </TitledPanel>

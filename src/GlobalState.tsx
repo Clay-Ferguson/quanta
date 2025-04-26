@@ -20,6 +20,8 @@ export interface GlobalState {
     saveToServer?: boolean;
     daysOfHistory?: number;
     roomHistory?: Array<RoomHistoryItem>;
+    userDescription?: string;
+    userAvatar?: any; // todo-0: what kind is this?
 }
 
 const initialState: GlobalState = {
@@ -37,6 +39,8 @@ const initialState: GlobalState = {
     saveToServer: true,
     daysOfHistory: 30,
     roomHistory: [],
+    userDescription: '',
+    userAvatar: null
 };
 
 export type GlobalAction = { type: string, payload: any};

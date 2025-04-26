@@ -18,6 +18,8 @@ export interface RoomHistoryItem {
 
 export enum DBKeys {
     userName = 'userName',
+    userDescription = 'userDescription',
+    userAvatar = 'userAvatar',
     roomName = 'roomName',
     contacts = 'contacts',
     keyPair = 'keyPair',
