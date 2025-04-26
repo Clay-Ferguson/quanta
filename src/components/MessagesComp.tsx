@@ -69,7 +69,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
     useEffect(() => scrollEffects.effect(elmRef), []);
 
     // Note; This looks silly but it's required to have the upper case tag name.
-    const Tag = tag;
+    const Tag = tag; 
     
     return (
         <Tag 

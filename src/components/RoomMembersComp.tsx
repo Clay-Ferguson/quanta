@@ -1,13 +1,25 @@
 import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 
 export default function RoomMembersComp() {
+    const gs = useGlobalState();
     // get 'participants' which is a type of Map<string, User> | null
     const { participants, contacts } = useGlobalState();
 
     // Sort contacts alphabetically by name
     const sortedParticipants: any[] = participants ? Array.from(participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
 
+    // let's add ourselves as the first member in the list
+    if (gs.keyPair && gs.userName) {
+        sortedParticipants.unshift({
+            publicKey: gs.keyPair.publicKey,
+            name: gs.userName,
+            avatar: gs.userAvatar ? gs.userAvatar.data : null
+        });
+    }
+    
     if (contacts) {
         // scan all sorted participants and for each one that's a known contact (looked up by public key) add a property 'alias' to it for display below.
         for (const member of sortedParticipants) {;
@@ -24,6 +36,9 @@ export default function RoomMembersComp() {
                 <table className="min-w-full divide-y divide-gray-700">
                     <thead className="bg-gray-800">
                         <tr>
+                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Avatar
+                            </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                                 Alias
                             </th>
@@ -43,6 +58,24 @@ export default function RoomMembersComp() {
                         {sortedParticipants.length > 0 ? (
                             sortedParticipants.map((member: any) => (
                                 <tr key={member.publicKey} className="hover:bg-gray-750">
+                                    <td className="px-3 py-2 whitespace-nowrap">
+                                        <div className="flex-shrink-0">
+                                            <img 
+                                                src={`/api/users/${encodeURIComponent(member.publicKey)}/avatar`} 
+                                                alt={`${member.name}'s avatar`} 
+                                                className="w-10 h-10 rounded-full object-cover border border-gray-600"
+                                                onError={(e) => {
+                                                    // Replace with icon if image fails to load
+                                                    const target = e.currentTarget as HTMLImageElement;
+                                                    target.style.display = 'none';
+                                                    // target.nextElementSibling!.style.display = 'flex'; // todo-0: AI keeps adding this line but IDE shows error
+                                                }}
+                                            />
+                                            <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
+                                                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.alias || ''}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.name}</td>
                                     <td className="px-3 py-2">

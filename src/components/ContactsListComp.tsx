@@ -3,7 +3,7 @@ import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 
 export default function ContactsListComp() {
     const { contacts = [] } = useGlobalState();
@@ -92,7 +92,7 @@ export default function ContactsListComp() {
                         disabled={selectedContacts.size === 0}
                         onClick={handleDeleteSelected}
                     >
-            Delete Selected
+                        Delete Selected
                     </button>
                 </div>
                 <div>
@@ -100,7 +100,7 @@ export default function ContactsListComp() {
                         className="btn-primary"
                         onClick={handleAddContact}
                     >
-            Add Contact
+                        Add Contact
                     </button>
                 </div>
             </div>
@@ -116,6 +116,9 @@ export default function ContactsListComp() {
                                     checked={contacts.length > 0 && selectedContacts.size === contacts.length}
                                     onChange={handleSelectAll}
                                 />
+                            </th>
+                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Avatar
                             </th>
                             <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                                 Alias
@@ -162,6 +165,24 @@ export default function ContactsListComp() {
                                                 checked={selectedContacts.has(contact.publicKey)}
                                                 onChange={() => toggleContactSelection(contact.publicKey)}
                                             />
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap">
+                                            <div className="flex-shrink-0">
+                                                <img 
+                                                    src={`/api/users/${encodeURIComponent(contact.publicKey)}/avatar`} 
+                                                    alt={`${contact.alias}'s avatar`} 
+                                                    className="w-10 h-10 rounded-full object-cover border border-gray-600"
+                                                    onError={(e) => {
+                                                        // Replace with icon if image fails to load
+                                                        const target = e.currentTarget as HTMLImageElement;
+                                                        target.style.display = 'none';
+                                                        // target.nextElementSibling!.style.display = 'flex'; //todo-0: figure this out IDE is showing error
+                                                    }}
+                                                />
+                                                <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
+                                                    <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>
                                         <td className="px-3 py-2">
@@ -229,6 +250,11 @@ const ContactEditRow: React.FC<{
         <tr className="bg-gray-750">
             <td className="px-3 py-2 whitespace-nowrap text-center">
                 {isNew ? "New" : "✎"}
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap text-center">
+                <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+                    <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
+                </div>
             </td>
             <td className="px-3 py-2 whitespace-nowrap">
                 <input
