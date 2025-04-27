@@ -96,12 +96,6 @@ export default function AdminPage() {
                 <div className="space-y-6 max-w-2xl mx-auto">
 
                     <TitledPanel title="Server Data">
-                        {/* <button 
-                            onClick={() => crypt.openRecentAttachments(gs.keyPair!)}
-                            className="btn-secondary"
-                        >
-                                    Open Recent Attachments
-                        </button> */}
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
                             className="btn-secondary"

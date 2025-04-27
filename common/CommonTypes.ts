@@ -13,6 +13,13 @@ export interface ChatMessageIntf extends SignableObject {
     attachments?: FileBase64Intf[];
 }
 
+export interface UserProfile {
+    name: string;
+    description: string;
+    avatar: FileBase64Intf | null;
+    publicKey: string;
+}
+
 export interface User {
     name: string;
     publicKey: string;

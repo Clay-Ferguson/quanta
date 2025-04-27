@@ -40,6 +40,7 @@ export enum PageNames{
     recentAttachments = 'RecentAttachmentsPage',
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
+    userProfile = 'UserProfilePage',
 }
 
 export type ChatMessage = ChatMessageIntf & {

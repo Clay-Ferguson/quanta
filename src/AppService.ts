@@ -110,6 +110,13 @@ export class AppService implements AppServiceTypes  {
         return hadOldMessages; // return true if we removed any messages
     }
 
+    showUserProfile = async (publicKey: string) => {
+        // set page to userprofile 
+        this.setTopPage(this.gs, PageNames.userProfile);
+        this.gs!.userProfile = {name: '', publicKey, description: '', avatar: null};
+        this.gd!({ type: 'setUserProfile', payload: this.gs});
+    }
+
     saveLinkPreviewInfo = async (url: string, data: any) => {
         // Save the link preview data to IndexedDB
         await this.storage?.setItem(DBKeys.linkPreview + url, data);

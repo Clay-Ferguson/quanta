@@ -14,6 +14,7 @@ import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './Global
 import {app} from './AppService';
 import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
+import UserProfilePage from './pages/UserProfilePage.tsx';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
@@ -60,6 +61,8 @@ function PageRouter() {
         return <RoomInfoPage />;
     case PageNames.rooms:
         return <RoomsPage />;
+    case PageNames.userProfile:
+        return <UserProfilePage />;
     case PageNames.quantaChat: // fall thru. to default
     default:
         return <QuantaChatPage />;

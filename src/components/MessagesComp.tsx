@@ -7,6 +7,7 @@ import { faTriangleExclamation, faCertificate, faUser } from '@fortawesome/free-
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
+import { app } from '../AppService';
 
 interface MainCompProps {
     id: string;
@@ -89,7 +90,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                         >
                             <div className="flex">
                                 <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
-                                    <div className="flex items-center">
+                                    <div className="flex items-center" onClick={() => app.showUserProfile(msg.publicKey!)}>
                                         {/* Avatar */}
                                         <div className="mr-2 flex-shrink-0">
                                             {avatarUrl ? (
