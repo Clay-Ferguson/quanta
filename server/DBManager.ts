@@ -95,21 +95,41 @@ export class DBManager {
         await this.db!.exec('PRAGMA busy_timeout = 5000;'); // 5 second timeout
     }
 
+    private checkDb = (): void => {
+        if (!this.db) {
+            throw new Error('Database not initialized. Call getInstance() first.');   
+        }
+    }
+
+    private runTrans = async (fn: () => Promise<any>): Promise<any> => {
+        this.checkDb();
+        let ret = null;
+        try {
+            await this.db!.run('BEGIN TRANSACTION');
+            ret = await fn();
+            await this.db!.run('COMMIT');
+        } catch (error) {
+            console.error('Transaction error:', error);
+            try {
+                await this.db!.run('ROLLBACK');
+            } catch (rollbackError) {
+                console.error('Rollback failed:', rollbackError);
+            }
+        }
+        return ret;
+    }
+
     /**
     * Removes all messages from a specified room
     */
     public async wipeRoom(roomName: string): Promise<void> {
         console.log(`Wiping all messages from room: ${roomName}`);
-    
-        try {
-        // Begin transaction
-            await this.db!.run('BEGIN TRANSACTION');
         
+        this.runTrans(async () => {
             // Get the room ID
             const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
             if (!room) {
                 console.log(`Room '${roomName}' not found, nothing to wipe`);
-                await this.db!.run('COMMIT');
                 return;
             }
         
@@ -128,33 +148,17 @@ export class DBManager {
         
             // Delete all messages in the room
             const result = await this.db!.run('DELETE FROM messages WHERE room_id = ?', room.id);
-        
-            // Commit transaction
-            await this.db!.run('COMMIT');
             console.log(`Successfully wiped ${result.changes} messages from room '${roomName}'`);
-        } catch (error) {
-            console.error(`Error wiping room '${roomName}':`, error);
-            // Rollback if error
-            try {
-                if (this.db) {
-                    await this.db.run('ROLLBACK');
-                }
-            } catch (rollbackError) {
-                console.error('Rollback failed:', rollbackError);
-            }
-        }
+        });
     }
 
     public async createTestData(): Promise<void> {
         const roomName = 'test';
         console.log('Creating test data...');
         
-        try {
+        this.runTrans(async () => {
             // First, wipe the test room to ensure we start fresh
             await this.wipeRoom(roomName);
-
-            // Begin transaction
-            await this.db!.run('BEGIN TRANSACTION');
             
             // Get or create the 'test' room
             const roomId = await this.getOrCreateRoom(roomName);
@@ -195,31 +199,14 @@ export class DBManager {
                     );
                 }
             }
-            
-            // Commit transaction
-            await this.db!.run('COMMIT');
             console.log('Successfully created 70 test messages in the "test" room');
-            
-        } catch (error) {
-            console.error('Error creating test data:', error);
-            // Rollback if error
-            try {
-                if (this.db) {
-                    await this.db.run('ROLLBACK');
-                }
-            } catch (rollbackError) {
-                console.error('Rollback failed:', rollbackError);
-            }
-        }
+        });
     }
 
     public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         console.log('Persisting message:', message);
 
-        try {
-            // Begin transaction
-            await this.db!.run('BEGIN TRANSACTION');
-
+        return this.runTrans(async () => {
             // Ensure room exists
             const roomId = await this.getOrCreateRoom(roomName);
             console.log('    Room ID:', roomId);
@@ -268,24 +255,9 @@ export class DBManager {
                 }
             }
 
-            // Commit transaction
-            await this.db!.run('COMMIT');
-            console.log('    Message persisted successfully');
+            console.log('Message persisted successfully');
             return true;
-
-        } catch (error) {
-            console.error('Error persisting message:', error);
-            // Only try to rollback if we have a database connection
-            try {
-                if (this.db) {
-                    await this.db.run('ROLLBACK');
-                }
-            } catch (rollbackError) {
-                // If rollback fails (e.g., no transaction active), just log it
-                console.error('Rollback failed:', rollbackError);
-            }
-            return false;
-        }
+        });
     }
 
     private async getOrCreateRoom(roomName: string): Promise<number> {
@@ -437,7 +409,6 @@ export class DBManager {
                     };
                 });
             }
-            
             return messages;
         } catch (error) {
             console.error('Error retrieving messages by IDs:', error);
@@ -587,7 +558,6 @@ export class DBManager {
     async serveAttachment(req: any, res: any): Promise<void> {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
-                
             if (isNaN(attachmentId)) {
                 return res.status(400).send('Invalid attachment ID');
             }
