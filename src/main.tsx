@@ -32,7 +32,7 @@ function AppServiceConnector() {
 
 // Component to handle conditional page rendering
 function PageRouter() {
-    const { page, userName, appInitialized } = useGlobalState();
+    const { pages, userName, appInitialized } = useGlobalState();
 
     // Show loading indicator while app is initializing
     if (!appInitialized) {
@@ -45,7 +45,7 @@ function PageRouter() {
         return <SettingsPage />;
     }
     
-    switch (page) {
+    switch (pages![pages!.length - 1]) {
     case PageNames.settings:
         return <SettingsPage />;
     case PageNames.contacts:

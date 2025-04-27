@@ -7,7 +7,8 @@ const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 export interface GlobalState {
     keyPair?: KeyPairHex;
-    page?: string,
+    // page history so we can go back (we generally don's support going forward tho)
+    pages?: Array<string>; 
     connecting?: boolean;
     connected?: boolean;
     roomName?: string; 
@@ -26,7 +27,7 @@ export interface GlobalState {
 
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
-    page: PageNames.quantaChat,
+    pages: [PageNames.quantaChat],
     connecting: false,
     connected: false, 
     roomName: '',

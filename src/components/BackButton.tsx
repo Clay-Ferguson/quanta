@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PageNames } from "../AppServiceTypes";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons/faArrowLeft";
 import { app } from "../AppService";
 
@@ -8,7 +7,7 @@ import { app } from "../AppService";
 export default function BackButton() {
     return (
         <button 
-            onClick={() => app.goToPage(PageNames.quantaChat)}
+            onClick={() => app.goBack()}
             className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
             title="Back"
         >

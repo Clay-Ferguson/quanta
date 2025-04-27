@@ -158,7 +158,7 @@ export class AppService implements AppServiceTypes  {
 
         // if no username we send to settings page.
         if (!userName) {
-            state.page = PageNames.settings;
+            state.pages?.push(PageNames.settings);
         }
 
         this.gd!({ type: 'restoreSavedValues', payload: state});
@@ -169,8 +169,24 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setFullSizeImage', payload: this.gs});
     }
 
+    setTopPage = (gs: GlobalState | null, page: string): Array<string> | undefined => {
+        // if the page is NOT already on top of the stack, then push it
+        if (gs!.pages && gs!.pages[gs!.pages.length - 1] !== page) {
+            gs!.pages?.push(page);
+        } 
+        return gs!.pages;
+    }
+
     goToPage = (page: string) => {
-        this.gs!.page = page; 
+        this.setTopPage(this.gs, page);
+        this.gd!({ type: 'setPage', payload: this.gs });
+    }
+
+    goBack = () => {
+        if (this.gs && this.gs.pages && this.gs.pages.length > 1) {
+            // Remove the last page from the stack
+            this.gs.pages.pop();
+        }
         this.gd!({ type: 'setPage', payload: this.gs });
     }
 
@@ -327,7 +343,6 @@ export class AppService implements AppServiceTypes  {
         await this.setRoomAndUserName(roomName, userName!);
         
         const roomHistory: RoomHistoryItem[] = await this.updateRoomHistory(roomName);
-
         this.gd!({ type: 'connect', payload: { 
             userName,
             roomName,
@@ -335,7 +350,7 @@ export class AppService implements AppServiceTypes  {
             connected: true,
             connecting: false,
             roomHistory,
-            page: PageNames.quantaChat
+            pages: this.setTopPage(this.gs, PageNames.quantaChat)
         }});
 
         // set connected DB key

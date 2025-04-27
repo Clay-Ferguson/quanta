@@ -25,8 +25,6 @@ export interface FileBase64Intf {
     data: string; // base64 encoded
 }
 
-// todo-0: move all these below into an RTCTypes file.
-
 export interface WebRTCJoin extends SignableObject {
     type: 'join';
     room: string,
