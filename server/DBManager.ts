@@ -365,7 +365,87 @@ export class DBManager {
     /**
      * Get multiple messages by their IDs (filtering by room for security)
      */
-    async getMessagesByIds(messageIds: string[], roomId: string): Promise<FileBase64Intf[]> {
+    async getMessagesByIds(messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> {
+        if (!messageIds || messageIds.length === 0) {
+            return [];
+        }
+
+        try {
+            // First, get the room_id from the name or id
+            const room = await this.db!.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            if (!room) {
+                return [];
+            }
+        
+            // Using parameterized query with placeholders for security
+            const placeholders = messageIds.map(() => '?').join(',');
+        
+            // Join messages and attachments in a single query
+            const query = `
+            SELECT 
+                m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature,
+                a.id as attachment_id, a.name, a.type, a.size, a.data
+            FROM messages m
+            LEFT JOIN attachments a ON m.id = a.message_id
+            WHERE m.id IN (${placeholders}) AND m.room_id = ?
+            ORDER BY m.timestamp, a.id
+        `;
+        
+            // Add room_id as the last parameter
+            const params = [...messageIds, room.id];
+            const rows = await this.db!.all(query, params);
+        
+            // Process the result into proper structure
+            const messageMap = new Map<string, ChatMessageIntf>();
+        
+            for (const row of rows) {
+            // If this is a new message id we haven't processed yet
+                if (!messageMap.has(row.id)) {
+                    // Create a new message object
+                    const message: ChatMessageIntf = {
+                        id: row.id,
+                        timestamp: row.timestamp,
+                        sender: row.sender,
+                        content: row.content,
+                        publicKey: row.publicKey,
+                        signature: row.signature,
+                        attachments: []
+                    };
+                    messageMap.set(row.id, message);
+                }
+            
+                // If this row has attachment data, add it to the message
+                if (row.attachment_id) {
+                    const message = messageMap.get(row.id)!;
+                    let dataUrl = '';
+                    if (row.data) {
+                        dataUrl = `data:${row.type};base64,${Buffer.from(row.data).toString('base64')}`;
+                    }
+                
+                    message.attachments!.push({
+                        name: row.name,
+                        type: row.type,
+                        size: row.size,
+                        data: dataUrl
+                    });
+                }
+            }
+        
+            // Convert the map to an array and return
+            return Array.from(messageMap.values());
+        } catch (error) {
+            console.error('Error retrieving messages by IDs:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get multiple messages by their IDs (filtering by room for security)
+     * 
+     * DO NOT DELETE (yet). This is the original AI-generated method which was a very inefficient way to load Messages
+     * but I will keep it here for now as a backup in case the new method has issues.
+     */
+    async getMessagesByIds_old(messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> {
         if (!messageIds || messageIds.length === 0) {
             return [];
         }

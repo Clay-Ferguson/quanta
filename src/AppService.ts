@@ -679,7 +679,7 @@ export class AppService implements AppServiceTypes  {
         // Next get room messages from server using our new optimized approach
         if (this.gs!.saveToServer) {
             try {
-            // Step 1: Get all message IDs from the server for this room
+                // Step 1: Get all message IDs from the server for this room
                 const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
                 if (!idsResponse.ok) {
                     throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);

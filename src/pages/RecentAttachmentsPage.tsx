@@ -102,7 +102,7 @@ export default function RecentAttachmentsPage() {
                 // Remove the deleted attachment from the list
                 setAttachments(prev => prev.filter(att => att.id !== id));
 
-                // now scan the 'gs.messages' array which is an array of ChatMessage objects and remove any attacments that are in the 'attachments' array of the ChatMessage object
+                // now scan the 'gs.messages' array which is an array of ChatMessage objects and remove any attachments that are in the 'attachments' array of the ChatMessage object
                 // todo-0: oops we don't have the attachment ID available in the message object yet.
                 // gs.messages = gs.messages!.map(msg => {
                 //     if (msg.attachments) {
