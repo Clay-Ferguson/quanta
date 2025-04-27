@@ -117,6 +117,11 @@ app.get('/api/attachments/:attachmentId', async (req, res) => {
     await db.serveAttachment(req, res);
 });
 
+app.post('/api/attachments/:attachmentId/delete', crypt.verifyAdminHTTPSignature, async (req, res) => {
+    console.log('Deleting attachment:', req.params.attachmentId);
+    await db.deleteAttachment(req, res);
+});
+
 // API endpoint to get messages by their IDs for a specific room
 app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
     console.log('getMessagesByIds for room', req.params.roomId);

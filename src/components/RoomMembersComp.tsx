@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { util } from '../Util';
 import { app } from '../AppService';
+import PublicKeyComp from './PublicKeyComp';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();
@@ -76,19 +77,7 @@ export default function RoomMembersComp() {
                                     <td className="px-3 py-2 whitespace-nowrap">{member.alias || ''}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.name}</td>
                                     <td className="px-3 py-2">
-                                        <div className="flex items-center">
-                                            <span className="font-mono text-sm truncate max-w-[200px]" title={member.publicKey}>
-                                                {member.publicKey.length > 20
-                                                    ? `${member.publicKey.substring(0, 10)}...${member.publicKey.substring(member.publicKey.length - 10)}`
-                                                    : member.publicKey}
-                                            </span>
-                                            <button 
-                                                className="ml-2 text-xs bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
-                                                onClick={() => navigator.clipboard.writeText(member.publicKey)}
-                                            >
-                                                Copy
-                                            </button>
-                                        </div>
+                                        <PublicKeyComp publicKey={member.publicKey} />
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                         {!member.alias && member.publicKey !== gs.keyPair?.publicKey ? (

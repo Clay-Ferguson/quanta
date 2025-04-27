@@ -118,7 +118,12 @@ export default function SettingsPage() {
         }
     };
     
-    const saveUserInfo = async () => {
+    const previewUserInfo = async () => {
+        await saveUserInfo(false);
+        app.showUserProfile(gs.keyPair!.publicKey);
+    };
+
+    const saveUserInfo = async (showConfirm: boolean) => {
         let userAvatar = null;
 
         if (avatarFile) {
@@ -134,8 +139,10 @@ export default function SettingsPage() {
             userAvatar = gs.userAvatar
         }
 
-        app.saveUserInfo(userName, userDescription, userAvatar);
-        alert("Profile information saved successfully!");
+        await app.saveUserInfo(userName, userDescription, userAvatar);
+        if (showConfirm) {
+            alert("Profile information saved successfully!");
+        }
     };
 
     return (
@@ -232,8 +239,14 @@ export default function SettingsPage() {
                         
                         <div className="flex justify-end">
                             <button 
+                                className="btn-primary mr-2"
+                                onClick={previewUserInfo}
+                            >
+                                Preview
+                            </button>
+                            <button 
                                 className="btn-primary"
-                                onClick={saveUserInfo}
+                                onClick={() => saveUserInfo(true)}
                             >
                                 Save
                             </button>

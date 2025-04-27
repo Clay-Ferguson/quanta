@@ -5,6 +5,9 @@ import { useGlobalState } from '../GlobalState';
 import { UserProfile } from '../../common/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+import PublicKeyComp from '../components/PublicKeyComp';
+import Markdown from '../components/MarkdownComp';
+import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 
 export default function UserProfilePage() {
     const { userProfile } = useGlobalState();
@@ -64,8 +67,7 @@ export default function UserProfilePage() {
                 <div className="space-y-6 max-w-2xl mx-auto">
                     {loading ? (
                         <div className="flex justify-center items-center h-64">
-                            {/* <LoadingSpinner size="large" /> todo-0: tried to use this as if it's in 'components' folder. Is is?*/}
-                            Loading...
+                            <LoadingIndicatorComp />
                         </div>
                     ) : error ? (
                         <div className="bg-red-900/30 text-red-300 p-4 rounded-lg text-center">
@@ -95,7 +97,7 @@ export default function UserProfilePage() {
                                     <h1 className="text-2xl font-bold text-white mb-2">{profileData.name || "Unnamed User"}</h1>
                                     <div className="bg-gray-700 p-2 rounded text-sm text-gray-300 overflow-hidden">
                                         <div className="font-semibold mb-1">Public Key:</div>
-                                        <div className="font-mono break-all text-xs">{profileData.publicKey}</div>
+                                        <PublicKeyComp publicKey={profileData.publicKey} />
                                     </div>
                                 </div>
                             </div>
@@ -105,7 +107,7 @@ export default function UserProfilePage() {
                                 <h2 className="text-xl font-semibold text-white mb-3">About</h2>
                                 <div className="bg-gray-700 p-4 rounded-lg text-gray-200">
                                     {profileData.description ? (
-                                        <p className="whitespace-pre-wrap">{profileData.description}</p>
+                                        <Markdown markdownContent={profileData.description} />
                                     ) : (
                                         <p className="text-gray-400 italic">No description provided</p>
                                     )}

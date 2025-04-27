@@ -5,15 +5,16 @@ import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import { util } from '../Util';
+import PublicKeyComp from './PublicKeyComp';
 
 export default function ContactsListComp() {
-    const { contacts = [] } = useGlobalState();
+    const gs = useGlobalState();
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
     const [editingContact, setEditingContact] = useState<string | null>(null);
     const [newContact, setNewContact] = useState<Contact | null>(null);
 
     // Sort contacts alphabetically by name
-    const sortedContacts = [...contacts].sort((a, b) => a.alias.localeCompare(b.alias));
+    const sortedContacts = [...gs.contacts!].sort((a, b) => a.alias.localeCompare(b.alias));
 
     const toggleContactSelection = (publicKey: string) => {
         const newSelected = new Set(selectedContacts);
@@ -26,10 +27,10 @@ export default function ContactsListComp() {
     };
 
     const handleSelectAll = () => {
-        if (selectedContacts.size === contacts.length) {
+        if (selectedContacts.size === gs.contacts!.length) {
             setSelectedContacts(new Set());
         } else {
-            setSelectedContacts(new Set(contacts.map(contact => contact.publicKey)));
+            setSelectedContacts(new Set(gs.contacts!.map(contact => contact.publicKey)));
         }
     };
 
@@ -48,14 +49,14 @@ export default function ContactsListComp() {
         setEditingContact(null);
     };
 
-    const handleDelete = (contact: any) => {
-        if (!confirm(`Are you sure you want to delete contact '${contact.name}' ?`)) return;
-        const updatedContacts = contacts.filter(c => c.publicKey !== contact.publicKey);
+    const handleDelete = (contact: Contact) => {
+        if (!confirm(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
+        const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
         app._setContacts(updatedContacts);
     };
 
     const handleDeleteSelected = () => {
-        const updatedContacts = contacts.filter(contact => !selectedContacts.has(contact.publicKey));
+        const updatedContacts = gs.contacts!.filter(contact => !selectedContacts.has(contact.publicKey));
         app._setContacts(updatedContacts);
         setSelectedContacts(new Set());
     };
@@ -69,18 +70,18 @@ export default function ContactsListComp() {
         contact.alias = contact.alias.trim();
 
         // If alias exists show error about that
-        if (contacts.some(c => c.alias === contact.alias)) {
+        if (gs.contacts!.some(c => c.alias === contact.alias)) {
             alert('Alias already exists');
             return;
         }
 
         // If alias exists show error about that
-        if (contacts.some(c => c.publicKey === contact.publicKey)) {
+        if (gs.contacts!.some(c => c.publicKey === contact.publicKey)) {
             alert('Alias already exists');
             return;
         }
         
-        app._setContacts([...contacts, contact]);
+        app._setContacts([...gs.contacts!, contact]);
         setNewContact(null);
     }
 
@@ -114,7 +115,7 @@ export default function ContactsListComp() {
                                 <input 
                                     type="checkbox" 
                                     className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
-                                    checked={contacts.length > 0 && selectedContacts.size === contacts.length}
+                                    checked={gs.contacts!.length > 0 && selectedContacts.size === gs.contacts!.length}
                                     onChange={handleSelectAll}
                                 />
                             </th>
@@ -149,7 +150,7 @@ export default function ContactsListComp() {
                                         key={contact.publicKey}
                                         contact={contact}
                                         onSave={(updatedContact) => {
-                                            const updatedContacts = contacts.map(c => 
+                                            const updatedContacts = gs.contacts!.map(c => 
                                                 c.publicKey === contact.publicKey ? updatedContact : c
                                             );
                                             app._setContacts(updatedContacts);
@@ -182,19 +183,7 @@ export default function ContactsListComp() {
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>
                                         <td className="px-3 py-2">
-                                            <div className="flex items-center">
-                                                <span className="font-mono text-sm truncate max-w-[200px]" title={contact.publicKey}>
-                                                    {contact.publicKey.length > 20
-                                                        ? `${contact.publicKey.substring(0, 10)}...${contact.publicKey.substring(contact.publicKey.length - 10)}`
-                                                        : contact.publicKey}
-                                                </span>
-                                                <button 
-                                                    className="ml-2 text-xs bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded"
-                                                    onClick={() => navigator.clipboard.writeText(contact.publicKey)}
-                                                >
-                                                    Copy
-                                                </button>
-                                            </div>
+                                            <PublicKeyComp publicKey={contact.publicKey} />
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                             <button

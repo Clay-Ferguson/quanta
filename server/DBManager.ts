@@ -582,6 +582,58 @@ export class DBManager {
         }
     }
 
+    async deleteAttachment(req: any, res: any): Promise<void> {
+        try {
+            const attachmentId = parseInt(req.params.attachmentId);
+            if (isNaN(attachmentId)) {
+                return res.status(400).json({ error: 'Invalid attachment ID' });
+            }
+                
+            const success = await this.deleteAttachmentById(attachmentId);
+                
+            if (success) {
+                res.json({ success: true });
+            } else {
+                res.status(404).json({ error: 'Attachment not found or could not be deleted' });
+            }
+        } catch (error) {
+            console.error('Error in deleteAttachment handler:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    async deleteAttachmentById(id: number): Promise<boolean> {
+        try {
+            if (isNaN(id) || id <= 0) {
+                console.error('Invalid attachment ID:', id);
+                return false;
+            }
+
+            // First verify the attachment exists
+            const attachment = await this.db!.get('SELECT id FROM attachments WHERE id = ?', [id]);
+            if (!attachment) {
+                console.log(`Attachment with ID ${id} not found`);
+                return false;
+            }
+
+            // Delete the attachment
+            const result: any = await this.db!.run('DELETE FROM attachments WHERE id = ?', [id]);
+            
+            // Check if a row was affected
+            const success = result.changes > 0;
+            if (success) {
+                console.log(`Successfully deleted attachment ID: ${id}`);
+            } else {
+                console.log(`No attachment deleted with ID: ${id}`);
+            }
+            
+            return success;
+        } catch (error) {
+            console.error('Error deleting attachment:', error);
+            return false;
+        }
+    }
+
     /**
      * Gets the most recent attachments
      * @param limit Maximum number of attachments to return
