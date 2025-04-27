@@ -489,6 +489,29 @@ export class AppService implements AppServiceTypes  {
         this.saveMessages();
     }
 
+    addContact = async (user: User) => {
+        if (!this.gs || !this.gs!.contacts) {
+            console.warn('No contacts available to add a new contact');
+            return;
+        }
+
+        // Check if the user is already in the contacts
+        const existingContact = this.gs!.contacts.find((contact: Contact) => contact.publicKey === user.publicKey);
+        if (existingContact) {
+            console.warn('User is already in contacts');
+            return;
+        }
+
+        // Add the new contact
+        this.gs!.contacts.push({
+            publicKey: user.publicKey,
+            alias: user.name,
+        });
+
+        await this.storage?.setItem(DBKeys.contacts, this.gs!.contacts);
+        this.gd!({ type: 'addContact', payload: this.gs});
+    }
+
     existsInContacts(msg: ChatMessage) {
         if (!this.gs || !this.gs!.contacts) {
             return false;

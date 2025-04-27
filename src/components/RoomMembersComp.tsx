@@ -1,8 +1,9 @@
 import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { util } from '../Util';
+import { app } from '../AppService';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();
@@ -90,7 +91,23 @@ export default function RoomMembersComp() {
                                         </div>
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                        TBD
+                                        {!member.alias && member.publicKey !== gs.keyPair?.publicKey ? (
+                                            <button 
+                                                className="text-xs bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded flex items-center"
+                                                onClick={() => {
+                                                    app.addContact(member);
+                                                    alert(`Added ${member.name} to contacts`);
+                                                }}
+                                                title="Add to contacts"
+                                            >
+                                                <FontAwesomeIcon icon={faUserPlus} className="mr-1" />
+                                                Add
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-gray-500">
+                                                {member.alias ? "In Contacts" : "You"}
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                             ))
@@ -98,7 +115,7 @@ export default function RoomMembersComp() {
                             
                             <tr>
                                 <td colSpan={5} className="px-3 py-6 text-center text-gray-400">
-                    No one else in room.
+                                    No one else in room.
                                 </td>
                             </tr>                            
                         )}
