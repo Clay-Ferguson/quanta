@@ -362,6 +362,20 @@ export class AppService implements AppServiceTypes  {
 
         // set connected DB key
         await this.storage?.setItem(DBKeys.connected, true);
+
+        const scrollToBottom = () => {
+            const chatLog = document.getElementById('chatLog');
+            if (chatLog) {
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        };
+        
+        // Additional scroll attempts with increasing delays
+        setTimeout(scrollToBottom, 500);
+        setTimeout(scrollToBottom, 1000);
+        setTimeout(scrollToBottom, 2500);
+
+        console.log("Connected to room: " + roomName);
     }
 
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {

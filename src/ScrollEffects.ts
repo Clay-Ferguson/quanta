@@ -48,16 +48,17 @@ class ScrollEffects {
         if (!elm) return;
     
         const handleScroll = () => {
+            const elm = elmRef.current;
             if (!elm) return;
             
             // Only save scroll position if user has manually scrolled (not at the bottom)
             const isAtBottom = elm.scrollHeight - elm.scrollTop <= elm.clientHeight + 50;
             
             if (!isAtBottom) {
-                console.log(`Restoring scroll position for ${elmRef.current?.id}: ${elm.scrollTop}`);
+                // console.log(`Saving scroll position for ${elmRef.current?.id}: ${elm.scrollTop}`);
                 this.scrollPositions.set(elmRef.current?.id, elm.scrollTop);
             } else {
-                console.log(`Restoring scroll position for ${elmRef.current?.id}: BOTTOM`);
+                // console.log(`Saving scroll position for ${elmRef.current?.id}: BOTTOM`);
                 this.scrollPositions.delete(elmRef.current?.id);
             }
         };
