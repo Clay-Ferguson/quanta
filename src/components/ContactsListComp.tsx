@@ -4,8 +4,8 @@ import { useGlobalState } from '../GlobalState';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
-import { util } from '../Util';
 import PublicKeyComp from './PublicKeyComp';
+import AvatarImageComp from './AvatarImageComp';
 
 export default function ContactsListComp() {
     const gs = useGlobalState();
@@ -170,15 +170,10 @@ export default function ContactsListComp() {
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">
                                             <div className="flex-shrink-0">
-                                                <img 
-                                                    src={`/api/users/${encodeURIComponent(contact.publicKey)}/avatar`} 
-                                                    alt={`${contact.alias}'s avatar`} 
-                                                    className="w-10 h-10 rounded-full object-cover border border-gray-600"
-                                                    onError={util.onAvatarError}
+                                                <AvatarImageComp
+                                                    publicKey={contact.publicKey}
+                                                    name={contact.alias || ''}
                                                 />
-                                                <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
-                                                    <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
-                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>

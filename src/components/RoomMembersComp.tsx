@@ -1,10 +1,10 @@
 import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { util } from '../Util';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
 import PublicKeyComp from './PublicKeyComp';
+import AvatarImageComp from './AvatarImageComp';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();
@@ -63,15 +63,10 @@ export default function RoomMembersComp() {
                                 <tr key={member.publicKey} className="hover:bg-gray-750">
                                     <td className="px-3 py-2 whitespace-nowrap">
                                         <div className="flex-shrink-0">
-                                            <img 
-                                                src={`/api/users/${encodeURIComponent(member.publicKey)}/avatar`} 
-                                                alt={`${member.name}'s avatar`} 
-                                                className="w-10 h-10 rounded-full object-cover border border-gray-600"
-                                                onError={util.onAvatarError}
+                                            <AvatarImageComp
+                                                publicKey={member.publicKey}
+                                                name={member.name || ''}
                                             />
-                                            <div className="w-10 h-10 bg-gray-700 rounded-full items-center justify-center hidden">
-                                                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
-                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.alias || ''}</td>

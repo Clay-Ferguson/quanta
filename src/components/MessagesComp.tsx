@@ -3,11 +3,12 @@ import AttachmentComp from './AttachmentComp';
 import { ChatMessage, Contact } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation, faCertificate, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
 import { app } from '../AppService';
+import AvatarImageComp from './AvatarImageComp';
 
 interface MainCompProps {
     id: string;
@@ -52,18 +53,6 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         return contactsByPublicKey.has(msg.publicKey!);
     }
 
-    const getAvatarUrl = (msg: ChatMessage): string | null => {
-        // If the message is from us and we have an avatar, use our own avatar
-        if (msg.sender === gs.userName && gs.userAvatar) {
-            return gs.userAvatar.data;
-        }
-        // Otherwise use the server endpoint to get avatar by public key
-        if (msg.publicKey) {
-            return `/api/users/${encodeURIComponent(msg.publicKey)}/avatar`;
-        }
-        // Return null if no avatar is available
-        return null;
-    }
 
     const elmRef = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, true), [messageCount]);
@@ -79,9 +68,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {messages!.map((msg, index) => {
-                    const avatarUrl = getAvatarUrl(msg);
-                    
+                {messages!.map((msg, index) => {                    
                     return (
                         <div 
                             key={index} 
@@ -93,18 +80,10 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                     <div className="flex items-center" onClick={() => app.showUserProfile(msg.publicKey!)}>
                                         {/* Avatar */}
                                         <div className="mr-2 flex-shrink-0">
-                                            {avatarUrl ? (
-                                                <img 
-                                                    src={avatarUrl} 
-                                                    alt={`${getDisplayName(msg)}'s avatar`} 
-                                                    className="w-12 h-12 rounded-full object-cover border border-gray-600"
-                                                    onError={util.onAvatarError}
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                                                    <FontAwesomeIcon icon={faUser} className="text-gray-400 text-lg" />
-                                                </div>
-                                            )}
+                                            <AvatarImageComp
+                                                publicKey={msg.publicKey!}
+                                                name={msg.sender || ''}
+                                            />
                                         </div>
                                         
                                         <div className="flex flex-col">

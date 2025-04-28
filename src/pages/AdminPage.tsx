@@ -127,7 +127,7 @@ export default function AdminPage() {
                             className="btn-secondary"
                             disabled={loading}
                         >
-                            {loading ? 'Loading...' : 'Get Room Info'}
+                            {loading ? 'Loading...' : 'Show All Rooms'}
                         </button>
 
                         {roomsData.length > 0 && (
