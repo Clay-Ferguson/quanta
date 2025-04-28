@@ -29,9 +29,9 @@ export default function AdminPage() {
     const createTestData = async () => {
         const success = await crypt.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
         if (success) {
-            alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
+            app.alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
         } else {
-            alert(`Failed to create test data`);
+            app.alert(`Failed to create test data`);
         }
     };
 
@@ -42,11 +42,11 @@ export default function AdminPage() {
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
             } else {
-                alert('Failed to retrieve room information');
+                app.alert('Failed to retrieve room information');
             }
         } catch (error) {
             console.error('Error fetching room info:', error);
-            alert('An error occurred while fetching room information');
+            app.alert('An error occurred while fetching room information');
         } finally {
             setLoading(false);
         }
@@ -55,7 +55,7 @@ export default function AdminPage() {
     const blockUser = async () => {
         const pubKey = prompt("Enter User Public Key to block:");
         if (!pubKey || pubKey.trim() === '') {
-            alert("No public key provided");
+            app.alert("No public key provided");
             return;
         }
 

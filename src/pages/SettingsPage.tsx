@@ -92,8 +92,9 @@ export default function SettingsPage() {
         const days = parseInt(daysOfHistory);
         if (!isNaN(days) && days >= 0) {
             app.setDaysOfHistory(days);
+            app.alert(`Saved successfully.`);
         } else {
-            alert("Please enter a valid number of days (0 or greater)");
+            app.alert("Please enter a valid number of days (0 or greater)");
         }
     };
     
@@ -108,7 +109,7 @@ export default function SettingsPage() {
             const file = e.target.files[0];
             // Only accept image files
             if (!file.type.startsWith('image/')) {
-                alert('Please select an image file for your avatar');
+                app.alert('Please select an image file for your avatar');
                 return;
             }
             
@@ -141,7 +142,7 @@ export default function SettingsPage() {
 
         await app.saveUserInfo(userName, userDescription, userAvatar);
         if (showConfirm) {
-            alert("Profile information saved successfully!");
+            app.alert("Profile information saved successfully!");
         }
     };
 

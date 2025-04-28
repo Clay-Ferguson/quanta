@@ -431,7 +431,7 @@ export default class WebRTC {
             const timeSinceDisconnect = Date.now() - this.disconnectTime;
             if (timeSinceDisconnect < 5000) {
                 util.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
-                alert('Too soon after disconnect. Please wait a few seconds before reconnecting.');
+                this.app!.alert('Too soon after disconnect. Please wait a few seconds before reconnecting.');
                 return false;
             }
         }

@@ -24,6 +24,8 @@ export interface GlobalState {
     userDescription?: string;
     userAvatar?: FileBase64Intf | null;
     userProfile?: UserProfile | null;
+    modalMessage?: string | null;
+    modalMessageReturn?: boolean;
 }
 
 const initialState: GlobalState = {
@@ -44,6 +46,8 @@ const initialState: GlobalState = {
     userDescription: '',
     userAvatar: null,
     userProfile: null,
+    modalMessage: null,
+    modalMessageReturn: false
 };
 
 export type GlobalAction = { type: string, payload: any};

@@ -117,6 +117,22 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setUserProfile', payload: this.gs});
     }
 
+    // todo-0: Also implement a custom confirm dialog
+    // confirm = (message: string): Promise<boolean> => {
+    // }
+
+    alert = (message: string) => {
+        this.gd!({ type: 'openAlert', payload: { 
+            modalMessage: message
+        }});
+    }
+
+    closeAlert = () => {
+        this.gd!({ type: 'closeAlert', payload: { 
+            modalMessage: null
+        }});
+    }
+
     saveLinkPreviewInfo = async (url: string, data: any) => {
         // Save the link preview data to IndexedDB
         await this.storage?.setItem(DBKeys.linkPreview + url, data);
@@ -402,14 +418,14 @@ export class AppService implements AppServiceTypes  {
         
             if (response) {
                 if (response.success) {
-                    alert(`Success: ${response.message}`);
+                    app.alert(`Success: ${response.message}`);
                 } else {
-                    alert(`Operation completed but failed: ${response.message}`);
+                    app.alert(`Operation completed but failed: ${response.message}`);
                 }
             }
         } catch (error) {
             console.error('Error blocking user:', error);
-            alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            app.alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } 
     }
 
@@ -492,7 +508,7 @@ export class AppService implements AppServiceTypes  {
                     console.warn("Retrying message send.");
                     const retryOk = this.rtc?._sendMessage(msg);
                     if (!retryOk) {
-                        alert("There was a probelm delivering that message, so it may not immediately appear for others.");
+                        app.alert("There was a probelm delivering that message, so it may not immediately appear for others.");
                     }
                 }, 20000);
             }

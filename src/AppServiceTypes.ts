@@ -10,6 +10,8 @@ export interface AppServiceTypes {
      * @param msg The message to persist
      */
     _persistMessage(msg: ChatMessage): Promise<void>;
+
+    alert(msg: string): void;
 }
 
 export interface RoomHistoryItem {
