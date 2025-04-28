@@ -26,6 +26,7 @@ export interface User {
 }
 
 export interface FileBase64Intf {
+    id?: number; // Attachments table ID if stored in DB
     name: string;
     type: string;
     size: number;

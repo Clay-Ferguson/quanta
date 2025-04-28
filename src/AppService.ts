@@ -6,7 +6,7 @@ import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { FileBase64Intf, User } from '../common/CommonTypes.ts';
+import { ChatMessageIntf, FileBase64Intf, User } from '../common/CommonTypes.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -399,6 +399,14 @@ export class AppService implements AppServiceTypes  {
 
         // Save to IndexedDB
         this.storage?.setItem(DBKeys.contacts, contacts);
+    }
+
+    _setMessages = (messages: ChatMessageIntf[]) => {
+        // Save into global state
+        this.gd!({ type: 'setMessages', payload: { messages }});
+
+        // Save to IndexedDB
+        this.storage?.setItem(DBKeys.roomPrefix+this.gs?.roomName, messages);
     }
 
     _disconnect = async () => {
