@@ -827,6 +827,51 @@ export class DBManager {
         }
     }
 
+    /**
+     * Deletes a message and all associated attachments by message ID
+     * @param messageId The ID of the message to delete
+     * @returns Whether the operation was successful
+     */
+    public async deleteMessage(messageId: string): Promise<boolean> {
+        console.log(`Deleting message: ${messageId} and all associated attachments`);
+
+        return this.runTrans(async () => {
+            try {
+            // First, check if the message exists
+                const message = await this.db!.get('SELECT id FROM messages WHERE id = ?', messageId);
+                if (!message) {
+                    console.log(`Message '${messageId}' not found, nothing to delete`);
+                    return false;
+                }
+            
+                // Delete all attachments associated with this message
+                const attachmentResult = await this.db!.run(
+                    'DELETE FROM attachments WHERE message_id = ?', 
+                    messageId
+                );
+                console.log(`Deleted ${attachmentResult.changes} attachments for message ${messageId}`);
+            
+                // Delete the message itself
+                const messageResult: any = await this.db!.run(
+                    'DELETE FROM messages WHERE id = ?',
+                    messageId
+                );
+            
+                const success = messageResult.changes > 0;
+                if (success) {
+                    console.log(`Successfully deleted message '${messageId}' and all its attachments`);
+                } else {
+                    console.log(`Failed to delete message '${messageId}'`);
+                }
+            
+                return success;
+            } catch (error) {
+                console.error('Error in deleteMessage transaction:', error);
+                return false;
+            }
+        });
+    }
+
     public async deleteUserContent(pub_key: string): Promise<boolean> {
         try {
             if (!pub_key) {

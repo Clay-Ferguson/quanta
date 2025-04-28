@@ -123,7 +123,8 @@ export default function UserProfilePage() {
                             <p>No profile data available</p>
                         </div>
                     )}
-                    { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
+                    
+                    { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey && ADMIN_PUBLIC_KEY !== profileData?.publicKey &&
                     <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 

@@ -74,6 +74,35 @@ app.post('/api/admin/create-test-data', crypt.verifyAdminHTTPSignature, async (r
     }
 });
 
+// Add this endpoint with the other admin endpoints
+app.post('/api/admin/delete-message', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
+    try {
+        const { messageId } = req.body;
+        
+        if (!messageId) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Message ID is required' 
+            });
+        }
+        
+        console.log('Admin request: Deleting message:', messageId);
+        const success = await db.deleteMessage(messageId);
+        
+        if (success) {
+            res.json({ success: true, message: `Message "${messageId}" deleted successfully` });
+        } else {
+            res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
+        }
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Server error while attempting to delete message' 
+        });
+    }
+});
+
 app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
     try {
         const { pub_key } = req.body;

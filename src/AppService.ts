@@ -84,6 +84,34 @@ export class AppService implements AppServiceTypes  {
             console.log("Room cleanup complete.");
         }
     }
+    
+    // todo-0: This is an admin function, now because with publicKey signatures we couild allow any user to delete their own messages.
+    _deleteMessage = async (messageId: string) => {
+        this.alert(`Deleting message ${messageId}`);
+        const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+        if (messageIndex !== undefined && messageIndex >= 0) {
+            this.gs!.messages!.splice(messageIndex, 1);
+            this.gd!({ type: 'deleteMessage', payload: this.gs});
+            this.saveMessages();
+
+            try {
+                // Make the secure POST request with body
+                const response = await crypt.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
+                    messageId: messageId
+                });
+                
+                if (response) {
+                    if (response.success) {
+                        console.log(`Message deleted from server: ${messageId}`);
+                    } else {
+                        console.error(`Failed to delete message from server: ${response.error || 'Unknown error'}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting message from server:', error);
+            }
+        }
+    }
 
     cleanRoomMessages = async (roomData: any): Promise<boolean> => {
         if (!roomData || !roomData.messages) {
@@ -446,6 +474,10 @@ export class AppService implements AppServiceTypes  {
     }
 
     _blockUser = async (publicKey: string) => {
+        if (!await this.confirm("Are you sure? This will delete all messages from this user and block them.")) {
+            return;
+        }
+        
         try {
             // Make the secure POST request with body
             const response = await crypt.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {

@@ -3,12 +3,14 @@ import AttachmentComp from './AttachmentComp';
 import { ChatMessage, Contact } from '../AppServiceTypes';
 import Markdown from './MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation, faCertificate } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation, faCertificate, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
 import { app } from '../AppService';
 import AvatarImageComp from './AvatarImageComp';
+
+declare const ADMIN_PUBLIC_KEY: string; 
 
 interface MainCompProps {
     id: string;
@@ -107,6 +109,17 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                 <div className="flex-1 text-left text-gray-200">
                                     <Markdown markdownContent={msg.content} />
                                 </div>
+                                {/* Delete icon - only visible for admin */}
+                                {ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey && (
+                                    <div className="flex items-start ml-2">
+                                        <FontAwesomeIcon 
+                                            icon={faTrash} 
+                                            className="h-4 w-4 text-gray-500 hover:text-red-500 cursor-pointer transition-colors" 
+                                            onClick={() => app._deleteMessage(msg.id)}
+                                            title="Delete message"
+                                        />
+                                    </div>
+                                )}
                             </div>
                     
                             {/* Attachments section */}
