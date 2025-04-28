@@ -6,7 +6,7 @@ import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { ChatMessageIntf, FileBase64Intf, User } from '../common/CommonTypes.ts';
+import { ChatMessageIntf, FileBase64Intf, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandlers } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 
@@ -85,7 +85,6 @@ export class AppService implements AppServiceTypes  {
         }
     }
     
-    // todo-0: This is an admin function, now because with publicKey signatures we couild allow any user to delete their own messages.
     _deleteMessage = async (messageId: string) => {
         this.alert(`Deleting message ${messageId}`);
         const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
@@ -288,21 +287,15 @@ export class AppService implements AppServiceTypes  {
         // Save user info to server if saving to server is enabled
         if (this.gs?.saveToServer && this.gs?.keyPair?.publicKey) {
             try {
-                const postData = {
-                    pubKey: this.gs.keyPair.publicKey,
-                    userName: userName,
-                    userDesc: userDescription,
+                const postData: UserProfile = {
+                    publicKey: this.gs.keyPair.publicKey,
+                    name: userName,
+                    description: userDescription,
                     avatar: userAvatar
                 };
 
-                // Make API call to persist user info to server
-                const response = await fetch('/api/users/info', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(postData)
-                });
+                const response = await crypt.secureHttpPost('/api/users/info', this.gs!.keyPair!, postData);
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Failed to save user info to server:', errorData.error);

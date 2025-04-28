@@ -18,6 +18,7 @@ export interface UserProfile {
     description: string;
     avatar: FileBase64Intf | null;
     publicKey: string;
+    signature?: string; // will be null if not signed
 }
 
 export interface User {

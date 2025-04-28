@@ -221,7 +221,7 @@ app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, as
     }
 });
 
-app.post('/api/users/info', (req, res) => db.saveUserInfoHandler(req, res));
+app.post('/api/users/info', crypt.verifyReqHTTPSignature, (req, res) => db.saveUserInfoHandler(req, res));
 app.get('/api/users/:pubKey/info', (req, res) => db.getUserInfoHandler(req, res));
 app.get('/api/users/:pubKey/avatar', (req, res) => db.serveAvatar(req, res));
 

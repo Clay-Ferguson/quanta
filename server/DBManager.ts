@@ -6,7 +6,7 @@ import fs from 'fs';
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
 // This is correct. The "@common" folder is an alias so we can get access to 
 // the common folder one level above the server folder (see tsconfig.json).
-import {ChatMessageIntf, FileBase64Intf} from '@common/CommonTypes.js';
+import {ChatMessageIntf, FileBase64Intf, UserProfile} from '@common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -1022,11 +1022,11 @@ export class DBManager {
      */
     public async saveUserInfoHandler(req: any, res: any): Promise<void> {
         try {
-            const { pubKey, userName, userDesc, avatar } = req.body;
-            if (!pubKey) {
+            const { publicKey, name, description, avatar }: UserProfile = req.body;
+            if (!publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const success = await this.saveUserInfo(pubKey, userName, userDesc, avatar);
+            const success = await this.saveUserInfo(publicKey, name, description, avatar);
             if (success) {
                 res.json({ success: true });
             } else {

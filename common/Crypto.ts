@@ -163,12 +163,25 @@ class Crypto {
         return '{' + parts.join(',') + '}';
     }
 
+    verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
+        const { publicKey }: SignableObject = req.body;
+        if (!publicKey) {
+            res.status(401).json({ error: 'Public key is not set' });
+            return;
+        }
+        return this.verifyHTTPSignature(req, res, publicKey, next);
+    }
+
+    verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
+        return this.verifyHTTPSignature(req, res, this.adminPubKey!, next);
+    }
+
     // Note: This is AI-Generated implementation for "RFC 9421 - HTTP Message Signatures" which looks ok to me
     // and is working but I haven't fully scrutenized it yet.
-    verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
+    verifyHTTPSignature = async (req: Request, res: Response, publicKey: string, next: any): Promise<void> => {
         try {
-            if (!this.adminPubKey) {
-                res.status(500).json({ error: 'Admin public key is not set' });
+            if (!publicKey) {
+                res.status(500).json({ error: 'Public key is not set' });
                 return;
             }
             const sig = req.headers['signature'];
@@ -237,7 +250,7 @@ class Crypto {
                 msgHash,
                 // AI got itself confused about which of these two lines is best.
                 Buffer.from(sig as string, 'hex'),            
-                this.adminPubKey!
+                publicKey
             );
         
             if (!isValid) {
@@ -246,7 +259,7 @@ class Crypto {
             }
         
             // If we reach here, signature is valid
-            console.log('Signature verified successfully for admin endpoint');
+            console.log('Signature verified successfully for HTTP endpoint');
             next();
         } catch (error) {
             console.error('Error verifying signature:', error);
