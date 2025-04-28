@@ -390,8 +390,8 @@ export default function SettingsPage() {
                             </p>
                             <button 
                                 className="btn-danger"
-                                onClick={() => {
-                                    if (window.confirm("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
+                                onClick={async () => {
+                                    if (await app.confirm("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
                                         app.clear();
                                     }
                                 }}

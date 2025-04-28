@@ -75,7 +75,7 @@ export default function RecentAttachmentsPage() {
     };
 
     const deleteAttachment = async (id: number) => {
-        if (!confirm(`Are you sure you want to delete this attachment?`)) {
+        if (!await app.confirm(`Are you sure you want to delete this attachment?`)) {
             return;
         }
                

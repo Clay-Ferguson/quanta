@@ -49,8 +49,8 @@ export default function ContactsListComp() {
         setEditingContact(null);
     };
 
-    const handleDelete = (contact: Contact) => {
-        if (!confirm(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
+    const handleDelete = async (contact: Contact) => {
+        if (!await app.confirm(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
         const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
         app._setContacts(updatedContacts);
     };

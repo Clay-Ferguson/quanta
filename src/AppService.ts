@@ -7,6 +7,7 @@ import {crypt} from '../common/Crypto.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
 import { ChatMessageIntf, FileBase64Intf, User } from '../common/CommonTypes.ts';
+import { setConfirmHandlers } from './components/ConfirmModalComp';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -117,19 +118,34 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setUserProfile', payload: this.gs});
     }
 
-    // todo-0: Also implement a custom confirm dialog
-    // confirm = (message: string): Promise<boolean> => {
-    // }
+    // todo-0: AI, Also implement a custom confirm dialog, which resolves to true if user clicks "OK" and false if they click "Cancel"
+    confirm = (message: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+            // Set the handlers for this confirmation dialog
+            setConfirmHandlers({ resolve });
+            
+            // Display the confirmation dialog
+            this.gd!({ type: 'openConfirm', payload: { 
+                confirmMessage: message
+            }});
+        });
+    }
+
+    closeConfirm = () => {
+        this.gd!({ type: 'closeConfirm', payload: { 
+            confirmMessage: null,
+        }});
+    }
 
     alert = (message: string) => {
         this.gd!({ type: 'openAlert', payload: { 
-            modalMessage: message
+            modalMessage: message,
         }});
     }
 
     closeAlert = () => {
         this.gd!({ type: 'closeAlert', payload: { 
-            modalMessage: null
+            modalMessage: null,
         }});
     }
 
@@ -284,7 +300,7 @@ export class AppService implements AppServiceTypes  {
 
     _importKeyPair = async () => {
         if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
-            if (!confirm("Are you sure? This will overwrite your existing key pair.")) {
+            if (!await this.confirm("Are you sure? This will overwrite your existing key pair.")) {
                 return;
             }
         }
@@ -311,7 +327,7 @@ export class AppService implements AppServiceTypes  {
     _createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
         if (askFirst && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
-            if (!confirm("Create new Identity Keys?")) {
+            if (! await this.confirm("Create new Identity Keys?")) {
                 return;
             }
         }
@@ -456,32 +472,33 @@ export class AppService implements AppServiceTypes  {
     }
 
     _forgetRoom = async (roomName: string) => {
-        if (confirm("Clear all chat history for room?")) {
-            if (!this.gs || !this.gs!.connected) {
-                console.log("Not connected, cannot clear messages.");
-                return;
-            }
+        if (!await this.confirm("Clear all chat history for room?")) return;
+        
+        if (!this.gs || !this.gs!.connected) {
+            console.log("Not connected, cannot clear messages.");
+            return;
+        }
 
-            // if deleting current room disconnect
-            if (roomName===this.gs!.roomName) {
-                await this._disconnect();
+        // if deleting current room disconnect
+        if (roomName===this.gs!.roomName) {
+            await this._disconnect();
                 this.gs!.messages = []; 
-            }
+        }
 
-            // remove room from history
-            const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
-            const roomIndex = roomHistory.findIndex((item) => item.name === roomName);
-            if (roomIndex !== -1) {
-                roomHistory.splice(roomIndex, 1);
-                await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
-            }
-            this.gs.roomHistory = roomHistory;
+        // remove room from history
+        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
+        const roomIndex = roomHistory.findIndex((item) => item.name === roomName);
+        if (roomIndex !== -1) {
+            roomHistory.splice(roomIndex, 1);
+            await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
+        }
+        this.gs.roomHistory = roomHistory;
 
-            // remove room from IndexedDB
-            await this.storage?.removeItem(DBKeys.roomPrefix + roomName);
-            console.log("Cleared messages for room: " + roomName);
+        // remove room from IndexedDB
+        await this.storage?.removeItem(DBKeys.roomPrefix + roomName);
+        console.log("Cleared messages for room: " + roomName);
 
-            this.gd!({ type: 'forgetRoom', payload: this.gs });}
+        this.gd!({ type: 'forgetRoom', payload: this.gs });
     }
 
     _send = async (message: string, selectedFiles: any) => {
@@ -594,7 +611,7 @@ export class AppService implements AppServiceTypes  {
                 const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
                     `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
 
-                if (confirm(warningMsg)) {
+                if (await this.confirm(warningMsg)) {
                     // Sort messages by timestamp and remove oldest 20%
                     this.gs!.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
                     const countToRemove = Math.ceil(this.gs!.messages!.length * 0.20);

@@ -16,6 +16,7 @@ import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import AlertModalComp from './components/AlertModalComp.tsx';
+import {ConfirmModalComp} from './components/ConfirmModalComp.tsx';
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
@@ -76,6 +77,7 @@ createRoot(document.getElementById('root')!).render(
             <AppServiceConnector />
             <PageRouter />
             <AlertModalComp />
+            <ConfirmModalComp />
         </GlobalStateProvider>
     </StrictMode>,
 );
