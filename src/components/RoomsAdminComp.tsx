@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
 import { crypt } from '../../common/Crypto';
 import { app } from '../AppService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 // Define interface for room info
 interface RoomInfo {
@@ -67,6 +69,25 @@ export default function RoomsAdminComp() {
         }
     };
 
+    const deleteRoom = async (roomName: string) => {
+        try {
+            const success = await crypt.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
+                roomName
+            });
+            
+            if (success) {
+                // Remove the deleted room from the state
+                setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
+                app.alert(`Room "${roomName}" deleted successfully`);
+            } else {
+                app.alert(`Failed to delete room "${roomName}"`);
+            }
+        } catch (error) {
+            console.error('Error deleting room:', error);
+            app.alert(`An error occurred while deleting room "${roomName}"`);
+        }
+    };
+
     return (
         <>
             <div className="mb-4 flex justify-between items-center">
@@ -106,16 +127,24 @@ export default function RoomsAdminComp() {
                         <thead className="bg-gray-700">
                             <tr>
                                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room Name</th>
-                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room ID</th>
                                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Message Count</th>
+                                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-700">
                             {roomsData.map((room) => (
                                 <tr key={room.id}>
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
-                                    <td className="px-4 py-2 text-sm text-gray-300">{room.id}</td>
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-300">
+                                        <button 
+                                            onClick={() => deleteRoom(room.name)}
+                                            className="text-red-400 hover:text-red-300"
+                                            title="Delete Room"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

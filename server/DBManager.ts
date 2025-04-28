@@ -120,6 +120,68 @@ export class DBManager {
     }
 
     /**
+     * Deletes a room and all associated data (messages and attachments)
+     * @param roomName The name of the room to delete
+     * @returns Whether the operation was successful
+     */
+    public async deleteRoom(roomName: string): Promise<boolean> {
+        console.log(`Deleting room: ${roomName} and all associated data`);
+    
+        return this.runTrans(async () => {
+            try {
+            // First, get the room ID
+                const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+                if (!room) {
+                    console.log(`Room '${roomName}' not found, nothing to delete`);
+                    return false;
+                }
+            
+                const roomId = room.id;
+                console.log(`Found room ID ${roomId} for room '${roomName}'`);
+            
+                // Get all message IDs in this room to delete their attachments
+                const messages = await this.db!.all('SELECT id FROM messages WHERE room_id = ?', roomId);
+                const messageIds = messages.map(msg => msg.id);
+            
+                // If there are messages, delete their attachments first
+                if (messageIds.length > 0) {
+                    console.log(`Deleting attachments for ${messageIds.length} messages in room '${roomName}'`);
+                    // Create placeholders for the query
+                    const placeholders = messageIds.map(() => '?').join(',');
+                
+                    // Delete all attachments associated with these messages
+                    const attachmentResult = await this.db!.run(
+                        `DELETE FROM attachments WHERE message_id IN (${placeholders})`, 
+                        messageIds
+                    );
+                    console.log(`Deleted ${attachmentResult.changes} attachments`);
+                }
+            
+                // Delete all messages in the room
+                console.log(`Deleting messages in room '${roomName}'`);
+                const messageResult = await this.db!.run('DELETE FROM messages WHERE room_id = ?', roomId);
+                console.log(`Deleted ${messageResult.changes} messages`);
+            
+                // Finally, delete the room itself
+                console.log(`Deleting room '${roomName}'`);
+                const roomResult: any = await this.db!.run('DELETE FROM rooms WHERE id = ?', roomId);
+            
+                const success = roomResult.changes > 0;
+                if (success) {
+                    console.log(`Successfully deleted room '${roomName}' and all its data`);
+                } else {
+                    console.log(`Failed to delete room '${roomName}'`);
+                }
+            
+                return success;
+            } catch (error) {
+                console.error('Error in deleteRoom transaction:', error);
+                return false;
+            }
+        });
+    }
+
+    /**
     * Removes all messages from a specified room
     */
     public async wipeRoom(roomName: string): Promise<void> {

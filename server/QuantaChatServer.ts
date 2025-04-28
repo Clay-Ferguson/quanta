@@ -139,6 +139,38 @@ app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, async (req,
     }
 });
 
+// API endpoint to delete an entire room and all associated data
+app.post('/api/admin/delete-room', crypt.verifyAdminHTTPSignature, async (req, res) => {
+    try {
+        const { roomName } = req.body;
+        
+        if (!roomName) {
+            res.status(400).json({ 
+                success: false, 
+                error: 'Room name is required' 
+            });
+        }
+        
+        console.log('Admin request: Deleting room:', roomName);
+        const success = await db.deleteRoom(roomName);
+        
+        if (success) {
+            res.json({ success: true, message: `Room "${roomName}" deleted successfully` });
+        } else {
+            res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Server error while attempting to delete room' 
+        });
+    }
+});
+
+
+// AI, you can add room delete endpoint here maybe...
+
 // Keep the original endpoint for backward compatibility
 // This can be enhanced later to accept optional roomId parameter
 app.get('/api/messages', async (req, res) => {
