@@ -5,7 +5,7 @@ interface TitledPanelProps {
   children: React.ReactNode;
 }
 
-export default function TitledPanel({ title, children }: TitledPanelProps) {
+export default function TitledPanelComp({ title, children }: TitledPanelProps) {
     return (
         <div className={`bg-gray-800/80 border border-blue-700/30 rounded-lg overflow-hidden`}>
             <h3 className="text-xl font-medium text-white bg-blue-900 py-2 px-4 shadow-md">{title}</h3>

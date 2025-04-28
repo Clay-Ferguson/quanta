@@ -1,5 +1,5 @@
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
 import { crypt } from '../../common/Crypto';
@@ -104,7 +104,7 @@ export default function RecentAttachmentsPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Recent Attachments"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
 

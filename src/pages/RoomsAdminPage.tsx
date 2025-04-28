@@ -1,5 +1,5 @@
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import RoomsAdminComp from '../components/RoomsAdminComp';
 
 export default function RoomsAdminPage() {  
@@ -8,7 +8,7 @@ export default function RoomsAdminPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Manage Rooms"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="roomsAdmin" className="flex-grow overflow-y-auto p-4 bg-gray-900">

@@ -4,7 +4,7 @@ import { app } from "../AppService";
 
 // We have this component because eventually we'll have a "stack" (history) of pages, and we want to be able to go back to the previous pages in order.
 
-export default function BackButton() {
+export default function BackButtonComp() {
     return (
         <button 
             onClick={() => app.goBack()}

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { scrollEffects } from '../ScrollEffects';
 
 // Cache for the documents content, using a Map to support multiple documents
@@ -63,7 +63,7 @@ export default function DocViewerPage({
             <header className="app-header">
                 <LogoBlockComp subText={title}/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="docContent" ref={elmRef}  className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">

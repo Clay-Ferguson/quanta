@@ -1,8 +1,8 @@
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { crypt } from '../../common/Crypto';
 import { useGlobalState } from '../GlobalState';
-import TitledPanel from '../components/TitledPanel';
+import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
 
@@ -44,14 +44,14 @@ export default function AdminPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Admin"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
 
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">            
                 <div className="space-y-6 max-w-2xl mx-auto">
 
-                    <TitledPanel title="Manage Server">
+                    <TitledPanelComp title="Manage Server">
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
                             className="btn-secondary mr-2"
@@ -73,10 +73,10 @@ export default function AdminPage() {
                         >
                             Block User
                         </button>
-                    </TitledPanel>
+                    </TitledPanelComp>
 
 
-                    <TitledPanel title="Test Data">
+                    <TitledPanelComp title="Test Data">
                         <p className="text-gray-300 mb-4">
                                 Restore test data, in room named 'test', for development and testing purposes. All existing data in the 'test' room will be deleted.
                         </p>
@@ -86,7 +86,7 @@ export default function AdminPage() {
                         >
                                 Create Test Data
                         </button>
-                    </TitledPanel> 
+                    </TitledPanelComp> 
 
                 </div>
             </div>

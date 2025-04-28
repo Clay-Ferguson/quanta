@@ -1,7 +1,7 @@
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import TitledPanel from '../components/TitledPanel';
+import TitledPanelComp from '../components/TitledPanelComp';
 import { useGlobalState } from '../GlobalState';
 import { RoomHistoryItem } from '../AppServiceTypes';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -18,12 +18,12 @@ export default function RoomsPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Rooms"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="rooms" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="roomsComp" className="space-y-3">
-                    <TitledPanel title="Room History">
+                    <TitledPanelComp title="Room History">
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
                             <div className="mb-2">
                                 <p className="text-xs text-gray-400 mt-1">
@@ -84,7 +84,7 @@ export default function RoomsPage() {
                                 </div>
                             )}
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
                 </div>
             </div>
         </div>

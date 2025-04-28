@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { useGlobalState } from '../GlobalState';
 import { UserProfile } from '../../common/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,7 +8,7 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 import PublicKeyComp from '../components/PublicKeyComp';
 import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
-import TitledPanel from '../components/TitledPanel';
+import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 
 declare const ADMIN_PUBLIC_KEY: string;
@@ -64,7 +64,7 @@ export default function UserProfilePage() {
             <header className="app-header">
                 <LogoBlockComp subText="User Profile"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="userProfile" className="flex-grow overflow-y-auto p-4 bg-gray-900">
@@ -124,7 +124,7 @@ export default function UserProfilePage() {
                         </div>
                     )}
                     { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
-                    <TitledPanel title="Admin Actions">
+                    <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 
                                 onClick={() => app._blockUser(profileData.publicKey)}
@@ -133,7 +133,7 @@ export default function UserProfilePage() {
                             Block User
                             </button>
                         )}
-                    </TitledPanel> }   
+                    </TitledPanelComp> }   
                 </div>
             </div>
         </div>

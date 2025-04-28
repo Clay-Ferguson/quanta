@@ -3,9 +3,9 @@ import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import { useGlobalState } from '../GlobalState';
-import TitledPanel from '../components/TitledPanel';
+import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 
 export default function SettingsPage() {
@@ -151,7 +151,7 @@ export default function SettingsPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Settings"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                 )} 
                 
                 <div className="space-y-6 max-w-2xl mx-auto">
-                    <TitledPanel title="About You">
+                    <TitledPanelComp title="About You">
                         <div className="flex flex-col md:flex-row gap-6 mb-4">
                             {/* Avatar section */}
                             <div className="flex flex-col items-center">
@@ -252,9 +252,9 @@ export default function SettingsPage() {
                                 Save
                             </button>
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
 
-                    <TitledPanel title="Storage Space">
+                    <TitledPanelComp title="Storage Space">
                         <div className="text-sm space-y-1">
                             <p className="flex items-center">
                                 <span>Usage: </span>
@@ -264,9 +264,9 @@ export default function SettingsPage() {
                             <p>Used Space: {util.formatStorageSize(storageInfo.usage)}</p>
                             <p>Remaining: {util.formatStorageSize(storageInfo.remainingStorage)}</p>
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
 
-                    <TitledPanel title="Options">               
+                    <TitledPanelComp title="Options">               
                         <div className="flex items-center justify-between">
                             <div>
                                 <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
@@ -318,9 +318,9 @@ export default function SettingsPage() {
                                 </button>
                             </div>
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
 
-                    <TitledPanel title="Your Identity Keys">
+                    <TitledPanelComp title="Your Identity Keys">
                         
                         {/* Public Key Section */}
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
@@ -378,9 +378,9 @@ export default function SettingsPage() {
                                 <button className="btn-primary" onClick={app._importKeyPair}>Import Keys</button>
                             </div>
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
 
-                    <TitledPanel title="Danger Zone">
+                    <TitledPanelComp title="Danger Zone">
                         <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>
@@ -399,7 +399,7 @@ export default function SettingsPage() {
                                 Wipe All Data
                             </button>
                         </div>
-                    </TitledPanel>
+                    </TitledPanelComp>
                 </div>
             </div>
         </div>

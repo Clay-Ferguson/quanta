@@ -1,7 +1,7 @@
 import LogoBlockComp from '../components/LogoBlockComp';
-import BackButton from '../components/BackButton';
+import BackButtonComp from '../components/BackButtonComp';
 import RoomMembersComp from '../components/RoomMembersComp';
-import TitledPanel from '../components/TitledPanel';
+import TitledPanelComp from '../components/TitledPanelComp';
 import { useGlobalState } from '../GlobalState';
 
 export default function RoomInfoPage() {
@@ -16,7 +16,7 @@ export default function RoomInfoPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Room Info"/>
                 <div className="flex items-center space-x-4">
-                    <BackButton/>
+                    <BackButtonComp/>
                 </div>
             </header>
             <div id="roomInfo" className="flex-grow overflow-y-auto p-4 bg-gray-900">
@@ -25,9 +25,9 @@ export default function RoomInfoPage() {
                         Room: {roomName}
                     </h3>   
                         
-                    <TitledPanel title="Members in Room Now...">
+                    <TitledPanelComp title="Members in Room Now...">
                         <RoomMembersComp />
-                    </TitledPanel>
+                    </TitledPanelComp>
                 </div>
             </div>
         </div>
