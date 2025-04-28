@@ -393,6 +393,26 @@ export class AppService implements AppServiceTypes  {
         return roomHistory;
     }
 
+    _blockUser = async (publicKey: string) => {
+        try {
+            // Make the secure POST request with body
+            const response = await crypt.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
+                pub_key: publicKey.trim()
+            });
+        
+            if (response) {
+                if (response.success) {
+                    alert(`Success: ${response.message}`);
+                } else {
+                    alert(`Operation completed but failed: ${response.message}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error blocking user:', error);
+            alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } 
+    }
+
     _setContacts = (contacts: any) => {
         // Save into global state
         this.gd!({ type: 'setContacts', payload: { contacts }});

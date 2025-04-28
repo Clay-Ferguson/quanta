@@ -8,16 +8,20 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 import PublicKeyComp from '../components/PublicKeyComp';
 import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
+import TitledPanel from '../components/TitledPanel';
+import { app } from '../AppService';
+
+declare const ADMIN_PUBLIC_KEY: string;
 
 export default function UserProfilePage() {
-    const { userProfile } = useGlobalState();
+    const gs = useGlobalState();
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            if (!userProfile?.publicKey) {
+            if (!gs.userProfile?.publicKey) {
                 setError("No public key provided");
                 setLoading(false);
                 return;
@@ -26,7 +30,7 @@ export default function UserProfilePage() {
             try {
                 setLoading(true);
                 // Use the correct endpoint from the server code
-                const response = await fetch(`/api/users/${userProfile.publicKey}/info`);
+                const response = await fetch(`/api/users/${gs.userProfile.publicKey}/info`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -39,7 +43,7 @@ export default function UserProfilePage() {
                     name: data.userName || "",
                     description: data.userDesc || "",
                     avatar: data.avatar,
-                    publicKey: userProfile.publicKey
+                    publicKey: gs.userProfile.publicKey
                 };
                 
                 setProfileData(profileData);
@@ -53,7 +57,7 @@ export default function UserProfilePage() {
         };
     
         fetchUserProfile();
-    }, [userProfile?.publicKey]);
+    }, [gs.userProfile?.publicKey]);
 
     return (
         <div className="page-container">
@@ -119,6 +123,17 @@ export default function UserProfilePage() {
                             <p>No profile data available</p>
                         </div>
                     )}
+                    { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
+                    <TitledPanel title="Admin Actions">
+                        {profileData && (
+                            <button 
+                                onClick={() => app._blockUser(profileData.publicKey)}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors duration-200"
+                            >
+                            Block User
+                            </button>
+                        )}
+                    </TitledPanel> }   
                 </div>
             </div>
         </div>

@@ -59,28 +59,7 @@ export default function AdminPage() {
             return;
         }
 
-        try {
-            // Show loading state
-            setLoading(true);
-
-            // Make the secure POST request with body
-            const response = await crypt.secureHttpPost('/api/admin/block-user', gs.keyPair!, {
-                pub_key: pubKey.trim()
-            });
-
-            if (response) {
-                if (response.success) {
-                    alert(`Success: ${response.message}`);
-                } else {
-                    alert(`Operation completed but failed: ${response.message}`);
-                }
-            }
-        } catch (error) {
-            console.error('Error blocking user:', error);
-            alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        } finally {
-            setLoading(false);
-        }
+        app._blockUser(pubKey);
     }
 
     return (
