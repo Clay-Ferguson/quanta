@@ -53,7 +53,7 @@ sudo ./run-prod.sh
 * NodeJS Express Server 
 * Vite Builder
 * Yarn Package Manager
-* `simple-peer` + `webrtc-adapter` (NPM for P2P)
+* Browser-based WebRTC
 
 # How it Works (Technical)
 
