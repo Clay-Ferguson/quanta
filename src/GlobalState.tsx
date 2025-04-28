@@ -26,6 +26,8 @@ export interface GlobalState {
     userProfile?: UserProfile | null;
     modalMessage?: string | null;
     confirmMessage?: string | null;
+    promptMessage?: string | null;
+    promptDefaultValue?: string | null;
 }
 
 const initialState: GlobalState = {
@@ -48,6 +50,8 @@ const initialState: GlobalState = {
     userProfile: null,
     modalMessage: null,
     confirmMessage: null,
+    promptMessage: null,
+    promptDefaultValue: null
 };
 
 export type GlobalAction = { type: string, payload: any};

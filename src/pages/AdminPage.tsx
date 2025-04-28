@@ -53,9 +53,8 @@ export default function AdminPage() {
     };
 
     const blockUser = async () => {
-        const pubKey = prompt("Enter User Public Key to block:");
+        const pubKey = await app.prompt("Enter User Public Key to block");
         if (!pubKey || pubKey.trim() === '') {
-            app.alert("No public key provided");
             return;
         }
 

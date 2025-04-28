@@ -8,6 +8,7 @@ import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
 import { ChatMessageIntf, FileBase64Intf, User } from '../common/CommonTypes.ts';
 import { setConfirmHandlers } from './components/ConfirmModalComp';
+import { setPromptHandlers } from './components/PromptModalComp';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -117,8 +118,27 @@ export class AppService implements AppServiceTypes  {
         this.gs!.userProfile = {name: '', publicKey, description: '', avatar: null};
         this.gd!({ type: 'setUserProfile', payload: this.gs});
     }
+    
+    prompt = (message: string, defaultValue: string = ''): Promise<string | null> => {
+        return new Promise((resolve) => {
+            // Set the handlers for this prompt dialog
+            setPromptHandlers({ resolve });
+            
+            // Display the prompt dialog
+            this.gd!({ type: 'openPrompt', payload: { 
+                promptMessage: message,
+                promptDefaultValue: defaultValue
+            }});
+        });
+    }
 
-    // todo-0: AI, Also implement a custom confirm dialog, which resolves to true if user clicks "OK" and false if they click "Cancel"
+    closePrompt = () => {
+        this.gd!({ type: 'closePrompt', payload: { 
+            promptMessage: null,
+            promptDefaultValue: null
+        }});
+    }
+
     confirm = (message: string): Promise<boolean> => {
         return new Promise((resolve) => {
             // Set the handlers for this confirmation dialog
@@ -305,9 +325,9 @@ export class AppService implements AppServiceTypes  {
             }
         }
 
-        const privateKey = prompt("Enter Private Key String:");
+        const privateKey = await app.prompt("Enter Private Key");
         console.log("Importing Key Pair: " + privateKey);
-
+        
         if (!privateKey) {
             return;
         }
