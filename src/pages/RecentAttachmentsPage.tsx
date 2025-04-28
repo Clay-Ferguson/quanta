@@ -6,6 +6,7 @@ import { crypt } from '../../common/Crypto';
 import PublicKeyComp from '../components/PublicKeyComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faSpinner, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import AvatarImageComp from '../components/AvatarImageComp';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -198,6 +199,7 @@ export default function RecentAttachmentsPage() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col">
+                                                        <AvatarImageComp publicKey={attachment.public_key} name="{attachment.sender}" />
                                                         <span>{attachment.sender}</span>
                                                         <PublicKeyComp publicKey={attachment.public_key} />
                                                     </div>
