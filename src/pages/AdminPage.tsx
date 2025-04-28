@@ -2,24 +2,15 @@ import LogoBlockComp from '../components/LogoBlockComp';
 import BackButton from '../components/BackButton';
 import { crypt } from '../../common/Crypto';
 import { useGlobalState } from '../GlobalState';
-import { useState } from 'react';
 import TitledPanel from '../components/TitledPanel';
 import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
-// Define an interface for the room info
-interface RoomInfo {
-    id: string;
-    name: string;
-    messageCount: number;
-}
 
 export default function AdminPage() {
     const gs = useGlobalState();
-    const [roomsData, setRoomsData] = useState<RoomInfo[]>([]);
-    const [loading, setLoading] = useState(false);
     
     if (!ADMIN_PUBLIC_KEY) {
         console.error('Admin public key is not set. Please set the QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable.');
@@ -36,20 +27,7 @@ export default function AdminPage() {
     };
 
     const getRoomInfo = async () => {
-        setLoading(true);
-        try {
-            const response: any = await crypt.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
-            if (response && Array.isArray(response.rooms)) {
-                setRoomsData(response.rooms);
-            } else {
-                app.alert('Failed to retrieve room information');
-            }
-        } catch (error) {
-            console.error('Error fetching room info:', error);
-            app.alert('An error occurred while fetching room information');
-        } finally {
-            setLoading(false);
-        }
+        app.goToPage(PageNames.roomsAdmin);
     };
 
     const blockUser = async () => {
@@ -73,13 +51,27 @@ export default function AdminPage() {
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">            
                 <div className="space-y-6 max-w-2xl mx-auto">
 
-                    <TitledPanel title="Server Data">
+                    <TitledPanel title="Manage Server">
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
-                            className="btn-secondary"
+                            className="btn-secondary mr-2"
                             title="Recent Attachments"
                         >
                             Recent Attachments
+                        </button>
+
+                        <button 
+                            onClick={getRoomInfo}
+                            className="btn-secondary mr-2"
+                        >
+                            Server Rooms
+                        </button>
+
+                        <button 
+                            className="btn-secondary mr-2"
+                            onClick={blockUser}
+                        >
+                            Block User
                         </button>
                     </TitledPanel>
 
@@ -96,50 +88,6 @@ export default function AdminPage() {
                         </button>
                     </TitledPanel> 
 
-                    <TitledPanel title="All Rooms">
-                        <p className="text-gray-300 mb-4">
-                                View information about all rooms stored on the server.
-                        </p>
-                        <button 
-                            onClick={getRoomInfo}
-                            className="btn-secondary"
-                            disabled={loading}
-                        >
-                            {loading ? 'Loading...' : 'Show All Rooms'}
-                        </button>
-
-                        {roomsData.length > 0 && (
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full bg-gray-800 border border-gray-700 rounded-lg">
-                                    <thead className="bg-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room Name</th>
-                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Room ID</th>
-                                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Message Count</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-700">
-                                        {roomsData.map((room) => (
-                                            <tr key={room.id}>
-                                                <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
-                                                <td className="px-4 py-2 text-sm text-gray-300">{room.id}</td>
-                                                <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </TitledPanel>
-
-                    <TitledPanel title="Manage Users">
-                        <button 
-                            className="btn-secondary"
-                            onClick={blockUser}
-                        >
-                            Block User
-                        </button>
-                    </TitledPanel>
                 </div>
             </div>
         </div>

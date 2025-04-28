@@ -6,8 +6,9 @@ import QuantaChatPage from './pages/QuantaChatPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
-import RoomInfoPage from './pages/RoomInfoPage.tsx';
+import RoomInfoPage from './pages/RoomInfoPage.tsx';    
 import RoomsPage from './pages/RoomsPage.tsx';
+import RoomsAdminPage from './pages/RoomsAdminPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import RecentAttachmentsPage from './pages/RecentAttachmentsPage.tsx';
 import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
@@ -64,6 +65,8 @@ function PageRouter() {
         return <RoomInfoPage />;
     case PageNames.rooms:
         return <RoomsPage />;
+    case PageNames.roomsAdmin:
+        return <RoomsAdminPage />;
     case PageNames.userProfile:
         return <UserProfilePage />;
     case PageNames.quantaChat: // fall thru. to default

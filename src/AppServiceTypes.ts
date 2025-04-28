@@ -42,6 +42,7 @@ export enum PageNames{
     recentAttachments = 'RecentAttachmentsPage',
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
+    roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
 }
 
