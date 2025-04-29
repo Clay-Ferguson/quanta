@@ -303,11 +303,11 @@ class Controller {
 
     saveUserInfo = async (req: any, res: any): Promise<void> => {
         try {
-            const { publicKey, name, description, avatar }: UserProfile = req.body;
-            if (!publicKey) {
+            const userProfile: UserProfile = req.body;
+            if (!userProfile.publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const success = await this.db!.saveUserInfo(publicKey, name, description, avatar);
+            const success = await this.db!.saveUserInfo(userProfile); 
             if (success) {
                 res.json({ success: true });
             } else {

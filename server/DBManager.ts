@@ -6,7 +6,7 @@ import fs from 'fs';
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
 // This is correct. The "@common" folder is an alias so we can get access to 
 // the common folder one level above the server folder (see tsconfig.json).
-import {ChatMessageIntf, FileBase64Intf} from '@common/CommonTypes.js';
+import {ChatMessageIntf, FileBase64Intf, UserProfile} from '@common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -788,22 +788,17 @@ export class DBManager {
         }
     }
 
-    // todo-0: use a type here.
-    saveUserInfo = async (
-        pubKey: string, 
-        userName: string, 
-        userDesc: string, 
-        avatar: FileBase64Intf | null): Promise<boolean> => {
+    saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
         try {
-            if (!pubKey) {
+            if (!userProfile.publicKey) {
                 console.error('Cannot save user info without a public key');
                 return false;
             }
             let avatarBinaryData: Buffer | null = null;
         
             // Extract binary data from data URL if avatar exists
-            if (avatar && avatar.data) {
-                const matches = avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+            if (userProfile.avatar && userProfile.avatar.data) {
+                const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
                 if (matches && matches.length === 3) {
                     avatarBinaryData = Buffer.from(matches[2], 'base64');
                 }
@@ -815,16 +810,16 @@ export class DBManager {
             (pub_key, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    pubKey,
-                    userName,
-                    userDesc,
-                    avatar?.name || null,
-                    avatar?.type || null,
-                    avatar?.size || null,
+                    userProfile.publicKey,
+                    userProfile.name,
+                    userProfile.description,
+                    userProfile.avatar?.name || null,
+                    userProfile.avatar?.type || null,
+                    userProfile.avatar?.size || null,
                     avatarBinaryData
                 ]
             );
-            console.log(`User info saved for public key: ${pubKey}`);
+            console.log(`User info saved for public key: ${userProfile.publicKey}`);
             return true;
         } catch (error) {
             console.error('Error saving user info:', error);
