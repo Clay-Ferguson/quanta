@@ -5,9 +5,9 @@ import TitledPanelComp from '../components/TitledPanelComp';
 import { useGlobalState } from '../GlobalState';
 
 export default function RoomInfoPage() {
-    const { roomName = "" } = useGlobalState();
+    const gs = useGlobalState();
     
-    if (!roomName) {
+    if (!gs.roomName) {
         return null;
     }
 
@@ -22,7 +22,7 @@ export default function RoomInfoPage() {
             <div id="roomInfo" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="roomInfoComp" className="space-y-3">
                     <h3 className="font-semibold">
-                        Room: {roomName}
+                        Room: {gs.roomName}
                     </h3>   
                         
                     <TitledPanelComp title="Members in Room Now...">

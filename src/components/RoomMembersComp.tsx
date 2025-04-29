@@ -8,11 +8,9 @@ import AvatarImageComp from './AvatarImageComp';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();
-    // get 'participants' which is a type of Map<string, User> | null
-    const { participants, contacts } = useGlobalState();
 
     // Sort contacts alphabetically by name
-    const sortedParticipants: any[] = participants ? Array.from(participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const sortedParticipants: any[] = gs.participants ? Array.from(gs.participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
 
     // let's add ourselves as the first member in the list
     if (gs.keyPair && gs.userName) {
@@ -23,10 +21,10 @@ export default function RoomMembersComp() {
         });
     }
     
-    if (contacts) {
+    if (gs.contacts) {
         // scan all sorted participants and for each one that's a known contact (looked up by public key) add a property 'alias' to it for display below.
         for (const member of sortedParticipants) {;
-            const contact = contacts.find((contact: Contact) => contact.publicKey === member.publicKey);
+            const contact = gs.contacts.find((contact: Contact) => contact.publicKey === member.publicKey);
             if (contact) {
                 member.alias = contact.alias;
             }

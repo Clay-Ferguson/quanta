@@ -37,20 +37,20 @@ function AppServiceConnector() {
 
 // Component to handle conditional page rendering
 function PageRouter() {
-    const { pages, userName, appInitialized } = useGlobalState();
+    const gs = useGlobalState();
 
     // Show loading indicator while app is initializing
-    if (!appInitialized) {
+    if (!gs.appInitialized) {
         return <LoadingIndicator />;
     }
 
     // Until user enters a username, show the settings page, which will tell them why they're seeing it.
-    if (!userName) {
+    if (!gs.userName) {
         console.log('No username set, in PageRouter, showing settings page');
         return <SettingsPage />;
     }
     
-    switch (pages![pages!.length - 1]) {
+    switch (gs.pages![gs.pages!.length - 1]) {
     case PageNames.settings:
         return <SettingsPage />;
     case PageNames.contacts:
