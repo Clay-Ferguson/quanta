@@ -5,6 +5,7 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import {crypt} from '../common/Crypto.js'
+import {controller} from './Contoller.js';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
@@ -12,6 +13,17 @@ import { DBManager } from './DBManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
+if (!dbPath) {
+    throw new Error('Database path is not set');
+}
+
+const db = await DBManager.getInstance(dbPath);
+if (!db) {
+    throw new Error('Failed to initialize database');
+}
+controller.db = db;
 
 const app = express();
 
@@ -63,167 +75,25 @@ if (SECURE === 'y') {
     });
 }
 
-app.post('/api/admin/create-test-data', crypt.verifyAdminHTTPSignature, async (req, res) => {
-    try {
-        console.log('Admin request: Creating test data');
-        await db.createTestData();
-        res.json({ success: true, message: 'Test data created successfully' });
-    } catch (error) {
-        console.error('Error creating test data:', error);
-        res.status(500).json({ error: 'Failed to create test data' });
-    }
-});
+app.get('/api/rooms/:roomId/message-ids', controller.getMessageIdsForRoom);
+app.get('/api/attachments/:attachmentId', controller.serveAttachment);
+app.get('/api/messages', controller.getMessageHistory);
+app.get('/api/users/:pubKey/info', controller.getUserInfo);
+app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
 
-// Add this endpoint with the other admin endpoints
-app.post('/api/admin/delete-message', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
-    try {
-        const { messageId } = req.body;
-        
-        if (!messageId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Message ID is required' 
-            });
-        }
-        
-        console.log('Admin request: Deleting message:', messageId);
-        const success = await db.deleteMessage(messageId);
-        
-        if (success) {
-            res.json({ success: true, message: `Message "${messageId}" deleted successfully` });
-        } else {
-            res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
-        }
-    } catch (error) {
-        console.error('Error deleting message:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Server error while attempting to delete message' 
-        });
-    }
-});
+app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, controller.getRoomInfo);
+app.post('/api/admin/delete-room', crypt.verifyAdminHTTPSignature, controller.deleteRoom);
+app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, controller.getRecentAttachments);
+app.post('/api/admin/create-test-data', crypt.verifyAdminHTTPSignature, controller.createTestData);
+app.post('/api/admin/delete-message', crypt.verifyAdminHTTPSignature, controller.deleteMessage);
+app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, controller.blockUser);
 
-app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
-    try {
-        const { pub_key } = req.body;
-        
-        if (!pub_key) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Missing pub_key parameter' 
-            });
-        }
-        
-        console.log('Admin request: Blocking user with public key:', pub_key);
-        await db.deleteUserContent(pub_key);
-        await db.blockUser(pub_key);
-                
-        res.json({ 
-            success: true, 
-            message: `User was blocked successfully.` 
-        });
-
-    } catch (error) {
-        console.error('Error blocking user:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Server error while attempting to block user' 
-        });
-    }
-});
-
-app.get('/api/health', (req: Request, res: Response) => {
-    res.json({ status: 'ok', message: 'Server is running' });
-});
-
-// API endpoint to get message IDs for a specific room
-app.get('/api/rooms/:roomId/message-ids', async (req, res) => {
-    console.log('getMessageIdsForRoom', req.params.roomId, 'daysOfHistory:', req.query.daysOfHistory);
-    await db.getMessageIdsForRoomHandler(req, res);
-});
-
-app.get('/api/attachments/:attachmentId', async (req, res) => {
-    await db.serveAttachment(req, res);
-});
-
-app.post('/api/attachments/:attachmentId/delete', crypt.verifyAdminHTTPSignature, async (req, res) => {
-    console.log('Deleting attachment:', req.params.attachmentId);
-    await db.deleteAttachment(req, res);
-});
-
-// API endpoint to get messages by their IDs for a specific room
-app.post('/api/rooms/:roomId/get-messages-by-id', async (req, res) => {
-    console.log('getMessagesByIds for room', req.params.roomId);
-    await db.getMessagesByIdsHandler(req, res);
-});
-
-app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, async (req, res) => {
-    try {
-        console.log('Admin request: Getting room information');
-        const roomsInfo = await db.getAllRoomsInfo();
-        res.json({ success: true, rooms: roomsInfo });
-    } catch (error) {
-        console.error('Error getting room information:', error);
-        res.status(500).json({ success: false, error: 'Failed to get room information' });
-    }
-});
-
-// API endpoint to delete an entire room and all associated data
-app.post('/api/admin/delete-room', crypt.verifyAdminHTTPSignature, async (req, res) => {
-    try {
-        const { roomName } = req.body;
-        
-        if (!roomName) {
-            res.status(400).json({ 
-                success: false, 
-                error: 'Room name is required' 
-            });
-        }
-        
-        console.log('Admin request: Deleting room:', roomName);
-        const success = await db.deleteRoom(roomName);
-        
-        if (success) {
-            res.json({ success: true, message: `Room "${roomName}" deleted successfully` });
-        } else {
-            res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
-        }
-    } catch (error) {
-        console.error('Error deleting room:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Server error while attempting to delete room' 
-        });
-    }
-});
-
-
-// AI, you can add room delete endpoint here maybe...
-
-// Keep the original endpoint for backward compatibility
-// This can be enhanced later to accept optional roomId parameter
-app.get('/api/messages', async (req, res) => {
-    console.log('getMessageHistory');
-    await db.getMessageHistory(req, res);
-});
+app.post('/api/attachments/:attachmentId/delete', crypt.verifyAdminHTTPSignature, controller.deleteAttachment);
+app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
+app.post('/api/users/info', crypt.verifyReqHTTPSignature, controller.saveUserInfo);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
-
-app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, async (req: any, res: any) => {
-    try {
-        console.log('Admin request: Getting recent attachments');
-        const attachments = await db.getRecentAttachments();
-        res.json({ success: true, attachments });
-    } catch (error) {
-        console.error('Error getting recent attachments:', error);
-        res.status(500).json({ success: false, error: 'Failed to get recent attachments' });
-    }
-});
-
-app.post('/api/users/info', crypt.verifyReqHTTPSignature, (req, res) => db.saveUserInfoHandler(req, res));
-app.get('/api/users/:pubKey/info', (req, res) => db.getUserInfoHandler(req, res));
-app.get('/api/users/:pubKey/avatar', (req, res) => db.serveAvatar(req, res));
 
 const distPath = path.join(__dirname, '../../dist');
 
@@ -283,10 +153,4 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
-if (!dbPath) {
-    throw new Error('Database path is not set');
-}
-
-const db = await DBManager.getInstance(dbPath);
 await WebRTCSigServer.getInst(db, HOST, PORT, server);

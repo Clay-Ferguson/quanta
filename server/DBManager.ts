@@ -6,7 +6,7 @@ import fs from 'fs';
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
 // This is correct. The "@common" folder is an alias so we can get access to 
 // the common folder one level above the server folder (see tsconfig.json).
-import {ChatMessageIntf, FileBase64Intf, UserProfile} from '@common/CommonTypes.js';
+import {ChatMessageIntf, FileBase64Intf} from '@common/CommonTypes.js';
 
 export class DBManager {
     private db: Database | null = null;
@@ -124,7 +124,7 @@ export class DBManager {
      * @param roomName The name of the room to delete
      * @returns Whether the operation was successful
      */
-    public async deleteRoom(roomName: string): Promise<boolean> {
+    deleteRoom = async (roomName: string): Promise<boolean> => {
         console.log(`Deleting room: ${roomName} and all associated data`);
     
         return this.runTrans(async () => {
@@ -214,7 +214,7 @@ export class DBManager {
         });
     }
 
-    public async createTestData(): Promise<void> {
+    createTestData = async (): Promise<void> => {
         const roomName = 'test';
         console.log('Creating test data...');
         
@@ -335,7 +335,7 @@ export class DBManager {
         return result.lastID;
     }
 
-    public async getMessagesForRoom(roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> {
+    getMessagesForRoom = async (roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> => {
         try {
             // Get the room ID
             const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
@@ -383,28 +383,6 @@ export class DBManager {
         }
     }
 
-    // Add a new method to retrieve message history
-    async getMessageHistory(req: any, res: any) {
-        const { roomName, limit, offset } = req.query;
-            
-        if (!roomName) {
-            return res.status(400).json({ error: 'Room name is required' });
-        }
-            
-        try {
-            const messages = await this.getMessagesForRoom(
-                roomName,
-                limit ? parseInt(limit) : 100,
-                offset ? parseInt(offset) : 0
-            );
-                
-            res.json({ messages });
-        } catch (error) {
-            console.error('Error retrieving message history:', error);
-            res.status(500).json({ error: 'Failed to retrieve message history' });
-        }
-    } 
-
     /**
      * Get all message IDs for a specific room
      */
@@ -427,7 +405,7 @@ export class DBManager {
     /**
      * Get multiple messages by their IDs (filtering by room for security)
      */
-    async getMessagesByIds(messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> {
+    getMessagesByIds = async (messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> => {
         if (!messageIds || messageIds.length === 0) {
             return [];
         }
@@ -559,38 +537,9 @@ export class DBManager {
     }
 
     /**
-     * API handler for getting all message IDs for a specific room
-     */
-    async getMessageIdsForRoomHandler(req: any, res: any): Promise<void> {
-        try {
-            const roomId = req.params?.roomId;
-            if (!roomId) {
-                return res.status(400).json({ error: 'Room ID is required' });
-            }
-            
-            // Parse daysOfHistory parameter
-            let historyDays = parseInt(req.query.daysOfHistory as string) || Number.MAX_SAFE_INTEGER;
-            if (historyDays < 2) {
-                historyDays = 2; // Ensure at least 2 days of history
-            }
-            
-            // Calculate cutoff timestamp in milliseconds
-            const millisecondsPerDay = 24 * 60 * 60 * 1000;
-            const currentTime = Date.now();
-            const cutoffTimestamp = currentTime - (historyDays * millisecondsPerDay);
-            
-            const messageIds = await this.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
-            res.json({ messageIds });
-        } catch (error) {
-            console.error('Error in getMessageIdsForRoom handler:', error);
-            res.status(500).json({ error: 'Failed to retrieve message IDs' });
-        }
-    }
-
-    /**
      * Get message IDs for a specific room, filtered by timestamp
      */
-    async getMessageIdsForRoomWithDateFilter(roomId: string, cutoffTimestamp: number): Promise<string[]> {
+    getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {
             // First, get the room_id from the room name
             const room = await this.db!.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
@@ -612,34 +561,10 @@ export class DBManager {
     }
 
     /**
-     * API handler for getting messages by IDs for a specific room
-     */
-    async getMessagesByIdsHandler(req: any, res: any): Promise<void> {
-        try {
-            const { ids } = req.body || {};
-            const roomId = req.params?.roomId;
-            
-            if (!roomId) {
-                return res.status(400).json({ error: 'Room ID is required' });
-            }
-            
-            if (!ids || !Array.isArray(ids)) {
-                return res.status(400).json({ error: 'Invalid request. Expected array of message IDs' });
-            }
-            
-            const messages = await this.getMessagesByIds(ids, roomId);
-            res.json({ messages });
-        } catch (error) {
-            console.error('Error in getMessagesByIds handler:', error);
-            res.status(500).json({ error: 'Failed to retrieve messages' });
-        }
-    }
-
-    /**
      * Gets information about all rooms including their message counts
      * @returns An array of room information objects
      */
-    async getAllRoomsInfo() {
+    getAllRoomsInfo = async () => {
         try {
         // Query to get all rooms and join with messages to count messages per room
             const query = `
@@ -670,7 +595,7 @@ export class DBManager {
      * @param id The ID of the attachment
      * @returns The attachment data with type information
      */
-    async getAttachmentById(id: number): Promise<{data: Buffer, type: string, name: string} | null> {
+    getAttachmentById = async (id: number): Promise<{data: Buffer, type: string, name: string} | null> => {
         try {
             const attachment = await this.db!.get(
                 'SELECT data, type, name FROM attachments WHERE id = ?',
@@ -692,59 +617,7 @@ export class DBManager {
         }
     }
     
-    /**
-     * Express handler for serving attachment files
-     * @param req Express request object
-     * @param res Express response object
-     */
-    async serveAttachment(req: any, res: any): Promise<void> {
-        try {
-            const attachmentId = parseInt(req.params.attachmentId);
-            if (isNaN(attachmentId)) {
-                return res.status(400).send('Invalid attachment ID');
-            }
-                
-            const attachment = await this.getAttachmentById(attachmentId);
-                
-            if (!attachment) {
-                return res.status(404).send('Attachment not found');
-            }
-                
-            // Set the appropriate content type
-            res.set('Content-Type', attachment.type);
-                
-            // Set content disposition for downloads (optional)
-            res.set('Content-Disposition', `inline; filename="${attachment.name}"`);
-                
-            // Send the binary data
-            res.send(attachment.data);
-        } catch (error) {
-            console.error('Error serving attachment:', error);
-            res.status(500).send('Server error');
-        }
-    }
-
-    async deleteAttachment(req: any, res: any): Promise<void> {
-        try {
-            const attachmentId = parseInt(req.params.attachmentId);
-            if (isNaN(attachmentId)) {
-                return res.status(400).json({ error: 'Invalid attachment ID' });
-            }
-                
-            const success = await this.deleteAttachmentById(attachmentId);
-                
-            if (success) {
-                res.json({ success: true });
-            } else {
-                res.status(404).json({ error: 'Attachment not found or could not be deleted' });
-            }
-        } catch (error) {
-            console.error('Error in deleteAttachment handler:', error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    }
-
-    async deleteAttachmentById(id: number): Promise<boolean> {
+    deleteAttachmentById = async (id: number): Promise<boolean> => {
         try {
             if (isNaN(id) || id <= 0) {
                 console.error('Invalid attachment ID:', id);
@@ -781,7 +654,7 @@ export class DBManager {
      * @param limit Maximum number of attachments to return
      * @returns Array of recent attachments with their details
      */
-    async getRecentAttachments(limit = 100): Promise<any[]> {
+    getRecentAttachments = async (limit = 100): Promise<any[]> => {
         try {
             const query = `
                     SELECT 
@@ -832,7 +705,7 @@ export class DBManager {
      * @param messageId The ID of the message to delete
      * @returns Whether the operation was successful
      */
-    public async deleteMessage(messageId: string): Promise<boolean> {
+    deleteMessage = async (messageId: string): Promise<boolean> => {
         console.log(`Deleting message: ${messageId} and all associated attachments`);
 
         return this.runTrans(async () => {
@@ -872,7 +745,7 @@ export class DBManager {
         });
     }
 
-    public async deleteUserContent(pub_key: string): Promise<boolean> {
+    deleteUserContent = async (pub_key: string): Promise<boolean> => {
         try {
             if (!pub_key) {
                 console.error('Cannot delete content for an empty public key');
@@ -898,7 +771,7 @@ export class DBManager {
         }
     }
 
-    public async blockUser(pub_key: string) {
+    blockUser = async (pub_key: string) => {
         try {
             if (!pub_key) {
                 console.error('Cannot block an empty public key');
@@ -915,19 +788,12 @@ export class DBManager {
         }
     }
 
-    /**
-     * Saves or updates user information in the database
-     * @param pubKey The user's public key
-     * @param userName The user's display name
-     * @param userDesc The user's description/bio
-     * @param avatar User's avatar information (optional)
-     * @returns Whether the operation was successful
-     */
-    public async saveUserInfo(
+    // todo-0: use a type here.
+    saveUserInfo = async (
         pubKey: string, 
         userName: string, 
         userDesc: string, 
-        avatar: FileBase64Intf | null): Promise<boolean> {
+        avatar: FileBase64Intf | null): Promise<boolean> => {
         try {
             if (!pubKey) {
                 console.error('Cannot save user info without a public key');
@@ -971,11 +837,12 @@ export class DBManager {
      * @param pubKey The user's public key
      * @returns The user information or null if not found
      */
-    public async getUserInfo(pubKey: string): Promise<{
+    // todo-0: need some kind of user info type here.
+    getUserInfo = async (pubKey: string): Promise<{
             userName: string;
             userDesc: string;
             avatar: FileBase64Intf | null;
-        } | null> {
+        } | null> => {
         try {
             if (!pubKey) {
                 console.error('Cannot get user info without a public key');
@@ -1014,89 +881,5 @@ export class DBManager {
             return null;
         }
     }
-
-    /**
-     * API handler for saving user information
-     * @param req Express request object
-     * @param res Express response object
-     */
-    public async saveUserInfoHandler(req: any, res: any): Promise<void> {
-        try {
-            const { publicKey, name, description, avatar }: UserProfile = req.body;
-            if (!publicKey) {
-                return res.status(400).json({ error: 'Public key is required' });
-            }
-            const success = await this.saveUserInfo(publicKey, name, description, avatar);
-            if (success) {
-                res.json({ success: true });
-            } else {
-                res.status(500).json({ error: 'Failed to save user information' });
-            }
-        } catch (error) {
-            console.error('Error in saveUserInfo handler:', error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    }
-
-    /**
-     * API handler for retrieving user information
-     * @param req Express request object
-     * @param res Express response object
-     */
-    public async getUserInfoHandler(req: any, res: any): Promise<void> {
-        try {
-            const pubKey = req.params.pubKey;
-        
-            if (!pubKey) {
-                return res.status(400).json({ error: 'Public key is required' });
-            }
-            const userInfo = await this.getUserInfo(pubKey);
-            if (userInfo) {
-                res.json(userInfo);
-            } else {
-                res.status(404).json({ error: 'User information not found' });
-            }
-        } catch (error) {
-            console.error('Error in getUserInfo handler:', error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    }
-
-    public async serveAvatar(req: any, res: any): Promise<void> {
-        try {
-            const pubKey = req.params.pubKey;
-            if (!pubKey) {
-                return res.status(400).json({ error: 'Public key is required' });
-            }
-                
-            // Get user info from the database
-            const userInfo = await this.getUserInfo(pubKey);
-            if (!userInfo || !userInfo.avatar || !userInfo.avatar.data) {
-                // Return a 404 for missing avatars
-                return res.status(404).send('Avatar not found');
-            }
-                
-            // Extract content type and base64 data
-            const matches = userInfo.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-            if (!matches || matches.length !== 3) {
-                return res.status(400).send('Invalid avatar data format');
-            }
-                
-            const contentType = matches[1];
-            const base64Data = matches[2];
-            const binaryData = Buffer.from(base64Data, 'base64');
-                
-            // Set appropriate headers
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Content-Length', binaryData.length);
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-                
-            // Send the binary image data
-            res.send(binaryData);
-        } catch (error) {
-            console.error('Error serving avatar:', error);
-            res.status(500).send('Server error');
-        }
-    }    
 }
 
