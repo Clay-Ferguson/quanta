@@ -181,18 +181,16 @@ export default function ContactsListComp() {
                                             <PublicKeyComp publicKey={contact.publicKey} />
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                            <button
+                                            <FontAwesomeIcon 
+                                                icon={faUserEdit} 
                                                 onClick={() => handleEdit(contact.publicKey)}
-                                                className="text-blue-400 hover:text-blue-300 border border-gray-400 mr-2"
-                                            >
-                                                <FontAwesomeIcon icon={faUserEdit} />
-                                            </button>
-                                            <button
+                                                className="text-blue-400 hover:text-blue-300 cursor-pointer mr-4"
+                                            />
+                                            <FontAwesomeIcon 
+                                                icon={faTrash} 
                                                 onClick={() => handleDelete(contact)}
-                                                className="text-red-400 hover:text-red-300 border border-gray-400"
-                                            >
-                                                <FontAwesomeIcon icon={faTrash} />
-                                            </button>
+                                                className="text-red-400 hover:text-red-300 cursor-pointer"
+                                            />
                                         </td>
                                     </tr>
                                 )
