@@ -84,16 +84,15 @@ class Controller {
         }
     } 
 
-    getUserInfo = async (req: any, res: any): Promise<void> => {
+    getUserProfile = async (req: any, res: any): Promise<void> => {
         try {
-            const pubKey = req.params.pubKey;
-        
-            if (!pubKey) {
+            const publicKey = req.params.pubKey;
+            if (!publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const userInfo = await this.db!.getUserInfo(pubKey);
-            if (userInfo) {
-                res.json(userInfo);
+            const userProfile = await this.db!.getUserInfo(publicKey);
+            if (userProfile) {
+                res.json(userProfile);
             } else {
                 res.status(404).json({ error: 'User information not found' });
             }
@@ -105,20 +104,20 @@ class Controller {
 
     serveAvatar = async (req: any, res: any): Promise<void> => {
         try {
-            const pubKey = req.params.pubKey;
-            if (!pubKey) {
+            const publicKey = req.params.pubKey;
+            if (!publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
                 
             // Get user info from the database
-            const userInfo = await this.db!.getUserInfo(pubKey);
-            if (!userInfo || !userInfo.avatar || !userInfo.avatar.data) {
+            const userProfile: UserProfile | null = await this.db!.getUserInfo(publicKey);
+            if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
                 // Return a 404 for missing avatars
                 return res.status(404).send('Avatar not found');
             }
                 
             // Extract content type and base64 data
-            const matches = userInfo.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+            const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
             if (!matches || matches.length !== 3) {
                 return res.status(400).send('Invalid avatar data format');
             }
@@ -301,7 +300,7 @@ class Controller {
         }
     }
 
-    saveUserInfo = async (req: any, res: any): Promise<void> => {
+    saveUserProfile = async (req: any, res: any): Promise<void> => {
         try {
             const userProfile: UserProfile = req.body;
             if (!userProfile.publicKey) {

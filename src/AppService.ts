@@ -287,14 +287,14 @@ export class AppService implements AppServiceTypes  {
         // Save user info to server if saving to server is enabled
         if (this.gs?.saveToServer && this.gs?.keyPair?.publicKey) {
             try {
-                const postData: UserProfile = {
+                const userProfile: UserProfile = {
                     publicKey: this.gs.keyPair.publicKey,
                     name: userName,
                     description: userDescription,
                     avatar: userAvatar
                 };
 
-                const response = await crypt.secureHttpPost('/api/users/info', this.gs!.keyPair!, postData);
+                const response = await crypt.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
 
                 if (!response.ok) {
                     const errorData = await response.json();

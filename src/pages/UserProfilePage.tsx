@@ -31,22 +31,12 @@ export default function UserProfilePage() {
                 setLoading(true);
                 // Use the correct endpoint from the server code
                 const response = await fetch(`/api/users/${gs.userProfile.publicKey}/info`);
-                
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 
-                const data = await response.json();
-                
-                // Transform the server response into the format we need for UserProfile
-                const profileData: UserProfile = {
-                    name: data.userName || "",
-                    description: data.userDesc || "",
-                    avatar: data.avatar,
-                    publicKey: gs.userProfile.publicKey
-                };
-                
-                setProfileData(profileData);
+                const userProfile: UserProfile = await response.json();
+                setProfileData(userProfile);
                 setError(null);
             } catch (err) {
                 console.error("Error fetching user profile:", err);

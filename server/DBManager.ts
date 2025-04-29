@@ -829,17 +829,12 @@ export class DBManager {
 
     /**
      * Retrieves user information from the database
-     * @param pubKey The user's public key
+     * @param publicKey The user's public key
      * @returns The user information or null if not found
      */
-    // todo-0: need some kind of user info type here.
-    getUserInfo = async (pubKey: string): Promise<{
-            userName: string;
-            userDesc: string;
-            avatar: FileBase64Intf | null;
-        } | null> => {
+    getUserInfo = async (publicKey: string): Promise<UserProfile | null> => {
         try {
-            if (!pubKey) {
+            if (!publicKey) {
                 console.error('Cannot get user info without a public key');
                 return null;
             }
@@ -848,7 +843,7 @@ export class DBManager {
                 `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
              FROM user_info 
              WHERE pub_key = ?`,
-                [pubKey]
+                [publicKey]
             );
 
             if (!userInfo) {
@@ -856,7 +851,7 @@ export class DBManager {
             }
 
             // Convert binary avatar data back to data URL if it exists
-            let avatar = null;
+            let avatar: FileBase64Intf | null = null;
             if (userInfo.avatar_data) {
                 avatar = {
                     name: userInfo.avatar_name,
@@ -866,11 +861,13 @@ export class DBManager {
                 };
             }
 
-            return {
-                userName: userInfo.user_name,
-                userDesc: userInfo.user_desc,
-                avatar
+            const userProfile: UserProfile = {
+                name: userInfo.user_name,
+                description: userInfo.user_desc,
+                avatar,
+                publicKey
             };
+            return userProfile;
         } catch (error) {
             console.error('Error retrieving user info:', error);
             return null;

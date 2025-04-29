@@ -78,7 +78,7 @@ if (SECURE === 'y') {
 app.get('/api/rooms/:roomId/message-ids', controller.getMessageIdsForRoom);
 app.get('/api/attachments/:attachmentId', controller.serveAttachment);
 app.get('/api/messages', controller.getMessageHistory);
-app.get('/api/users/:pubKey/info', controller.getUserInfo);
+app.get('/api/users/:pubKey/info', controller.getUserProfile);
 app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
 
 app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, controller.getRoomInfo);
@@ -90,7 +90,7 @@ app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, controller.blo
 
 app.post('/api/attachments/:attachmentId/delete', crypt.verifyAdminHTTPSignature, controller.deleteAttachment);
 app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
-app.post('/api/users/info', crypt.verifyReqHTTPSignature, controller.saveUserInfo);
+app.post('/api/users/info', crypt.verifyReqHTTPSignature, controller.saveUserProfile);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);

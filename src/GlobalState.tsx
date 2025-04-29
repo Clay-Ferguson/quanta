@@ -23,6 +23,7 @@ export interface GlobalState {
     roomHistory?: Array<RoomHistoryItem>;
     userDescription?: string;
     userAvatar?: FileBase64Intf | null;
+    // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile | null;
     modalMessage?: string | null;
     confirmMessage?: string | null;
