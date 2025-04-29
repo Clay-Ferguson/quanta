@@ -266,7 +266,7 @@ export default class WebRTC {
 
     _onBroadcast = (evt: WebRTCBroadcast) => {
         util.log('broadcast. Received broadcast message from ' + evt.sender!.name);
-        this.app?._persistMessage(evt.message);           
+        this.app?.persistMessage(evt.message);           
     }
 
     _onmessage = (event: any) => {
@@ -298,7 +298,7 @@ export default class WebRTC {
         default:
             util.log('Unknown message type: ' + evt.type);
         } 
-        this.app?._rtcStateChange();
+        this.app?.rtcStateChange();
     }
 
     _onopen = async () => {
@@ -319,20 +319,20 @@ export default class WebRTC {
             this.signedSocketSend(joinMessage, crypt.canonical_WebRTCJoin);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        this.app?._rtcStateChange();
+        this.app?.rtcStateChange();
     }
 
     _onerror = (error: any) => {
         util.log('WebSocket error: ' + error);
         this.connected = false;
-        this.app?._rtcStateChange();
+        this.app?.rtcStateChange();
     };
 
     _onclose = () => {
         util.log('Disconnected from signaling server');
         this.connected = false;
         this.closeAllConnections();
-        this.app?._rtcStateChange();
+        this.app?.rtcStateChange();
     }
 
     //peerName = user.name
@@ -470,7 +470,7 @@ export default class WebRTC {
         this.connected = false;
     
         util.log('Disconnected from WebRTC session');
-        this.app?._rtcStateChange();
+        this.app?.rtcStateChange();
     }
 
     closeAllConnections() {
@@ -549,7 +549,7 @@ export default class WebRTC {
                         console.log('Received message without signature, ignoring.');
                         return;
                     }
-                    this.app?._persistMessage(msg);
+                    this.app?.persistMessage(msg);
                 }
             } catch (error) {
                 util.log('Error parsing message: ' + error);

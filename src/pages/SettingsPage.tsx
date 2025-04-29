@@ -374,8 +374,8 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-3 mt-4">
                             <div className="flex space-x-4">
-                                <button className="btn-primary" onClick={() => app._createIdentity(true)}>Create New Keys</button>
-                                <button className="btn-primary" onClick={app._importKeyPair}>Import Keys</button>
+                                <button className="btn-primary" onClick={() => app.createIdentity(true)}>Create New Keys</button>
+                                <button className="btn-primary" onClick={app.importKeyPair}>Import Keys</button>
                             </div>
                         </div>
                     </TitledPanelComp>

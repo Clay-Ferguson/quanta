@@ -97,7 +97,7 @@ export default function FooterComp() {
             }
         } 
         // Send message without attachments
-        await app._send(message.trim(), processedFiles);
+        await app.sendMessage(message.trim(), processedFiles);
         
         setMessage(''); 
         setSelectedFiles([]); 
@@ -133,7 +133,6 @@ export default function FooterComp() {
                     multiple
                     onChange={handleFiles}
                 />
-
                 <textarea 
                     ref={textareaRef}
                     value={message}

@@ -55,7 +55,6 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         return contactsByPublicKey.has(msg.publicKey!);
     }
 
-
     const elmRef = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, true), [messageCount]);
     useEffect(() => scrollEffects.effect(elmRef), []);
@@ -115,7 +114,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                         <FontAwesomeIcon 
                                             icon={faTrash} 
                                             className="h-4 w-4 text-gray-500 hover:text-red-500 cursor-pointer transition-colors" 
-                                            onClick={() => app._deleteMessage(msg.id)}
+                                            onClick={() => app.deleteMessage(msg.id)}
                                             title="Delete message"
                                         />
                                     </div>

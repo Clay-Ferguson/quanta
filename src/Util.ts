@@ -78,7 +78,51 @@ class Util {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
-    };
+    }
+
+    // Calculate the size of a message object in bytes
+    calculateMessageSize(msg: any) {
+        let totalSize = 0;
+    
+        // Text content size
+        if (msg.content) {
+            totalSize += new Blob([msg.content]).size;
+        }
+    
+        // Metadata size (sender, timestamp, etc.)
+        totalSize += new Blob([JSON.stringify({
+            sender: msg.sender,
+            timestamp: msg.timestamp
+        })]).size;
+    
+        // Attachments size
+        if (msg.attachments && msg.attachments.length > 0) {
+            msg.attachments.forEach((attachment: any) => {
+                // Base64 data URLs are approximately 33% larger than the original binary
+                // The actual data portion is after the comma in "data:image/jpeg;base64,..."
+                if (attachment.data) {
+                    const dataUrl = attachment.data;
+                    const base64Index = dataUrl.indexOf(',') + 1;
+                    if (base64Index > 0) {
+                        const base64Data = dataUrl.substring(base64Index);
+                        // Convert from base64 size to binary size (approx)
+                        totalSize += Math.floor((base64Data.length * 3) / 4);
+                    } else {
+                        // Fallback if data URL format is unexpected
+                        totalSize += new Blob([dataUrl]).size;
+                    }
+                }
+    
+                // Add size of attachment metadata
+                totalSize += new Blob([JSON.stringify({
+                    name: attachment.name,
+                    type: attachment.type,
+                    size: attachment.size
+                })]).size;
+            });
+        }
+        return totalSize;
+    }
 }
 
 export const util = new Util();

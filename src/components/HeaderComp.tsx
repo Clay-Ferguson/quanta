@@ -57,7 +57,7 @@ export default function HeaderComp() {
                             
                             <button 
                                 disabled={!gs.userName || !roomName}
-                                onClick={() => app._connect(null, null, roomName)}
+                                onClick={() => app.connect(null, null, roomName)}
                                 className="btn-green"
                             >
                                 Join
@@ -73,7 +73,7 @@ export default function HeaderComp() {
                                 </div>
                             </div>
                             <button 
-                                onClick={app._disconnect}
+                                onClick={app.disconnect}
                                 className="btn-danger"
                             >
                                 Leave

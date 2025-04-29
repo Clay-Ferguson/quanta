@@ -2,8 +2,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons/faArrowLeft";
 import { app } from "../AppService";
 
-// We have this component because eventually we'll have a "stack" (history) of pages, and we want to be able to go back to the previous pages in order.
-
 export default function BackButtonComp() {
     return (
         <button 

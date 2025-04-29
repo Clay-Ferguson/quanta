@@ -3,13 +3,13 @@ export interface AppServiceTypes {
     /**
      * Handle RTC state changes
      */
-    _rtcStateChange(): void;
+    rtcStateChange(): void;
 
     /**
      * Persist a message to storage
      * @param msg The message to persist
      */
-    _persistMessage(msg: ChatMessage): Promise<void>;
+    persistMessage(msg: ChatMessage): Promise<void>;
 
     alert(msg: string): void;
 }

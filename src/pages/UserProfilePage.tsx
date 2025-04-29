@@ -29,7 +29,6 @@ export default function UserProfilePage() {
     
             try {
                 setLoading(true);
-                // Use the correct endpoint from the server code
                 const response = await fetch(`/api/users/${gs.userProfile.publicKey}/info`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -118,7 +117,7 @@ export default function UserProfilePage() {
                     <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 
-                                onClick={() => app._blockUser(profileData.publicKey)}
+                                onClick={() => app.blockUser(profileData.publicKey)}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors duration-200"
                             >
                             Block User

@@ -36,10 +36,10 @@ export default function RoomsPage() {
                                         <thead className="bg-gray-900/50">
                                             <tr>
                                                 <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-blue-300 uppercase tracking-wider">
-                                                                       Room Name
+                                                    Room Name
                                                 </th>
                                                 <th scope="col" className="px-4 py-2 text-right text-xs font-medium text-blue-300 uppercase tracking-wider">
-                                                                       Action
+                                                    Action
                                                 </th>
                                             </tr>
                                         </thead>
@@ -52,21 +52,21 @@ export default function RoomsPage() {
                                                     <td className="px-4 py-2 whitespace-nowrap text-right">
                                                         {gs.roomName===room.name && gs.connected ? (
                                                             <button 
-                                                                onClick={app._disconnect}
+                                                                onClick={app.disconnect}
                                                                 className="btn-danger mr-2"
                                                             >
                                                            Leave
                                                             </button>
                                                         ) : (
                                                             <button 
-                                                                onClick={() => app._connect(null, null, room.name)}
+                                                                onClick={() => app.connect(null, null, room.name)}
                                                                 className="btn-green mr-2"
                                                                 aria-label={`Join ${room.name}`}
                                                             >
                                                            Join
                                                             </button>)}
                                                         <button 
-                                                            onClick={() => app._forgetRoom(room.name)}
+                                                            onClick={() => app.forgetRoom(room.name)}
                                                             className="text-red-400 hover:text-red-300 focus:outline-none"
                                                             aria-label={`Delete ${room.name}`}
                                                         >

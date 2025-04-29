@@ -25,4 +25,3 @@ export default function Markdown({ markdownContent }: MarkdownDisplayProps) {
         </>
     );
 }
-

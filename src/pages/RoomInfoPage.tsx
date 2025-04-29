@@ -6,7 +6,6 @@ import { useGlobalState } from '../GlobalState';
 
 export default function RoomInfoPage() {
     const gs = useGlobalState();
-    
     if (!gs.roomName) {
         return null;
     }

@@ -34,7 +34,6 @@ export default function RecentAttachmentsPage() {
         setLoading(true);
         try {
             const response = await crypt.secureHttpPost(`/api/admin/get-recent-attachments`, gs.keyPair!);
-            
             if (response.success && response.attachments) {
                 setAttachments(response.attachments);
             } else {
@@ -96,7 +95,7 @@ export default function RecentAttachmentsPage() {
             }
             return msg;
         });
-        app._setMessages(gs.messages)
+        app.setMessages(gs.messages)
     };
 
     return (

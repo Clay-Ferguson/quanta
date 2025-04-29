@@ -52,12 +52,12 @@ export default function ContactsListComp() {
     const handleDelete = async (contact: Contact) => {
         if (!await app.confirm(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
         const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
-        app._setContacts(updatedContacts);
+        app.setContacts(updatedContacts);
     };
 
     const handleDeleteSelected = () => {
         const updatedContacts = gs.contacts!.filter(contact => !selectedContacts.has(contact.publicKey));
-        app._setContacts(updatedContacts);
+        app.setContacts(updatedContacts);
         setSelectedContacts(new Set());
     };
 
@@ -81,7 +81,7 @@ export default function ContactsListComp() {
             return;
         }
         
-        app._setContacts([...gs.contacts!, contact]);
+        app.setContacts([...gs.contacts!, contact]);
         setNewContact(null);
     }
 
@@ -153,7 +153,7 @@ export default function ContactsListComp() {
                                             const updatedContacts = gs.contacts!.map(c => 
                                                 c.publicKey === contact.publicKey ? updatedContact : c
                                             );
-                                            app._setContacts(updatedContacts);
+                                            app.setContacts(updatedContacts);
                                             setEditingContact(null);
                                         }}
                                         onCancel={() => setEditingContact(null)}

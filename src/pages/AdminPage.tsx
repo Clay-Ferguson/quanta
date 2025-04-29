@@ -8,7 +8,6 @@ import { PageNames } from '../AppServiceTypes';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
-
 export default function AdminPage() {
     const gs = useGlobalState();
     
@@ -36,7 +35,7 @@ export default function AdminPage() {
             return;
         }
 
-        app._blockUser(pubKey);
+        app.blockUser(pubKey);
     }
 
     return (

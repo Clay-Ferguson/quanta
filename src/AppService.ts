@@ -31,7 +31,7 @@ export class AppService implements AppServiceTypes  {
         // Load the keyPair from IndexedDB
         const keyPair: KeyPairHex = await this.storage?.getItem(DBKeys.keyPair);
         if (!keyPair) {
-            await this._createIdentity(false);
+            await this.createIdentity(false);
         }
         else {
             this.gd!({ type: 'setIdentity', payload: { 
@@ -55,7 +55,6 @@ export class AppService implements AppServiceTypes  {
             console.warn('Global dispatch or state not yet available');
             return;
         }
-
         this.gd = gd;
         this.gs = gs;
 
@@ -66,7 +65,7 @@ export class AppService implements AppServiceTypes  {
     }
 
     runRoomCleanup = async () => {
-    // Get all room keys
+        // Get all room keys
         const roomKeys = await this.storage?.findKeysByPrefix(DBKeys.roomPrefix);
         if (roomKeys) {
             // Loop through each room and delete all messages older than gs.daysOfHistory
@@ -85,7 +84,7 @@ export class AppService implements AppServiceTypes  {
         }
     }
     
-    _deleteMessage = async (messageId: string) => {
+    deleteMessage = async (messageId: string) => {
         this.alert(`Deleting message ${messageId}`);
         const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
         if (messageIndex !== undefined && messageIndex >= 0) {
@@ -216,7 +215,7 @@ export class AppService implements AppServiceTypes  {
 
         if (userName && roomName && connected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
-            await this._connect(userName, keyPair, roomName);
+            await this.connect(userName, keyPair, roomName);
         }
     }
 
@@ -332,20 +331,19 @@ export class AppService implements AppServiceTypes  {
 
     persistGlobalValue = async (key: string, value: any) => {
         // save to global state
-        this.gd!({ type: `persistGlobalValue-${key}`, payload: { 
+        this.gd!({ type: `persistGlobal-${key}`, payload: { 
             [key]: value
         }});
         // Save the keyPair to IndexedDB
         await this.storage?.setItem(key, value);
     }
 
-    _importKeyPair = async () => {
+    importKeyPair = async () => {
         if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
             if (!await this.confirm("Are you sure? This will overwrite your existing key pair.")) {
                 return;
             }
         }
-
         const privateKey = await app.prompt("Enter Private Key");
         console.log("Importing Key Pair: " + privateKey);
         
@@ -365,7 +363,7 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(DBKeys.keyPair, keyPair);
     }
 
-    _createIdentity = async (askFirst: boolean = true) => {
+    createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
         if (askFirst && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
             if (! await this.confirm("Create new Identity Keys?")) {
@@ -381,7 +379,7 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(DBKeys.keyPair, keyPair);
     }
 
-    _rtcStateChange = () => {
+    rtcStateChange = () => {
         if (!this.gd || !this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
@@ -399,7 +397,7 @@ export class AppService implements AppServiceTypes  {
     }
 
     // userName is optional and will default to global state if not provided
-    _connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
+    connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
         userName = userName || this.gs!.userName!;
         keyPair = keyPair || this.gs!.keyPair!;
 
@@ -432,8 +430,6 @@ export class AppService implements AppServiceTypes  {
             roomHistory,
             pages: this.setTopPage(this.gs, PageNames.quantaChat)
         }});
-
-        // set connected DB key
         await this.storage?.setItem(DBKeys.connected, true);
 
         const scrollToBottom = () => {
@@ -466,7 +462,7 @@ export class AppService implements AppServiceTypes  {
         return roomHistory;
     }
 
-    _blockUser = async (publicKey: string) => {
+    blockUser = async (publicKey: string) => {
         if (!await this.confirm("Are you sure? This will delete all messages from this user and block them.")) {
             return;
         }
@@ -490,7 +486,7 @@ export class AppService implements AppServiceTypes  {
         } 
     }
 
-    _setContacts = (contacts: any) => {
+    setContacts = (contacts: any) => {
         // Save into global state
         this.gd!({ type: 'setContacts', payload: { contacts }});
 
@@ -498,7 +494,7 @@ export class AppService implements AppServiceTypes  {
         this.storage?.setItem(DBKeys.contacts, contacts);
     }
 
-    _setMessages = (messages: ChatMessageIntf[]) => {
+    setMessages = (messages: ChatMessageIntf[]) => {
         // Save into global state
         this.gd!({ type: 'setMessages', payload: { messages }});
 
@@ -506,7 +502,7 @@ export class AppService implements AppServiceTypes  {
         this.storage?.setItem(DBKeys.roomPrefix+this.gs?.roomName, messages);
     }
 
-    _disconnect = async () => {
+    disconnect = async () => {
         this.rtc?._disconnect();
         this.gd!({ type: 'disconnect', payload: { 
             messages: [], 
@@ -516,7 +512,7 @@ export class AppService implements AppServiceTypes  {
         await this.storage?.setItem(DBKeys.connected, false);
     }
 
-    _forgetRoom = async (roomName: string) => {
+    forgetRoom = async (roomName: string) => {
         if (!await this.confirm("Clear all chat history for room?")) return;
         
         if (!this.gs || !this.gs!.connected) {
@@ -526,7 +522,7 @@ export class AppService implements AppServiceTypes  {
 
         // if deleting current room disconnect
         if (roomName===this.gs!.roomName) {
-            await this._disconnect();
+            await this.disconnect();
                 this.gs!.messages = []; 
         }
 
@@ -546,7 +542,7 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'forgetRoom', payload: this.gs });
     }
 
-    _send = async (message: string, selectedFiles: any) => {
+    sendMessage = async (message: string, selectedFiles: any) => {
         if (!this.rtc) {
             console.warn('RTC instance not available for sending message');
             return;
@@ -561,7 +557,7 @@ export class AppService implements AppServiceTypes  {
                     console.error('Error signing message:', error);
                 }
             }
-            this._persistMessage(msg);
+            this.persistMessage(msg);
             const sentOk = this.rtc._sendMessage(msg);
             if (!sentOk) {
                 console.warn("Failed to send message immediately, will retry in 20 seconds");
@@ -579,7 +575,7 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
-    _persistMessage = async (msg: ChatMessage) => {
+    persistMessage = async (msg: ChatMessage) => {
         console.log("Persisting message: ", msg);
 
         if (this.messageExists(msg)) {
@@ -639,7 +635,7 @@ export class AppService implements AppServiceTypes  {
         return this.gs!.contacts.some((contact: any) => contact.publicKey === msg.publicKey);
     }
 
-    async pruneDB(msg: any) {
+    pruneDB = async (msg: any) => {
         if (navigator.storage && navigator.storage.estimate) {
             const estimate: any = await navigator.storage.estimate();
             const remainingStorage = estimate.quota - estimate.usage;
@@ -649,7 +645,7 @@ export class AppService implements AppServiceTypes  {
             console.log(`Storage: (${Math.round(usagePercentage)}% used). Quota: ${util.formatStorageSize(estimate.quota)}`);
 
             // Calculate message size and check storage limits
-            const msgSize = this.calculateMessageSize(msg);
+            const msgSize = util.calculateMessageSize(msg);
 
             // If we're within 10% of storage limit
             if (remainingStorage < msgSize || usagePercentage > 90 || forceClean) {
@@ -670,51 +666,7 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
-    // Calculate the size of a message object in bytes
-    calculateMessageSize(msg: any) {
-        let totalSize = 0;
-
-        // Text content size
-        if (msg.content) {
-            totalSize += new Blob([msg.content]).size;
-        }
-
-        // Metadata size (sender, timestamp, etc.)
-        totalSize += new Blob([JSON.stringify({
-            sender: msg.sender,
-            timestamp: msg.timestamp
-        })]).size;
-
-        // Attachments size
-        if (msg.attachments && msg.attachments.length > 0) {
-            msg.attachments.forEach((attachment: any) => {
-                // Base64 data URLs are approximately 33% larger than the original binary
-                // The actual data portion is after the comma in "data:image/jpeg;base64,..."
-                if (attachment.data) {
-                    const dataUrl = attachment.data;
-                    const base64Index = dataUrl.indexOf(',') + 1;
-                    if (base64Index > 0) {
-                        const base64Data = dataUrl.substring(base64Index);
-                        // Convert from base64 size to binary size (approx)
-                        totalSize += Math.floor((base64Data.length * 3) / 4);
-                    } else {
-                        // Fallback if data URL format is unexpected
-                        totalSize += new Blob([dataUrl]).size;
-                    }
-                }
-
-                // Add size of attachment metadata
-                totalSize += new Blob([JSON.stringify({
-                    name: attachment.name,
-                    type: attachment.type,
-                    size: attachment.size
-                })]).size;
-            });
-        }
-        return totalSize;
-    }
-
-    saveMessages() {
+    saveMessages = () => {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
@@ -753,7 +705,7 @@ export class AppService implements AppServiceTypes  {
         return msg;
     }
 
-    async loadRoomMessages(roomId: string): Promise<ChatMessage[]> {
+    loadRoomMessages = async (roomId: string): Promise<ChatMessage[]> => {
         let messages: ChatMessage[] = [];
         
         if (!this.storage) {
@@ -785,7 +737,7 @@ export class AppService implements AppServiceTypes  {
         // Next get room messages from server using our new optimized approach
         if (this.gs!.saveToServer) {
             try {
-                // Step 1: Get all message IDs from the server for this room
+                // Get all message IDs from the server for this room
                 const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
                 if (!idsResponse.ok) {
                     throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);
@@ -799,10 +751,10 @@ export class AppService implements AppServiceTypes  {
                     return messages;
                 }
             
-                // Step 2: Create a map of existing message IDs for quick lookup
+                // Create a map of existing message IDs for quick lookup
                 const existingMessageIds = new Set(messages.map(msg => msg.id));
             
-                // Step 3: Determine which message IDs we're missing locally
+                // Determine which message IDs we're missing locally
                 const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
             
                 if (missingIds.length === 0) {
@@ -812,7 +764,7 @@ export class AppService implements AppServiceTypes  {
             
                 util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
-                // Step 4: Fetch only the missing messages from the server
+                // Fetch only the missing messages from the server
                 const messagesResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, {
                     method: 'POST',
                     headers: {
@@ -832,18 +784,17 @@ export class AppService implements AppServiceTypes  {
                         console.log(`Fetched message: ${msg.content} with ${msg.attachments ? msg.attachments.length : 0} attachments`);
                     });
 
-                    // Step 5: Add the fetched messages to our local array
+                    // Add the fetched messages to our local array
                     messages = [...messages, ...messagesData.messages];
                 
-                    // Step 6: Sort messages by timestamp to ensure chronological order
+                    // Sort messages by timestamp to ensure chronological order
                     messages.sort((a, b) => a.timestamp - b.timestamp);
                 
-                    // Step 7: Save the merged messages to local storage
+                    // Save the merged messages to local storage
                     await this.storage.setItem(DBKeys.roomPrefix + roomId, {
                         messages,
                         lastUpdated: new Date().toISOString()
                     });
-                
                     util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
                 }
             } catch (error) {

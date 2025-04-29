@@ -2,7 +2,6 @@ import { app } from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
-// Store resolution functions for active confirm dialogs
 interface ConfirmationPromiseHandlers {
     resolve: (value: boolean) => void;
 }
@@ -17,7 +16,6 @@ export function setConfirmHandlers(handlers: ConfirmationPromiseHandlers | null)
 
 export function ConfirmModalComp() {
     const gs = useGlobalState();
-    
     if (!gs.confirmMessage) return null;
     
     const handleConfirm = (result: boolean) => {
