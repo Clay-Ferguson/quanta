@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faQuestionCircle, faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
 import { PageNames } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 
 declare const ADMIN_PUBLIC_KEY: string;
+
 
 export default function HeaderComp() {
     const gs = useGlobalState();
@@ -39,9 +40,9 @@ export default function HeaderComp() {
     
     return (
         <header className="app-header">
-            <LogoBlockComp subText={participantMsg}/>
+            <LogoBlockComp clazz="" subText={participantMsg}/>
             <div className="flex items-center space-x-4">
-                <div className="border border-gray-600 rounded px-3 py-1 bg-gray-700/50 flex items-center space-x-3">
+                <div id="roomSection" className="border border-gray-600 rounded px-3 py-1 bg-gray-700/50 flex items-center space-x-3">
                     {!gs.connected ? (
                         <>
                             <div className="flex items-center">
@@ -93,20 +94,22 @@ export default function HeaderComp() {
                                 Rooms
                     </button>
                 </div>
-                <button 
-                    onClick={() => app.goToPage(PageNames.contacts)}
-                    className="btn-secondary"
-                >
-                    Contacts
-                </button>
-                <button 
-                    onClick={() => app.goToPage(PageNames.settings)}
-                    className="btn-icon"
-                    title="Settings"
-                >
-                    <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
-                </button>
-                { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
+
+                <div className="flex items-center space-x-4">
+                    <button 
+                        onClick={() => app.goToPage(PageNames.contacts)}
+                        className="btn-icon"
+                    >
+                        <FontAwesomeIcon icon={faUsers} className="h-5 w-5" />
+                    </button>
+                    <button 
+                        onClick={() => app.goToPage(PageNames.settings)}
+                        className="btn-icon"
+                        title="Settings"
+                    >
+                        <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
+                    </button>
+                    { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey &&
                 <button 
                     onClick={() => app.goToPage(PageNames.admin)}
                     className="btn-icon"
@@ -114,13 +117,14 @@ export default function HeaderComp() {
                 >
                     <FontAwesomeIcon icon={faScrewdriverWrench} className="h-5 w-5" />
                 </button>}
-                <button 
-                    onClick={() => app.goToPage(PageNames.userGuide)}
-                    className="btn-icon"
-                    title="Help"
-                >
-                    <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
-                </button>
+                    <button 
+                        onClick={() => app.goToPage(PageNames.userGuide)}
+                        className="btn-icon"
+                        title="Help"
+                    >
+                        <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
+                    </button>
+                </div>
             </div>
         </header>
     );

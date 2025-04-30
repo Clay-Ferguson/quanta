@@ -4,6 +4,7 @@ import ImageViewerComp from '../components/ImageViewerComp';
 import MessagesComp from '../components/MessagesComp';
 import { useGlobalState } from '../GlobalState';
 
+// #QuantaChatPage 
 export default function QuantaChatPage() {
     const gs = useGlobalState();
     let mainComp = null;
@@ -30,6 +31,7 @@ export default function QuantaChatPage() {
         )
     }
 
+    // #QuantaChatPageLayout
     return (
         <div className="page-container">
             <HeaderComp/>

@@ -3,13 +3,16 @@ import { PageNames } from '../AppServiceTypes';
 
 interface LogoBlockCompProps {
   subText: string;
+  clazz?: string;
 }
 
-export default function LogoBlockComp({ subText = '' }: LogoBlockCompProps) {
+
+
+export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
     const handleLogoClick = () => app.goToPage(PageNames.quantaChat);
     
     return (
-        <div className="flex-1 flex items-center">
+        <div className={`flex-1 flex items-center ${clazz}`} >
             <div className="mr-3 cursor-pointer" onClick={handleLogoClick}>
                 <img 
                     src="/logo-100px-tr.jpg" 

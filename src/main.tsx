@@ -36,6 +36,7 @@ function AppServiceConnector() {
 }
 
 // Component to handle conditional page rendering
+// #PageRouter
 function PageRouter() {
     const gs = useGlobalState();
 
@@ -75,6 +76,8 @@ function PageRouter() {
     }
 }
 
+
+// #FullWebApp
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <GlobalStateProvider> 

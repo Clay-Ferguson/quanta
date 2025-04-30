@@ -576,7 +576,6 @@ export default class WebRTC {
             this.dataChannels.forEach((channel, publicKey) => {
                 if (channel.readyState === 'open') {
                     try {
-                        // todo-0: is this guaranteed to throw exception if it fails. Becasue we can't let send=true get set if it fails.
                         channel.send(jsonMsg);
                         util.log(`Successfully sent message to ${publicKey}`);
                         sent = true;
@@ -599,8 +598,6 @@ export default class WebRTC {
                     message: msg, 
                     room: this.roomId
                 }
-                // todo-0: this needs to be setting 'sent' to the TRUE result of this socket send, need to investigage how, unless it
-                // is guaranteed to throw exception.
                 this.socketSend(broadcastMessage);
                 util.log('Sent message via signaling server broadcast.');
                 sent = true;

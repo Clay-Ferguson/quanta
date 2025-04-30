@@ -455,12 +455,9 @@ export class AppService implements AppServiceTypes  {
             for (const msg of unsentMessages) {
                 console.log(`Resending message: ${msg.id}`);
                 const sentOk = this.rtc._sendMessage(msg);
-                if (sentOk) {
-                    msg.state = 's';
-                    console.log(`Successfully resent message: ${msg.id}`);
-                } else {
-                    console.warn(`Failed to resend message: ${msg.id}`);
-                }
+                // we really need a more robust way to verify the server did indeed get saved on the server
+                // because we can't do it thru WebRTC
+                msg.state = sentOk ? 's' : 'f';
             }
             
             // Update the global state and save messages after resending
@@ -599,6 +596,8 @@ export class AppService implements AppServiceTypes  {
             }
             
             const sentOk = this.rtc._sendMessage(msg);
+            // we really need a more robust way to verify the server did indeed get saved on the server
+            // because we can't do it thru WebRTC
             msg.state = sentOk ? 's' : 'f';
 
             // persist in global state

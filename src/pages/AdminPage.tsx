@@ -38,6 +38,7 @@ export default function AdminPage() {
         app.blockUser(pubKey);
     }
 
+    
     return (
         <div className="page-container">
             <header className="app-header">
