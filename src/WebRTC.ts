@@ -1,9 +1,10 @@
-import { User, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
+import { ChatMessage, User, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
-import {AppServiceTypes, ChatMessage} from './AppServiceTypes.ts';
+import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
+import { canon } from '../common/Canonicalizer.ts';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -162,7 +163,7 @@ export default class WebRTC {
             util.log('Received offer with event of a mismatched publicKey. ignoring.');
             return;
         }
-        const sigOk = crypt.verifySignature(evt, crypt.canonical_WebRTCOffer); 
+        const sigOk = crypt.verifySignature(evt, canon.canonical_WebRTCOffer); 
         if (!sigOk) {
             console.error("Signature verification failed for offer message:", evt);
             return;
@@ -316,7 +317,7 @@ export default class WebRTC {
                 }
             };
 
-            this.signedSocketSend(joinMessage, crypt.canonical_WebRTCJoin);
+            this.signedSocketSend(joinMessage, canon.canonical_WebRTCJoin);
         }
         util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?.rtcStateChange();
@@ -416,7 +417,7 @@ export default class WebRTC {
                         target: user,
                         room: this.roomId
                     };
-                    this.signedSocketSend(offer, crypt.canonical_WebRTCOffer);
+                    this.signedSocketSend(offer, canon.canonical_WebRTCOffer);
                     util.log('Sent offer to ' + user.name);
                 }
             } catch (err) {

@@ -1,5 +1,4 @@
-import { FileBase64Intf } from "../common/CommonTypes";
-import { ChatMessage } from "./AppServiceTypes";
+import { ChatMessage, FileBase64Intf } from "../common/CommonTypes";
 
 class Util {
     log(message: string) {

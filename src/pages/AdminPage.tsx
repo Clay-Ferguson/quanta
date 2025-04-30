@@ -1,10 +1,10 @@
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
-import { crypt } from '../../common/Crypto';
 import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
+import { httpClientUtil } from '../HttpClientUtil';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -17,7 +17,7 @@ export default function AdminPage() {
     }
 
     const createTestData = async () => {
-        const success = await crypt.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
+        const success = await httpClientUtil.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
         if (success) {
             app.alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
         } else {

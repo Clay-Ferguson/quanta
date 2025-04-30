@@ -1,7 +1,8 @@
 import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
 import { DBManager } from './DBManager.js';
-import {crypt} from '../common/Crypto.js'
+import {crypt} from '../common/Crypto.js';
+import {canon} from '../common/Canonicalizer.js';
 import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 
 const log = logger.logInfo;
@@ -146,7 +147,7 @@ export default class WebRTCSigServer {
         }
 
         // validate the signature
-        const sigOk = crypt.verifySignature(msg, crypt.canonical_WebRTCJoin); 
+        const sigOk = crypt.verifySignature(msg, canon.canonical_WebRTCJoin); 
         if (!sigOk) {
             logError("Signature verification failed for join message:", msg);
             return;
@@ -275,7 +276,7 @@ export default class WebRTCSigServer {
     persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
             // todo-1: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
-            const sigOk = await crypt.verifySignature(data.message, crypt.canonical_ChatMessage);
+            const sigOk = await crypt.verifySignature(data.message, canon.canonical_ChatMessage);
             if (!sigOk) {
                 logError("Signature verification failed for message:", data.message);
                 return;

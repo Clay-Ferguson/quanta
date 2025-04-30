@@ -1,10 +1,10 @@
-import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
 import PublicKeyComp from './PublicKeyComp';
 import AvatarImageComp from './AvatarImageComp';
+import { Contact } from '../../common/CommonTypes';
 
 export default function RoomMembersComp() {
     const gs = useGlobalState();

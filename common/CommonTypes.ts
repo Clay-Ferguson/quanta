@@ -27,6 +27,16 @@ export interface User {
     publicKey: string;
 }
 
+export type ChatMessage = ChatMessageIntf & {
+    sigVersion?: string; // todo-1: need to put this in the base class and have stored on server as well.
+    sigOk?: boolean; // signature valid, regardless of presence in our Contact List
+}
+
+export type Contact = {
+    alias: string;
+    publicKey: string;
+}
+
 export interface FileBase64Intf {
     id?: number; // Attachments table ID if stored in DB
     name: string;

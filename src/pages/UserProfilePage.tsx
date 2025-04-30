@@ -10,6 +10,7 @@ import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
+import { httpClientUtil } from '../HttpClientUtil';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -29,12 +30,7 @@ export default function UserProfilePage() {
     
             try {
                 setLoading(true);
-                const response = await fetch(`/api/users/${gs.userProfile.publicKey}/info`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const userProfile: UserProfile = await response.json();
+                const userProfile: UserProfile = await httpClientUtil.httpGet(`/api/users/${gs.userProfile.publicKey}/info`);
                 setProfileData(userProfile);
                 setError(null);
             } catch (err) {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Contact } from '../AppServiceTypes';
 import { useGlobalState } from '../GlobalState';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import PublicKeyComp from './PublicKeyComp';
 import AvatarImageComp from './AvatarImageComp';
+import { Contact } from '../../common/CommonTypes';
 
 export default function ContactsListComp() {
     const gs = useGlobalState();

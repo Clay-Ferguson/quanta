@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
-import { crypt } from '../../common/Crypto';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { httpClientUtil } from '../HttpClientUtil';
 
 // Define interface for room info
 interface RoomInfo {
@@ -25,7 +25,7 @@ export default function RoomsAdminComp() {
             setError(null);
             
             try {
-                const response: any = await crypt.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
+                const response: any = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
                 if (response && Array.isArray(response.rooms)) {
                     setRoomsData(response.rooms);
                 } else {
@@ -53,7 +53,7 @@ export default function RoomsAdminComp() {
         setError(null);
         
         try {
-            const response: any = await crypt.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
+            const response: any = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
             } else {
@@ -71,7 +71,7 @@ export default function RoomsAdminComp() {
 
     const deleteRoom = async (roomName: string) => {
         try {
-            const success = await crypt.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
+            const success = await httpClientUtil.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
                 roomName
             });
             

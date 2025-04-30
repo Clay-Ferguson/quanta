@@ -1,14 +1,16 @@
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, ChatMessage, Contact, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
+import {AppServiceTypes, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { ChatMessageIntf, FileBase64Intf, User, UserProfile } from '../common/CommonTypes.ts';
+import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandlers } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
+import { httpClientUtil } from './HttpClientUtil.ts';
+import { canon } from '../common/Canonicalizer.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -94,7 +96,7 @@ export class AppService implements AppServiceTypes  {
 
             try {
                 // Make the secure POST request with body
-                const response = await crypt.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
+                const response = await httpClientUtil.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
                     messageId: messageId
                 });
                 
@@ -293,7 +295,7 @@ export class AppService implements AppServiceTypes  {
                     avatar: userAvatar
                 };
 
-                const response = await crypt.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
+                const response = await httpClientUtil.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -506,7 +508,7 @@ export class AppService implements AppServiceTypes  {
         
         try {
             // Make the secure POST request with body
-            const response = await crypt.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
+            const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
                 pub_key: publicKey.trim()
             });
         
@@ -589,7 +591,7 @@ export class AppService implements AppServiceTypes  {
             
             if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
                 try {
-                    await crypt.signObject(msg, crypt.canonical_ChatMessage, this.gs!.keyPair);
+                    await crypt.signObject(msg, canon.canonical_ChatMessage, this.gs!.keyPair);
                     msg.sigOk = true;
                 } catch (error) {
                     console.error('Error signing message:', error);
@@ -628,7 +630,7 @@ export class AppService implements AppServiceTypes  {
         }
 
         if (msg.signature) {
-            msg.sigOk = await crypt.verifySignature(msg, crypt.canonical_ChatMessage);
+            msg.sigOk = await crypt.verifySignature(msg, canon.canonical_ChatMessage);
         }
         else {
             // console.log("No signature found on message: "+ msg.content);
@@ -781,12 +783,8 @@ export class AppService implements AppServiceTypes  {
         if (this.gs!.saveToServer) {
             try {
                 // Get all message IDs from the server for this room
-                const idsResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
-                if (!idsResponse.ok) {
-                    throw new Error(`Failed to fetch message IDs: ${idsResponse.status}`);
-                }
-            
-                const idsData = await idsResponse.json();
+                const idsData: any = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
+               
                 const serverMessageIds: string[] = idsData.messageIds || [];
                 if (serverMessageIds.length === 0) {
                     util.log(`No messages found on server for room: ${roomId}`);
@@ -806,20 +804,8 @@ export class AppService implements AppServiceTypes  {
                 util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
                 // Fetch only the missing messages from the server
-                // todo-0: we need a reusable 'post' method in Utils that does this, and returns the respons object from response.json.
-                const messagesResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ ids: missingIds })
-                });
+                const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
             
-                if (!messagesResponse.ok) {
-                    throw new Error(`Failed to fetch missing messages: ${messagesResponse.status}`);
-                }
-            
-                const messagesData = await messagesResponse.json();
                 if (messagesData.messages && messagesData.messages.length > 0) {
                     // log all the messages content we got back along with number of attachments for each message
                     messagesData.messages.forEach((msg: ChatMessage) => {

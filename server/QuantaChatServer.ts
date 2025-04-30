@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import {crypt} from '../common/Crypto.js'
+import {crypt} from '../common/Crypto.js';
+import { httpServerUtil } from '../common/HttpServerUtil.js';
 import {controller} from './Contoller.js';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
@@ -81,19 +82,19 @@ app.get('/api/messages', controller.getMessageHistory);
 app.get('/api/users/:pubKey/info', controller.getUserProfile);
 app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
 
-app.post('/api/admin/get-room-info', crypt.verifyAdminHTTPSignature, controller.getRoomInfo);
-app.post('/api/admin/delete-room', crypt.verifyAdminHTTPSignature, controller.deleteRoom);
-app.post('/api/admin/get-recent-attachments', crypt.verifyAdminHTTPSignature, controller.getRecentAttachments);
-app.post('/api/admin/create-test-data', crypt.verifyAdminHTTPSignature, controller.createTestData);
-app.post('/api/admin/delete-message', crypt.verifyAdminHTTPSignature, controller.deleteMessage);
-app.post('/api/admin/block-user', crypt.verifyAdminHTTPSignature, controller.blockUser);
+app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, controller.getRoomInfo);
+app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, controller.deleteRoom);
+app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, controller.getRecentAttachments);
+app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, controller.createTestData);
+app.post('/api/admin/delete-message', httpServerUtil.verifyAdminHTTPSignature, controller.deleteMessage);
+app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, controller.blockUser);
 
-app.post('/api/attachments/:attachmentId/delete', crypt.verifyAdminHTTPSignature, controller.deleteAttachment);
+app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteAttachment);
 app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
-app.post('/api/users/info', crypt.verifyReqHTTPSignature, controller.saveUserProfile);
+app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, controller.saveUserProfile);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
-// app.get('/recent-attachments', crypt.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
+// app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
 const distPath = path.join(__dirname, '../../dist');
 

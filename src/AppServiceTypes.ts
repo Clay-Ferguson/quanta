@@ -1,4 +1,5 @@
-import { ChatMessageIntf } from '../common/CommonTypes.js';
+import { ChatMessage } from "../common/CommonTypes";
+
 export interface AppServiceTypes {
     rtcStateChange(): void;
     persistInboundMessage(msg: ChatMessage): Promise<void>;
@@ -35,15 +36,5 @@ export enum PageNames{
     rooms = 'RoomsPage',
     roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
-}
-
-export type ChatMessage = ChatMessageIntf & {
-    sigVersion?: string; // todo-1: need to put this in the base class and have stored on server as well.
-    sigOk?: boolean; // signature valid, regardless of presence in our Contact List
-}
-
-export type Contact = {
-    alias: string;
-    publicKey: string;
 }
 
