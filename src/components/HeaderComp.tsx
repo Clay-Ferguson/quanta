@@ -8,7 +8,6 @@ import { useGlobalState } from '../GlobalState';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
-
 export default function HeaderComp() {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');

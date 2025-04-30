@@ -71,17 +71,13 @@ export default function RoomsAdminComp() {
 
     const deleteRoom = async (roomName: string) => {
         try {
-            const success = await httpClientUtil.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
+            await httpClientUtil.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
                 roomName
             });
             
-            if (success) {
-                // Remove the deleted room from the state
-                setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
-                app.alert(`Room "${roomName}" deleted successfully`);
-            } else {
-                app.alert(`Failed to delete room "${roomName}"`);
-            }
+            // Remove the deleted room from the state
+            setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
+            app.alert(`Room "${roomName}" deleted successfully`);
         } catch (error) {
             console.error('Error deleting room:', error);
             app.alert(`An error occurred while deleting room "${roomName}"`);

@@ -96,17 +96,10 @@ export class AppService implements AppServiceTypes  {
 
             try {
                 // Make the secure POST request with body
-                const response = await httpClientUtil.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
+                await httpClientUtil.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
                     messageId: messageId
                 });
                 
-                if (response) {
-                    if (response.success) {
-                        console.log(`Message deleted from server: ${messageId}`);
-                    } else {
-                        console.error(`Failed to delete message from server: ${response.error || 'Unknown error'}`);
-                    }
-                }
             } catch (error) {
                 console.error('Error deleting message from server:', error);
             }
@@ -295,14 +288,7 @@ export class AppService implements AppServiceTypes  {
                     avatar: userAvatar
                 };
 
-                const response = await httpClientUtil.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Failed to save user info to server:', errorData.error);
-                } else {
-                    console.log('User info successfully saved to server');
-                }
+                await httpClientUtil.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
             } catch (error) {
                 console.error('Error saving user info to server:', error);
             }
@@ -508,14 +494,7 @@ export class AppService implements AppServiceTypes  {
             const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
                 pub_key: publicKey.trim()
             });
-        
-            if (response) {
-                if (response.success) {
-                    app.alert(`Success: ${response.message}`);
-                } else {
-                    app.alert(`Operation completed but failed: ${response.message}`);
-                }
-            }
+            app.alert(`Success: ${response.message}`);
         } catch (error) {
             console.error('Error blocking user:', error);
             app.alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
