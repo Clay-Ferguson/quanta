@@ -1,16 +1,7 @@
 import { ChatMessageIntf } from '../common/CommonTypes.js';
 export interface AppServiceTypes {
-    /**
-     * Handle RTC state changes
-     */
     rtcStateChange(): void;
-
-    /**
-     * Persist a message to storage
-     * @param msg The message to persist
-     */
-    persistMessage(msg: ChatMessage): Promise<void>;
-
+    persistInboundMessage(msg: ChatMessage): Promise<void>;
     alert(msg: string): void;
 }
 

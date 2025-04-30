@@ -432,6 +432,44 @@ export class AppService implements AppServiceTypes  {
         }});
         await this.storage?.setItem(DBKeys.connected, true);
 
+        setTimeout(() => {
+            this.reSendFailedMessages();
+        }, 500);
+
+        this.delayedscrollToBottom();
+        console.log("Connected to room: " + roomName);
+    }
+
+    reSendFailedMessages = () => {
+        if (!this.rtc || !this.gs || !this.gs.messages) {
+            console.warn('Cannot resend messages: RTC not initialized or no messages available');
+            return;
+        }
+        const unsentMessages = this.gs.messages.filter(msg => msg.state !== 's' && msg.publicKey === this.gs!.keyPair?.publicKey);
+        
+        if (unsentMessages.length > 0) {
+            console.log(`Attempting to resend ${unsentMessages.length} unsent messages`);
+            
+            for (const msg of unsentMessages) {
+                console.log(`Resending message: ${msg.id}`);
+                const sentOk = this.rtc._sendMessage(msg);
+                if (sentOk) {
+                    msg.state = 's';
+                    console.log(`Successfully resent message: ${msg.id}`);
+                } else {
+                    console.warn(`Failed to resend message: ${msg.id}`);
+                }
+            }
+            
+            // Update the global state and save messages after resending
+            this.gd!({ type: 'resendMessages', payload: this.gs });
+            this.saveMessages();
+        } else {
+            console.log('No unsent messages to resend');
+        }
+    }
+
+    delayedscrollToBottom = () => {
         const scrollToBottom = () => {
             const chatLog = document.getElementById('chatLog');
             if (chatLog) {
@@ -440,11 +478,10 @@ export class AppService implements AppServiceTypes  {
         };
         
         // Additional scroll attempts with increasing delays
+        setTimeout(scrollToBottom, 10);
         setTimeout(scrollToBottom, 500);
         setTimeout(scrollToBottom, 1000);
         setTimeout(scrollToBottom, 2500);
-
-        console.log("Connected to room: " + roomName);
     }
 
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {
@@ -553,30 +590,34 @@ export class AppService implements AppServiceTypes  {
             if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
                 try {
                     await crypt.signObject(msg, crypt.canonical_ChatMessage, this.gs!.keyPair);
+                    msg.sigOk = true;
                 } catch (error) {
                     console.error('Error signing message:', error);
                 }
             }
-            this.persistMessage(msg);
+            
             const sentOk = this.rtc._sendMessage(msg);
-            if (!sentOk) {
-                console.warn("Failed to send message immediately, will retry in 20 seconds");
-                // try again in 20 seconds
-                setTimeout(() => {
-                    console.warn("Retrying message send.");
-                    const retryOk = this.rtc?._sendMessage(msg);
-                    if (!retryOk) {
-                        app.alert("There was a probelm delivering that message, so it may not immediately appear for others.");
-                    }
-                }, 20000);
-            }
+            msg.state = sentOk ? 's' : 'f';
 
-            this.gd!({ type: 'send', payload: this.gs});
+            // persist in global state
+            this.gs!.messages!.push(msg);
+            this.gd!({ type: 'persistMessage', payload: this.gs});
+
+            // persist in IndexedDB
+            this.saveMessages();
+
+            setTimeout(() => {
+                try {
+                    this.pruneDB(msg);
+                } catch (error) {
+                    util.log('Error checking storage or saving message: ' + error);
+                }
+            }, 1000);
         }
     }
 
-    persistMessage = async (msg: ChatMessage) => {
-        console.log("Persisting message: ", msg);
+    persistInboundMessage = async (msg: ChatMessage) => {
+        console.log("App Persisting message: ", msg);
 
         if (this.messageExists(msg)) {
             return; // Message already exists, do not save again
@@ -666,6 +707,7 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
+    /* Saves the current Global State messages to IndexedDB */
     saveMessages = () => {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
@@ -689,7 +731,8 @@ export class AppService implements AppServiceTypes  {
         return this.gs!.messages!.some((message: any) =>
             message.timestamp === msg.timestamp &&
             message.sender === msg.sender &&
-            message.content === msg.content
+            message.content === msg.content &&
+            message.state === msg.state
         );
     }
 
@@ -734,7 +777,7 @@ export class AppService implements AppServiceTypes  {
             util.log('Error loading messages from storage: ' + error);
         }
 
-        // Next get room messages from server using our new optimized approach
+        // Next get room messages from server
         if (this.gs!.saveToServer) {
             try {
                 // Get all message IDs from the server for this room
@@ -745,7 +788,6 @@ export class AppService implements AppServiceTypes  {
             
                 const idsData = await idsResponse.json();
                 const serverMessageIds: string[] = idsData.messageIds || [];
-            
                 if (serverMessageIds.length === 0) {
                     util.log(`No messages found on server for room: ${roomId}`);
                     return messages;
@@ -756,7 +798,6 @@ export class AppService implements AppServiceTypes  {
             
                 // Determine which message IDs we're missing locally
                 const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
-            
                 if (missingIds.length === 0) {
                     util.log(`Local message store is up to date for room: ${roomId}`);
                     return messages;
@@ -765,6 +806,7 @@ export class AppService implements AppServiceTypes  {
                 util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
                 // Fetch only the missing messages from the server
+                // todo-0: we need a reusable 'post' method in Utils that does this, and returns the respons object from response.json.
                 const messagesResponse = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, {
                     method: 'POST',
                     headers: {

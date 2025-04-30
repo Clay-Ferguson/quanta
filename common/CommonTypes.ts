@@ -11,6 +11,7 @@ export interface ChatMessageIntf extends SignableObject {
     publicKey?: string;
     signature?: string;
     attachments?: FileBase64Intf[];
+    state?: 's' | 'f'; //s=sent, f=failed
 }
 
 export interface UserProfile {

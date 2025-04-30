@@ -106,7 +106,6 @@ class Crypto {
 
         try {
             const isVerified: boolean = await secp.verify(sig, msgHash, pubKeyBytes);
-            console.log("verifySignature Verified: "+isVerified);
             return isVerified;
         } catch (error) {
             console.error("Error verifying signature:", error);
@@ -456,7 +455,7 @@ class Crypto {
         return sigHex;
     }
 
-    // Takes the hash of 's' and signs it with the private key, returnign the hex of the signature
+    // Takes the hash of 's' and signs it with the private key, returning the hex of the signature
     getSigHexOfString = async (s: string, keyBytes: Uint8Array) => {
         const hash = this.getHashBytesOfString(s);    
         const sig = await secp.signAsync(hash, keyBytes);    

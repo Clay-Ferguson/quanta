@@ -19,7 +19,6 @@ export default function QuantaChatPage() {
                     <div className="text-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-md">
                         <h2 className="text-2xl font-bold text-blue-400 mb-4">Not Connected</h2>
                         <p className="text-gray-300 mb-2">Enter a room name in the field above and click "Join" to get started chatting.</p>
-                        <p className="text-gray-400 text-sm">You'll be able to see messages and share files once you're connected to a room.</p>
                     </div>
                 </main>
             );

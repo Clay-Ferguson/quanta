@@ -6,9 +6,9 @@ class Util {
         console.log(message);
     }
 
-    // Generate a shorter random ID (about 8-10 characters)
+    // Generate a shorter random ID
     generateShortId = () => {
-        const array = new Uint8Array(6); // 6 bytes = ~8 chars in base64
+        const array = new Uint8Array(12);
         crypto.getRandomValues(array);
         return btoa(String.fromCharCode(...array)).replace(/[+/=]/g, '');
     };

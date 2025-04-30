@@ -110,13 +110,13 @@ export default class WebRTCSigServer {
     }
 
     // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
-    onBroadcast = (ws: WebSocket, msg: WebRTCBroadcast) => {
+    onBroadcast = async (ws: WebSocket, msg: WebRTCBroadcast) => {
         if (!msg.room) {
             logError("No room in broadcast message");
             return;
         }
         // First save message to DB
-        this.persist(msg);
+        await this.persist(msg);
 
         const senderClientInfo = this.clientsMap.get(ws);
         if (senderClientInfo) {
@@ -287,15 +287,10 @@ export default class WebRTCSigServer {
                 return;
             }
           
-            this.db.persistMessage(data.room, data.message)
-                .then(success => {
-                    if (success) {
-                        console.log(`Message from ${data.message.sender} persisted to database (silent)`);
-                    }
-                })
-                .catch(err => {
-                    console.error('Error persisting silent message:', err);
-                });
+            const success = await this.db.persistMessage(data.room, data.message)
+            if (success) {
+                console.log(`Message from ${data.message.sender} persisted to database`);
+            }
         }
     }
 }
