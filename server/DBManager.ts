@@ -12,6 +12,7 @@ export class DBManager {
     private db: Database | null = null;
     private static instance: DBManager | null = null;
     private dbPath: string;
+    private tranCounter = 0;
 
     private constructor(dbPath: string) {
         this.dbPath = dbPath;
@@ -104,17 +105,32 @@ export class DBManager {
     private runTrans = async (fn: () => Promise<any>): Promise<any> => {
         this.checkDb();
         let ret = null;
+        
+        // Increment counter BEFORE starting transaction
+        this.tranCounter++;
         try {
+            if (this.tranCounter > 1) {
+                console.log('USING CURRENT TRAN');
+                return await fn();
+            }
+            
             await this.db!.run('BEGIN TRANSACTION');
             ret = await fn();
             await this.db!.run('COMMIT');
         } catch (error) {
             console.error('Transaction error:', error);
-            try {
-                await this.db!.run('ROLLBACK');
-            } catch (rollbackError) {
-                console.error('Rollback failed:', rollbackError);
+            console.trace();
+            if (this.tranCounter === 1) { // Only rollback if we're the "owner" of the transaction
+                try {
+                    await this.db!.run('ROLLBACK');
+                } 
+                catch (rollbackError) {
+                    console.error('Transaction error:', rollbackError);
+                }
             }
+        }
+        finally {
+            this.tranCounter--;
         }
         return ret;
     }
@@ -266,12 +282,12 @@ export class DBManager {
     }
 
     public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
-        console.log('Persisting message:', message);
+        console.log('DB Persisting message:', message);
 
-        return this.runTrans(async () => {
+        return await this.runTrans(async () => {
             // Ensure room exists
             const roomId = await this.getOrCreateRoom(roomName);
-            console.log('    Room ID:', roomId);
+            console.log('Got Room ID:', roomId);
 
             // Store the message
             await this.db!.run(
@@ -325,7 +341,6 @@ export class DBManager {
     private async getOrCreateRoom(roomName: string): Promise<number> {
         // Check if room exists
         let result = await this.db!.get('SELECT id FROM rooms WHERE name = ?', roomName);
-        
         if (result) {
             return result.id;
         }
