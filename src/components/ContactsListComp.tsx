@@ -9,6 +9,9 @@ import AvatarImageComp from './AvatarImageComp';
 
 export default function ContactsListComp() {
     const gs = useGlobalState();
+    if (!gs.contacts) {
+        gs.contacts = [];
+    }
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
     const [editingContact, setEditingContact] = useState<string | null>(null);
     const [newContact, setNewContact] = useState<Contact | null>(null);
