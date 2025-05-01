@@ -2,7 +2,7 @@ import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
-import PublicKeyComp from './PublicKeyComp';
+import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/CommonTypes';
 
@@ -70,7 +70,7 @@ export default function RoomMembersComp() {
                                     <td className="px-3 py-2 whitespace-nowrap">{member.alias || ''}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">{member.name}</td>
                                     <td className="px-3 py-2">
-                                        <PublicKeyComp publicKey={member.publicKey} />
+                                        <HexKeyComp hexKey={member.publicKey} />
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                         {!member.alias && member.publicKey !== gs.keyPair?.publicKey ? (

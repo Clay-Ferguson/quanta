@@ -7,6 +7,7 @@ import BackButtonComp from '../components/BackButtonComp';
 import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
+import HexKeyComp from '../components/HexKeyComp';
 
 export default function SettingsPage() {
     const gs = useGlobalState();
@@ -331,9 +332,7 @@ export default function SettingsPage() {
                                 <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">Shareable</span>
                             </div>
                             <div className="bg-gray-900 p-3 rounded border border-blue-400/20">
-                                <code className="font-mono text-green-400 text-sm block">
-                                    {gs.keyPair?.publicKey || "No public key available"}
-                                </code>
+                                <HexKeyComp hexKey={gs.keyPair?.publicKey || ""} />
                             </div>
                         </div>
 
@@ -360,9 +359,7 @@ export default function SettingsPage() {
                             </div>
                             <div className="bg-gray-900 p-3 rounded border border-red-400/20">
                                 {showPrivateKey ? (
-                                    <code className="font-mono text-red-400 text-sm block">
-                                        {gs.keyPair?.privateKey || "No private key available"}
-                                    </code>
+                                    <HexKeyComp hexKey={gs.keyPair?.privateKey || ""} />
                                 ) : (
                                     <div className="text-gray-500 italic text-sm flex items-center justify-center p-2 border-dashed border border-gray-700 rounded">
                                         <FontAwesomeIcon icon={faLock} className="h-5 w-5 mr-2" />

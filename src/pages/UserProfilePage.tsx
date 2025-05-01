@@ -5,7 +5,7 @@ import { useGlobalState } from '../GlobalState';
 import { UserProfile } from '../../common/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import PublicKeyComp from '../components/PublicKeyComp';
+import HexKeyComp from '../components/HexKeyComp';
 import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 import TitledPanelComp from '../components/TitledPanelComp';
@@ -88,7 +88,7 @@ export default function UserProfilePage() {
                                     <h1 className="text-2xl font-bold text-white mb-2">{profileData.name || "Unnamed User"}</h1>
                                     <div className="bg-gray-700 p-2 rounded text-sm text-gray-300 overflow-hidden">
                                         <div className="font-semibold mb-1">Public Key:</div>
-                                        <PublicKeyComp publicKey={profileData.publicKey} />
+                                        <HexKeyComp hexKey={profileData.publicKey} />
                                     </div>
                                 </div>
                             </div>

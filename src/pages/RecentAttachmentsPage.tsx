@@ -2,7 +2,7 @@ import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
 import { useState, useEffect } from 'react';
 import { useGlobalState } from '../GlobalState';
-import PublicKeyComp from '../components/PublicKeyComp';
+import HexKeyComp from '../components/HexKeyComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash} from '@fortawesome/free-solid-svg-icons';
 import AvatarImageComp from '../components/AvatarImageComp';
@@ -177,7 +177,7 @@ export default function RecentAttachmentsPage() {
                                                     <div className="flex flex-col">
                                                         <AvatarImageComp publicKey={attachment.public_key} name="{attachment.sender}" />
                                                         <span>{attachment.sender}</span>
-                                                        <PublicKeyComp publicKey={attachment.public_key} />
+                                                        <HexKeyComp hexKey={attachment.public_key} />
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-300">

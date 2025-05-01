@@ -3,7 +3,7 @@ import { useGlobalState } from '../GlobalState';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
-import PublicKeyComp from './PublicKeyComp';
+import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/CommonTypes';
 
@@ -181,7 +181,7 @@ export default function ContactsListComp() {
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap">{contact.alias || '-'}</td>
                                         <td className="px-3 py-2">
-                                            <PublicKeyComp publicKey={contact.publicKey} />
+                                            <HexKeyComp hexKey={contact.publicKey} />
                                         </td>
                                         <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                                             <FontAwesomeIcon 
