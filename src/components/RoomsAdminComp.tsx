@@ -133,6 +133,21 @@ export default function RoomsAdminComp() {
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
                                     <td className="px-4 py-2 text-sm text-gray-300">
+                                        {gs.roomName===room.name && gs.connected ? (
+                                            <button 
+                                                onClick={app.disconnect}
+                                                className="btn-danger mr-2"
+                                            >
+                                                           Leave
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => app.connect(null, null, room.name)}
+                                                className="btn-green mr-2"
+                                                aria-label={`Join ${room.name}`}
+                                            >
+                                                           Join
+                                            </button>)}
                                         <button 
                                             onClick={() => deleteRoom(room.name)}
                                             className="text-red-400 hover:text-red-300"
