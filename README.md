@@ -1,8 +1,16 @@
-# About QuantaChat
+# About Quanta Chat
 
 ## [Try QuantaChat Now! --> https://chat.quanta.wiki](https://chat.quanta.wiki)
 
 ### Peer-to-Peer WebRTC-based Chat Web App
+
+# Goals and Uses
+
+The purpose of `Quanta Chat` is to be the simplest possible, yet full featured, chat app that can work for any small or medium sized group of people, while still using all modern web standards and technologies for a NodeJS-based app. The idea is that larger apps like Slack, for example, are much more complex than necessary, and not self-hosted. Quanta Chat is something simple enough for any developer to deploy and has code that's arguably as simple as possible.
+
+This app also serves as a good pedagogical example of not only a modern Web App, but demonstrates the power of WebRTC, also, again hopefully in the simplest, and best organized, and easiest way to understant that's possible. The app allows users to select a pure-P2P mode where messages are never sent thru the master server, as well as a standard Server-Mode where messages are stored on the server, so that people don't need to be online simultaneously to communicate.
+
+SQLite DB was chosen for this app primarily to keep it as small and simple as possible, and to be able to run on tiny servers with limited resources and memory. To make this into a highly-scalable commercial-grade app, the main change that would need to be done would be the fairly simple task of switching to a real DB (like PostgreSQL or MySQL), but doing so is so simple it could be done by an AI in probably a single-shot prompt.
 
 # Features
 
