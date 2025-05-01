@@ -126,10 +126,10 @@ export default function HeaderComp() {
                         <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
                     </button>}
                     {!gs.headerExpanded && gs.connected && gs.userName && 
-                <span className="ml-2 mt-1 font-semibold text-sm whitespace-nowrap">{`${gs.roomName} (${gs.participants!.size} others)`}</span>}
+                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.roomName} (${gs.participants!.size} others)`}</span>}
 
                     {!gs.headerExpanded && !gs.connected && gs.userName && 
-                <span className="ml-2 mt-1 font-semibold text-sm whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
+                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
 
                     <button 
                         onClick={() => app.toggleHeaderExpand()}

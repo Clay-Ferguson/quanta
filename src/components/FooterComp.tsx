@@ -123,7 +123,7 @@ export default function FooterComp() {
     }
 
     return (
-        <footer className="w-full bg-gray-800 p-4 flex flex-col shadow-md border-t border-blue-400/30">
+        <footer className="w-full bg-gray-800 p-4 flex flex-col shadow-md border-t border-gray-400">
             <div id="inputsDiv" className="flex items-center w-full">
                 {/* Hidden file input element */}
                 <input 
