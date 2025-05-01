@@ -28,7 +28,7 @@ export default function RoomInfoPage() {
                         Room: {gs.roomName}
                     </h3>   
                         
-                    <TitledPanelComp title="Members in Room Now...">
+                    <TitledPanelComp title="In Room Now...">
                         <RoomMembersComp />
                     </TitledPanelComp>
                 </div>
