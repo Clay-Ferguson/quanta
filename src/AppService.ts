@@ -432,7 +432,6 @@ export class AppService implements AppServiceTypes  {
             this.reSendFailedMessages();
         }, 500);
 
-        this.delayedscrollToBottom();
         console.log("Connected to room: " + roomName);
     }
 
@@ -460,21 +459,6 @@ export class AppService implements AppServiceTypes  {
         } else {
             console.log('No unsent messages to resend');
         }
-    }
-
-    delayedscrollToBottom = () => {
-        const scrollToBottom = () => {
-            const chatLog = document.getElementById('chatLog');
-            if (chatLog) {
-                chatLog.scrollTop = chatLog.scrollHeight;
-            }
-        };
-        
-        // Additional scroll attempts with increasing delays
-        setTimeout(scrollToBottom, 10);
-        setTimeout(scrollToBottom, 500);
-        setTimeout(scrollToBottom, 1000);
-        setTimeout(scrollToBottom, 2500);
     }
 
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {

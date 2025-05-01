@@ -36,9 +36,7 @@ class Util {
         };
         
         // Additional scroll attempts with increasing delays
-        setTimeout(scrollFunc, 10);
-        setTimeout(scrollFunc, 500);
-        setTimeout(scrollFunc, 1000);
+        setTimeout(scrollFunc, 0);
         setTimeout(scrollFunc, 1500);
     }
 
