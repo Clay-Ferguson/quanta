@@ -29,6 +29,7 @@ export interface GlobalState {
     confirmMessage?: string | null;
     promptMessage?: string | null;
     promptDefaultValue?: string | null;
+    headerExpanded?: boolean;
 }
 
 const initialState: GlobalState = {
@@ -52,7 +53,8 @@ const initialState: GlobalState = {
     modalMessage: null,
     confirmMessage: null,
     promptMessage: null,
-    promptDefaultValue: null
+    promptDefaultValue: null,
+    headerExpanded: false,
 };
 
 export type GlobalAction = { type: string, payload: any};

@@ -23,6 +23,7 @@ export enum DBKeys {
     linkPreview = 'linkPreview',
     daysOfHistory = 'daysOfHistory',
     roomHistory = 'roomHistory',
+    headerExpanded = 'headerExpanded',
 }
 
 export enum PageNames{

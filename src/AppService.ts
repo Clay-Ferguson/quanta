@@ -66,6 +66,12 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
+    toggleHeaderExpand = () => {
+        this.gs!.headerExpanded = !this.gs!.headerExpanded;
+        this.gd!({ type: 'toggleHeaderExpand', payload: this.gs});
+        this.storage?.setItem(DBKeys.headerExpanded, this.gs!.headerExpanded);
+    }
+
     runRoomCleanup = async () => {
         // Get all room keys
         const roomKeys = await this.storage?.findKeysByPrefix(DBKeys.roomPrefix);
@@ -224,6 +230,7 @@ export class AppService implements AppServiceTypes  {
         const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
         const userDescription: string = await this.storage?.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await this.storage?.getItem(DBKeys.userAvatar);
+        const headerExpanded: boolean = await this.storage?.getItem(DBKeys.headerExpanded) || false;
 
         const state: GlobalState = {
             userName,
@@ -234,6 +241,7 @@ export class AppService implements AppServiceTypes  {
             roomHistory,
             userDescription,
             userAvatar,
+            headerExpanded
         };
 
         // if no username we send to settings page.
