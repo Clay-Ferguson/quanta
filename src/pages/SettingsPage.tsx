@@ -10,6 +10,8 @@ import { util } from '../Util';
 
 export default function SettingsPage() {
     const gs = useGlobalState();
+    useEffect(() => util.resizeEffect(), []);
+    
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [userName, setUserName] = useState('');
     const [userDescription, setUserDescription] = useState('');

@@ -3,6 +3,7 @@ import Markdown from "../components/MarkdownComp";
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
 import { scrollEffects } from '../ScrollEffects';
+import { util } from '../Util';
 
 // Cache for the documents content, using a Map to support multiple documents
 const documentCache: Map<string, string> = new Map();
@@ -18,6 +19,8 @@ export default function DocViewerPage({
 }: DocViewerPageProps) {
     const [docContent, setDocContent] = useState<string | null>(documentCache.get(filename) || null);
     const [isLoading, setIsLoading] = useState<boolean>(!documentCache.has(filename));
+
+    useEffect(() => util.resizeEffect(), []);
 
     useEffect(() => {
         // If we already have cached content for this file, no need to fetch

@@ -47,6 +47,8 @@ export default function RecentAttachmentsPage() {
         }
     };
 
+    useEffect(() => util.resizeEffect(), []);
+
     // Call getAttachmentsInfo when component mounts
     useEffect(() => {
         getAttachmentsInfo();

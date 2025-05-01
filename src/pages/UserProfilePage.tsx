@@ -11,6 +11,7 @@ import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 import { httpClientUtil } from '../HttpClientUtil';
+import { util } from '../Util';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -20,6 +21,7 @@ export default function UserProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    useEffect(() => util.resizeEffect(), []);
     useEffect(() => {
         const fetchUserProfile = async () => {
             if (!gs.userProfile?.publicKey) {

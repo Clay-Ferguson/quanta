@@ -1,8 +1,11 @@
 import ContactsListComp from '../components/ContactsListComp';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
+import { useEffect } from 'react';
+import { util } from '../Util';
 
 export default function ContactsPage() {
+    useEffect(() => util.resizeEffect(), []);
     return (
         <div className="page-container">
             <header className="app-header">

@@ -6,9 +6,13 @@ import { useGlobalState } from '../GlobalState';
 import { RoomHistoryItem } from '../AppServiceTypes';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
+import { useEffect } from 'react';
+import { util } from '../Util';
 
 export default function RoomsPage() {
     const gs = useGlobalState();
+    useEffect(() => util.resizeEffect(), []);
+    
     if (!gs.roomHistory) {
         return <div className="text-center text-gray-400">No room history.</div>;
     }

@@ -5,11 +5,14 @@ import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
 import { httpClientUtil } from '../HttpClientUtil';
+import { useEffect } from 'react';
+import { util } from '../Util';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
 export default function AdminPage() {
     const gs = useGlobalState();
+    useEffect(() => util.resizeEffect(), []);
     
     if (!ADMIN_PUBLIC_KEY) {
         console.error('Admin public key is not set. Please set the QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable.');
@@ -38,7 +41,6 @@ export default function AdminPage() {
         app.blockUser(pubKey);
     }
 
-    
     return (
         <div className="page-container">
             <header className="app-header">

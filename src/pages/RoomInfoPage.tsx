@@ -3,9 +3,13 @@ import BackButtonComp from '../components/BackButtonComp';
 import RoomMembersComp from '../components/RoomMembersComp';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { useGlobalState } from '../GlobalState';
+import { useEffect } from 'react';
+import { util } from '../Util';
 
 export default function RoomInfoPage() {
     const gs = useGlobalState();
+    useEffect(() => util.resizeEffect(), []);
+    
     if (!gs.roomName) {
         return null;
     }

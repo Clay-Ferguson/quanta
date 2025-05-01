@@ -5,6 +5,29 @@ class Util {
         console.log(message);
     }
 
+    resizeEffect = () => {
+        // Handle viewport height for mobile browsers
+        const updateHeight = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+            
+        // Set initial height
+        updateHeight();
+            
+        // Update on resize and orientation change
+        window.addEventListener('resize', updateHeight);
+        window.addEventListener('orientationchange', updateHeight);
+            
+        // Add extra trigger for iOS Safari - it sometimes needs a delay
+        setTimeout(updateHeight, 100);
+            
+        return () => {
+            window.removeEventListener('resize', updateHeight);
+            window.removeEventListener('orientationchange', updateHeight);
+        };
+    }
+
     // Generate a shorter random ID
     generateShortId = () => {
         const array = new Uint8Array(12);

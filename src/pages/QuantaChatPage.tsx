@@ -1,13 +1,18 @@
+import { useEffect } from 'react';
 import FooterComp from '../components/FooterComp';
 import HeaderComp from '../components/HeaderComp';
 import ImageViewerComp from '../components/ImageViewerComp';
 import MessagesComp from '../components/MessagesComp';
 import { useGlobalState } from '../GlobalState';
+import { util } from '../Util';
 
 // #QuantaChatPage 
 export default function QuantaChatPage() {
     const gs = useGlobalState();
     let mainComp = null;
+    
+    // Fix for mobile viewport issues
+    useEffect(() => util.resizeEffect(), []);
 
     // Show not connected message if user is not connected
     if (!gs.connected) {
@@ -31,11 +36,14 @@ export default function QuantaChatPage() {
         )
     }
 
-    // #QuantaChatPageLayout
+    // #QuantaChatPageLayout 
     return (
         <div className="page-container">
             <HeaderComp/>
-            {mainComp}
+            {/* Change to overflow-y-auto to allow scrolling in the main content area */}
+            <div className="flex-grow overflow-y-auto">
+                {mainComp}
+            </div>
             <FooterComp/>
             <ImageViewerComp />
         </div>
