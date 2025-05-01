@@ -40,10 +40,7 @@ export default function QuantaChatPage() {
     return (
         <div className="page-container">
             <HeaderComp/>
-            {/* Change to overflow-y-auto to allow scrolling in the main content area */}
-            <div className="flex-grow overflow-y-auto">
-                {mainComp}
-            </div>
+            {mainComp}
             <FooterComp/>
             <ImageViewerComp />
         </div>

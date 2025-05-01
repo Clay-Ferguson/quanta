@@ -27,7 +27,6 @@ class Controller {
             const cutoffTimestamp = currentTime - (historyDays * millisecondsPerDay);
                 
             const messageIds = await this.db!.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
-            console.log('Message IDs:', messageIds);
             res.json({ messageIds });
         } catch (error) {
             console.error('Error in getMessageIdsForRoom handler:', error);

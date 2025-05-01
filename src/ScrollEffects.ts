@@ -1,3 +1,5 @@
+import { util } from "./Util";
+
 /**
  * ScrollEffects.ts
  * 
@@ -29,14 +31,18 @@ class ScrollEffects {
     layoutEffect = (elmRef: any, defaultToBottom: boolean) => {
         if (elmRef.current) {
             const savedPos = this.scrollPositions.get(elmRef.current?.id);
-            console.log(`Restoring scroll position for ${elmRef.current?.id}: ${savedPos}`);
+            // console.log(`Scroll Restore ${elmRef.current?.id}: ${savedPos}`);
+            
+            // NOTE: We have this 'stubbornScroll' function maily because the DocViewerPage has issues with the scroll position
+            // probably related to the Markdown rendering. The stubbornScroll function is a workaround for that, but is a good idea
+            // for any other scrollable elements also, because scrolling notoriously needs 'delays' like this to work properly.
             if (savedPos !== undefined) {
                 // Restore previous scroll position if available
-                elmRef.current.scrollTop = savedPos;
+                util.stubbornScroll(elmRef.current, savedPos);
             } else {
                 if (defaultToBottom) {
                     // Default to scrolling to bottom
-                    elmRef.current.scrollTop = elmRef.current.scrollHeight;
+                    util.stubbornScroll(elmRef.current, elmRef.current.scrollHeight);
                 }
             }
         }
@@ -46,16 +52,16 @@ class ScrollEffects {
     effect = (elmRef: any) => {
         const elm = elmRef.current;
         if (!elm) return;
-    
+
         const handleScroll = () => {
             const elm = elmRef.current;
-            if (!elm) return;
+            if (!elm || !elmRef.current) return;
             
             // Only save scroll position if user has manually scrolled (not at the bottom)
             const isAtBottom = elm.scrollHeight - elm.scrollTop <= elm.clientHeight + 50;
             
             if (!isAtBottom) {
-                // console.log(`Saving scroll position for ${elmRef.current?.id}: ${elm.scrollTop}`);
+                // console.log(`Scroll Save ${elmRef.current?.id}: ${elm.scrollTop}`);
                 this.scrollPositions.set(elmRef.current?.id, elm.scrollTop);
             } else {
                 // console.log(`Saving scroll position for ${elmRef.current?.id}: BOTTOM`);

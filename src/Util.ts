@@ -28,6 +28,20 @@ class Util {
         };
     }
 
+    stubbornScroll = (elm: any, pos: number) => {
+        if (!elm) return;
+        elm.scrollTop = pos;
+        const scrollFunc = () => {
+            elm.scrollTop = pos;
+        };
+        
+        // Additional scroll attempts with increasing delays
+        setTimeout(scrollFunc, 10);
+        setTimeout(scrollFunc, 500);
+        setTimeout(scrollFunc, 1000);
+        setTimeout(scrollFunc, 1500);
+    }
+
     // Generate a shorter random ID
     generateShortId = () => {
         const array = new Uint8Array(12);
