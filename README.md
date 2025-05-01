@@ -13,6 +13,7 @@
 * Markdown is supported
 * All attached files are downloadable (making this app able to function as a rudimentary "File Sharing App")
 * Uses Crypto Keys and Digital Signatures to authenticate all messages
+* Ability import/export your Key Pair to have same identity on different devices.
 * Contact List lets you define what users (Public Keys) you trust.
 * To enable pure Peer-to-Peer mode, simply turn off the "Save on Server" option in Settings Panel. 
 * Admin features include ability to block users by Public Key, and any message, or any attachment from any user. Admins can also easily view *all* recently uploaded attachments to find/delete any unwanted kinds of content.
@@ -30,6 +31,8 @@ Learn how to use the app with the [User Guide](public/user-guide.md)
 * Vite Builder
 * Yarn Package Manager
 * Browser-based WebRTC
+* Browser persistence thru JS IndexedDB
+* Server-side DB is SQLite3
 
 # How it Works (Technical)
 
