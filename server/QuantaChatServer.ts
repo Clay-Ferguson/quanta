@@ -10,7 +10,7 @@ import {controller} from './Contoller.js';
 
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCSigServer from './WebRTCSigServer.js';
-import { DBManager } from './DBManager.js';
+import { DBManager } from './db/DBManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

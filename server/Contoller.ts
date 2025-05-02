@@ -1,5 +1,9 @@
 import { UserProfile } from "@common/CommonTypes.js";
-import { DBManager } from "./DBManager.js";
+import { DBManager } from "./db/DBManager.js";
+import { dbRoom } from "./db/DBRoom.js";
+import { dbMessages } from "./db/DBMessages.js";
+import { dbAttachments } from "./db/DBAttachments.js";
+import { dbUsers } from "./db/DBUsers.js";
 
 class Controller {
     public db: DBManager | null = null;
@@ -26,7 +30,7 @@ class Controller {
             const currentTime = Date.now();
             const cutoffTimestamp = currentTime - (historyDays * millisecondsPerDay);
                 
-            const messageIds = await this.db!.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
+            const messageIds = await dbMessages.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
             res.json({ messageIds });
         } catch (error) {
             console.error('Error in getMessageIdsForRoom handler:', error);
@@ -41,7 +45,7 @@ class Controller {
                 return res.status(400).send('Invalid attachment ID');
             }
                     
-            const attachment = await this.db!.getAttachmentById(attachmentId);
+            const attachment = await dbAttachments.getAttachmentById(attachmentId);
                     
             if (!attachment) {
                 return res.status(404).send('Attachment not found');
@@ -70,7 +74,7 @@ class Controller {
         }
             
         try {
-            const messages = await this.db!.getMessagesForRoom(
+            const messages = await dbMessages.getMessagesForRoom(
                 roomName,
                 limit ? parseInt(limit) : 100,
                 offset ? parseInt(offset) : 0
@@ -89,7 +93,7 @@ class Controller {
             if (!publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const userProfile = await this.db!.getUserInfo(publicKey);
+            const userProfile = await dbUsers.getUserInfo(publicKey);
             if (userProfile) {
                 res.json(userProfile);
             } else {
@@ -109,7 +113,7 @@ class Controller {
             }
                 
             // Get user info from the database
-            const userProfile: UserProfile | null = await this.db!.getUserInfo(publicKey);
+            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
             if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
                 // Return a 404 for missing avatars
                 return res.status(404).send('Avatar not found');
@@ -141,7 +145,7 @@ class Controller {
     getRoomInfo = async (req: any, res: any) => {
         try {
             console.log('Admin request: Getting room information');
-            const roomsInfo = await this.db!.getAllRoomsInfo();
+            const roomsInfo = await dbRoom.getAllRoomsInfo();
             res.json({ success: true, rooms: roomsInfo });
         } catch (error) {
             console.error('Error getting room information:', error);
@@ -161,7 +165,7 @@ class Controller {
             }
             
             console.log('Admin request: Deleting room:', roomName);
-            const success = await this.db!.deleteRoom(roomName);
+            const success = await dbRoom.deleteRoom(roomName);
             
             if (success) {
                 res.json({ success: true, message: `Room "${roomName}" deleted successfully` });
@@ -180,7 +184,7 @@ class Controller {
     getRecentAttachments = async (req: any, res: any) => {
         try {
             console.log('Admin request: Getting recent attachments');
-            const attachments = await this.db!.getRecentAttachments();
+            const attachments = await dbAttachments.getRecentAttachments();
             res.json({ success: true, attachments });
         } catch (error) {
             console.error('Error getting recent attachments:', error);
@@ -191,7 +195,7 @@ class Controller {
     createTestData = async (req: any, res: any): Promise<void> => {
         try {
             console.log('Admin request: Creating test data');
-            await this.db!.createTestData();
+            await dbRoom.createTestData();
             res.json({ success: true, message: 'Test data created successfully' });
         } catch (error) {
             console.error('Error creating test data:', error);
@@ -211,7 +215,7 @@ class Controller {
             }
         
             console.log('Admin request: Deleting message:', messageId);
-            const success = await this.db!.deleteMessage(messageId);
+            const success = await dbMessages.deleteMessage(messageId);
         
             if (success) {
                 res.json({ success: true, message: `Message "${messageId}" deleted successfully` });
@@ -239,8 +243,8 @@ class Controller {
             }
             
             console.log('Admin request: Blocking user with public key:', pub_key);
-            await this.db!.deleteUserContent(pub_key);
-            await this.db!.blockUser(pub_key);
+            await dbUsers.deleteUserContent(pub_key);
+            await dbUsers.blockUser(pub_key);
                     
             res.json({ 
                 success: true, 
@@ -262,7 +266,7 @@ class Controller {
             if (isNaN(attachmentId)) {
                 return res.status(400).json({ error: 'Invalid attachment ID' });
             }
-            const success = await this.db!.deleteAttachmentById(attachmentId);
+            const success = await dbAttachments.deleteAttachmentById(attachmentId);
                 
             if (success) {
                 res.json({ success: true });
@@ -291,7 +295,7 @@ class Controller {
                 return res.status(400).json({ error: 'Invalid request. Expected array of message IDs' });
             }
             
-            const messages = await this.db!.getMessagesByIds(ids, roomId);
+            const messages = await dbMessages.getMessagesByIds(ids, roomId);
             res.json({ messages });
         } catch (error) {
             console.error('Error in getMessagesByIds handler:', error);
@@ -305,7 +309,7 @@ class Controller {
             if (!userProfile.publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const success = await this.db!.saveUserInfo(userProfile); 
+            const success = await dbUsers.saveUserInfo(userProfile); 
             if (success) {
                 res.json({ success: true });
             } else {

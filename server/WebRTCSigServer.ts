@@ -1,9 +1,11 @@
 import {WebSocketServer, WebSocket} from 'ws';
 import { logger } from './Logger.js';
-import { DBManager } from './DBManager.js';
+import { DBManager } from './db/DBManager.js';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
 import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
+import { dbMessages } from './db/DBMessages.js';
+import { dbUsers } from './db/DBUsers.js';
 
 const log = logger.logInfo;
 const logError = logger.logError;
@@ -282,13 +284,13 @@ export default class WebRTCSigServer {
                 return;
             }
 
-            const userBlocked = await this.db.isUserBlocked(data.message.publicKey!);
+            const userBlocked = await dbUsers.isUserBlocked(data.message.publicKey!);
             if (userBlocked) {
                 console.log("User is blocked. Not persisting.");
                 return;
             }
           
-            const success = await this.db.persistMessage(data.room, data.message)
+            const success = await dbMessages.persistMessage(data.room, data.message)
             if (success) {
                 console.log(`Message from ${data.message.sender} persisted to database`);
             }

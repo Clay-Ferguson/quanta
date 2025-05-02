@@ -1,3 +1,9 @@
+export interface DBManagerIntf {
+    runTrans: (callback: () => Promise<any>) => Promise<any>;
+    get: (sql: string, ...params: any[]) => Promise<any>;
+    all: (sql: string, ...params: any[]) => Promise<any[]>;
+    run(sql: any, ...params: any[]): Promise<any>;
+}
 export interface SignableObject {
     signature?: string;
     publicKey?: string;
