@@ -41,6 +41,7 @@ export default function DocViewerPage({
                 }
                 
                 const content = await response.text();
+                //console.log('Document loaded: ${content}');
                 
                 // Update the cache and state
                 documentCache.set(filename, content);
@@ -61,6 +62,8 @@ export default function DocViewerPage({
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
+    //console.log('DocViewerPage: '+docContent);
+    // Handle back button click
     return (
         <div className="page-container">
             <header className="app-header">

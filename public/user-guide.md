@@ -63,3 +63,4 @@ You can view the rooms you've visited before using the "Rooms" button.
 You can view who's in your current room using the "Info" button.
 
 ![Settings Page](img/room-info.png)
+
