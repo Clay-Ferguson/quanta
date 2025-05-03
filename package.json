@@ -15,6 +15,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@noble/hashes": "^1.7.1",
     "@noble/secp256k1": "^2.2.3",
+    "date-fns": "^4.1.0",
     "express": "4.18.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

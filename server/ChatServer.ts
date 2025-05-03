@@ -7,10 +7,12 @@ import http from 'http';
 import {crypt} from '../common/Crypto.js';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
 import {controller} from './Contoller.js';
-
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCServer from './WebRTCServer.js';
 import { DBManager } from './db/DBManager.js';
+import { logInit } from './ServerLogger.js';
+
+logInit();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

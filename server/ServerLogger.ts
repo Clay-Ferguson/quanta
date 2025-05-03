@@ -1,0 +1,94 @@
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { format } from 'date-fns';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let logFile: string | null = null;
+let initDone: boolean = false;
+
+// Store original console methods
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+export function logInit() {
+    if (initDone) {
+        originalConsoleError('Error: Logger is already initialized');
+        return;
+    }
+    initDone = true;
+    const logDir = path.join(__dirname, 'logs');
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    // Format: server-MM-DD-YY.log
+    logFile = path.join(logDir, `server-${format(new Date(), 'MM-dd-yy')}.log`);
+   
+    // if logFile is not ok show an error message
+    if (!logFile) {
+        originalConsoleError('Error: logFile is not set');
+        return;
+    }
+
+    // Override console methods
+    console.log = customLog;
+    console.error = customError;
+}
+
+// Custom implementation for console.log
+function customLog(...args: any[]) {
+    const message = args.map(arg => String(arg)).join(' ');
+    const logMessage = `${format(new Date(), 'MM-dd-yy h:mm:ss a')}: ${message}`;
+    
+    // Output to original console.log
+    originalConsoleLog(logMessage);
+    
+    // Write to log file
+    if (logFile) {
+        fs.appendFileSync(logFile, logMessage + '\n');
+    }
+}
+
+// Custom implementation for console.error
+function customError(...args: any[]) {    
+    // Extract message and error if available
+    let message: string;
+    let error: any = null;
+    
+    if (args.length >= 2 && args[1] instanceof Error || typeof args[1] === 'object') {
+        message = String(args[0]);
+        error = args[1];
+    } else {
+        message = args.map(arg => String(arg)).join(' ');
+    }
+    
+    const logMessage = `${format(new Date(), 'MM-dd-yy h:mm:ss a')}: *** ERROR *** ${message}`;
+    
+    // Output to original console.error
+    originalConsoleError(logMessage);
+    
+    // Format the error for the log file if it exists
+    let errorString = '';
+    if (error) {
+        if (error instanceof Error) {
+            errorString = `\n  Error: ${error.message}\n  Stack: ${error.stack}`;
+        } else if (typeof error === 'object') {
+            try {
+                errorString = `\n  ${JSON.stringify(error, null, 2)}`;
+            } catch {
+                errorString = `\n  ${String(error)}`;
+            }
+        } else {
+            errorString = `\n  ${String(error)}`;
+        }
+    }
+    
+    // Write to log file
+    if (logFile) {
+        fs.appendFileSync(logFile, logMessage + errorString + '\n');
+    }
+}
+

@@ -1,14 +1,10 @@
 import {WebSocketServer, WebSocket} from 'ws';
-import { logger } from './Logger.js';
 import { DBManager } from './db/DBManager.js';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
 import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
-
-const log = logger.logInfo;
-const logError = logger.logError;
 
 // Represents a room, it's name and participants
 interface RoomInfo {
@@ -56,7 +52,7 @@ export default class WebRTCServer {
     onMessage = (ws: WebSocket, message: any) => {
         try {
             const msg = JSON.parse(message);
-            log(`Received message: ${msg.type}`);
+            console.log(`Received message: ${msg.type}`);
 
             switch (msg.type) {
             case 'join':
@@ -74,18 +70,18 @@ export default class WebRTCServer {
             //     this.persist(msg);
             //     break;
             default:
-                logError(`Unknown message type: ${msg.type}`);
+                console.error(`Unknown message type: ${msg.type}`);
                 break;
             }
         } catch (error) {
-            logError("Error processing WebSocket message", error);
+            console.error("Error processing WebSocket message", error);
         }
     }
     
     // Finds the target client for this msg and sends the message to them
     onSignaling = (ws: WebSocket, msg: WebRTCSignal) => {
         if (!msg.target) {
-            logError("No target in signaling message");
+            console.error("No target in signaling message");
             return;
         }
         const fromClientInfo = this.clientsMap.get(ws);
@@ -103,19 +99,19 @@ export default class WebRTCServer {
                     clientInfo.room === clientInfo.room &&
                     clientInfo.user.publicKey === msg.target.publicKey
                 ) {
-                    log(`Sending ${msg.type} from ${clientInfo.user.name} to ${msg.target.name} in room ${clientInfo.room}`);
+                    console.log(`Sending ${msg.type} from ${clientInfo.user.name} to ${msg.target.name} in room ${clientInfo.room}`);
                     cws.send(payload);
                 }
             });
         } else {
-            log("Received signaling message but client not in a room");
+            console.log("Received signaling message but client not in a room");
         }
     }
 
     // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
     onBroadcast = async (ws: WebSocket, msg: WebRTCBroadcast) => {
         if (!msg.room) {
-            logError("No room in broadcast message");
+            console.error("No room in broadcast message");
             return;
         }
         // First save message to DB
@@ -132,26 +128,26 @@ export default class WebRTCServer {
                 const clientInfo = this.clientsMap.get(cws);
                 if (cws !== ws && cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === msg.room) {
-                    log(`Broadcasting message in room ${msg.room} from ${clientInfo.user.name}`);
+                    console.log(`Broadcasting message in room ${msg.room} from ${clientInfo.user.name}`);
                     cws.send(payload);
                 }
             });
         }
         else {
-            log("Received broadcast message from unknown client WebSocket");
+            console.log("Received broadcast message from unknown client WebSocket");
         }
     }
 
     onJoin = (ws: WebSocket, msg: WebRTCJoin) => {
         if (!msg.user.publicKey) {
-            logError("No publicKey in join message");
+            console.error("No publicKey in join message");
             return;
         }
 
         // validate the signature
         const sigOk = crypt.verifySignature(msg, canon.canonical_WebRTCJoin); 
         if (!sigOk) {
-            logError("Signature verification failed for join message:", msg);
+            console.error("Signature verification failed for join message:", msg);
             return;
         }
 
@@ -164,7 +160,7 @@ export default class WebRTCServer {
         
         // Add to participants if not already present
         roomInfo.participants.set(msg.user.publicKey, msg.user); 
-        log(`Client ${msg.user.name} joined room: ${msg.room}`);
+        console.log(`Client ${msg.user.name} joined room: ${msg.room}`);
         
         // Build an array of Users objects from the map for all users in roomInfo except for msg.user.
         const participants = Array.from(roomInfo.participants.values()).filter((p: User) => p.publicKey !== msg.user.publicKey);
@@ -202,7 +198,7 @@ export default class WebRTCServer {
         const msgClientInfo = this.clientsMap.get(ws);
         if (msgClientInfo) {
             const { room, user } = msgClientInfo;
-            log(`Client ${user.name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
+            console.log(`Client ${user.name} disconnected from room: ${room} (Code: ${code}, Reason: ${reason || 'none'})`);
 
             const roomInfo = this.roomsMap.get(room);
 
@@ -213,7 +209,7 @@ export default class WebRTCServer {
                 // If room is empty, remove it, and there's no one to notify either
                 if (roomInfo.participants.size === 0) {
                     this.roomsMap.delete(room);
-                    log(`Room ${room} deleted as it's now empty`);
+                    console.log(`Room ${room} deleted as it's now empty`);
                 } else {
                     const userLeft: WebRTCUserLeft = {type: 'user-left', user, room};
                     // Else, notify others about the participant leaving
@@ -231,27 +227,27 @@ export default class WebRTCServer {
 
             this.clientsMap.delete(ws);
         } else {
-            log(`Unknown client disconnected (Code: ${code})`);
+            console.log(`Unknown client disconnected (Code: ${code})`);
         }
     }
 
     onError = (ws: WebSocket, error: any) => {
-        logError("WebSocket client error", error);
+        console.error("WebSocket client error", error);
 
         // Try to get client info for better logging
         const clientInfo = this.clientsMap.get(ws);
         if (clientInfo) {
-            logError(`Error for client ${clientInfo.user.name} in room ${clientInfo.room}`);
+            console.error(`Error for client ${clientInfo.user.name} in room ${clientInfo.room}`);
         }
     }
 
     async init(db: DBManager, host: string, port: string, server: any) {
         this.db = db;
         this.wss = new WebSocketServer({host, server });
-        log(`Signaling Server running on ${host}:${port}`);
+        console.log(`Signaling Server running on ${host}:${port}`);
 
         this.wss.on('connection', (ws, req) => {
-            log(`New WebSocket client connected from ${req.socket.remoteAddress}`);
+            console.log(`New WebSocket client connected from ${req.socket.remoteAddress}`);
             ws.on('message', (message) => this.onMessage(ws, message));
             ws.on('close', (code, reason) => this.onClose(ws, code, reason));
             ws.on('error', (error) => this.onError(ws, error));
@@ -259,20 +255,20 @@ export default class WebRTCServer {
 
         // Add error handler to WebSocket server
         this.wss!.on('error', (error) => {
-            logError("WebSocket server error", error);
+            console.error("WebSocket server error", error);
         });
 
         // Global error handler for uncaught exceptions
         process.on('uncaughtException', (error) => {
-            logError("UNCAUGHT EXCEPTION - Server continuing to run:", error);
+            console.error("UNCAUGHT EXCEPTION - Server continuing to run:", error);
         });
 
         // Global error handler for unhandled promise rejections
         process.on('unhandledRejection', (reason) => {
-            logError("UNHANDLED PROMISE REJECTION:", reason);
+            console.error("UNHANDLED PROMISE REJECTION:", reason);
         });
 
-        log("ChatServer initialization complete");
+        console.log("ChatServer initialization complete");
     }
 
     persist = async (data: WebRTCBroadcast) => {
@@ -280,7 +276,7 @@ export default class WebRTCServer {
             // todo-1: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
             const sigOk = await crypt.verifySignature(data.message, canon.canonical_ChatMessage);
             if (!sigOk) {
-                logError("Signature verification failed for message:", data.message);
+                console.error("Signature verification failed for message:", data.message);
                 return;
             }
 

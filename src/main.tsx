@@ -19,6 +19,9 @@ import UserProfilePage from './pages/UserProfilePage.tsx';
 import AlertModalComp from './components/AlertModalComp.tsx';
 import {ConfirmModalComp} from './components/ConfirmModalComp.tsx';
 import { PromptModalComp } from './components/PromptModalComp.tsx';
+import {logInit} from './ClientLogger.ts';
+
+logInit(); // Initialize the logger
 
 // Create a component that connects AppService to the global state
 function AppServiceConnector() {
