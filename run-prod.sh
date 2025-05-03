@@ -15,7 +15,7 @@ export QUANTA_CHAT_ADMIN_PUBLIC_KEY="0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa
 export QUANTA_DEV="true"
 
 # Note: the -E flag preserves the environment variables
-sudo -E node dist/server/QuantaChatServer.js
+sudo -E node dist/server/ChatServer.js
 
 read -p "Quanta Chat Ended. press ENTER to exit..."
 

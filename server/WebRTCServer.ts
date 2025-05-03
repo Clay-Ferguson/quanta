@@ -23,8 +23,8 @@ interface ClientInfo {
     user: User;
 }
 
-export default class WebRTCSigServer {
-    private static inst: WebRTCSigServer | null = null;
+export default class WebRTCServer {
+    private static inst: WebRTCServer | null = null;
     private db!: DBManager;
     private wss: WebSocketServer | null = null;
     private clientsMap = new Map<WebSocket, ClientInfo>(); 
@@ -34,11 +34,11 @@ export default class WebRTCSigServer {
 
     static getInst(db: DBManager,host: string, port: string, server: any) {
         // Create instance if it doesn't exist
-        if (!WebRTCSigServer.inst) {
-            WebRTCSigServer.inst = new WebRTCSigServer();
-            WebRTCSigServer.inst.init(db, host, port, server);
+        if (!WebRTCServer.inst) {
+            WebRTCServer.inst = new WebRTCServer();
+            WebRTCServer.inst.init(db, host, port, server);
         }
-        return WebRTCSigServer.inst;
+        return WebRTCServer.inst;
     }
 
     // Get room by room name
@@ -272,7 +272,7 @@ export default class WebRTCSigServer {
             logError("UNHANDLED PROMISE REJECTION:", reason);
         });
 
-        log("QuantaChatServer initialization complete");
+        log("ChatServer initialization complete");
     }
 
     persist = async (data: WebRTCBroadcast) => {
