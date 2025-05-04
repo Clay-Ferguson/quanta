@@ -70,7 +70,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         >
             <div className="space-y-3 max-w-full">
                 {messages!.map((msg, index) => {       
-                    const title = `From:\n\n${msg.sender} - ${msg.publicKey}\nDB_ID: ${msg.dbId}`;          
+                    const title = `From:\n\n${msg.sender} - ${msg.publicKey}\nDB_ID: ${msg.dbId}`;
                     return (
                         <div 
                             key={index} 

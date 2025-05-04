@@ -185,6 +185,7 @@ export class AppService implements AppServiceTypes  {
     }
 
     alert = (message: string) => {
+        console.log("Alert: " + message);
         this.gd!({ type: 'openAlert', payload: { 
             modalMessage: message,
         }});
@@ -574,15 +575,27 @@ export class AppService implements AppServiceTypes  {
             this.gd!({ type: 'persistMessage', payload: this.gs});
 
             // persist in IndexedDB
-            this.saveMessages();
+            await this.saveMessages();
 
             setTimeout(() => {
+                // after a few seconds check if the message was acknowledged by the server
+                // todo-0: we could add a resend button for these kinds of messages, which would
+                // come in handy for P2P mode also, which also needs to have some kind of ACK 
+                // mechanism, which we don't have yet.
+                if (this.gs!.messages && this.gs?.saveToServer) {
+                    // lookup the message by 'id' and verify it has the dbId on it now.
+                    const message = this.gs!.messages!.find((m: ChatMessage) => m.id === msg.id);
+                    if (message && !message.dbId) {
+                        this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
+                    }
+                }
+
                 try {
                     this.pruneDB(msg);
                 } catch (error) {
                     util.log('Error checking storage or saving message: ' + error);
                 }
-            }, 1000);
+            }, 3000);
         }
     }
 
@@ -597,7 +610,8 @@ export class AppService implements AppServiceTypes  {
             message.state = 'a';
             message.dbId = dbId;
             this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
-            this.saveMessages();
+            await this.saveMessages();
+            console.warn(`Message ID ${id} acknowledged as dbId ${dbId}`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
         }
@@ -695,7 +709,7 @@ export class AppService implements AppServiceTypes  {
     }
 
     /* Saves the current Global State messages to IndexedDB */
-    saveMessages = () => {
+    saveMessages = async () => {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
@@ -707,7 +721,7 @@ export class AppService implements AppServiceTypes  {
                 lastUpdated: new Date().toISOString()
             };
 
-            this.storage.setItem(DBKeys.roomPrefix + this.gs!.roomName, roomData);
+            await this.storage.setItem(DBKeys.roomPrefix + this.gs!.roomName, roomData);
             util.log('Saved ' + this.gs!.messages!.length + ' messages for room: ' + this.gs!.roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);
