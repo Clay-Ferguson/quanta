@@ -98,7 +98,7 @@ export class AppService implements AppServiceTypes  {
         if (messageIndex !== undefined && messageIndex >= 0) {
             this.gs!.messages!.splice(messageIndex, 1);
             this.gd!({ type: 'deleteMessage', payload: this.gs});
-            this.saveMessages();
+            this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
 
             try {
                 // Make the secure POST request with body
@@ -213,7 +213,6 @@ export class AppService implements AppServiceTypes  {
         const keyPair = await this.storage?.getItem(DBKeys.keyPair);
         const roomName = await this.storage?.getItem(DBKeys.roomName);
         const connected = await this.storage?.getItem(DBKeys.connected);
-
 
         if (userName && roomName && connected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
@@ -406,7 +405,8 @@ export class AppService implements AppServiceTypes  {
             connecting: true
         }});
 
-        const messages = await this.loadRoomMessages(roomName);
+        let messages = await this.loadRoomMessages(roomName);
+        messages = await this.resendFailedMessages(roomName, messages);
         const success = await this.rtc._connect(userName!, keyPair, roomName);
         if (!success) {
             this.gd!({ type: 'connectTooSoon', payload: { 
@@ -429,13 +429,16 @@ export class AppService implements AppServiceTypes  {
         }});
         await this.storage?.setItem(DBKeys.connected, true);
 
-        setTimeout(() => {
-            this.reSendFailedMessages();
-        }, 500);
+        // DO NOT DELETE
+        // Not currently used. We send all directly to server now, in one single call, BUT we may need to do something similar to this for pure P2P in the future.
+        // setTimeout(() => {
+        //     this.reSendFailedMessages();
+        // }, 500);
 
         console.log("Connected to room: " + roomName);
     }
 
+    // DO NOT DELETE THIS METHOD 
     reSendFailedMessages = () => {
         if (!this.rtc || !this.gs || !this.gs.messages) {
             console.warn('Cannot resend messages: RTC not initialized or no messages available');
@@ -456,12 +459,15 @@ export class AppService implements AppServiceTypes  {
             
             // Update the global state and save messages after resending
             this.gd!({ type: 'resendMessages', payload: this.gs });
-            this.saveMessages();
+            this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
         } else {
             console.log('No unsent messages to resend');
         }
     }
 
+    /**
+     * Updates just our list of known room names what we maintain a history of 
+     */
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {
         // Get the current room history from IndexedDB
         const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
@@ -575,7 +581,7 @@ export class AppService implements AppServiceTypes  {
             this.gd!({ type: 'persistMessage', payload: this.gs});
 
             // persist in IndexedDB
-            await this.saveMessages();
+            await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
 
             setTimeout(() => {
                 // after a few seconds check if the message was acknowledged by the server
@@ -610,7 +616,7 @@ export class AppService implements AppServiceTypes  {
             message.state = 'a';
             message.dbId = dbId;
             this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
-            await this.saveMessages();
+            await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
             console.warn(`Message ID ${id} acknowledged as dbId ${dbId}`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
@@ -644,7 +650,7 @@ export class AppService implements AppServiceTypes  {
         }
 
         this.gd!({ type: 'persistMessage', payload: this.gs});
-        this.saveMessages();
+        this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
     }
 
     addContact = async (user: User) => {
@@ -701,7 +707,7 @@ export class AppService implements AppServiceTypes  {
                     this.gs!.messages = this.gs!.messages!.slice(countToRemove);
 
                     // Save the pruned messages
-                    this.saveMessages();
+                    this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
                     util.log(`Removed ${countToRemove} old messages due to storage constraints`);
                 }
             }
@@ -709,20 +715,25 @@ export class AppService implements AppServiceTypes  {
     }
 
     /* Saves the current Global State messages to IndexedDB */
-    saveMessages = async () => {
+    saveMessages = async (roomName: string, messages: ChatMessage[]) => {
         if (!this.storage || !this.rtc) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
         }
 
+        if (!roomName) {
+            console.error('No room name available for saving messages');
+            return;
+        }
+
         try {
             const roomData = {
-                messages: this.gs!.messages,
+                messages,
                 lastUpdated: new Date().toISOString()
             };
 
-            await this.storage.setItem(DBKeys.roomPrefix + this.gs!.roomName, roomData);
-            util.log('Saved ' + this.gs!.messages!.length + ' messages for room: ' + this.gs!.roomName);
+            await this.storage.setItem(DBKeys.roomPrefix + roomName, roomData);
+            util.log('Saved ' + messages!.length + ' messages for room: ' + roomName);
         } catch (error) {
             util.log('Error saving messages: ' + error);
         }
@@ -749,6 +760,66 @@ export class AppService implements AppServiceTypes  {
         return msg;
     }
 
+    /**
+     * Finds all messages that have failed to send to server, by detecting which ones are missing dbId, and then
+     * builds up a list of those messages to send to the server, and sends them. The return value is the list of 
+     * dbId messages that are known for each message in exact order as they were sent.
+     */
+    resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
+        if (!this.gs?.saveToServer) return messages;
+        if (!roomName) {
+            console.warn('No room name available for resending messages');
+            return messages;
+        }
+        const messagesToSend: ChatMessage[] = [];
+        // iterate with a for loop to get the messages from the server
+        for (const message of messages) {
+            // if this is our message, and it doesn't have a dbId, then we need to resend it
+            if (message.publicKey===this.gs.keyPair?.publicKey && !message.dbId) {
+                messagesToSend.push(message);
+                console.log("Resending message: " + message.id);
+            }
+        }
+
+        if (messagesToSend.length == 0) return messages;
+
+        // todo-0: let's ask user to confirm they want to resend because this also indicates to them
+        // there may be a problem with their connectivity to the server.
+        try {
+            // Send the messages to the server
+            const response = await httpClientUtil.secureHttpPost(
+                `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
+                    this.gs.keyPair!, 
+                    { messages: messagesToSend }
+            );
+                
+            // Update the messages with their new dbIds
+            if (response && response.dbIds && response.dbIds.length === messagesToSend.length) {
+                for (let i = 0; i < messagesToSend.length; i++) {
+                    const message = messages.find(m => m.id === messagesToSend[i].id);
+                    if (message) {
+                        message.dbId = response.dbIds[i];
+                        message.state = 'a'; // Mark as acknowledged
+                        console.log(`Message ${message.id} assigned dbId ${message.dbId}`);
+                    }
+                }
+                // Save the updated messages to storage
+                this.saveMessages(roomName!, messages!);
+            }
+            else {
+                console.warn('Server response did not contain dbIds for all messages');
+            }
+        } catch (error) {
+            console.error("Error sending messages to server:", error);
+        }
+
+        console.log("Resend failed messages complete. Messages: ", messages);
+        return messages;
+    }
+
+    /**
+     * Loads messages for a specific room from local storage and also gets any from server what we don't have yet.
+     */
     loadRoomMessages = async (roomId: string): Promise<ChatMessage[]> => {
         let messages: ChatMessage[] = [];
         
@@ -774,6 +845,9 @@ export class AppService implements AppServiceTypes  {
                 util.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
                 messages = roomData.messages;
             }
+            else {
+                util.log('No messages found in local storage for room: ' + roomId);
+            }
         } catch (error) {
             util.log('Error loading messages from storage: ' + error);
         }
@@ -781,8 +855,9 @@ export class AppService implements AppServiceTypes  {
         // Next get room messages from server
         if (this.gs!.saveToServer) {
             try {
+                const daysOfHistory = this.gs?.daysOfHistory || 30;
                 // Get all message IDs from the server for this room
-                const idsData: any = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${this.gs?.daysOfHistory || 30}`);
+                const idsData: any = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${daysOfHistory}`);
                
                 const serverMessageIds: string[] = idsData.messageIds || [];
                 if (serverMessageIds.length === 0) {
@@ -795,39 +870,38 @@ export class AppService implements AppServiceTypes  {
             
                 // Determine which message IDs we're missing locally
                 const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
-                if (missingIds.length === 0) {
-                    util.log(`Local message store is up to date for room: ${roomId}`);
-                    return messages;
-                }
+                if (missingIds.length > 0) {
+                    util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
-                util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
+                    // Fetch only the missing messages from the server
+                    const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
             
-                // Fetch only the missing messages from the server
-                const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
-            
-                if (messagesData.messages && messagesData.messages.length > 0) {
-                    // log all the messages content we got back along with number of attachments for each message
-                    messagesData.messages.forEach((msg: ChatMessage) => {
-                        console.log(`Fetched message: ${msg.content} with ${msg.attachments ? msg.attachments.length : 0} attachments`);
-                    });
+                    if (messagesData.messages && messagesData.messages.length > 0) {
+                        console.log(`Fetched ${messagesData.messages.length} messages from server for room: ${roomId}`);
+                        // log all the messages content we got back along with number of attachments for each message
+                        messagesData.messages.forEach((msg: ChatMessage) => {
+                            console.log(`Fetched message isd: ${msg.id}`);
+                        });
 
-                    // Add the fetched messages to our local array
-                    messages = [...messages, ...messagesData.messages];
+                        // Add the fetched messages to our local array
+                        messages = [...messages, ...messagesData.messages];
                 
-                    // Sort messages by timestamp to ensure chronological order
-                    messages.sort((a, b) => a.timestamp - b.timestamp);
-                
-                    // Save the merged messages to local storage
-                    await this.storage.setItem(DBKeys.roomPrefix + roomId, {
-                        messages,
-                        lastUpdated: new Date().toISOString()
-                    });
-                    util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
+                        // Sort messages by timestamp to ensure chronological order
+                        messages.sort((a, b) => a.timestamp - b.timestamp);
+
+                        // Save the merged messages to local storage
+                        await this.storage.setItem(DBKeys.roomPrefix + roomId, {
+                            messages,
+                            lastUpdated: new Date().toISOString()
+                        });
+                        util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
+                    }
                 }
             } catch (error) {
                 util.log('Error synchronizing messages with server, falling back to local storage: ' + error);
             }
         }
+        console.log("**** Final: Loaded " + messages.length + " messages for room: " + roomId);
         return messages;
     }
 

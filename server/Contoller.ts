@@ -320,6 +320,28 @@ class Controller {
             res.status(500).json({ error: 'Server error' });
         }
     }
+
+    /**
+     * Saves multiple messages to the database and returns an array of database IDs
+     * @param roomId The ID of the room
+     * @param messages Array of messages to save
+     * @returns Array of database IDs in the same order as the input messages
+     */
+    sendMessages = async (req: any, res: any): Promise<void> => {
+        const roomId = req.params.roomId;
+        const { messages } = req.body;
+        
+        if (!Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'Invalid or empty messages array' });
+        }
+        
+        // Send messages to controller and get back database IDs
+        const dbIds = await dbMessages.saveMessages(roomId, messages);
+        console.log('Database IDs Created:', dbIds);
+        
+        // Return the database IDs to the client
+        res.json({ dbIds });
+    }
 }
 
 export const controller = new Controller();

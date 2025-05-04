@@ -94,6 +94,7 @@ app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, contr
 app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteAttachment);
 app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
 app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, controller.saveUserProfile);
+app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, controller.sendMessages);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);

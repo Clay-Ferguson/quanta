@@ -29,6 +29,14 @@ class HttpClientUtil {
     }
 
     secureHttpPost = async (url: string, keyPair: KeyPairHex, body?: any): Promise<any> => {
+        if (!keyPair.publicKey) {
+            console.error("Attempting secure post with invalid keyPair");
+        }
+        if (!body.publicKey) {
+            body.publicKey = keyPair.publicKey;
+        }
+        console.log(`secureHttpPost: ${url} publicKey=${keyPair.publicKey}`);
+
         let response: any | null = null;
         try {
             const headers = await this.buildSecureHeaders(url, keyPair!);

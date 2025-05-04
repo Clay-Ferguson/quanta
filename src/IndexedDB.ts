@@ -61,6 +61,8 @@ export default class IndexedDB {
      */
     async setItem(key: string, value: any) {
         this.checkDB();
+        // console.log(`setItem: ${key} val=`, value);
+
         try {
             return new Promise<void>((resolve, reject) => {
                 const transaction = this.db!.transaction(this.storeName, 'readwrite');
@@ -91,8 +93,11 @@ export default class IndexedDB {
                 const transaction = this.db!.transaction(this.storeName, 'readonly');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.get(key);
-
-                request.onsuccess = () => resolve(request.result);
+            
+                request.onsuccess = () => {
+                    // console.log(`getItem: ${key} val=`, request.result);
+                    return resolve(request.result);
+                }
                 request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
             });
         } catch (error) {
