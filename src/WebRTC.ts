@@ -1,4 +1,4 @@
-import { ChatMessage, User, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
+import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
@@ -265,6 +265,14 @@ export default class WebRTC {
         }
     }
 
+    _onAcknowledge = (evt: WebRTCAck) => {
+        if (!evt.dbId) {
+            util.log('Received acknowledgment without dbId, ignoring.');
+            return;
+        }
+        this.app?.acknowledgeMessage(evt.id, evt.dbId);
+    }
+
     _onBroadcast = (evt: WebRTCBroadcast) => {
         util.log('broadcast. Received broadcast message from ' + evt.sender!.name);
         this.app?.persistInboundMessage(evt.message);           
@@ -295,6 +303,9 @@ export default class WebRTC {
             break;
         case 'broadcast':
             this._onBroadcast(evt);
+            break;
+        case 'ack':
+            this._onAcknowledge(evt);
             break;
         default:
             util.log('Unknown message type: ' + evt.type);

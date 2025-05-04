@@ -567,8 +567,6 @@ export class AppService implements AppServiceTypes  {
             }
             
             const sentOk = this.rtc._sendMessage(msg);
-            // we really need a more robust way to verify the server did indeed get saved on the server
-            // because we can't do it thru WebRTC
             msg.state = sentOk ? 's' : 'f';
 
             // persist in global state
@@ -585,6 +583,23 @@ export class AppService implements AppServiceTypes  {
                     util.log('Error checking storage or saving message: ' + error);
                 }
             }, 1000);
+        }
+    }
+
+    acknowledgeMessage = async (id: string, dbId: number): Promise<void> => {
+        if (!this.gs || !this.gs!.messages) {
+            console.warn('No messages available to acknowledge');
+            return;
+        }
+
+        const message = this.gs!.messages.find((msg: ChatMessage) => msg.id === id);
+        if (message) {
+            message.state = 'a';
+            message.dbId = dbId;
+            this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
+            this.saveMessages();
+        } else {
+            console.warn(`Message with ID ${id} not found`);
         }
     }
 

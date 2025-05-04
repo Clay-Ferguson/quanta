@@ -2,7 +2,7 @@ import {WebSocketServer, WebSocket} from 'ws';
 import { DBManager } from './db/DBManager.js';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
-import { User, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
+import { User, WebRTCAck, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
 
@@ -126,10 +126,22 @@ export default class WebRTCServer {
             // Send the message to all clients in the same room, except the sender
             this.wss!.clients.forEach((cws) => {
                 const clientInfo = this.clientsMap.get(cws);
-                if (cws !== ws && cws.readyState === WebSocket.OPEN && clientInfo &&
+                if (cws.readyState === WebSocket.OPEN && clientInfo &&
                     clientInfo.room === msg.room) {
-                    console.log(`Broadcasting message in room ${msg.room} from ${clientInfo.user.name}`);
-                    cws.send(payload);
+                    // If this is the sender, we only send back the ACK so their local message can know the DB ID also know of successful storage
+                    if (cws === ws) {
+                        const ack: WebRTCAck = {
+                            type: 'ack',
+                            id: msg.message.id,
+                            dbId: msg.message.dbId
+                        };
+                        console.log(`Sending ACK to sender ${senderClientInfo.user.name} for message ${msg.message.id}`);
+                        cws.send(JSON.stringify(ack));
+                    }
+                    else {
+                        console.log(`Broadcasting message in room ${msg.room} from ${clientInfo.user.name}`);
+                        cws.send(payload);
+                    }
                 }
             });
         }
@@ -289,6 +301,9 @@ export default class WebRTCServer {
             const success = await dbMessages.persistMessage(data.room, data.message)
             if (success) {
                 console.log(`Message from ${data.message.sender} persisted to database`);
+            }
+            else {
+                console.error("Failed to persist message to database: ", data.message);
             }
         }
     }

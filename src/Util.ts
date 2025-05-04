@@ -1,6 +1,7 @@
 import { ChatMessage, FileBase64Intf } from "../common/CommonTypes";
 
 class Util {
+    // todo-0: this is obsolete now replace with just 'console.log'
     log(message: string) {
         console.log(message);
     }

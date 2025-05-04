@@ -3,6 +3,7 @@ import { ChatMessage } from "../common/CommonTypes";
 export interface AppServiceTypes {
     rtcStateChange(): void;
     persistInboundMessage(msg: ChatMessage): Promise<void>;
+    acknowledgeMessage(id: string, dbId: number): Promise<void>;
     alert(msg: string): void;
 }
 

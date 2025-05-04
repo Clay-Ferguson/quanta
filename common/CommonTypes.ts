@@ -11,13 +11,14 @@ export interface SignableObject {
 
 export interface ChatMessageIntf extends SignableObject {
     id: string;
+    dbId?: number; // DB ID
     timestamp: number;
     sender: string;
     content: string;
     publicKey?: string;
     signature?: string;
     attachments?: FileBase64Intf[];
-    state?: 's' | 'f'; //s=sent, f=failed
+    state?: 's' | 'f' | 'a'; //s=sent, f=failed, a=acknowledged (saved by server)
 }
 
 export interface UserProfile {
@@ -66,6 +67,12 @@ export interface WebRTCBroadcast extends SignableObject{
     sender?: User,
     publicKey?: string;
     signature?: string;
+}
+
+export interface WebRTCAck extends SignableObject{
+    type: 'ack',
+    id: string, // message that is being acknowledged
+    dbId?: number; // Server-side DB ID of stored message
 }
 
 export interface WebRTCSignal {

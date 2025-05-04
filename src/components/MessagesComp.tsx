@@ -69,7 +69,8 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {messages!.map((msg, index) => {                    
+                {messages!.map((msg, index) => {       
+                    const title = `From:\n\n${msg.sender} - ${msg.publicKey}\nDB_ID: ${msg.dbId}`;          
                     return (
                         <div 
                             key={index} 
@@ -77,7 +78,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                 : 'bg-gray-800 border-l-4 border-transparent'} p-3 rounded-md shadow-md flex flex-col`}
                         >
                             <div className="flex">
-                                <div className="flex flex-col mr-3 min-w-[100px] text-left" title={"From: \n\n"+msg.sender+"\n\n"+msg.publicKey}>
+                                <div className="flex flex-col mr-3 min-w-[100px] text-left" title={title}>
                                     <div className="flex items-center" onClick={() => app.showUserProfile(msg.publicKey!)}>
                                         {/* Avatar */}
                                         <div className="mr-2 flex-shrink-0">

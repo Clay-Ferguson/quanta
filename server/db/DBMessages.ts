@@ -6,14 +6,14 @@ class DBMessages {
 
     public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         console.log('DB Persisting message:', message);
-    
+
         return await this.dbm!.runTrans(async () => {
             // Ensure room exists
             const roomId = await dbRoom.getOrCreateRoom(roomName);
             console.log('Got Room ID:', roomId);
-    
+
             // Store the message
-            await this.dbm!.run(
+            const result: any = await this.dbm!.run(
                 `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [
@@ -27,7 +27,11 @@ class DBMessages {
                 ]
             );
             console.log('Message Record stored: ', message.id);
-    
+            
+            // Set the database ID on the message object
+            message.dbId = result.lastID;
+            console.log('Assigned DB ID:', message.dbId);
+
             // Store attachments if any
             if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
                 console.log('Storing attachments:', message.attachments.length);
@@ -41,7 +45,7 @@ class DBMessages {
                             binaryData = Buffer.from(matches[2], 'base64');
                         }
                     }
-    
+
                     await this.dbm!.run(
                         `INSERT INTO attachments (message_id, name, type, size, data)
                              VALUES (?, ?, ?, ?, ?)`,
@@ -53,9 +57,10 @@ class DBMessages {
                             binaryData
                         ]
                     );
+                    attachment.id = result.lastID;
                 }
             }
-    
+
             console.log('Message persisted successfully');
             return true;
         });
