@@ -273,10 +273,10 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
-                                        Save Messages on Server
+                                        Sync Messages with Server
                                 </label>
                                 <p className="text-xs text-gray-400 mt-1">
-                                        When enabled, your messages will be stored on the server. Otherwise, messages are only kept locally.
+                                        When enabled, your messages will be stored on the server. Otherwise, server is not used, and you can only send/recieve messages with other users who are online simultaneously with you.
                                 </p>
                             </div>
                             <div className="flex items-center">
