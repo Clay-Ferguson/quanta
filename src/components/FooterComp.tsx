@@ -46,6 +46,36 @@ export default function FooterComp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedFiles]);
     
+    // Add clipboard paste handler
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            // Skip if not connected
+            if (!gs.connected) return;
+            
+            // Skip if nowhere to deliver
+            const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
+            if (nowhereToDeliver) return;
+            
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                e.preventDefault();
+                
+                const filesArray = Array.from(e.clipboardData.files);
+                if (filesArray.length > 0) {
+                    // Add pasted files to existing files
+                    setSelectedFiles(prev => [...prev, ...filesArray]);
+                }
+            }
+        };
+
+        // Add event listener to the document (not just the textarea)
+        document.addEventListener('paste', handlePaste);
+        
+        // Clean up
+        return () => {
+            document.removeEventListener('paste', handlePaste);
+        };
+    }, [gs.connected, gs.participants, gs.saveToServer]);
+    
     const messageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
     };
@@ -115,7 +145,7 @@ export default function FooterComp() {
             textareaPlaceholder = "No one is in this room, to send messages. Select 'Save Messages on Server' option in Settings to send now."
         }
         else {
-            textareaPlaceholder = "Type your message...";
+            textareaPlaceholder = "Type your message... (CTRL+V to paste images/files from clipboard)";
         }
     }
     else {
