@@ -118,6 +118,7 @@ export default class WebRTC {
         return channel && channel.readyState === 'open';
     }
 
+    // NOTE: this kind of event is redundant based on our current design, and is never called but let's keep it here for now.
     _onUserJoined = (evt: WebRTCUserJoined) => {
         const user: User = evt.user;
         if (!user.publicKey) {
@@ -216,6 +217,7 @@ export default class WebRTC {
                 if (this.socket) {
                     console.log('Sending answer to ' + evt.sender!.name);
                     const answer: WebRTCAnswer = {
+                        id: util.generateShortId(),
                         type: 'answer',
                         answer: pc.localDescription!,
                         target: evt.sender!,
@@ -276,7 +278,7 @@ export default class WebRTC {
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
-        util.log('Received message from signaling server: ' + event.data);
+        util.log('Received RCT Type: ' + event.type);
 
         switch (evt.type) {
         case 'room-info':
@@ -365,6 +367,7 @@ export default class WebRTC {
         pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
             if (event.candidate && this.socket) {
                 const iceCandidate: WebRTCICECandidate = {
+                    id: util.generateShortId(),
                     type: 'ice-candidate',
                     candidate: event.candidate,
                     target: user,
@@ -403,7 +406,6 @@ export default class WebRTC {
                 });
                 this.setupDataChannel(channel, user);
                 
-               
                 // Create the offer with specific options
                 const offer = await pc.createOffer({
                     offerToReceiveAudio: false,
@@ -419,6 +421,7 @@ export default class WebRTC {
                 // Send the offer if socket is available and local description is set
                 if (this.socket && pc.localDescription) {
                     const offer: WebRTCOffer = {
+                        id: util.generateShortId(),
                         type: 'offer',
                         offer: pc.localDescription,
                         target: user,
@@ -529,6 +532,8 @@ export default class WebRTC {
 
         channel.onopen = () => {
             util.log(`Data channel OPENED with ${user.name}`);
+            this.participants.set(user.publicKey, user);
+            this.app?.rtcStateChange();
             if (this.pingChecks) {
                 // Try sending a test message to confirm functionality
                 try {

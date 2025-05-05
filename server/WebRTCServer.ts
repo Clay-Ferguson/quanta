@@ -99,7 +99,7 @@ export default class WebRTCServer {
                     clientInfo.room === clientInfo.room &&
                     clientInfo.user.publicKey === msg.target.publicKey
                 ) {
-                    console.log(`Sending ${msg.type} from ${clientInfo.user.name} to ${msg.target.name} in room ${clientInfo.room}`);
+                    console.log(`Sending msg.id=${msg.id} type=${msg.type} from ${msg.sender?.name} to ${msg.target.name} in room ${clientInfo.room}`);
                     cws.send(payload);
                 }
             });
@@ -167,7 +167,6 @@ export default class WebRTCServer {
 
         // lookup the Room by this name
         const roomInfo = this.getOrCreateRoom(msg.room);
-        // const user = {name: msg.name, publicKey: msg.publicKey};
         
         // Add to participants if not already present
         roomInfo.participants.set(msg.user.publicKey, msg.user); 
@@ -185,7 +184,19 @@ export default class WebRTCServer {
 
         // Send the current participants list to the new client
         ws.send(JSON.stringify(roomInfoMsg));
-        
+
+        // ------------------------------
+        // DO NOT DELETE
+        // AI originally implemented our WebRTC to have this onJoin message sent out, and made it where the recievers
+        // attempt to initiate a connection to the new user joining the room, but this is redundant because when someone 
+        // joins a room, their browser will ALSO try to initialize a connection to all peers, so doing this here, while
+        // harmless, is redundant.
+        //
+        // this.sendUserJoined(ws, msg);
+        // ------------------------------
+    }
+
+    sendUserJoined = (ws: WebSocket, msg: WebRTCJoin) => {
         // NOTE: We don't sign this message because, comming fom the server, we trust it.
         const userJoined: WebRTCUserJoined = {
             type: 'user-joined',

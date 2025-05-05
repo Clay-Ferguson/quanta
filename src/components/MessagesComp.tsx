@@ -70,9 +70,9 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         >
             <div className="space-y-3 max-w-full">
                 {messages!.map((msg, index) => {       
-                    let title = `From:\n\n${msg.sender} - ${msg.publicKey}\n\nID: ${msg.id}`;
+                    let title = `From:\n${msg.sender} - ${msg.publicKey}\nID: ${msg.id}`;
                     if (msg.state==='a') {
-                        title += ' Saved to server';
+                        title += '\nSaved to server';
                     }
                     return (
                         <div 

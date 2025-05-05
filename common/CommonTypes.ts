@@ -74,6 +74,7 @@ export interface WebRTCAck extends SignableObject{
 }
 
 export interface WebRTCSignal {
+    id?: string;
     type: string;
     target: User;
     sender?: User;

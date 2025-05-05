@@ -616,7 +616,7 @@ export class AppService implements AppServiceTypes  {
             message.state = 'a';
             this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
             await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
-            console.warn(`Message ID ${id} acknowledged`); 
+            console.log(`Message ID ${id} acknowledged`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
         }
