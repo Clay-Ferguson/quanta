@@ -51,7 +51,7 @@ export default class WebRTC {
             console.error('******** WebRTC ran with existing socket. Should be closed first.');
             return;
         }
-        util.log('Starting WebRTC connection setup...');
+        console.log('Starting WebRTC connection setup...');
 
         // Create WebSocket connection to signaling server. 
         const url = `${this.secure ? 'wss' : 'ws'}://${this.host}:${this.port}`;
@@ -68,20 +68,20 @@ export default class WebRTC {
     }
 
     _onRoomInfo = async (evt: WebRTCRoomInfo) => {
-        util.log('Room info received with participants');
+        console.log('Room info received with participants');
         this.participants = new Map<string, User>();
 
         // build up a list of strings which is what 'this.participants' currently is.
         for (const user of evt.participants) {
-            util.log('    User in room: ' + user.name);
+            console.log('    User in room: ' + user.name);
             this.participants.set(user.publicKey, user);
       
             if (!this.peerConnections.has(user.publicKey)) {
-                util.log('Initiate a connection with ' + user.name+' because he is in room');
+                console.log('Initiate a connection with ' + user.name+' because he is in room');
                 await this.createPeerConnection(user, true);
             }
             else {
-                util.log('Already have connection with ' + user.name);
+                console.log('Already have connection with ' + user.name);
             }
         }
         
@@ -95,13 +95,13 @@ export default class WebRTC {
 
     // Recovery method
     attemptConnectionRecovery() {
-        util.log('Checking participant connectivity');
+        console.log('Checking participant connectivity');
         
         // Close any stalled connections and recreate them
         this.participants.forEach(participant => {
             const pc = this.peerConnections.get(participant.publicKey);
             if (pc && (pc.connectionState !== 'connected' || !this.hasOpenChannelFor(participant.publicKey))) {
-                util.log(`Recreating connection with ${participant}`);
+                console.log(`Recreating connection with ${participant}`);
                 
                 // Close old connection
                 pc.close();
@@ -122,25 +122,25 @@ export default class WebRTC {
     _onUserJoined = (evt: WebRTCUserJoined) => {
         const user: User = evt.user;
         if (!user.publicKey) {
-            util.log('User joined without a public key, ignoring.');
+            console.log('User joined without a public key, ignoring.');
             return;
         }
-        util.log('User joined: ' + user.name);
+        console.log('User joined: ' + user.name);
         this.participants.set(user.publicKey, user);
 
         // Initiate a connection with the new user
         if (!this.peerConnections.has(user.publicKey)) {
-            util.log('Creating connection with ' + user.name+' because of onUserJoined');
+            console.log('Creating connection with ' + user.name+' because of onUserJoined');
             this.createPeerConnection(user, true); 
         }
         else {
-            util.log('Already have connection with ' + user.name);
+            console.log('Already have connection with ' + user.name);
         }
     }
 
     _onUserLeft = (evt: WebRTCUserLeft) => {
         const user: User = evt.user;
-        util.log('User left: ' + user.name);
+        console.log('User left: ' + user.name);
         this.participants.delete(user.publicKey);
 
         // Clean up connections
@@ -157,11 +157,11 @@ export default class WebRTC {
 
     _onOffer = async (evt: WebRTCOffer) => {
         if (!evt.sender) {
-            util.log('Received offer without sender, ignoring.');
+            console.log('Received offer without sender, ignoring.');
             return;
         }
         if (evt.sender.publicKey != evt.publicKey) {
-            util.log('Received offer with event of a mismatched publicKey. ignoring.');
+            console.log('Received offer with event of a mismatched publicKey. ignoring.');
             return;
         }
         const sigOk = crypt.verifySignature(evt, canon.canonical_WebRTCOffer); 
@@ -179,11 +179,11 @@ export default class WebRTC {
             
             if (localKeyIsLower) {
                 // Local peer wins - ignore the remote offer and wait for our offer to be accepted
-                util.log(`Received competing offer from ${evt.sender.name}, but we'll prioritize our local offer based on key comparison`);
+                console.log(`Received competing offer from ${evt.sender.name}, but we'll prioritize our local offer based on key comparison`);
                 return;
             } else {
                 // Remote peer wins - rollback our offer and accept the remote one
-                util.log(`Resolving signaling conflict with ${evt.sender.name} by rolling back our offer`);
+                console.log(`Resolving signaling conflict with ${evt.sender.name} by rolling back our offer`);
                 pc.close();
                 this.peerConnections.delete(evt.sender.publicKey);
                 // Create a new connection as a non-initiator
@@ -193,24 +193,24 @@ export default class WebRTC {
         
         // Create a connection if it doesn't exist
         if (!pc) {
-            util.log('Creating connection with ' + evt.sender.name+' because of onOffer');
+            console.log('Creating connection with ' + evt.sender.name+' because of onOffer');
             pc = await this.createPeerConnection(evt.sender, false);
         }
         
         // Rest of the existing code for handling the offer...
-        util.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
+        console.log('Received offer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection yet'));
 
         // Continue with existing code to set remote description and create answer
         pc.setRemoteDescription(new RTCSessionDescription(evt.offer))
             .then(() => {
                 const answer = pc.createAnswer();
-                util.log('Creating answer for ' + evt.sender!.name);
+                console.log('Creating answer for ' + evt.sender!.name);
                 return answer;
             })
             .then((answer: any) => {
                 const desc = pc.setLocalDescription(answer);
-                util.log('Setting local description for ' + evt.sender!.name);
+                console.log('Setting local description for ' + evt.sender!.name);
                 return desc;
             })
             .then(() => {
@@ -229,41 +229,41 @@ export default class WebRTC {
                     console.error('Error: WebSocket not open. Cannot send answer.');
                 }
             })
-            .catch((error: any) => util.log('Error creating answer: ' + error));
+            .catch((error: any) => console.log('Error creating answer: ' + error));
     }
 
     _onAnswer = (evt: WebRTCAnswer) => {
         if (!evt.sender) {
-            util.log('Received answer without sender, ignoring.');
+            console.log('Received answer without sender, ignoring.');
             return;
         }
         const pc = this.peerConnections.get(evt.sender.publicKey);
-        util.log('Received answer from ' + evt.sender.name + ', signaling state: ' + 
+        console.log('Received answer from ' + evt.sender.name + ', signaling state: ' + 
                  (pc?.signalingState || 'no connection'));
         if (pc) {
             // Check the signaling state before setting remote description
             if (pc.signalingState === 'have-local-offer') {
                 pc.setRemoteDescription(new RTCSessionDescription(evt.answer))
-                    .catch((error: any) => util.log('Error setting remote description: ' + error));
+                    .catch((error: any) => console.log('Error setting remote description: ' + error));
             } else {
-                util.log(`Cannot set remote answer in current state: ${pc.signalingState}`);
+                console.log(`Cannot set remote answer in current state: ${pc.signalingState}`);
                 // Optionally implement recovery logic here
             }
         }
         else {
-            util.log('No peer connection found for ' + evt.sender.name);
+            console.log('No peer connection found for ' + evt.sender.name);
         }
     }
 
     _onIceCandidate = (evt: WebRTCICECandidate) => {
-        util.log('Received ICE candidate from ' + evt.sender!.name);
+        console.log('Received ICE candidate from ' + evt.sender!.name);
         const pc = this.peerConnections.get(evt.sender!.publicKey);
         if (pc) {
             pc.addIceCandidate(new RTCIceCandidate(evt.candidate))
-                .catch((error: any) => util.log('Error adding ICE candidate: ' + error));
+                .catch((error: any) => console.log('Error adding ICE candidate: ' + error));
         }
         else {
-            util.log('No peer connection found for ' + evt.sender!.name);
+            console.log('No peer connection found for ' + evt.sender!.name);
         }
     }
 
@@ -272,13 +272,13 @@ export default class WebRTC {
     }
 
     _onBroadcast = (evt: WebRTCBroadcast) => {
-        util.log('broadcast. Received broadcast message from ' + evt.sender!.name);
+        console.log('broadcast. Received broadcast message from ' + evt.sender!.name);
         this.app?.persistInboundMessage(evt.message);           
     }
 
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
-        util.log('Received RCT Type: ' + event.type);
+        console.log('Received RCT Type: ' + event.type);
 
         switch (evt.type) {
         case 'room-info':
@@ -306,13 +306,13 @@ export default class WebRTC {
             this._onAcknowledge(evt);
             break;
         default:
-            util.log('Unknown message type: ' + evt.type);
+            console.log('Unknown message type: ' + evt.type);
         } 
         this.app?.rtcStateChange();
     }
 
     _onopen = async () => {
-        util.log('Connected to signaling server.');
+        console.log('Connected to signaling server.');
         this.connected = true;
 
         // Join a room with user name
@@ -328,18 +328,18 @@ export default class WebRTC {
 
             this.signedSocketSend(joinMessage, canon.canonical_WebRTCJoin);
         }
-        util.log('Joining room: ' + this.roomId + ' as ' + this.userName);
+        console.log('Joining room: ' + this.roomId + ' as ' + this.userName);
         this.app?.rtcStateChange();
     }
 
     _onerror = (error: any) => {
-        util.log('WebSocket error: ' + error);
+        console.log('WebSocket error: ' + error);
         this.connected = false;
         this.app?.rtcStateChange();
     };
 
     _onclose = () => {
-        util.log('Disconnected from signaling server');
+        console.log('Disconnected from signaling server');
         this.connected = false;
         this.closeAllConnections();
         this.app?.rtcStateChange();
@@ -347,7 +347,7 @@ export default class WebRTC {
 
     //peerName = user.name
     createPeerConnection = async (user: User, isInitiator: boolean): Promise<RTCPeerConnection> => {
-        util.log('Creating peer connection with ' + user.name + (isInitiator ? ' (as initiator)' : ''));
+        console.log('Creating peer connection with ' + user.name + (isInitiator ? ' (as initiator)' : ''));
         const pc = new RTCPeerConnection({
             iceCandidatePoolSize: 10 // Increase candidate gathering
         });
@@ -355,12 +355,12 @@ export default class WebRTC {
 
         // Add monitoring for ICE gathering state
         pc.onicegatheringstatechange = () => {
-            util.log(`ICE gathering state with ${user.name}: ${pc.iceGatheringState}`);
+            console.log(`ICE gathering state with ${user.name}: ${pc.iceGatheringState}`);
         };
 
         // Add monitoring for signaling state
         pc.onsignalingstatechange = () => {
-            util.log(`Signaling state with ${user.name}: ${pc.signalingState}`);
+            console.log(`Signaling state with ${user.name}: ${pc.signalingState}`);
         };
 
         // Set up ICE candidate handling
@@ -374,23 +374,23 @@ export default class WebRTC {
                     room: this.roomId
                 };
                 this.socketSend(iceCandidate);
-                util.log('Sent ICE candidate to ' + user.name);
+                console.log('Sent ICE candidate to ' + user.name);
             }
         };
 
         // Connection state changes
         pc.onconnectionstatechange = () => {
-            util.log('Connection state with ' + user.name + ': ' + pc.connectionState);
+            console.log('Connection state with ' + user.name + ': ' + pc.connectionState);
             if (pc.connectionState === 'connected') {
-                util.log('WebRTC connected with ' + user.name + '!');
+                console.log('WebRTC connected with ' + user.name + '!');
             } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                util.log('WebRTC disconnected from ' + user.name);
+                console.log('WebRTC disconnected from ' + user.name);
             }
         };
 
         // Handle incoming data channels
         pc.ondatachannel = (event: RTCDataChannelEvent) => {
-            util.log('Received data channel from ' + user.name);
+            console.log('Received data channel from ' + user.name);
             this.setupDataChannel(event.channel, user);
         };
 
@@ -398,7 +398,7 @@ export default class WebRTC {
         if (isInitiator) {
             // Convert promise chains to async/await pattern
             try {
-                util.log('Creating data channel as initiator for ' + user.name);
+                console.log('Creating data channel as initiator for ' + user.name);
                 
                 const channel = pc.createDataChannel('chat', {
                     ordered: true,        // Guaranteed delivery order
@@ -413,7 +413,7 @@ export default class WebRTC {
                 });
                     
                 // Log the offer SDP for debugging
-                util.log(`Created offer SDP type: ${offer.type}`);
+                console.log(`Created offer SDP type: ${offer.type}`);
                     
                 // Set the local description
                 await pc.setLocalDescription(offer);
@@ -428,10 +428,10 @@ export default class WebRTC {
                         room: this.roomId
                     };
                     this.signedSocketSend(offer, canon.canonical_WebRTCOffer);
-                    util.log('Sent offer to ' + user.name);
+                    console.log('Sent offer to ' + user.name);
                 }
             } catch (err) {
-                util.log('Error creating data channel: ' + err);
+                console.log('Error creating data channel: ' + err);
             }
         }
         return pc;
@@ -441,7 +441,7 @@ export default class WebRTC {
         if (this.disconnectTime > 0) {
             const timeSinceDisconnect = Date.now() - this.disconnectTime;
             if (timeSinceDisconnect < 5000) {
-                util.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
+                console.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
                 this.app!.alert('Too soon after disconnect. Please wait a few seconds before reconnecting.');
                 return false;
             }
@@ -463,10 +463,10 @@ export default class WebRTC {
         // Close the signaling socket if it exists and is open
         if (this.socket) {
             if (this.socket.readyState === WebSocket.OPEN) {
-                util.log('Closing WebSocket connection...');
+                console.log('Closing WebSocket connection...');
                 this.socket.close();
             } else if (this.socket.readyState === WebSocket.CONNECTING) {
-                util.log('Aborting connection attempt...');
+                console.log('Aborting connection attempt...');
                 this.socket.close();
             }
             // Clear the socket reference
@@ -480,7 +480,7 @@ export default class WebRTC {
         this.participants.clear();
         this.connected = false;
     
-        util.log('Disconnected from WebRTC session');
+        console.log('Disconnected from WebRTC session');
         this.app?.rtcStateChange();
     }
 
@@ -488,11 +488,11 @@ export default class WebRTC {
         // Close all data channels first
         this.dataChannels.forEach((channel, publicKey) => {
             if (channel.readyState !== 'closed') {
-                util.log(`Explicitly closing data channel to ${publicKey}`);
+                console.log(`Explicitly closing data channel to ${publicKey}`);
                 try {
                     channel.close();
                 } catch (err) {
-                    util.log(`Error closing channel to ${publicKey}: ${err}`);
+                    console.log(`Error closing channel to ${publicKey}: ${err}`);
                 }
             }
         });
@@ -507,55 +507,55 @@ export default class WebRTC {
 
     // Add this new method to help diagnose channel issues
     debugDataChannels() {
-        util.log('---------- DATA CHANNEL DEBUG INFO ----------');
+        console.log('---------- DATA CHANNEL DEBUG INFO ----------');
         if (this.dataChannels.size === 0) {
-            util.log('No data channels established');
+            console.log('No data channels established');
         
             // Check if connections exist
             if (this.peerConnections.size > 0) {
-                util.log(`Have ${this.peerConnections.size} peer connections but no channels`);
+                console.log(`Have ${this.peerConnections.size} peer connections but no channels`);
                 this.peerConnections.forEach((pc, peer) => {
-                    util.log(`Connection to ${peer}: state=${pc.connectionState}, signaling=${pc.signalingState}`);
+                    console.log(`Connection to ${peer}: state=${pc.connectionState}, signaling=${pc.signalingState}`);
                 });
             }
         } else {
             this.dataChannels.forEach((channel, publicKey) => {
-                util.log(`Channel to ${publicKey}: state=${channel.readyState}, ordered=${channel.ordered}, reliable=${!channel.maxRetransmits && !channel.maxPacketLifeTime}`);
+                console.log(`Channel to ${publicKey}: state=${channel.readyState}, ordered=${channel.ordered}, reliable=${!channel.maxRetransmits && !channel.maxPacketLifeTime}`);
             });
         }
-        util.log('------------------------------------------');
+        console.log('------------------------------------------');
     }
 
     setupDataChannel(channel: RTCDataChannel, user: User) {
-        util.log('Setting up data channel for ' + user.name);
+        console.log('Setting up data channel for ' + user.name);
         this.dataChannels.set(user.publicKey, channel);
 
         channel.onopen = () => {
-            util.log(`Data channel OPENED with ${user.name}`);
+            console.log(`Data channel OPENED with ${user.name}`);
             this.participants.set(user.publicKey, user);
             this.app?.rtcStateChange();
             if (this.pingChecks) {
                 // Try sending a test message to confirm functionality
                 try {
                     channel.send(JSON.stringify({type: 'ping', timestamp: Date.now()}));
-                    util.log(`Test message sent to ${user.name}`);
+                    console.log(`Test message sent to ${user.name}`);
                 } catch (err) {
-                    util.log(`Error sending test message: ${err}`);
+                    console.log(`Error sending test message: ${err}`);
                 }}
         };
 
         channel.onclose = () => {
-            util.log('Data channel closed with ' + user.name);
+            console.log('Data channel closed with ' + user.name);
             this.dataChannels.delete(user.publicKey);
         };
 
         channel.onmessage = (event: MessageEvent) => {
-            util.log('onMessage. Received message from ' + user.name);
+            console.log('onMessage. Received message from ' + user.name);
             try {
                 const msg = JSON.parse(event.data);
                 // ignore if a 'ping' message
                 if (msg.type === 'ping') {
-                    util.log(`Ping received from ${user.name} at ${msg.timestamp}`);
+                    console.log(`Ping received from ${user.name} at ${msg.timestamp}`);
                 }
                 else {
                     if (!msg.signature) {
@@ -565,12 +565,12 @@ export default class WebRTC {
                     this.app?.persistInboundMessage(msg);
                 }
             } catch (error) {
-                util.log('Error parsing message: ' + error);
+                console.log('Error parsing message: ' + error);
             }
         };
 
         channel.onerror = (error: any) => {
-            util.log('Data channel error with ' + user.name + ': ' + error);
+            console.log('Data channel error with ' + user.name + ': ' + error);
         };
     }
 
@@ -582,22 +582,22 @@ export default class WebRTC {
         // If Pure P2P mode.
         if (!this.saveToServer) {
             const jsonMsg = JSON.stringify(msg);
-            util.log(`Attempting to send message through ${this.dataChannels.size} data channels`);
+            console.log(`Attempting to send message through ${this.dataChannels.size} data channels`);
         
             // Try to send through all open channels
             this.dataChannels.forEach((channel, publicKey) => {
                 if (channel.readyState === 'open') {
                     try {
                         channel.send(jsonMsg);
-                        util.log(`Successfully sent message to ${publicKey}`);
+                        console.log(`Successfully sent message to ${publicKey}`);
                         sent = true;
                     } catch (err) {
                         // todo-1: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
-                        util.log(`Error sending to ${publicKey}: ${err}`);
+                        console.log(`Error sending to ${publicKey}: ${err}`);
                     }
                 }
                 else {
-                    util.log(`Channel to ${publicKey} is not open, skipping send`);
+                    console.log(`Channel to ${publicKey} is not open, skipping send`);
                 }
             });
         }
@@ -611,14 +611,14 @@ export default class WebRTC {
                     room: this.roomId
                 }
                 this.socketSend(broadcastMessage);
-                util.log('Sent message via signaling server broadcast.');
+                console.log('Sent message via signaling server broadcast.');
                 sent = true;
             } else {
                 console.error('Cannot send broadcast message: WebSocket not open.');
             }
         }
         if (!sent) {
-            util.log('ERROR: Failed to send message through any channel');
+            console.log('ERROR: Failed to send message through any channel');
         }
         return sent;
     }
@@ -640,7 +640,7 @@ export default class WebRTC {
     //             message: msg,
     //             room: this.roomId
     //         }));
-    //         util.log('Message persisted to server database.');
+    //         console.log('Message persisted to server database.');
     //     } else {
     //         console.warn('Cannot persist message: WebSocket not open.');
     //         // Could implement a retry mechanism or queue for offline messages

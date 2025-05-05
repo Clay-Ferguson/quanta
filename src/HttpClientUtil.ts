@@ -28,8 +28,6 @@ class HttpClientUtil {
         return ret;
     }
 
-    // todo-0: I think we have an inconsistency where some of the client and/or server code is expecting
-    // publicKey to be in the body, rather than headers. Probably always need in header??
     secureHttpPost = async (url: string, keyPair: KeyPairHex, body?: any): Promise<any> => {
         if (!keyPair.publicKey) {
             console.error("Attempting secure post with invalid keyPair");

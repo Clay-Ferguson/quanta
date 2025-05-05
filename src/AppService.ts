@@ -599,7 +599,7 @@ export class AppService implements AppServiceTypes  {
                 try {
                     this.pruneDB(msg);
                 } catch (error) {
-                    util.log('Error checking storage or saving message: ' + error);
+                    console.log('Error checking storage or saving message: ' + error);
                 }
             }, 3000);
         }
@@ -645,7 +645,7 @@ export class AppService implements AppServiceTypes  {
         try {
             await this.pruneDB(msg);
         } catch (error) {
-            util.log('Error checking storage or saving message: ' + error);
+            console.log('Error checking storage or saving message: ' + error);
         }
 
         this.gd!({ type: 'persistMessage', payload: this.gs});
@@ -707,7 +707,7 @@ export class AppService implements AppServiceTypes  {
 
                     // Save the pruned messages
                     this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
-                    util.log(`Removed ${countToRemove} old messages due to storage constraints`);
+                    console.log(`Removed ${countToRemove} old messages due to storage constraints`);
                 }
             }
         }
@@ -732,9 +732,9 @@ export class AppService implements AppServiceTypes  {
             };
 
             await this.storage.setItem(DBKeys.roomPrefix + roomName, roomData);
-            util.log('Saved ' + messages!.length + ' messages for room: ' + roomName);
+            console.log('Saved ' + messages!.length + ' messages for room: ' + roomName);
         } catch (error) {
-            util.log('Error saving messages: ' + error);
+            console.log('Error saving messages: ' + error);
         }
     }
 
@@ -839,17 +839,17 @@ export class AppService implements AppServiceTypes  {
                     console.log("Saving new room data after cleaning old messages for room: " + roomId);
                     // If we cleaned old messages, save the updated room data
                     await this.storage.setItem(DBKeys.roomPrefix + roomId, roomData);
-                    util.log(`Cleaned old messages for room: ${roomId}`);
+                    console.log(`Cleaned old messages for room: ${roomId}`);
                 }
 
-                util.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
+                console.log('Loaded ' + roomData.messages.length + ' messages from local storage for room: ' + roomId);
                 messages = roomData.messages;
             }
             else {
-                util.log('No messages found in local storage for room: ' + roomId);
+                console.log('No messages found in local storage for room: ' + roomId);
             }
         } catch (error) {
-            util.log('Error loading messages from storage: ' + error);
+            console.log('Error loading messages from storage: ' + error);
         }
 
         // Next get room messages from server
@@ -861,7 +861,7 @@ export class AppService implements AppServiceTypes  {
                
                 const serverMessageIds: string[] = idsData.messageIds || [];
                 if (serverMessageIds.length === 0) {
-                    util.log(`No messages found on server for room: ${roomId}`);
+                    console.log(`No messages found on server for room: ${roomId}`);
                     return messages;
                 }
             
@@ -871,7 +871,7 @@ export class AppService implements AppServiceTypes  {
                 // Determine which message IDs we're missing locally
                 const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
                 if (missingIds.length > 0) {
-                    util.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
+                    console.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
                     // Fetch only the missing messages from the server
                     const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
@@ -890,11 +890,11 @@ export class AppService implements AppServiceTypes  {
                             messages,
                             lastUpdated: new Date().toISOString()
                         });
-                        util.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
+                        console.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
                     }
                 }
             } catch (error) {
-                util.log('Error synchronizing messages with server, falling back to local storage: ' + error);
+                console.log('Error synchronizing messages with server, falling back to local storage: ' + error);
             }
         }
         console.log("**** Final: Loaded " + messages.length + " messages for room: " + roomId);
