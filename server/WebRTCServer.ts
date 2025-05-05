@@ -308,7 +308,7 @@ export default class WebRTCServer {
                 return;
             }
           
-            const saved = await dbMessages.persistMessage(data.room, data.message)
+            const saved = await dbMessages.persistMessageToRoomName(data.room, data.message)
             if (saved) {
                 console.log(`Message from ${data.message.sender} persisted to database`);
             }

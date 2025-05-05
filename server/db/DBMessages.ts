@@ -4,7 +4,7 @@ import { dbRoom } from "./DBRoom.js";
 class DBMessages {
     dbm: DBManagerIntf | null = null;
 
-    public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
+    persistMessageToRoomName = async (roomName: string, message: ChatMessageIntf): Promise<boolean> => {
         return await this.dbm!.runTrans(async () => {
             const existingMessage = await this.dbm!.get(
                 'SELECT rowid FROM messages WHERE id = ?',
@@ -22,70 +22,72 @@ class DBMessages {
             const roomId = await dbRoom.getOrCreateRoom(roomName);
             console.log('Got Room ID:', roomId);
 
-            // Store the message
-            const result: any = await this.dbm!.run(
-                `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    message.id, 
-                    'a',
-                    roomId, 
-                    message.timestamp, 
-                    message.sender, 
-                    message.content,
-                    message.publicKey || null,
-                    message.signature || null
-                ]
-            );
-            
-            // Store attachments if any
-            if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
-                console.log('Storing attachments:', message.attachments.length);
-                // Store each attachment
-                for (const attachment of message.attachments) {
-                    // Extract the binary data from the data URL
-                    let binaryData = null;
-                    if (attachment.data) {
-                        const matches = attachment.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-                        if (matches && matches.length === 3) {
-                            binaryData = Buffer.from(matches[2], 'base64');
-                        }
-                    }
-
-                    await this.dbm!.run(
-                        `INSERT INTO attachments (message_id, name, type, size, data)
-                             VALUES (?, ?, ?, ?, ?)`,
-                        [
-                            message.id,
-                            attachment.name,
-                            attachment.type,
-                            attachment.size,
-                            binaryData
-                        ]
-                    );
-                    attachment.id = result.lastID;
-                }
-            }
-            console.log(`Message persisted successfully: id=${message.id}`);
+            this.persistMessageToRoomId(roomId, message)
             return true;
         });
     }
 
+    persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{            
+        const result: any = await this.dbm!.run(
+            `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                message.id, 
+                'a',
+                roomId, 
+                message.timestamp, 
+                message.sender, 
+                message.content,
+                message.publicKey || null,
+                message.signature || null
+            ]
+        );
+        
+        // Store attachments if any
+        if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
+            console.log('Storing attachments:', message.attachments.length);
+            // Store each attachment
+            for (const attachment of message.attachments) {
+                // Extract the binary data from the data URL
+                let binaryData = null;
+                if (attachment.data) {
+                    const matches = attachment.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                    if (matches && matches.length === 3) {
+                        binaryData = Buffer.from(matches[2], 'base64');
+                    }
+                }
+
+                await this.dbm!.run(
+                    `INSERT INTO attachments (message_id, name, type, size, data)
+                         VALUES (?, ?, ?, ?, ?)`,
+                    [
+                        message.id,
+                        attachment.name,
+                        attachment.type,
+                        attachment.size,
+                        binaryData
+                    ]
+                );
+                attachment.id = result.lastID;
+            }
+        }
+        console.log(`Message persisted successfully: id=${message.id}`);
+        return true;
+    }
+
     /**
      * Saves multiple messages to the database and returns their database IDs
-     * @param roomId The ID of the room
-     * @param messages Array of messages to save
-     * @returns Number saved ok.
      */
-    async saveMessages(roomId: string, messages: ChatMessageIntf[]): Promise<number> {
+    async saveMessages(roomName: string, messages: ChatMessageIntf[]): Promise<number> {
         // Use a transaction to ensure all messages are saved or none
         return await this.dbm!.runTrans(async () => {
+            // Ensure room exists
+            const roomId = await dbRoom.getOrCreateRoom(roomName);
+            console.log('Got Room ID:', roomId);
+
             let numSaved = 0;
             for (const message of messages) {
-                // console.log('ReSaving message:', message);
-                // todo-0: persistMessaget will attempt to create a transaction here, and also verify the room exists, so 
-                // we need the parts just for adding the message to be in a separate function.
-                const save = await this.persistMessage(roomId, message);
+                const save = await this.persistMessageToRoomId(roomId, message);
                 if (!save) {
                     console.error('Failed to save message:', message);
                     continue; // Skip this message if saving failed
