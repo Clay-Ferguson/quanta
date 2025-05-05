@@ -45,7 +45,8 @@ class Util {
     generateShortId = () => {
         const array = new Uint8Array(12);
         crypto.getRandomValues(array);
-        return btoa(String.fromCharCode(...array)).replace(/[+/=]/g, '');
+        const id = btoa(String.fromCharCode(...array)).replace(/[+/=]/g, '');
+        return id;
     };
 
     // Utility function to get URL parameters

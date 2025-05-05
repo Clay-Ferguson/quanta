@@ -4,20 +4,31 @@ import { dbRoom } from "./DBRoom.js";
 class DBMessages {
     dbm: DBManagerIntf | null = null;
 
-    public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<number> {
-        console.log('DB Persisting message:', message);
-
+    public async persistMessage(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         return await this.dbm!.runTrans(async () => {
+            const existingMessage = await this.dbm!.get(
+                'SELECT rowid FROM messages WHERE id = ?',
+                [message.id]
+            );
+            if (existingMessage) {
+                console.log('Message already exists, skipping insert');
+                return true;
+            }
+            else {
+                console.log('Message does not exist, inserting new message');
+            }
+
             // Ensure room exists
             const roomId = await dbRoom.getOrCreateRoom(roomName);
             console.log('Got Room ID:', roomId);
 
             // Store the message
             const result: any = await this.dbm!.run(
-                `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     message.id, 
+                    'a',
                     roomId, 
                     message.timestamp, 
                     message.sender, 
@@ -26,21 +37,7 @@ class DBMessages {
                     message.signature || null
                 ]
             );
-
-            // Check if the row was actually inserted
-            if (result.changes === 0) {
-                // Message already exists, get its ID
-                const existingMessage = await this.dbm!.get(
-                    'SELECT rowid FROM messages WHERE id = ?',
-                    [message.id]
-                );
-                message.dbId = existingMessage ? existingMessage.rowid : 0;
-            } else {
-                message.dbId = result.lastID;
-            }
-
-            console.log('Assigned DB ID:', message.dbId);
-
+            
             // Store attachments if any
             if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
                 console.log('Storing attachments:', message.attachments.length);
@@ -69,9 +66,8 @@ class DBMessages {
                     attachment.id = result.lastID;
                 }
             }
-
-            console.log('Message persisted successfully');
-            return message.dbId;
+            console.log(`Message persisted successfully: id=${message.id}`);
+            return true;
         });
     }
 
@@ -79,21 +75,25 @@ class DBMessages {
      * Saves multiple messages to the database and returns their database IDs
      * @param roomId The ID of the room
      * @param messages Array of messages to save
-     * @returns Array of database IDs in the same order as the input messages
+     * @returns Number saved ok.
      */
-    async saveMessages(roomId: string, messages: ChatMessageIntf[]): Promise<number[]> {
-        const dbIds: number[] = [];
-    
+    async saveMessages(roomId: string, messages: ChatMessageIntf[]): Promise<number> {
         // Use a transaction to ensure all messages are saved or none
         return await this.dbm!.runTrans(async () => {
+            let numSaved = 0;
             for (const message of messages) {
+                // console.log('ReSaving message:', message);
                 // todo-0: persistMessaget will attempt to create a transaction here, and also verify the room exists, so 
                 // we need the parts just for adding the message to be in a separate function.
-                const dbId = await this.persistMessage(roomId, message);
-                dbIds.push(dbId);
-                console.log('Message Record stored: ', message.id+" as DbId: "+dbId);
-                return dbIds;
+                const save = await this.persistMessage(roomId, message);
+                if (!save) {
+                    console.error('Failed to save message:', message);
+                    continue; // Skip this message if saving failed
+                }
+                numSaved++;
+                console.log(`Message Record stored: ${message.id}`);
             }
+            return numSaved;
         });
     }
 
@@ -116,6 +116,9 @@ class DBMessages {
     
             // For each message, get its attachments
             for (const message of messages) {
+                // This came from DB so no matter what states is consider id 'ack'
+                message.state = 'a';
+
                 const attachments = await this.dbm!.all(`
                         SELECT name, type, size, data
                         FROM attachments
@@ -146,8 +149,8 @@ class DBMessages {
     }
     
     /**
-         * Get all message IDs for a specific room
-         */
+     * Get all message IDs for a specific room
+     */
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
             // First, get the room_id from the name or id
@@ -206,6 +209,7 @@ class DBMessages {
                     // Create a new message object
                     const message: ChatMessageIntf = {
                         id: row.id,
+                        state: 'a', // anything from the DB is an 'a' state by definition
                         timestamp: row.timestamp,
                         sender: row.sender,
                         content: row.content,

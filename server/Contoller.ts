@@ -329,18 +329,15 @@ class Controller {
      */
     sendMessages = async (req: any, res: any): Promise<void> => {
         const roomId = req.params.roomId;
-        const { messages } = req.body;
-        
-        if (!Array.isArray(messages) || messages.length === 0) {
+        if (!req.body.messages || req.body.messages.length === 0) {
             return res.status(400).json({ error: 'Invalid or empty messages array' });
         }
         
         // Send messages to controller and get back database IDs
-        const dbIds = await dbMessages.saveMessages(roomId, messages);
-        console.log('Database IDs Created:', dbIds);
+        const numSaved = await dbMessages.saveMessages(roomId, req.body.messages);
         
         // Return the database IDs to the client
-        res.json({ dbIds });
+        res.json({ allOk: req.body.messages.length === numSaved});
     }
 }
 

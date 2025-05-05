@@ -11,7 +11,6 @@ export interface SignableObject {
 
 export interface ChatMessageIntf extends SignableObject {
     id: string;
-    dbId?: number; // DB ID
     timestamp: number;
     sender: string;
     content: string;
@@ -72,7 +71,6 @@ export interface WebRTCBroadcast extends SignableObject{
 export interface WebRTCAck extends SignableObject{
     type: 'ack',
     id: string, // message that is being acknowledged
-    dbId?: number; // Server-side DB ID of stored message
 }
 
 export interface WebRTCSignal {

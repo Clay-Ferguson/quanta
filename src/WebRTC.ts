@@ -266,11 +266,7 @@ export default class WebRTC {
     }
 
     _onAcknowledge = (evt: WebRTCAck) => {
-        if (!evt.dbId) {
-            util.log('Received acknowledgment without dbId, ignoring.');
-            return;
-        }
-        this.app?.acknowledgeMessage(evt.id, evt.dbId);
+        this.app?.acknowledgeMessage(evt.id);
     }
 
     _onBroadcast = (evt: WebRTCBroadcast) => {

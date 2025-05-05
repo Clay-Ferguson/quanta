@@ -589,9 +589,9 @@ export class AppService implements AppServiceTypes  {
                 // come in handy for P2P mode also, which also needs to have some kind of ACK 
                 // mechanism, which we don't have yet.
                 if (this.gs!.messages && this.gs?.saveToServer) {
-                    // lookup the message by 'id' and verify it has the dbId on it now.
+                    // lookup the message by 'id' and verify it has the 'ack' state on it now.
                     const message = this.gs!.messages!.find((m: ChatMessage) => m.id === msg.id);
-                    if (message && !message.dbId) {
+                    if (message && message.state!=='a') {
                         this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                     }
                 }
@@ -605,7 +605,7 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
-    acknowledgeMessage = async (id: string, dbId: number): Promise<void> => {
+    acknowledgeMessage = async (id: string): Promise<void> => {
         if (!this.gs || !this.gs!.messages) {
             console.warn('No messages available to acknowledge');
             return;
@@ -614,17 +614,16 @@ export class AppService implements AppServiceTypes  {
         const message = this.gs!.messages.find((msg: ChatMessage) => msg.id === id);
         if (message) {
             message.state = 'a';
-            message.dbId = dbId;
             this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
             await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
-            console.warn(`Message ID ${id} acknowledged as dbId ${dbId}`); 
+            console.warn(`Message ID ${id} acknowledged`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
         }
     }
 
     persistInboundMessage = async (msg: ChatMessage) => {
-        console.log("App Persisting message: ", msg);
+        // console.log("App Persisting message: ", msg);
 
         if (this.messageExists(msg)) {
             return; // Message already exists, do not save again
@@ -761,9 +760,8 @@ export class AppService implements AppServiceTypes  {
     }
 
     /**
-     * Finds all messages that have failed to send to server, by detecting which ones are missing dbId, and then
-     * builds up a list of those messages to send to the server, and sends them. The return value is the list of 
-     * dbId messages that are known for each message in exact order as they were sent.
+     * Finds all messages that have failed to send to server, by detecting which ones are not state=='a', and then
+     * builds up a list of those messages to send to the server, and sends them. 
      */
     resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
         if (!this.gs?.saveToServer) return messages;
@@ -774,10 +772,10 @@ export class AppService implements AppServiceTypes  {
         const messagesToSend: ChatMessage[] = [];
         // iterate with a for loop to get the messages from the server
         for (const message of messages) {
-            // if this is our message, and it doesn't have a dbId, then we need to resend it
-            if (message.publicKey===this.gs.keyPair?.publicKey && !message.dbId) {
+            // if this is our message, and it doesn't have state=='a', then we need to resend it
+            if (message.publicKey===this.gs.keyPair?.publicKey && message.state !== 'a') {
                 messagesToSend.push(message);
-                console.log("Resending message: " + message.id);
+                console.log("Will resend message: " + message.id);
             }
         }
 
@@ -786,6 +784,7 @@ export class AppService implements AppServiceTypes  {
         // todo-0: let's ask user to confirm they want to resend because this also indicates to them
         // there may be a problem with their connectivity to the server.
         try {
+            console.log("Resending " + messagesToSend.length + " messages to server: ", messagesToSend);
             // Send the messages to the server
             const response = await httpClientUtil.secureHttpPost(
                 `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
@@ -793,21 +792,22 @@ export class AppService implements AppServiceTypes  {
                     { messages: messagesToSend }
             );
                 
-            // Update the messages with their new dbIds
-            if (response && response.dbIds && response.dbIds.length === messagesToSend.length) {
+            if (response && response.allOk) {
                 for (let i = 0; i < messagesToSend.length; i++) {
                     const message = messages.find(m => m.id === messagesToSend[i].id);
                     if (message) {
-                        message.dbId = response.dbIds[i];
                         message.state = 'a'; // Mark as acknowledged
-                        console.log(`Message ${message.id} assigned dbId ${message.dbId}`);
+                        console.log(`Message ${message.id} asknowledged`);
+                    }
+                    else {
+                        console.warn(`Message ${messagesToSend[i].id} not found in local messages`);
                     }
                 }
                 // Save the updated messages to storage
                 this.saveMessages(roomName!, messages!);
             }
             else {
-                console.warn('Server response did not contain dbIds for all messages');
+                console.warn("Server did not save all messages");
             }
         } catch (error) {
             console.error("Error sending messages to server:", error);
@@ -878,10 +878,6 @@ export class AppService implements AppServiceTypes  {
             
                     if (messagesData.messages && messagesData.messages.length > 0) {
                         console.log(`Fetched ${messagesData.messages.length} messages from server for room: ${roomId}`);
-                        // log all the messages content we got back along with number of attachments for each message
-                        messagesData.messages.forEach((msg: ChatMessage) => {
-                            console.log(`Fetched message isd: ${msg.id}`);
-                        });
 
                         // Add the fetched messages to our local array
                         messages = [...messages, ...messagesData.messages];

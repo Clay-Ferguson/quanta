@@ -133,7 +133,6 @@ export default class WebRTCServer {
                         const ack: WebRTCAck = {
                             type: 'ack',
                             id: msg.message.id,
-                            dbId: msg.message.dbId
                         };
                         console.log(`Sending ACK to sender ${senderClientInfo.user.name} for message ${msg.message.id}`);
                         cws.send(JSON.stringify(ack));
@@ -298,8 +297,8 @@ export default class WebRTCServer {
                 return;
             }
           
-            const dbId = await dbMessages.persistMessage(data.room, data.message)
-            if (dbId) {
+            const saved = await dbMessages.persistMessage(data.room, data.message)
+            if (saved) {
                 console.log(`Message from ${data.message.sender} persisted to database`);
             }
             else {

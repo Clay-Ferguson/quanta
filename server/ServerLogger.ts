@@ -40,7 +40,27 @@ export function logInit() {
 
 // Custom implementation for console.log
 function customLog(...args: any[]) {
-    const message = args.map(arg => String(arg)).join(' ');
+    // Process each argument appropriately
+    const processedArgs = args.map(arg => {
+        if (arg === null) {
+            return 'null';
+        } else if (arg === undefined) {
+            return 'undefined';
+        } else if (typeof arg === 'object') {
+            try {
+                // For objects, create pretty JSON with 4-space indentation
+                return '\n' + JSON.stringify(arg, null, 4);
+            } 
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            catch (err) {
+                return String(arg); // Fallback if JSON stringification fails
+            }
+        } else {
+            return String(arg);
+        }
+    });
+    
+    const message = processedArgs.join(' ');
     const logMessage = `${format(new Date(), 'MM-dd-yy h:mm:ss a')}: ${message}`;
     
     // Output to original console.log

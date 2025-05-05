@@ -70,13 +70,16 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
         >
             <div className="space-y-3 max-w-full">
                 {messages!.map((msg, index) => {       
-                    const title = `From:\n\n${msg.sender} - ${msg.publicKey}\nDB_ID: ${msg.dbId}\nID: ${msg.id}`;
+                    let title = `From:\n\n${msg.sender} - ${msg.publicKey}\n\nID: ${msg.id}`;
+                    if (msg.state==='a') {
+                        title += ' Saved to server';
+                    }
                     return (
                         <div 
                             key={index} 
                             className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 ' 
                                 : 'bg-gray-800 border-l-4 '}
-                                ${!msg.dbId ? 'border-red-500' : 
+                                ${msg.state!=='a' ? 'border-red-500' : 
                             msg.sender === gs.userName ? 'border-blue-500' : 
                                 'border-transparent'
                         } p-3 rounded-md shadow-md flex flex-col`}

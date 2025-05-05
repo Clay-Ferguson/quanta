@@ -104,6 +104,17 @@ export class DBManager implements DBManagerIntf {
             CREATE INDEX IF NOT EXISTS idx_user_info_pub_key ON user_info (pub_key);
         `);
 
+        // Try to add the state column and ignore errors if it already exists
+        // This is the cleanest way to do it, but SQLite doesn't support "IF NOT EXISTS" for ALTER TABLE
+        try {
+            await this.db.exec('ALTER TABLE messages ADD COLUMN state TEXT;');
+        } 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        catch (error) {
+            // Column likely already exists, ignore the error
+            console.log('State column might already exist, continuing...');
+        }
+
         // I'm not skilled with SQLite, but followed the advice of Claude to add these two PRAGMAs.
         await this.db!.exec('PRAGMA journal_mode = WAL;');
         await this.db!.exec('PRAGMA busy_timeout = 5000;'); // 5 second timeout
