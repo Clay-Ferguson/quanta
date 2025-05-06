@@ -4,6 +4,9 @@ import BackButtonComp from '../components/BackButtonComp';
 import { useEffect } from 'react';
 import { util } from '../Util';
 
+/**
+ * Page for displaying the list of contacts.
+ */
 export default function ContactsPage() {
     useEffect(() => util.resizeEffect(), []);
     return (

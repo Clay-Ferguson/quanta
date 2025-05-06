@@ -585,7 +585,7 @@ export class AppService implements AppServiceTypes  {
 
             setTimeout(() => {
                 // after a few seconds check if the message was acknowledged by the server
-                // todo-0: we could add a resend button for these kinds of messages, which would
+                // todo-1: we could add a resend button for these kinds of messages, which would
                 // come in handy for P2P mode also, which also needs to have some kind of ACK 
                 // mechanism, which we don't have yet.
                 if (this.gs!.messages && this.gs?.saveToServer) {
@@ -781,7 +781,7 @@ export class AppService implements AppServiceTypes  {
 
         if (messagesToSend.length == 0) return messages;
 
-        // todo-0: let's ask user to confirm they want to resend because this also indicates to them
+        // todo-1: let's ask user to confirm they want to resend because this also indicates to them
         // there may be a problem with their connectivity to the server.
         try {
             console.log("Resending " + messagesToSend.length + " messages to server: ", messagesToSend);

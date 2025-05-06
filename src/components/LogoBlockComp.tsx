@@ -6,6 +6,9 @@ interface LogoBlockCompProps {
   clazz?: string;
 }
 
+/**
+ * LogoBlockComp is a React component that displays the Quanta Chat logo and a subtext.
+ */
 export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
     const handleLogoClick = () => app.goToPage(PageNames.quantaChat);
     

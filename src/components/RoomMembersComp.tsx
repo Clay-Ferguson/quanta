@@ -6,6 +6,9 @@ import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/CommonTypes';
 
+/**
+ * Displays the list of members in the room. This includes the user themselves, and all other participants.
+ */
 export default function RoomMembersComp() {
     const gs = useGlobalState();
 

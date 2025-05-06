@@ -4,6 +4,11 @@ import {app} from '../AppService';
 import {util} from '../Util';
 import { useGlobalState } from '../GlobalState';
 
+/**
+ * Footer component for the chat application. It includes a textarea for typing messages,
+ * a button to attach files, and a send button. It also handles file selection and pasting
+ * images/files from the clipboard.
+ */
 export default function FooterComp() {
     const [message, setMessage] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

@@ -6,6 +6,10 @@ import { useGlobalState } from '../GlobalState';
 import { useEffect } from 'react';
 import { util } from '../Util';
 
+/**
+ * Page for displaying information about the current chat room.
+ * It shows the room name and a list of members currently in the room.
+ */
 export default function RoomInfoPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);

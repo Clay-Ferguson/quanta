@@ -24,6 +24,10 @@ interface Attachment {
     room_name: string;
 }
 
+/**
+ * Displays a list of recent attachments sent in the chat application, which are saved to the server. Maily for moderation purposes and to keep an eye
+ * on the content being shared.
+ */
 export default function RecentAttachmentsPage() {
     const gs = useGlobalState();
     const [loading, setLoading] = useState(true);

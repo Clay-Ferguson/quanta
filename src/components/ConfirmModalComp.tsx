@@ -14,6 +14,9 @@ export function setConfirmHandlers(handlers: ConfirmationPromiseHandlers | null)
     activeConfirmHandlers = handlers;
 }
 
+/**
+ * Displays a modal confirmation dialog box with a message and two buttons: Cancel and OK. This modal is used to confirm user actions.
+ */
 export function ConfirmModalComp() {
     const gs = useGlobalState();
     if (!gs.confirmMessage) return null;

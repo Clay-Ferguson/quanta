@@ -1,4 +1,7 @@
 
+/**
+ * Loading Indicator Component which shows a spinner and a loading message.
+ */
 export default function LoadingIndicatorComp() {
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900">

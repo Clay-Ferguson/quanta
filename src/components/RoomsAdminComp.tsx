@@ -12,6 +12,9 @@ interface RoomInfo {
     messageCount: number;
 }
 
+/**
+ * Displays a list of rooms and allows the admin to delete rooms.
+ */
 export default function RoomsAdminComp() {
     const gs = useGlobalState();
     const [roomsData, setRoomsData] = useState<RoomInfo[]>([]);

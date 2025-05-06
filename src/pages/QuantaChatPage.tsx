@@ -6,7 +6,10 @@ import MessagesComp from '../components/MessagesComp';
 import { useGlobalState } from '../GlobalState';
 import { util } from '../Util';
 
-// #QuantaChatPage 
+/**
+ * Main chat page for the Quanta Chat application. This page displays the chat messages and handles user interactions.
+ * It also includes a header and footer for navigation and additional features.
+ */
 export default function QuantaChatPage() {
     const gs = useGlobalState();
     let mainComp = null;

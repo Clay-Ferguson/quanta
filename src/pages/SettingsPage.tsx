@@ -9,6 +9,11 @@ import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
 
+/**
+ * Page for managing user settings, including username, avatar, and identity keys.
+ * It also provides options for syncing messages with the server and managing storage space.
+ * The page allows users to preview their profile, save changes, and wipe all data if necessary.
+ */
 export default function SettingsPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);

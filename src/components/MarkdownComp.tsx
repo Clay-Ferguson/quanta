@@ -6,6 +6,9 @@ interface MarkdownDisplayProps {
   markdownContent: string;
 }
 
+/**
+ * Displays a markdown content using ReactMarkdown. It uses rehypeRaw and rehypeSanitize for security and remarkGfm for GitHub Flavored Markdown support.
+ */
 export default function Markdown({ markdownContent }: MarkdownDisplayProps) {    
     return (
         <>            

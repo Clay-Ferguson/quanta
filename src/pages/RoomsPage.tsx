@@ -9,6 +9,9 @@ import { app } from '../AppService';
 import { useEffect } from 'react';
 import { util } from '../Util';
 
+/**
+ * Page for displaying the list of rooms the user has previously joined.
+ */
 export default function RoomsPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);

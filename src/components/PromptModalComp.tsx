@@ -16,6 +16,10 @@ export function setPromptHandlers(handlers: PromptPromiseHandlers | null) {
     activePromptHandlers = handlers;
 }
 
+/**
+ * Displays a modal prompt dialog box with a message and an input field. This modal is used to get generic user input.
+ */
+
 export function PromptModalComp() {
     const gs = useGlobalState();
     const [inputValue, setInputValue] = useState('');

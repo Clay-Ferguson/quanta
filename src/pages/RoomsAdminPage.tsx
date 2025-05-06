@@ -4,6 +4,9 @@ import RoomsAdminComp from '../components/RoomsAdminComp';
 import { useEffect } from 'react';
 import { util } from '../Util';
 
+/**
+ * Page for managing rooms, including creating, deleting, and modifying room settings. For the admin user only.
+ */
 export default function RoomsAdminPage() {  
     useEffect(() => util.resizeEffect(), []);
     

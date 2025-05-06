@@ -5,6 +5,9 @@ interface TitledPanelProps {
   children: React.ReactNode;
 }
 
+/**
+ * Displays a titled panel with a title and content area. The title is styled with a blue background and the content area has a gray background.
+ */
 export default function TitledPanelComp({ title, children }: TitledPanelProps) {
     return (
         <div className={`bg-gray-800/80 border border-blue-700/30 rounded-lg overflow-hidden`}>

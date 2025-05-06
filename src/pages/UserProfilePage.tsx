@@ -15,6 +15,11 @@ import { util } from '../Util';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
+/**
+ * Page for displaying user profile information.
+ * It shows the user's avatar, name, public key, description, and contact status.
+ * If the user is not in the contact list, an option to add them as a contact is provided.
+ */
 export default function UserProfilePage() {
     const gs = useGlobalState();
     const [profileData, setProfileData] = useState<UserProfile | null>(null);

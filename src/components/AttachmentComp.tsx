@@ -9,6 +9,9 @@ interface AttachmentCompProps {
   index?: number;
 }
 
+/**
+ * Displays an attachment (image or other file) with options to download or view it in full size. Images are displayed inline with an IMG tag
+ */
 export default function AttachmentComp({ attachment: att, index = 0 }: AttachmentCompProps) {
     return (
         <div key={index} className="attachment-container border border-gray-600 rounded p-2 flex flex-col bg-gray-800">
@@ -34,7 +37,6 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
                             <FontAwesomeIcon icon={faDownload} className="h-5 w-5" />
                         </button>
                     </div>
-                    <div className="text-xs mt-1 truncate text-gray-300">{att.name}</div>
                 </>
             ) : (
                 <>

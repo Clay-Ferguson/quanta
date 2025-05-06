@@ -4,6 +4,9 @@ interface HexKeyCompProps {
   hexKey: string;
 }
 
+/**
+ * Displays a hex key with options to copy it to the clipboard or show it in an alert.
+ */
 export default function HexKeyComp({ hexKey }: HexKeyCompProps) {
     // Check if hexKey is a valid non-empty string
     if (!hexKey || typeof hexKey !== 'string') {

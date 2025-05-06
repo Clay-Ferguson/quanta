@@ -13,6 +13,9 @@ interface DocViewerPageProps {
     title?: string;
 }
 
+/**
+ * Page for displaying a document viewer. So far only used for displaying static markdown files, and specifically the user guide.
+ */
 export default function DocViewerPage({ 
     filename = '/user-guide.md',
     title = 'Document Viewer' 

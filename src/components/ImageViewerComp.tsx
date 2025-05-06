@@ -1,6 +1,9 @@
 import {app} from '../AppService';
 import { useGlobalState } from '../GlobalState';
 
+/**
+ * Component to display a full-size image when clicked. It overlays the entire screen with a dark background
+ */
 export default function ImageViewerComp() {
     const gs = useGlobalState();
 

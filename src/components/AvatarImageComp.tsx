@@ -8,6 +8,9 @@ interface AvatarImageCompProps {
     name: string;
 }
 
+/**
+ * Displays an avatar image for a user. If the image fails to load, a default icon is shown.
+ */
 export default function AvatarImageComp({ name, publicKey }: AvatarImageCompProps) {
     return (
         <>

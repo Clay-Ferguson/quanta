@@ -7,6 +7,9 @@ import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/CommonTypes';
 
+/**
+ * Displays a list of contacts with options to add, edit, delete, and select multiple contacts.
+ */
 export default function ContactsListComp() {
     const gs = useGlobalState();
     if (!gs.contacts) {

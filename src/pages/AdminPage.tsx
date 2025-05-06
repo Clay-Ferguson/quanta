@@ -10,6 +10,9 @@ import { util } from '../Util';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
+/**
+ * AdminPage component for managing server settings and test data.
+ */
 export default function AdminPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);

@@ -2,6 +2,9 @@ import { app } from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
+/**
+ * Displays a modal alert dialog box with a message.
+ */
 export default function AlertModalComp() {
     const gs = useGlobalState();
     if (!gs.modalMessage) return null;

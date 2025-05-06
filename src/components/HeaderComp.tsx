@@ -8,6 +8,9 @@ import { useGlobalState } from '../GlobalState';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
+/**
+ * Header component for the chat application. It includes a logo, room name input, and buttons for joining/leaving rooms.
+ */
 export default function HeaderComp() {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
