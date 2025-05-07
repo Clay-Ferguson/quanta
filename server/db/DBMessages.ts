@@ -71,7 +71,7 @@ class DBMessages {
                 attachment.id = result.lastID;
             }
         }
-        console.log(`Message persisted successfully: id=${message.id}`);
+        // console.log(`Message persisted successfully: id=${message.id}`);
         return true;
     }
 
@@ -93,7 +93,7 @@ class DBMessages {
                     continue; // Skip this message if saving failed
                 }
                 numSaved++;
-                console.log(`Message Record stored: ${message.id}`);
+                // console.log(`Message Record stored: ${message.id}`);
             }
             return numSaved;
         });
