@@ -17,8 +17,8 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
         <div key={index} className="attachment-container border border-gray-600 rounded p-2 flex flex-col bg-gray-800">
             {att.type.startsWith('image/') ? (
                 <>
-                    {/* Image attachment */}
-                    <div className="relative">
+                    {/* Image attachment with fixed height container */}
+                    <div className="relative h-40 flex items-center justify-center">
                         <img 
                             src={att.data}
                             alt={att.name}
@@ -41,7 +41,7 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
             ) : (
                 <>
                     {/* Non-image attachment */}
-                    <div className="flex items-center">
+                    <div className="flex items-center h-16">
                         <span className="text-2xl mr-2"><FontAwesomeIcon icon={faFile} className="h-5 w-5" /></span>
                         <div className="flex-1">
                             <div className="font-medium text-sm truncate text-gray-200">{att.name}</div>

@@ -1,5 +1,3 @@
-import { util } from "./Util";
-
 /**
  * ScrollEffects.ts
  * 
@@ -37,12 +35,11 @@ class ScrollEffects {
             // probably related to the Markdown rendering. The stubbornScroll function is a workaround for that, but is a good idea
             // for any other scrollable elements also, because scrolling notoriously needs 'delays' like this to work properly.
             if (savedPos !== undefined) {
-                // Restore previous scroll position if available
-                util.stubbornScroll(elmRef.current, savedPos);
+                elmRef.current.scrollTop = savedPos;
             } else {
                 if (defaultToBottom) {
                     // Default to scrolling to bottom
-                    util.stubbornScroll(elmRef.current, elmRef.current.scrollHeight);
+                    elmRef.current.scrollTop = elmRef.current.scrollHeight;
                 }
             }
         }
