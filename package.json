@@ -7,7 +7,8 @@
     "build:client": "tsc -b && vite build",
     "build:server": "tsc -p server/tsconfig.json",
     "build": "yarn build:client && yarn build:server",
-    "start": "node dist/server/ChatServer.js"
+    "start": "node dist/server/ChatServer.js",
+    "postinstall": "[ -f package-lock.json ] && rm package-lock.json || true"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
