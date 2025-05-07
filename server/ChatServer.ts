@@ -62,8 +62,8 @@ console.log(`Environment Variables:
     QUANTA_CHAT_ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY}
 `);
 
-app.use(express.json({ limit: '5mb' }));  // Increase the limit to 10MB
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // Add HTTP to HTTPS redirect if using HTTPS
 if (SECURE === 'y') {
