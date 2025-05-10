@@ -1,4 +1,4 @@
-import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
+import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceTypes} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
@@ -271,6 +271,11 @@ export default class WebRTC {
         this.app?.acknowledgeMessage(evt.id);
     }
 
+    _onDeleteMsg = (evt: WebRTCDeleteMsg) => {
+        console.log('Delete message received for message ID: ' + evt.messageId);
+        this.app?.inboundDeleteMessage(evt.room, evt.messageId);
+    }
+
     _onBroadcast = (evt: WebRTCBroadcast) => {
         console.log('broadcast. Received broadcast message from ' + evt.sender!.name);
         this.app?.persistInboundMessage(evt.message);           
@@ -301,6 +306,9 @@ export default class WebRTC {
             break;
         case 'broadcast':
             this._onBroadcast(evt);
+            break;
+        case 'delete-msg':
+            this._onDeleteMsg(evt);
             break;
         case 'ack':
             this._onAcknowledge(evt);
@@ -631,19 +639,4 @@ export default class WebRTC {
     socketSend(msg: any) {
         this.socket!.send(JSON.stringify(msg));
     }
-
-    // todo-1: we now use a broadcast for this, so the 'persist' code on the server can be removed.
-    // persistOnServer(msg: any) {
-    //     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-    //         this.socket.send(JSON.stringify({
-    //             type: 'persist', // Use a dedicated type for server-only persistence
-    //             message: msg,
-    //             room: this.roomId
-    //         }));
-    //         console.log('Message persisted to server database.');
-    //     } else {
-    //         console.warn('Cannot persist message: WebSocket not open.');
-    //         // Could implement a retry mechanism or queue for offline messages
-    //     }
-    // }
 }

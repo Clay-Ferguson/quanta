@@ -158,4 +158,5 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-await WebRTCServer.getInst(db, HOST, PORT, server);
+const rtc: WebRTCServer = await WebRTCServer.getInst(db, HOST, PORT, server);
+controller.rtc = rtc;

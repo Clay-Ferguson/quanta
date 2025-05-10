@@ -122,6 +122,33 @@ export class AppService implements AppServiceTypes  {
         }
     }
     
+    // Gets the messages for this room from IndexedDB by roomName, and then removes the messageId one and then resaves the room messsages
+    // back into indexedDb
+    inboundDeleteMessage = async (roomName: string, messageId: string) => {
+    
+        // if the room is the current room, then we need to remove it from the global state
+        if (roomName == this.gs?.roomName) {
+            // if the room is the current room, then we need to remove it from the global state
+            const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+            if (messageIndex !== undefined && messageIndex >= 0) {
+                this.gs!.messages!.splice(messageIndex, 1);
+                this.gd!({ type: 'deleteMessage', payload: this.gs});
+                this.saveMessages(roomName, this.gs!.messages!);
+            }
+        }
+        // else we will delete from some other room.
+        else {
+            const roomData: any = await this.storage?.getItem(DBKeys.roomPrefix + roomName);
+            if (roomData && roomData.messages) {
+                const messageIndex = roomData.messages.findIndex((msg: ChatMessage) => msg.id === messageId);
+                if (messageIndex !== undefined && messageIndex >= 0) {
+                    roomData.messages.splice(messageIndex, 1);
+                    this.saveMessages(roomName, roomData.messages);
+                }
+            }
+        }
+    }
+
     deleteMessage = async (messageId: string) => {
         const confirmed = await this.confirm(`Delete message?`);
         if (!confirmed) return;
@@ -135,7 +162,8 @@ export class AppService implements AppServiceTypes  {
             try {
                 // Make the secure POST request with body
                 await httpClientUtil.secureHttpPost('/api/delete-message', this.gs!.keyPair!, {
-                    messageId: messageId
+                    messageId,
+                    roomName: this.gs!.roomName
                 });
                 
             } catch (error) {
@@ -755,10 +783,10 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
-    /* Saves the current Global State messages to IndexedDB */
+    /* Saves messages into the room by roomName to IndexedDB */
     saveMessages = async (roomName: string, messages: ChatMessage[]) => {
         if (!this.storage) { 
-            console.warn('No storage or rct instance available for saving messages');
+            console.warn('No storage instance available for saving messages');
             return;
         }
 

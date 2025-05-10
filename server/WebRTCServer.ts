@@ -2,7 +2,7 @@ import {WebSocketServer, WebSocket} from 'ws';
 import { DBManager } from './db/DBManager.js';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
-import { User, WebRTCAck, WebRTCBroadcast, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
+import { User, WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '@common/CommonTypes.js';
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
 
@@ -108,7 +108,7 @@ export default class WebRTCServer {
         }
     }
 
-    // Currently the only data being broadcast are chat messages so we don't check for any type we juset assume it's a message.
+    // Broadcasts a message to all clients in the same room, except the sender
     onBroadcast = async (ws: WebSocket, msg: WebRTCBroadcast) => {
         if (!msg.room) {
             console.error("No room in broadcast message");
@@ -194,6 +194,27 @@ export default class WebRTCServer {
         //
         // this.sendUserJoined(ws, msg);
         // ------------------------------
+    }
+
+    sendDeleteMessage = (roomName: string, messageId: string, publicKey: string) => {
+        console.log(`Sending delete message for ID ${messageId} in room ${roomName}`);
+        const deleteMsg: WebRTCDeleteMsg = {
+            type: 'delete-msg',
+            messageId,
+            room: roomName,
+        };
+        // build message to send to all OTHER clients.
+        const payload = JSON.stringify(deleteMsg);
+        
+        // Notify others about the new participant
+        this.wss!.clients.forEach((cws) => {
+            const clientInfo = this.clientsMap.get(cws);
+            if (clientInfo?.user.publicKey !== publicKey && // don't send to the sender 
+                //cws !== ws && // NOTE: This is the other way to avoid sending to the sender, but we don't have ws here.
+                cws.readyState === WebSocket.OPEN && clientInfo &&  clientInfo.room === roomName) {
+                cws.send(payload);
+            }
+        });
     }
 
     sendUserJoined = (ws: WebSocket, msg: WebRTCJoin) => {

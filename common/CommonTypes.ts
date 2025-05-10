@@ -59,11 +59,19 @@ export interface WebRTCJoin extends SignableObject {
     signature?: string;
 }
 
-export interface WebRTCBroadcast extends SignableObject{
+export interface WebRTCBroadcast extends SignableObject {
     type: 'broadcast',
-    message: ChatMessageIntf, // currently we make this scrict as a messge, but probably will be a polymorphic base-type later on.
+    message: ChatMessageIntf,
     room: string,
     sender?: User,
+    publicKey?: string;
+    signature?: string;
+}
+
+export interface WebRTCDeleteMsg extends SignableObject {
+    type: 'delete-msg',
+    messageId: string,
+    room: string,
     publicKey?: string;
     signature?: string;
 }

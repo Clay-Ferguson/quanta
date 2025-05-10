@@ -4,6 +4,7 @@ export interface AppServiceTypes {
     rtcStateChange(): void;
     persistInboundMessage(msg: ChatMessage): Promise<void>;
     acknowledgeMessage(id: string): Promise<void>;
+    inboundDeleteMessage(roomName: string, id: string): Promise<void>;
     alert(msg: string): void;
 }
 
