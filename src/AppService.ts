@@ -21,8 +21,9 @@ export class AppService implements AppServiceTypes  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     private static initComplete: boolean = false;
-    gd: React.Dispatch<GlobalAction> | null = null; // Global Dispatch Function
-    gs: GlobalState | null = null; // Global State Object
+
+    private globalDispatch: React.Dispatch<GlobalAction> | null = null;
+    private globalStateRef: React.RefObject<GlobalState> | null = null;
 
     async init() {
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
@@ -52,14 +53,42 @@ export class AppService implements AppServiceTypes  {
         }, 10000);
     }
 
-    setGlobals = (gd: any, gs: any) => {
-        if (!gd || !gs) {
+    // Create a getter for the global state that always accesses the latest state
+    private get gs(): GlobalState {
+        if (!this.globalStateRef || !this.globalStateRef.current) {
+            throw new Error('Global state ref not initialized');
+        }
+        return this.globalStateRef.current;
+    }
+
+    // Create a dispatch method that automatically updates both React state and our ref
+    private gd(action: GlobalAction): void {
+        if (!this.globalDispatch) {
+            throw new Error('Global dispatch not initialized');
+        }
+  
+        // First, update our local state ref with the expected new state
+        if (this.globalStateRef && this.globalStateRef.current) {
+            this.globalStateRef.current = {
+                ...this.globalStateRef.current,
+                ...action.payload
+            };
+        }
+  
+        // Then dispatch to React's state management
+        this.globalDispatch(action);
+    }
+
+    // Update the setGlobals method
+    setGlobals = (dispatch: React.Dispatch<GlobalAction>, stateRef: React.RefObject<GlobalState>) => {
+        if (!dispatch || !stateRef) {
             console.warn('Global dispatch or state not yet available');
             return;
         }
-        this.gd = gd;
-        this.gs = gs;
-
+  
+        this.globalDispatch = dispatch;
+        this.globalStateRef = stateRef;
+  
         if (!AppService.initComplete) {
             AppService.initComplete = true;
             this.init();
@@ -93,7 +122,9 @@ export class AppService implements AppServiceTypes  {
     }
     
     deleteMessage = async (messageId: string) => {
-        this.alert(`Deleting message ${messageId}`);
+        const confirmed = await this.confirm(`Delete message?`);
+        if (!confirmed) return;
+
         const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
         if (messageIndex !== undefined && messageIndex >= 0) {
             this.gs!.messages!.splice(messageIndex, 1);
@@ -102,7 +133,7 @@ export class AppService implements AppServiceTypes  {
 
             try {
                 // Make the secure POST request with body
-                await httpClientUtil.secureHttpPost('/api/admin/delete-message', this.gs!.keyPair!, {
+                await httpClientUtil.secureHttpPost('/api/delete-message', this.gs!.keyPair!, {
                     messageId: messageId
                 });
                 
@@ -112,6 +143,11 @@ export class AppService implements AppServiceTypes  {
         }
     }
 
+    /**
+     * Cleans up messages older than the specified number of days in the room data.
+     * @param roomData The room data containing messages to clean.
+     * @returns A promise that resolves to true if any messages were removed, false otherwise.
+     */
     cleanRoomMessages = async (roomData: any): Promise<boolean> => {
         if (!roomData || !roomData.messages) {
             return false; // No messages to clean
@@ -179,11 +215,13 @@ export class AppService implements AppServiceTypes  {
     }
 
     closeConfirm = () => {
-        this.gd!({ type: 'closeConfirm', payload: { 
+        this.gd({ type: 'closeConfirm', payload: { 
             confirmMessage: null,
         }});
     }
 
+    // todo-0: this alert sometimes won't even show up, if some other code is running and causes a re-render, so this needs
+    // to always have an await (return promise) like the 'confirm' method.
     alert = (message: string) => {
         console.log("Alert: " + message);
         this.gd!({ type: 'openAlert', payload: { 
@@ -854,6 +892,7 @@ export class AppService implements AppServiceTypes  {
 
         // Next get room messages from server
         if (this.gs!.saveToServer) {
+            let messagesDirty = false;
             try {
                 const daysOfHistory = this.gs?.daysOfHistory || 30;
                 // Get all message IDs from the server for this room
@@ -866,10 +905,37 @@ export class AppService implements AppServiceTypes  {
                 }
             
                 // Create a map of existing message IDs for quick lookup
-                const existingMessageIds = new Set(messages.map(msg => msg.id));
+                const serverIdsSet = new Set(serverMessageIds);
+
+                // This filter loop does two things: 
+                // 1) Makes sure that any messages that are on the server are marked as 'a' (acknowledged). This should not be necessary,
+                //    but we do it just to be sure the 'a' state is as correct as we can make it, in case there were any problems in the past.
+                // 2) Removes any messages that are no longer on the server but were at one time (state=='a'). Note that since we always enforce
+                //    'daysOfHistory' such that anything older than that is removed, we don't need to worry about messages that are older than that, or the fact
+                //     that what we just pulled from the server is only the last 'daysOfHistory' worth of messages. 
+                messages = messages.filter((msg: ChatMessage) => {
+                    if (serverIdsSet.has(msg.id)) {
+                        if (msg.state !== 'a') {
+                            msg.state = 'a'; // Mark as acknowledged
+                            messagesDirty = true;
+                        }
+                    }
+                    else {
+                        // if the message is not on the server, and it has state=='a', then we need to remove it from our local storage
+                        if (msg.state === 'a') {
+                            console.log(`Removing message ${msg.id} from local storage as it no longer exists on the server`);
+                            messagesDirty = true;
+                            return false; // Remove this message
+                        }
+                    }
+                    return true; // Keep this message
+                });
+
+                // Create a map of existing message IDs for quick lookup
+                const existingMessageIdsSet = new Set(messages.map(msg => msg.id));
             
                 // Determine which message IDs we're missing locally
-                const missingIds = serverMessageIds.filter(id => !existingMessageIds.has(id));
+                const missingIds = serverMessageIds.filter(id => !existingMessageIdsSet.has(id));
                 if (missingIds.length > 0) {
                     console.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
@@ -877,6 +943,7 @@ export class AppService implements AppServiceTypes  {
                     const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
             
                     if (messagesData.messages && messagesData.messages.length > 0) {
+                        messagesDirty = true;
                         console.log(`Fetched ${messagesData.messages.length} messages from server for room: ${roomId}`);
 
                         // Add the fetched messages to our local array
@@ -884,14 +951,16 @@ export class AppService implements AppServiceTypes  {
                 
                         // Sort messages by timestamp to ensure chronological order
                         messages.sort((a, b) => a.timestamp - b.timestamp);
-
-                        // Save the merged messages to local storage
-                        await this.storage.setItem(DBKeys.roomPrefix + roomId, {
-                            messages,
-                            lastUpdated: new Date().toISOString()
-                        });
-                        console.log(`Merged ${messagesData.messages.length} server messages with local store. Total messages: ${messages.length}`);
                     }
+                }
+                if (messagesDirty) {
+                    // todo-0: don't we have a method that does this cleaner.
+                    // Save the merged messages to local storage
+                    await this.storage.setItem(DBKeys.roomPrefix + roomId, {
+                        messages,
+                        lastUpdated: new Date().toISOString()
+                    });
+                    console.log(`Saved updated messages: ${messages.length}`);
                 }
             } catch (error) {
                 console.log('Error synchronizing messages with server, falling back to local storage: ' + error);

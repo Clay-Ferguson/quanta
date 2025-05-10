@@ -118,8 +118,8 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                 <div className="flex-1 text-left text-gray-200">
                                     <Markdown markdownContent={msg.content} />
                                 </div>
-                                {/* Delete icon - only visible for admin */}
-                                {ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey && (
+                                {/* Delete icon - visible for admin, always or else if you own the post */}
+                                {(ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey || msg.publicKey === gs.keyPair?.publicKey) && (
                                     <div className="flex items-start ml-2">
                                         <FontAwesomeIcon 
                                             icon={faTrash} 

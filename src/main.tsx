@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { StrictMode, useEffect } from 'react';
+import { StrictMode, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
 import QuantaChatPage from './pages/QuantaChatPage.tsx';
@@ -11,7 +11,7 @@ import RoomsPage from './pages/RoomsPage.tsx';
 import RoomsAdminPage from './pages/RoomsAdminPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import RecentAttachmentsPage from './pages/RecentAttachmentsPage.tsx';
-import { GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
+import { GlobalState, GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
 import {app} from './AppService';
 import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
@@ -28,12 +28,22 @@ function AppServiceConnector() {
     const gd = useGlobalDispatch();
     const gs = useGlobalState();
     
+    // Create a ref that always points to the latest state
+    const stateRef = useRef<GlobalState>(gs);
+    
+    // Keep the ref updated with the latest state
     useEffect(() => {
-        app.setGlobals(gd, gs);
+        stateRef.current = gs;
+    }, [gs]);
+    
+    useEffect(() => {
+        // Pass the dispatcher and the state ref
+        app.setGlobals(gd, stateRef);
+        
         return () => {
             // Optional cleanup if needed
         };
-    }, [gd, gs]);
+    }, [gd]);
     
     return null; // This component doesn't render anything
 }

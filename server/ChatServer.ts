@@ -53,6 +53,7 @@ if (!ADMIN_PUBLIC_KEY) {
     console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
 }
 crypt.setAdminPublicKey(ADMIN_PUBLIC_KEY);
+controller.setAdminPublicKey(ADMIN_PUBLIC_KEY);
 
 // print out all env vars above that we just used
 console.log(`Environment Variables:
@@ -88,13 +89,13 @@ app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, co
 app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, controller.deleteRoom);
 app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, controller.getRecentAttachments);
 app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, controller.createTestData);
-app.post('/api/admin/delete-message', httpServerUtil.verifyAdminHTTPSignature, controller.deleteMessage);
 app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, controller.blockUser);
 
 app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteAttachment);
 app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
 app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, controller.saveUserProfile);
 app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, controller.sendMessages);
+app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controller.deleteMessage);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);

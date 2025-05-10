@@ -27,13 +27,18 @@ class DBMessages {
         });
     }
 
-    persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{            
+    persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{        
+        
+        // This is important to set because for example during a broadcast the message needs to arrive to the clients
+        // with the state 'a' (acknowledged) so they're up to date immediately with correct state on the object.
+        message.state = 'a'; // Set state to 'a' for all messages being saved
+
         const result: any = await this.dbm!.run(
             `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 message.id, 
-                'a',
+                message.state,
                 roomId, 
                 message.timestamp, 
                 message.sender, 
@@ -42,6 +47,11 @@ class DBMessages {
                 message.signature || null
             ]
         );
+
+        if (result.changes === 0) {
+            console.log('Message already exists, skipping insert');
+            return true;
+        }
         
         // Store attachments if any
         if (message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0) {
@@ -274,17 +284,27 @@ class DBMessages {
     /**
      * Deletes a message and all associated attachments by message ID
      * @param messageId The ID of the message to delete
+     * @param publicKey The public key of the user requesting the deletion
      * @returns Whether the operation was successful
      */
-    deleteMessage = async (messageId: string): Promise<boolean> => {
+    deleteMessage = async (messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> => {
         console.log(`Deleting message: ${messageId} and all associated attachments`);
     
         return this.dbm!.runTrans(async () => {
             try {
-                // First, check if the message exists
-                const message = await this.dbm!.get('SELECT id FROM messages WHERE id = ?', messageId);
-                if (!message) {
+                // Select the public key of the message to verify ownership, we already trust the publicKey argument because 
+                // the HTTP request was verified by the server
+                const results = await this.dbm!.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
+
+                // Check if the message exists and the public key matches
+                if (results.length === 0) {
                     console.log(`Message '${messageId}' not found, nothing to delete`);
+                    return false;
+                }
+
+                // Verify the public key matches (user owns the message) or publicKey is admin user
+                if (results[0].public_key !== publicKey && publicKey !== adminPubKey) {
+                    console.log(`Unauthorized deletion attempt for message '${messageId}'`);
                     return false;
                 }
                 

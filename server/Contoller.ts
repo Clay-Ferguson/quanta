@@ -7,7 +7,12 @@ import { dbUsers } from "./db/DBUsers.js";
 
 class Controller {
     public db: DBManager | null = null;
+    public adminPubKey: string | null = null;
     
+    setAdminPublicKey(adminPubKey: string | undefined) {
+        this.adminPubKey = adminPubKey || null;
+    }
+
     /**
      * API handler for getting all message IDs for a specific room
      */
@@ -205,7 +210,7 @@ class Controller {
 
     deleteMessage = async (req: any, res: any) => {
         try {
-            const { messageId } = req.body;
+            const { messageId, publicKey } = req.body;
         
             if (!messageId) {
                 return res.status(400).json({ 
@@ -215,7 +220,10 @@ class Controller {
             }
         
             console.log('Admin request: Deleting message:', messageId);
-            const success = await dbMessages.deleteMessage(messageId);
+            const success = await dbMessages.deleteMessage(messageId, publicKey, this.adminPubKey);
+
+            // todo-0: Currently other live connected clients won't see the delete until they rejoin the room (or refresh the page)
+            // but we can send a message to all clients in the room to notify them of the deletion
         
             if (success) {
                 res.json({ success: true, message: `Message "${messageId}" deleted successfully` });
