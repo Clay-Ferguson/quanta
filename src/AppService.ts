@@ -555,7 +555,7 @@ export class AppService implements AppServiceTypes  {
         this.gd!({ type: 'setMessages', payload: { messages }});
 
         // Save to IndexedDB
-        this.storage?.setItem(DBKeys.roomPrefix+this.gs?.roomName, messages);
+        this.saveMessages(this.gs!.roomName!, messages);
     }
 
     disconnect = async () => {
@@ -757,7 +757,7 @@ export class AppService implements AppServiceTypes  {
 
     /* Saves the current Global State messages to IndexedDB */
     saveMessages = async (roomName: string, messages: ChatMessage[]) => {
-        if (!this.storage || !this.rtc) { 
+        if (!this.storage) { 
             console.warn('No storage or rct instance available for saving messages');
             return;
         }
@@ -958,12 +958,7 @@ export class AppService implements AppServiceTypes  {
                     }
                 }
                 if (messagesDirty) {
-                    // todo-0: don't we have a method that does this cleaner.
-                    // Save the merged messages to local storage
-                    await this.storage.setItem(DBKeys.roomPrefix + roomId, {
-                        messages,
-                        lastUpdated: new Date().toISOString()
-                    });
+                    await this.saveMessages(roomId, messages);
                     console.log(`Saved updated messages: ${messages.length}`);
                 }
             } catch (error) {
