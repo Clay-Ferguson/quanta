@@ -25,9 +25,9 @@ export default function AdminPage() {
     const createTestData = async () => {
         const success = await httpClientUtil.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
         if (success) {
-            app.alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
+            await app.alert('Test data creation request submitted successfully! You will need to REFRESH the page to see the changes.');
         } else {
-            app.alert(`Failed to create test data`);
+            await app.alert(`Failed to create test data`);
         }
     };
 

@@ -7,10 +7,11 @@ import {crypt} from '../common/Crypto.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
 import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes.ts';
-import { setConfirmHandlers } from './components/ConfirmModalComp';
+import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
 import { canon } from '../common/Canonicalizer.ts';
+import { setAlertHandler } from './components/AlertModalComp.tsx';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -205,7 +206,7 @@ export class AppService implements AppServiceTypes  {
     confirm = (message: string): Promise<boolean> => {
         return new Promise((resolve) => {
             // Set the handlers for this confirmation dialog
-            setConfirmHandlers({ resolve });
+            setConfirmHandler({ resolve });
             
             // Display the confirmation dialog
             this.gd!({ type: 'openConfirm', payload: { 
@@ -220,13 +221,16 @@ export class AppService implements AppServiceTypes  {
         }});
     }
 
-    // todo-0: this alert sometimes won't even show up, if some other code is running and causes a re-render, so this needs
-    // to always have an await (return promise) like the 'confirm' method.
-    alert = (message: string) => {
-        console.log("Alert: " + message);
-        this.gd!({ type: 'openAlert', payload: { 
-            modalMessage: message,
-        }});
+    alert = (message: string): Promise<void> => {
+        return new Promise((resolve) => {
+            // Set the handlers for this confirmation dialog
+            setAlertHandler({ resolve });
+            
+            console.log("Alert: " + message);
+            this.gd!({ type: 'openAlert', payload: { 
+                modalMessage: message,
+            }});
+        });
     }
 
     closeAlert = () => {
@@ -531,10 +535,10 @@ export class AppService implements AppServiceTypes  {
             const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
                 pub_key: publicKey.trim()
             });
-            app.alert(`Success: ${response.message}`);
+            await app.alert(`Success: ${response.message}`);
         } catch (error) {
             console.error('Error blocking user:', error);
-            app.alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            await app.alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } 
     }
 
@@ -621,7 +625,7 @@ export class AppService implements AppServiceTypes  {
             // persist in IndexedDB
             await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 // after a few seconds check if the message was acknowledged by the server
                 // todo-1: we could add a resend button for these kinds of messages, which would
                 // come in handy for P2P mode also, which also needs to have some kind of ACK 
@@ -630,7 +634,7 @@ export class AppService implements AppServiceTypes  {
                     // lookup the message by 'id' and verify it has the 'ack' state on it now.
                     const message = this.gs!.messages!.find((m: ChatMessage) => m.id === msg.id);
                     if (message && message.state!=='a') {
-                        this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
+                        await this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                     }
                 }
 

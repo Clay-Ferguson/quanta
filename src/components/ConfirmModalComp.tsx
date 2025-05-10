@@ -2,16 +2,16 @@ import { app } from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
-interface ConfirmationPromiseHandlers {
+interface ConfirmationPromiseHandler {
     resolve: (value: boolean) => void;
 }
 
 // A global variable to store our promise callbacks
-let activeConfirmHandlers: ConfirmationPromiseHandlers | null = null;
+let activeConfirmHandler: ConfirmationPromiseHandler | null = null;
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function setConfirmHandlers(handlers: ConfirmationPromiseHandlers | null) {
-    activeConfirmHandlers = handlers;
+export function setConfirmHandler(handler: ConfirmationPromiseHandler | null) {
+    activeConfirmHandler = handler;
 }
 
 /**
@@ -23,9 +23,9 @@ export function ConfirmModalComp() {
     
     const handleConfirm = (result: boolean) => {
         // Resolve the promise with the user's choice
-        if (activeConfirmHandlers) {
-            activeConfirmHandlers.resolve(result);
-            setConfirmHandlers(null);
+        if (activeConfirmHandler) {
+            activeConfirmHandler.resolve(result);
+            setConfirmHandler(null);
         }
         app.closeConfirm();
     };

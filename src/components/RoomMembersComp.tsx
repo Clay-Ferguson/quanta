@@ -79,9 +79,9 @@ export default function RoomMembersComp() {
                                         {!member.alias && member.publicKey !== gs.keyPair?.publicKey ? (
                                             <button 
                                                 className="text-xs bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded flex items-center"
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     app.addContact(member);
-                                                    app.alert(`Added ${member.name} to contacts`);
+                                                    await app.alert(`Added ${member.name} to contacts`);
                                                 }}
                                                 title="Add to contacts"
                                             >

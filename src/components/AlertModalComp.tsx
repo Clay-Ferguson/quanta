@@ -2,6 +2,18 @@ import { app } from '../AppService';
 import { useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
+interface AlertPromiseHandler {
+    resolve: () => void;
+}
+
+// A global variable to store our promise callbacks
+let activeAlertHandler: AlertPromiseHandler | null = null;
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function setAlertHandler(handler: AlertPromiseHandler | null) {
+    activeAlertHandler = handler;
+}
+
 /**
  * Displays a modal alert dialog box with a message.
  */
@@ -9,6 +21,15 @@ export default function AlertModalComp() {
     const gs = useGlobalState();
     if (!gs.modalMessage) return null;
     
+    const handleAlert = () => {
+        // Resolve the promise with the user's choice
+        if (activeAlertHandler) {
+            activeAlertHandler.resolve();
+            setAlertHandler(null);
+        }
+        app.closeAlert();
+    };
+
     return (
         // Overlay with semi-transparent background that covers the entire screen
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -24,7 +45,7 @@ export default function AlertModalComp() {
                     <button
                         type="button"
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        onClick={app.closeAlert}
+                        onClick={handleAlert}
                     >
                         OK
                     </button>

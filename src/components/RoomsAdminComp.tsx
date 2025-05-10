@@ -33,12 +33,12 @@ export default function RoomsAdminComp() {
                     setRoomsData(response.rooms);
                 } else {
                     setError('Failed to retrieve room information');
-                    app.alert('Failed to retrieve room information');
+                    await app.alert('Failed to retrieve room information');
                 }
             } catch (error) {
                 console.error('Error fetching room info:', error);
                 setError('An error occurred while fetching room information');
-                app.alert('An error occurred while fetching room information');
+                await app.alert('An error occurred while fetching room information');
             } finally {
                 setLoading(false);
             }
@@ -61,12 +61,12 @@ export default function RoomsAdminComp() {
                 setRoomsData(response.rooms);
             } else {
                 setError('Failed to retrieve room information');
-                app.alert('Failed to retrieve room information');
+                await app.alert('Failed to retrieve room information');
             }
         } catch (error) {
             console.error('Error fetching room info:', error);
             setError('An error occurred while fetching room information');
-            app.alert('An error occurred while fetching room information');
+            await app.alert('An error occurred while fetching room information');
         } finally {
             setLoading(false);
         }
@@ -80,10 +80,10 @@ export default function RoomsAdminComp() {
             
             // Remove the deleted room from the state
             setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
-            app.alert(`Room "${roomName}" deleted successfully`);
+            await app.alert(`Room "${roomName}" deleted successfully`);
         } catch (error) {
             console.error('Error deleting room:', error);
-            app.alert(`An error occurred while deleting room "${roomName}"`);
+            await app.alert(`An error occurred while deleting room "${roomName}"`);
         }
     };
 

@@ -67,9 +67,9 @@ export default function ContactsListComp() {
         setSelectedContacts(new Set());
     };
 
-    const saveContact = (contact: Contact) => {
+    const saveContact = async (contact: Contact) => {
         if (!contact.publicKey || !contact.alias) {
-            app.alert('Public Key and Alias is required');
+            await app.alert('Public Key and Alias is required');
             return;
         }
         contact.publicKey = contact.publicKey.trim();
@@ -77,13 +77,13 @@ export default function ContactsListComp() {
 
         // If alias exists show error about that
         if (gs.contacts!.some(c => c.alias === contact.alias)) {
-            app.alert('Alias already exists');
+            await app.alert('Alias already exists');
             return;
         }
 
         // If alias exists show error about that
         if (gs.contacts!.some(c => c.publicKey === contact.publicKey)) {
-            app.alert('Alias already exists');
+            await app.alert('Alias already exists');
             return;
         }
         
