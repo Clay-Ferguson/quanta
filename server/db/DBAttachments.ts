@@ -1,4 +1,4 @@
-import { AttachmentInfo, DBManagerIntf } from "@common/CommonTypes.js";
+import { AttachmentInfo, DBManagerIntf, FileBlob } from "@common/CommonTypes.js";
 
 class DBAttachments {
     dbm: DBManagerIntf | null = null;
@@ -8,10 +8,10 @@ class DBAttachments {
      * @param id The ID of the attachment
      * @returns The attachment data with type information
      */
-    getAttachmentById = async (id: number): Promise<{data: Buffer, type: string, name: string} | null> => {
+    getAttachmentById = async (id: number): Promise<FileBlob | null> => {
         try {
             const attachment = await this.dbm!.get(
-                'SELECT data, type, name FROM attachments WHERE id = ?',
+                'SELECT data, type, name, size FROM attachments WHERE id = ?',
                 [id]
             );
                 
@@ -22,7 +22,8 @@ class DBAttachments {
             return {
                 data: attachment.data,
                 type: attachment.type,
-                name: attachment.name
+                name: attachment.name,
+                size: attachment.size,
             };
         } catch (error) {
             console.error('Error retrieving attachment:', error);

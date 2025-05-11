@@ -1,4 +1,4 @@
-import { DeleteRoom_Response, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "@common/CommonTypes.js";
+import { DeleteRoom_Response, FileBlob, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "@common/CommonTypes.js";
 import { DBManager } from "./db/DBManager.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
@@ -53,7 +53,7 @@ class Controller {
                 return res.status(400).send('Invalid attachment ID');
             }
                     
-            const attachment = await dbAttachments.getAttachmentById(attachmentId);
+            const attachment: FileBlob | null = await dbAttachments.getAttachmentById(attachmentId); 
                     
             if (!attachment) {
                 return res.status(404).send('Attachment not found');
@@ -61,6 +61,9 @@ class Controller {
                     
             // Set the appropriate content type
             res.set('Content-Type', attachment.type);
+
+            // Set the Content-Length header using the size property
+            res.set('Content-Length', attachment.size);
                     
             // Set content disposition for downloads (optional)
             res.set('Content-Disposition', `inline; filename="${attachment.name}"`);

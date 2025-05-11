@@ -57,6 +57,14 @@ export interface FileBase64Intf {
     data: string; // base64 encoded
 }
 
+export interface FileBlob {
+    id?: number; // Attachments table ID if stored in DB
+    name: string;
+    type: string;
+    size: number;
+    data: Buffer; 
+}
+
 export type AttachmentInfo = {
     id: number;
     name: string;
