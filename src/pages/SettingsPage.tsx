@@ -8,6 +8,7 @@ import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
+import { PanelKeys } from '../AppServiceTypes';
 
 /**
  * Page for managing user settings, including username, avatar, and identity keys.
@@ -173,7 +174,7 @@ export default function SettingsPage() {
                 )} 
                 
                 <div className="space-y-6 max-w-2xl mx-auto">
-                    <TitledPanelComp title="About You">
+                    <TitledPanelComp title="About You" collapsibleKey={PanelKeys.settings_userInfo}>
                         <div className="flex flex-col md:flex-row gap-6 mb-4">
                             {/* Avatar section */}
                             <div className="flex flex-col items-center">
@@ -262,19 +263,7 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    <TitledPanelComp title="Storage Space">
-                        <div className="text-sm space-y-1">
-                            <p className="flex items-center">
-                                <span>Usage: </span>
-                                <span className="text-lg font-bold ml-1">{Math.round(storageInfo.usagePercentage)}%</span>
-                            </p>
-                            <p>Total Space: {util.formatStorageSize(storageInfo.quota)}</p>
-                            <p>Used Space: {util.formatStorageSize(storageInfo.usage)}</p>
-                            <p>Remaining: {util.formatStorageSize(storageInfo.remainingStorage)}</p>
-                        </div>
-                    </TitledPanelComp>
-
-                    <TitledPanelComp title="Options">               
+                    <TitledPanelComp title="Options" collapsibleKey={PanelKeys.settings_options}>               
                         <div className="flex items-center justify-between">
                             <div>
                                 <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
@@ -328,10 +317,14 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    <TitledPanelComp title="Your Identity Keys">
+                    <TitledPanelComp title="Identity Keys" collapsibleKey={PanelKeys.settings_identityKeys}>
                         
                         {/* Public Key Section */}
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
+                            <p>
+                                Your identity keys are used to identify you on the network, because user names are not guaranteed to be unique. Your public key is unique 
+                                and will be visible to others, to represent your identity. Your private key must be kept secret like a password.
+                            </p>
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-blue-300">Public Key</h4>
                                 <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">Shareable</span>
@@ -384,7 +377,19 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    <TitledPanelComp title="Danger Zone">
+                    <TitledPanelComp title="Storage Space" collapsibleKey={PanelKeys.settings_storageSpace}>
+                        <div className="text-sm space-y-1">
+                            <p className="flex items-center">
+                                <span>Usage: </span>
+                                <span className="text-lg font-bold ml-1">{Math.round(storageInfo.usagePercentage)}%</span>
+                            </p>
+                            <p>Total Space: {util.formatStorageSize(storageInfo.quota)}</p>
+                            <p>Used Space: {util.formatStorageSize(storageInfo.usage)}</p>
+                            <p>Remaining: {util.formatStorageSize(storageInfo.remainingStorage)}</p>
+                        </div>
+                    </TitledPanelComp>
+
+                    <TitledPanelComp title="Danger Zone" collapsibleKey={PanelKeys.settings_dangerZone}>
                         <div className="bg-gray-800 rounded-lg p-4 border border-red-400/20 shadow-md">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-red-300">Wipe All Data</h4>

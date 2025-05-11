@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
-import { PageNames, RoomHistoryItem } from './AppServiceTypes';
+import { PageNames, PanelKeys, RoomHistoryItem } from './AppServiceTypes';
 import { ChatMessage, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
@@ -30,6 +30,7 @@ export interface GlobalState {
     promptMessage?: string | null;
     promptDefaultValue?: string | null;
     headerExpanded?: boolean;
+    collapsedPanels?: Set<string>;
 }
 
 const initialState: GlobalState = {
@@ -55,6 +56,13 @@ const initialState: GlobalState = {
     promptMessage: null,
     promptDefaultValue: null,
     headerExpanded: false,
+
+    collapsedPanels: new Set<string>([
+        PanelKeys.settings_storageSpace,
+        PanelKeys.settings_options,
+        PanelKeys.settings_identityKeys,
+        PanelKeys.settings_dangerZone
+    ]),
 };
 
 export type GlobalAction = { type: string, payload: any};

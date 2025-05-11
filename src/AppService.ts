@@ -432,7 +432,7 @@ export class AppService implements AppServiceTypes  {
     createIdentity = async (askFirst: boolean = true) => {
         // if they already have a keyPair, ask if they want to create a new one
         if (askFirst && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
-            if (! await this.confirm("Create new Identity Keys?")) {
+            if (! await this.confirm("Create new Identity Keys?\n\nWARNING: This will overwrite your existing keys.")) {
                 return;
             }
         }
@@ -720,6 +720,22 @@ export class AppService implements AppServiceTypes  {
 
         this.gd!({ type: 'persistMessage', payload: this.gs});
         this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+    }
+
+    setPanelCollapsed = (collapsibleKey: string, isCollapsed: boolean) => {
+        // Clone the current set of collapsed panels (or create a new one if it doesn't exist)
+        const collapsedPanels = new Set(this.gs.collapsedPanels || new Set<string>());
+    
+        if (isCollapsed) {
+        // If collapsing, add the key to the set
+            collapsedPanels.add(collapsibleKey);
+        } else {
+        // If expanding, remove the key from the set
+            collapsedPanels.delete(collapsibleKey);
+        }
+        
+        // Update the global state with the new set
+        this.gd!({ type: 'setPanelCollapsed', payload: { collapsedPanels }});
     }
 
     addContact = async (user: User) => {

@@ -28,6 +28,14 @@ export enum DBKeys {
     headerExpanded = 'headerExpanded',
 }
 
+export enum PanelKeys {
+    settings_userInfo = 'settings_userInfo',
+    settings_storageSpace = 'settings_storageSpace',
+    settings_options = 'settings_options',
+    settings_identityKeys = 'settings_identityKeys',
+    settings_dangerZone = 'settings_dangerZone',
+}
+
 export enum PageNames{
     contacts = 'ContactsPage',
     settings = 'SettingsPage',
