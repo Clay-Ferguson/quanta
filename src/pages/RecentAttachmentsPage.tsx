@@ -27,7 +27,7 @@ export default function RecentAttachmentsPage() {
         setLoading(true);
         try {
             const response = await httpClientUtil.secureHttpPost(`/api/admin/get-recent-attachments`, gs.keyPair!);
-            if (response.success && response.attachments) {
+            if (response.attachments) {
                 setAttachments(response.attachments);
             } else {
                 setError('Failed to retrieve attachment data');
@@ -163,14 +163,14 @@ export default function RecentAttachmentsPage() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="bg-blue-900 text-blue-200 px-2 py-1 rounded">
-                                                        {attachment.room_name}
+                                                        {attachment.roomName}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col">
-                                                        <AvatarImageComp publicKey={attachment.public_key} name="{attachment.sender}" />
+                                                        <AvatarImageComp publicKey={attachment.publicKey} name="{attachment.sender}" />
                                                         <span>{attachment.sender}</span>
-                                                        <HexKeyComp hexKey={attachment.public_key} />
+                                                        <HexKeyComp hexKey={attachment.publicKey} />
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-300">

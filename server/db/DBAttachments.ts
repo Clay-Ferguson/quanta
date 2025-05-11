@@ -76,11 +76,11 @@ class DBAttachments {
                         a.name, 
                         a.type, 
                         a.size, 
-                        a.message_id,
+                        a.message_id as messageId,
                         m.sender,
-                        m.public_key,
+                        m.public_key as publicKey,
                         m.timestamp,
-                        r.name as room_name
+                        r.name as roomName
                     FROM attachments a
                     JOIN messages m ON a.message_id = m.id
                     JOIN rooms r ON m.room_id = r.id

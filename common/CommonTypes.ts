@@ -70,11 +70,11 @@ export type AttachmentInfo = {
     name: string;
     type: string;
     size: number;
-    message_id: string;
+    messageId: string;
     sender: string;
-    public_key: string;
+    publicKey: string;
     timestamp: number;
-    room_name: string;
+    roomName: string;
 }
 
 export interface WebRTCJoin extends SignableObject {
