@@ -74,6 +74,10 @@ export default function RoomsAdminComp() {
     };
 
     const deleteRoom = async (roomName: string) => {
+        if (!await app.confirm(`Are you sure you want to delete the room "${roomName}"?`)) {
+            return;
+        }
+
         try {
             await httpClientUtil.secureHttpPost(`/api/admin/delete-room`, gs.keyPair!, {
                 roomName
