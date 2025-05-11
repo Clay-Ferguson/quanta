@@ -38,6 +38,12 @@ export type ChatMessage = ChatMessageIntf & {
     sigOk?: boolean; // signature valid, regardless of presence in our Contact List
 }
 
+export type RoomInfo = {
+    id: string;
+    name: string;
+    messageCount: number;
+}
+
 export type Contact = {
     alias: string;
     publicKey: string;
@@ -49,6 +55,18 @@ export interface FileBase64Intf {
     type: string;
     size: number;
     data: string; // base64 encoded
+}
+
+export type AttachmentInfo = {
+    id: number;
+    name: string;
+    type: string;
+    size: number;
+    message_id: string;
+    sender: string;
+    public_key: string;
+    timestamp: number;
+    room_name: string;
 }
 
 export interface WebRTCJoin extends SignableObject {
@@ -128,4 +146,28 @@ export interface WebRTCUserLeft {
     type: 'user-left';
     user: User;
     room: string;
+}
+
+export type GetMessageIdsForRoom_Response = {
+    messageIds: string[];
+}
+
+export type GetMessageHistory_Response = {
+    messages: ChatMessageIntf[];
+}
+
+export type GetRoomInfo_Response = {
+    rooms: RoomInfo[];
+}
+
+export type DeleteRoom_Response = {
+    message: string;
+}
+
+export type GetRecentAttachments_Response = {
+    attachments: AttachmentInfo[]
+}
+
+export type GetMessagesByIds_Response = {
+    messages: ChatMessageIntf[];
 }

@@ -1,4 +1,4 @@
-import { DBManagerIntf } from "@common/CommonTypes.js";
+import { DBManagerIntf, RoomInfo } from "@common/CommonTypes.js";
 
 class DBRoom {
     dbm: DBManagerIntf | null = null;
@@ -165,7 +165,7 @@ class DBRoom {
      * Gets information about all rooms including their message counts
      * @returns An array of room information objects
      */
-    getAllRoomsInfo = async () => {
+    getAllRoomsInfo = async (): Promise<RoomInfo[]> => {
         try {
             // Query to get all rooms and join with messages to count messages per room
             const query = `

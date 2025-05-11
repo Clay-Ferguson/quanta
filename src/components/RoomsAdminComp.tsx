@@ -4,6 +4,7 @@ import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { httpClientUtil } from '../HttpClientUtil';
+import { GetRoomInfo_Response } from '../../common/CommonTypes';
 
 // Define interface for room info
 interface RoomInfo {
@@ -28,7 +29,7 @@ export default function RoomsAdminComp() {
             setError(null);
             
             try {
-                const response: any = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
+                const response: GetRoomInfo_Response = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
                 if (response && Array.isArray(response.rooms)) {
                     setRoomsData(response.rooms);
                 } else {
@@ -56,7 +57,7 @@ export default function RoomsAdminComp() {
         setError(null);
         
         try {
-            const response: any = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
+            const response: GetRoomInfo_Response = await httpClientUtil.secureHttpPost(`/api/admin/get-room-info`, gs.keyPair!);
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
             } else {

@@ -6,7 +6,7 @@ import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes.ts';
+import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
@@ -928,9 +928,9 @@ export class AppService implements AppServiceTypes  {
             try {
                 const daysOfHistory = this.gs?.daysOfHistory || 30;
                 // Get all message IDs from the server for this room
-                const idsData: any = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${daysOfHistory}`);
+                const respIds: GetMessageIdsForRoom_Response = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${daysOfHistory}`);
                
-                const serverMessageIds: string[] = idsData.messageIds || [];
+                const serverMessageIds: string[] = respIds.messageIds || [];
                 if (serverMessageIds.length === 0) {
                     console.log(`No messages found on server for room: ${roomId}`);
                     return messages;
@@ -972,14 +972,14 @@ export class AppService implements AppServiceTypes  {
                     console.log(`Found ${missingIds.length} missing messages to fetch for room: ${roomId}`);
             
                     // Fetch only the missing messages from the server
-                    const messagesData = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
+                    const respMessages: GetMessagesByIds_Response = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
             
-                    if (messagesData.messages && messagesData.messages.length > 0) {
+                    if (respMessages.messages && respMessages.messages.length > 0) {
                         messagesDirty = true;
-                        console.log(`Fetched ${messagesData.messages.length} messages from server for room: ${roomId}`);
+                        console.log(`Fetched ${respMessages.messages.length} messages from server for room: ${roomId}`);
 
                         // Add the fetched messages to our local array
-                        messages = [...messages, ...messagesData.messages];
+                        messages = [...messages, ...respMessages.messages];
                 
                         // Sort messages by timestamp to ensure chronological order
                         messages.sort((a, b) => a.timestamp - b.timestamp);

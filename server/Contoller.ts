@@ -1,4 +1,4 @@
-import { UserProfile } from "@common/CommonTypes.js";
+import { DeleteRoom_Response, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "@common/CommonTypes.js";
 import { DBManager } from "./db/DBManager.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
@@ -38,7 +38,8 @@ class Controller {
             const cutoffTimestamp = currentTime - (historyDays * millisecondsPerDay);
                 
             const messageIds = await dbMessages.getMessageIdsForRoomWithDateFilter(roomId, cutoffTimestamp);
-            res.json({ messageIds });
+            const ret: GetMessageIdsForRoom_Response = {messageIds}
+            res.json(ret);
         } catch (error) {
             console.error('Error in getMessageIdsForRoom handler:', error);
             res.status(500).json({ error: 'Failed to retrieve message IDs' });
@@ -86,8 +87,9 @@ class Controller {
                 limit ? parseInt(limit) : 100,
                 offset ? parseInt(offset) : 0
             );
-                
-            res.json({ messages });
+             
+            const response: GetMessageHistory_Response = {messages};
+            res.json(response);
         } catch (error) {
             console.error('Error retrieving message history:', error);
             res.status(500).json({ error: 'Failed to retrieve message history' });
@@ -100,7 +102,7 @@ class Controller {
             if (!publicKey) {
                 return res.status(400).json({ error: 'Public key is required' });
             }
-            const userProfile = await dbUsers.getUserInfo(publicKey);
+            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
             if (userProfile) {
                 res.json(userProfile);
             } else {
@@ -152,8 +154,9 @@ class Controller {
     getRoomInfo = async (req: any, res: any) => {
         try {
             console.log('Admin request: Getting room information');
-            const roomsInfo = await dbRoom.getAllRoomsInfo();
-            res.json({ success: true, rooms: roomsInfo });
+            const rooms = await dbRoom.getAllRoomsInfo();
+            const response: GetRoomInfo_Response = { rooms };
+            res.json(response);
         } catch (error) {
             console.error('Error getting room information:', error);
             res.status(500).json({ success: false, error: 'Failed to get room information' });
@@ -175,7 +178,8 @@ class Controller {
             const success = await dbRoom.deleteRoom(roomName);
             
             if (success) {
-                res.json({ success: true, message: `Room "${roomName}" deleted successfully` });
+                const response: DeleteRoom_Response = { message: `Room "${roomName}" deleted successfully` };
+                res.json(response);
             } else {
                 res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
             }
@@ -192,7 +196,8 @@ class Controller {
         try {
             console.log('Admin request: Getting recent attachments');
             const attachments = await dbAttachments.getRecentAttachments();
-            res.json({ success: true, attachments });
+            const response: GetRecentAttachments_Response = { attachments };
+            res.json(response);
         } catch (error) {
             console.error('Error getting recent attachments:', error);
             res.status(500).json({ success: false, error: 'Failed to get recent attachments' });
@@ -306,7 +311,8 @@ class Controller {
             }
             
             const messages = await dbMessages.getMessagesByIds(ids, roomId);
-            res.json({ messages });
+            const response: GetMessagesByIds_Response = { messages };
+            res.json(response);
         } catch (error) {
             console.error('Error in getMessagesByIds handler:', error);
             res.status(500).json({ error: 'Failed to retrieve messages' });

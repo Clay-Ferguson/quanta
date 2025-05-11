@@ -9,20 +9,9 @@ import AvatarImageComp from '../components/AvatarImageComp';
 import { app } from '../AppService';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
+import { AttachmentInfo } from '../../common/CommonTypes';
 
 declare const ADMIN_PUBLIC_KEY: string;
-
-interface Attachment {
-    id: number;
-    name: string;
-    type: string;
-    size: number;
-    message_id: string;
-    sender: string;
-    public_key: string;
-    timestamp: number;
-    room_name: string;
-}
 
 /**
  * Displays a list of recent attachments sent in the chat application, which are saved to the server. Maily for moderation purposes and to keep an eye
@@ -31,7 +20,7 @@ interface Attachment {
 export default function RecentAttachmentsPage() {
     const gs = useGlobalState();
     const [loading, setLoading] = useState(true);
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     const getAttachmentsInfo = async () => {

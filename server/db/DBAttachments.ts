@@ -1,4 +1,4 @@
-import { DBManagerIntf } from "@common/CommonTypes.js";
+import { AttachmentInfo, DBManagerIntf } from "@common/CommonTypes.js";
 
 class DBAttachments {
     dbm: DBManagerIntf | null = null;
@@ -67,7 +67,7 @@ class DBAttachments {
      * @param limit Maximum number of attachments to return
      * @returns Array of recent attachments with their details
      */
-    getRecentAttachments = async (limit = 100): Promise<any[]> => {
+    getRecentAttachments = async (limit = 100): Promise<AttachmentInfo[]> => {
         try {
             const query = `
                     SELECT 
