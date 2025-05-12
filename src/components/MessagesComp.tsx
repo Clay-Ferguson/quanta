@@ -71,14 +71,14 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
             className="flex-grow overflow-y-auto p-4 bg-gray-900"
         >
             <div className="space-y-3 max-w-full">
-                {messages!.map((msg, index) => {       
+                {messages!.map((msg) => {       
                     let title = `From:\n${msg.sender} - ${msg.publicKey}\nID: ${msg.id}`;
                     if (msg.state===MessageStates.SAVED) {
                         title += '\nSaved to server';
                     }
                     return (
                         <div 
-                            key={index} 
+                            key={'message-'+msg.id} 
                             className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 ' 
                                 : 'bg-gray-800 border-l-4 '}
                                 ${msg.state!==MessageStates.SAVED ? 'border-red-500' : 

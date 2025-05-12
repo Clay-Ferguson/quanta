@@ -27,6 +27,7 @@ export class AppService implements AppServiceIntf  {
     private globalStateRef: React.RefObject<GlobalState> | null = null;
 
     async init() {
+        console.log("Quanta Chat AppService init");
         this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await this.storage?.getItem(DBKeys.saveToServer);
         this.rtc = new WebRTC(this.storage, this, HOST, PORT, SECURE==='y', saveToServer);
