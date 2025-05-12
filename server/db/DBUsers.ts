@@ -1,4 +1,4 @@
-import { DBManagerIntf, FileBase64Intf, UserProfile } from "@common/CommonTypes.js";
+import { DBManagerIntf, FileBase64Intf, UserProfile } from "../../common/CommonTypes.js";
 
 class DBUsers {
     dbm: DBManagerIntf | null = null;

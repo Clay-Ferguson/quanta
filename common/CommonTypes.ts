@@ -9,6 +9,12 @@ export interface SignableObject {
     publicKey?: string;
 }
 
+export enum MessageStates {
+    SENT = 's', // sent to server, not proven stored in DB yet
+    FAILED = 'f', // failed to send
+    SAVED = 'a' // acknowledged by server (stored in DB)
+}
+
 export interface ChatMessageIntf extends SignableObject {
     id: string;
     timestamp: number;
@@ -17,7 +23,7 @@ export interface ChatMessageIntf extends SignableObject {
     publicKey?: string;
     signature?: string;
     attachments?: FileBase64Intf[];
-    state?: 's' | 'f' | 'a'; //s=sent, f=failed, a=acknowledged (saved by server)
+    state?: MessageStates;
 }
 
 export interface UserProfile {

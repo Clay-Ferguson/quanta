@@ -6,7 +6,7 @@ import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
-import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, User, UserProfile } from '../common/CommonTypes.ts';
+import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
@@ -514,7 +514,7 @@ export class AppService implements AppServiceTypes  {
             console.warn('Cannot resend messages: RTC not initialized or no messages available');
             return;
         }
-        const unsentMessages = this.gs.messages.filter(msg => msg.state !== 's' && msg.publicKey === this.gs!.keyPair?.publicKey);
+        const unsentMessages = this.gs.messages.filter(msg => msg.state !== MessageStates.SENT && msg.publicKey === this.gs!.keyPair?.publicKey);
         
         if (unsentMessages.length > 0) {
             console.log(`Attempting to resend ${unsentMessages.length} unsent messages`);
@@ -524,7 +524,7 @@ export class AppService implements AppServiceTypes  {
                 const sentOk = this.rtc._sendMessage(msg);
                 // we really need a more robust way to verify the server did indeed get saved on the server
                 // because we can't do it thru WebRTC
-                msg.state = sentOk ? 's' : 'f';
+                msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
             }
             
             // Update the global state and save messages after resending
@@ -644,7 +644,7 @@ export class AppService implements AppServiceTypes  {
             }
             
             const sentOk = this.rtc._sendMessage(msg);
-            msg.state = sentOk ? 's' : 'f';
+            msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
 
             // persist in global state
             this.gs!.messages!.push(msg);
@@ -661,7 +661,7 @@ export class AppService implements AppServiceTypes  {
                 if (this.gs!.messages && this.gs?.saveToServer) {
                     // lookup the message by 'id' and verify it has the 'ack' state on it now.
                     const message = this.gs!.messages!.find((m: ChatMessage) => m.id === msg.id);
-                    if (message && message.state!=='a') {
+                    if (message && message.state!==MessageStates.SAVED) {
                         await this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                     }
                 }
@@ -683,7 +683,7 @@ export class AppService implements AppServiceTypes  {
 
         const message = this.gs!.messages.find((msg: ChatMessage) => msg.id === id);
         if (message) {
-            message.state = 'a';
+            message.state = MessageStates.SAVED;
             this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
             await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
             console.log(`Message ID ${id} acknowledged`); 
@@ -846,7 +846,7 @@ export class AppService implements AppServiceTypes  {
     }
 
     /**
-     * Finds all messages that have failed to send to server, by detecting which ones are not state=='a', and then
+     * Finds all messages that have failed to send to server, by detecting which ones are not state==SAVED, and then
      * builds up a list of those messages to send to the server, and sends them. 
      */
     resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
@@ -858,8 +858,8 @@ export class AppService implements AppServiceTypes  {
         const messagesToSend: ChatMessage[] = [];
         // iterate with a for loop to get the messages from the server
         for (const message of messages) {
-            // if this is our message, and it doesn't have state=='a', then we need to resend it
-            if (message.publicKey===this.gs.keyPair?.publicKey && message.state !== 'a') {
+            // if this is our message, and it doesn't have state==SAVED, then we need to resend it
+            if (message.publicKey===this.gs.keyPair?.publicKey && message.state !== MessageStates.SAVED) {
                 messagesToSend.push(message);
                 console.log("Will resend message: " + message.id);
             }
@@ -882,7 +882,7 @@ export class AppService implements AppServiceTypes  {
                 for (let i = 0; i < messagesToSend.length; i++) {
                     const message = messages.find(m => m.id === messagesToSend[i].id);
                     if (message) {
-                        message.state = 'a'; // Mark as acknowledged
+                        message.state = MessageStates.SAVED; // Mark as saved
                         console.log(`Message ${message.id} asknowledged`);
                     }
                     else {
@@ -956,21 +956,21 @@ export class AppService implements AppServiceTypes  {
                 const serverIdsSet = new Set(serverMessageIds);
 
                 // This filter loop does two things: 
-                // 1) Makes sure that any messages that are on the server are marked as 'a' (acknowledged). This should not be necessary,
-                //    but we do it just to be sure the 'a' state is as correct as we can make it, in case there were any problems in the past.
-                // 2) Removes any messages that are no longer on the server but were at one time (state=='a'). Note that since we always enforce
+                // 1) Makes sure that any messages that are on the server are marked as SAVED (acknowledged). This should not be necessary,
+                //    but we do it just to be sure the SAVED state is as correct as we can make it, in case there were any problems in the past.
+                // 2) Removes any messages that are no longer on the server but were at one time (state==SAVED). Note that since we always enforce
                 //    'daysOfHistory' such that anything older than that is removed, we don't need to worry about messages that are older than that, or the fact
                 //     that what we just pulled from the server is only the last 'daysOfHistory' worth of messages. 
                 messages = messages.filter((msg: ChatMessage) => {
                     if (serverIdsSet.has(msg.id)) {
-                        if (msg.state !== 'a') {
-                            msg.state = 'a'; // Mark as acknowledged
+                        if (msg.state !== MessageStates.SAVED) {
+                            msg.state = MessageStates.SAVED; // Mark as acknowledged
                             messagesDirty = true;
                         }
                     }
                     else {
-                        // if the message is not on the server, and it has state=='a', then we need to remove it from our local storage
-                        if (msg.state === 'a') {
+                        // if the message is not on the server, and it has state==SAVED, then we need to remove it from our local storage
+                        if (msg.state === MessageStates.SAVED) {
                             console.log(`Removing message ${msg.id} from local storage as it no longer exists on the server`);
                             messagesDirty = true;
                             return false; // Remove this message

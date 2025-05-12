@@ -7,7 +7,7 @@ import { dbRoom } from './DBRoom.js'; // Import the dbRoom module
 // NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
 // This is correct. The "@common" folder is an alias so we can get access to 
 // the common folder one level above the server folder (see tsconfig.json).
-import {DBManagerIntf} from '@common/CommonTypes.js';
+import {DBManagerIntf} from '../../common/CommonTypes.js';
 import { dbMessages } from './DBMessages.js';
 import { dbAttachments } from './DBAttachments.js';
 import { dbUsers } from './DBUsers.js';

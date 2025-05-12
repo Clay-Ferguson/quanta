@@ -1,4 +1,4 @@
-import { DeleteRoom_Response, FileBlob, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "@common/CommonTypes.js";
+import { DeleteRoom_Response, FileBlob, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "../common/CommonTypes.js";
 import { DBManager } from "./db/DBManager.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";

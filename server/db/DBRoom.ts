@@ -1,4 +1,4 @@
-import { DBManagerIntf, RoomInfo } from "@common/CommonTypes.js";
+import { DBManagerIntf, RoomInfo } from "../../common/CommonTypes.js";
 
 class DBRoom {
     dbm: DBManagerIntf | null = null;

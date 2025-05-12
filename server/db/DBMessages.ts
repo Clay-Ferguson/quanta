@@ -1,4 +1,4 @@
-import { ChatMessageIntf, DBManagerIntf } from "@common/CommonTypes.js";
+import { ChatMessageIntf, DBManagerIntf, MessageStates,  } from "../../common/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
 
 class DBMessages {
@@ -20,18 +20,15 @@ class DBMessages {
 
             // Ensure room exists
             const roomId = await dbRoom.getOrCreateRoom(roomName);
-            console.log('Got Room ID:', roomId);
-
             this.persistMessageToRoomId(roomId, message)
             return true;
         });
     }
 
     persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{        
-        
         // This is important to set because for example during a broadcast the message needs to arrive to the clients
-        // with the state 'a' (acknowledged) so they're up to date immediately with correct state on the object.
-        message.state = 'a'; // Set state to 'a' for all messages being saved
+        // with the state SAVED (acknowledged) so they're up to date immediately with correct state on the object.
+        message.state = MessageStates.SAVED; 
 
         const result: any = await this.dbm!.run(
             `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
@@ -129,7 +126,7 @@ class DBMessages {
             // For each message, get its attachments
             for (const message of messages) {
                 // This came from DB so no matter what states is consider id 'ack'
-                message.state = 'a';
+                message.state = MessageStates.SAVED;
 
                 const attachments = await this.dbm!.all(`
                         SELECT name, type, size, data
@@ -221,7 +218,7 @@ class DBMessages {
                     // Create a new message object
                     const message: ChatMessageIntf = {
                         id: row.id,
-                        state: 'a', // anything from the DB is an 'a' state by definition
+                        state: MessageStates.SAVED, // anything from the DB is a SAVED state by definition
                         timestamp: row.timestamp,
                         sender: row.sender,
                         content: row.content,

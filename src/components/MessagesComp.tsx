@@ -8,7 +8,7 @@ import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
 import { app } from '../AppService';
 import AvatarImageComp from './AvatarImageComp';
-import { ChatMessage, Contact } from '../../common/CommonTypes';
+import { ChatMessage, Contact, MessageStates } from '../../common/CommonTypes';
 
 declare const ADMIN_PUBLIC_KEY: string; 
 
@@ -73,7 +73,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
             <div className="space-y-3 max-w-full">
                 {messages!.map((msg, index) => {       
                     let title = `From:\n${msg.sender} - ${msg.publicKey}\nID: ${msg.id}`;
-                    if (msg.state==='a') {
+                    if (msg.state===MessageStates.SAVED) {
                         title += '\nSaved to server';
                     }
                     return (
@@ -81,7 +81,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                             key={index} 
                             className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 ' 
                                 : 'bg-gray-800 border-l-4 '}
-                                ${msg.state!=='a' ? 'border-red-500' : 
+                                ${msg.state!==MessageStates.SAVED ? 'border-red-500' : 
                             msg.sender === gs.userName ? 'border-blue-500' : 
                                 'border-transparent'
                         } p-3 rounded-md shadow-md flex flex-col`}

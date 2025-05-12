@@ -1,4 +1,4 @@
-import { AttachmentInfo, DBManagerIntf, FileBlob } from "@common/CommonTypes.js";
+import { AttachmentInfo, DBManagerIntf, FileBlob } from "../../common/CommonTypes.js";
 
 class DBAttachments {
     dbm: DBManagerIntf | null = null;
@@ -19,12 +19,13 @@ class DBAttachments {
                 return null;
             }
                 
-            return {
+            const ret: FileBlob ={
                 data: attachment.data,
                 type: attachment.type,
                 name: attachment.name,
                 size: attachment.size,
             };
+            return ret;
         } catch (error) {
             console.error('Error retrieving attachment:', error);
             return null;
