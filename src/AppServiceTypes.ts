@@ -1,6 +1,6 @@
 import { ChatMessage } from "../common/CommonTypes";
 
-export interface AppServiceTypes {
+export interface AppServiceIntf {
     rtcStateChange(): void;
     persistInboundMessage(msg: ChatMessage): Promise<void>;
     acknowledgeMessage(id: string): Promise<void>;

@@ -1,6 +1,6 @@
 import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
-import {AppServiceTypes} from './AppServiceTypes.ts';
+import {AppServiceIntf} from './AppServiceTypes.ts';
 import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
@@ -28,7 +28,7 @@ export default class WebRTC {
     participants = new Map<string, User>();
     connected: boolean = false;
     storage: IndexedDB | null = null;
-    app: AppServiceTypes | null = null;
+    app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
     secure: boolean = false;
@@ -37,7 +37,7 @@ export default class WebRTC {
     // for debugging
     pingChecks = false;
 
-    constructor(storage: IndexedDB, app: AppServiceTypes, host: string, port: string, secure: boolean, saveToServer: boolean) {
+    constructor(storage: IndexedDB, app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.storage = storage;
         this.app = app;
         this.host = host;

@@ -1,7 +1,7 @@
 import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
-import {AppServiceTypes, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
+import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {GlobalAction, GlobalState} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
@@ -18,7 +18,7 @@ declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 
-export class AppService implements AppServiceTypes  {
+export class AppService implements AppServiceIntf  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
     private static initComplete: boolean = false;
