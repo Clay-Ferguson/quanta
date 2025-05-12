@@ -1,8 +1,8 @@
 export interface DBManagerIntf {
-    runTrans: (callback: () => Promise<any>) => Promise<any>;
     get: (sql: string, ...params: any[]) => Promise<any>;
     all: (sql: string, ...params: any[]) => Promise<any[]>;
     run(sql: any, ...params: any[]): Promise<any>;
+    checkDb: () => void;
 }
 export interface SignableObject {
     signature?: string;

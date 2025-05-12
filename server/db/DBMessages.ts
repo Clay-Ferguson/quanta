@@ -1,28 +1,36 @@
 import { ChatMessageIntf, DBManagerIntf, MessageStates,  } from "../../common/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
+import { Transactional } from './Transactional.js';
 
 class DBMessages {
     dbm: DBManagerIntf | null = null;
 
-    persistMessageToRoomName = async (roomName: string, message: ChatMessageIntf): Promise<boolean> => {
-        return await this.dbm!.runTrans(async () => {
-            const existingMessage = await this.dbm!.get(
-                'SELECT rowid FROM messages WHERE id = ?',
-                [message.id]
-            );
-            if (existingMessage) {
-                console.log('Message already exists, skipping insert');
-                return true;
-            }
-            else {
-                console.log('Message does not exist, inserting new message');
-            }
+    constructor() {
+        // Bind methods that need 'this' context but can't use decorators
+        this.persistMessageToRoomName = this.persistMessageToRoomName.bind(this);
+        this.deleteMessage = this.deleteMessage.bind(this);
+    }
 
-            // Ensure room exists
-            const roomId = await dbRoom.getOrCreateRoom(roomName);
-            this.persistMessageToRoomId(roomId, message)
+    @Transactional()
+    // Because of @Transactional() decorator, we can't use fat-arrow function so we bind to this in constructor.
+    async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
+        
+        const existingMessage = await this.dbm!.get(
+            'SELECT rowid FROM messages WHERE id = ?',
+            [message.id]
+        );
+        if (existingMessage) {
+            console.log('Message already exists, skipping insert');
             return true;
-        });
+        }
+        else {
+            console.log('Message does not exist, inserting new message');
+        }
+
+        // Ensure room exists
+        const roomId = await dbRoom.getOrCreateRoom(roomName);
+        this.persistMessageToRoomId(roomId, message)
+        return true;
     }
 
     persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{        
@@ -85,25 +93,23 @@ class DBMessages {
     /**
      * Saves multiple messages to the database and returns their database IDs
      */
+    @Transactional()
     async saveMessages(roomName: string, messages: ChatMessageIntf[]): Promise<number> {
-        // Use a transaction to ensure all messages are saved or none
-        return await this.dbm!.runTrans(async () => {
-            // Ensure room exists
-            const roomId = await dbRoom.getOrCreateRoom(roomName);
-            console.log('Got Room ID:', roomId);
+        // Ensure room exists
+        const roomId = await dbRoom.getOrCreateRoom(roomName); 
+        console.log('Got Room ID:', roomId);
 
-            let numSaved = 0;
-            for (const message of messages) {
-                const save = await this.persistMessageToRoomId(roomId, message);
-                if (!save) {
-                    console.error('Failed to save message:', message);
-                    continue; // Skip this message if saving failed
-                }
-                numSaved++;
-                // console.log(`Message Record stored: ${message.id}`);
+        let numSaved = 0;
+        for (const message of messages) {
+            const save = await this.persistMessageToRoomId(roomId, message);
+            if (!save) {
+                console.error('Failed to save message:', message);
+                continue; // Skip this message if saving failed
             }
-            return numSaved;
-        });
+            numSaved++;
+            // console.log(`Message Record stored: ${message.id}`);
+        }
+        return numSaved;
     }
 
     getMessagesForRoom = async (roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> => {
@@ -284,53 +290,52 @@ class DBMessages {
      * @param publicKey The public key of the user requesting the deletion
      * @returns Whether the operation was successful
      */
-    deleteMessage = async (messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> => {
+    @Transactional()
+    async deleteMessage(messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> {
         console.log(`Deleting message: ${messageId} and all associated attachments`);
     
-        return this.dbm!.runTrans(async () => {
-            try {
-                // Select the public key of the message to verify ownership, we already trust the publicKey argument because 
-                // the HTTP request was verified by the server
-                const results = await this.dbm!.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
+        try {
+            // Select the public key of the message to verify ownership, we already trust the publicKey argument because 
+            // the HTTP request was verified by the server
+            const results = await this.dbm!.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
 
-                // Check if the message exists and the public key matches
-                if (results.length === 0) {
-                    console.log(`Message '${messageId}' not found, nothing to delete`);
-                    return false;
-                }
-
-                // Verify the public key matches (user owns the message) or publicKey is admin user
-                if (results[0].public_key !== publicKey && publicKey !== adminPubKey) {
-                    console.log(`Unauthorized deletion attempt for message '${messageId}'`);
-                    return false;
-                }
-                
-                // Delete all attachments associated with this message
-                const attachmentResult = await this.dbm!.run(
-                    'DELETE FROM attachments WHERE message_id = ?', 
-                    messageId
-                );
-                console.log(`Deleted ${attachmentResult.changes} attachments for message ${messageId}`);
-                
-                // Delete the message itself
-                const messageResult: any = await this.dbm!.run(
-                    'DELETE FROM messages WHERE id = ?',
-                    messageId
-                );
-                
-                const success = messageResult.changes > 0;
-                if (success) {
-                    console.log(`Successfully deleted message '${messageId}' and all its attachments`);
-                } else {
-                    console.log(`Failed to delete message '${messageId}'`);
-                }
-                
-                return success;
-            } catch (error) {
-                console.error('Error in deleteMessage transaction:', error);
+            // Check if the message exists and the public key matches
+            if (results.length === 0) {
+                console.log(`Message '${messageId}' not found, nothing to delete`);
                 return false;
             }
-        });
+
+            // Verify the public key matches (user owns the message) or publicKey is admin user
+            if (results[0].public_key !== publicKey && publicKey !== adminPubKey) {
+                console.log(`Unauthorized deletion attempt for message '${messageId}'`);
+                return false;
+            }
+                
+            // Delete all attachments associated with this message
+            const attachmentResult = await this.dbm!.run(
+                'DELETE FROM attachments WHERE message_id = ?', 
+                messageId
+            );
+            console.log(`Deleted ${attachmentResult.changes} attachments for message ${messageId}`);
+                
+            // Delete the message itself
+            const messageResult: any = await this.dbm!.run(
+                'DELETE FROM messages WHERE id = ?',
+                messageId
+            );
+                
+            const success = messageResult.changes > 0;
+            if (success) {
+                console.log(`Successfully deleted message '${messageId}' and all its attachments`);
+            } else {
+                console.log(`Failed to delete message '${messageId}'`);
+            }
+                
+            return success;
+        } catch (error) {
+            console.error('Error in deleteMessage transaction:', error);
+            return false;
+        }
     }
 }
 

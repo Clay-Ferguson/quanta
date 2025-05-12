@@ -2,15 +2,12 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
-import { dbRoom } from './DBRoom.js'; // Import the dbRoom module
-
-// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. 
-// This is correct. The "@common" folder is an alias so we can get access to 
-// the common folder one level above the server folder (see tsconfig.json).
+import { dbRoom } from './DBRoom.js';
 import {DBManagerIntf} from '../../common/CommonTypes.js';
 import { dbMessages } from './DBMessages.js';
 import { dbAttachments } from './DBAttachments.js';
 import { dbUsers } from './DBUsers.js';
+import { setDBManager } from './Transactional.js';
 
 export class DBManager implements DBManagerIntf {
     private db: Database | null = null;
@@ -20,6 +17,7 @@ export class DBManager implements DBManagerIntf {
 
     private constructor(dbPath: string) {
         this.dbPath = dbPath;
+        setDBManager(this);
     }
 
     public static async getInstance(dbPath: string): Promise<DBManager> {
@@ -140,39 +138,6 @@ export class DBManager implements DBManagerIntf {
     run(sql: any, ...params: any[]): Promise<any> {
         this.checkDb();
         return this.db!.run(sql, ...params);
-    }
-
-    runTrans = async (fn: () => Promise<any>): Promise<any> => {
-        this.checkDb();
-        let ret = null;
-        
-        // Increment counter BEFORE starting transaction
-        this.tranCounter++;
-        try {
-            if (this.tranCounter > 1) {
-                console.log('USING CURRENT TRAN');
-                return await fn();
-            }
-            
-            await this.db!.run('BEGIN TRANSACTION');
-            ret = await fn();
-            await this.db!.run('COMMIT');
-        } catch (error) {
-            console.error('Transaction error:', error);
-            console.trace();
-            if (this.tranCounter === 1) { // Only rollback if we're the "owner" of the transaction
-                try {
-                    await this.db!.run('ROLLBACK');
-                } 
-                catch (rollbackError) {
-                    console.error('Transaction error:', rollbackError);
-                }
-            }
-        }
-        finally {
-            this.tranCounter--;
-        }
-        return ret;
     }
 }
 
