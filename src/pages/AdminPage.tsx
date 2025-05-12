@@ -45,7 +45,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText="Admin"/>
                 <div className="flex items-center space-x-4">

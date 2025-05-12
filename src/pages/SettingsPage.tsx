@@ -157,7 +157,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText="Settings"/>
                 <div className="flex items-center space-x-4">

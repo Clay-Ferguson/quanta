@@ -53,7 +53,7 @@ export default function UserProfilePage() {
     }, [gs.userProfile?.publicKey]);
 
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText="User Profile"/>
                 <div className="flex items-center space-x-4">

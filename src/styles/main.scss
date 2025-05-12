@@ -143,6 +143,10 @@
 
 :root {
   --vh: 1vh;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -204,5 +208,24 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+}
+
+// Add these utility classes
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--sat);
+  }
+  
+  .pb-safe {
+    padding-bottom: var(--sab);
+  }
+  
+  .pl-safe {
+    padding-left: var(--sal);
+  }
+  
+  .pr-safe {
+    padding-right: var(--sar);
   }
 }

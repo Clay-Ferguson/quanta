@@ -19,7 +19,7 @@ export default function RoomInfoPage() {
     }
 
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText="Room Info"/>
                 <div className="flex items-center space-x-4">

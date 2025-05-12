@@ -41,7 +41,7 @@ export default function QuantaChatPage() {
 
     // #QuantaChatPageLayout 
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <HeaderComp/>
             {mainComp}
             <FooterComp/>

@@ -10,7 +10,7 @@ import { util } from '../Util';
 export default function ContactsPage() {
     useEffect(() => util.resizeEffect(), []);
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText="Contacts"/>
                 <div className="flex items-center space-x-4">

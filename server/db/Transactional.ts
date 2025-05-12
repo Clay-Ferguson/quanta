@@ -25,7 +25,7 @@ export function Transactional() {
             try {
                 // console.log("ENTER TRAN: "+tranCounter);
                 if (tranCounter > 1) {
-                    console.log('USING CURRENT TRAN');
+                    // console.log('USING CURRENT TRAN');
                     return await originalMethod.apply(this, args); // call wrapped function
                 }
           
@@ -49,7 +49,6 @@ export function Transactional() {
             }
             return ret;
         };
-      
         return descriptor;
     };
 }

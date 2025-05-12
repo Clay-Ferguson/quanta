@@ -68,7 +68,7 @@ export default function DocViewerPage({
     //console.log('DocViewerPage: '+docContent);
     // Handle back button click
     return (
-        <div className="page-container">
+        <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText={title}/>
                 <div className="flex items-center space-x-4">
