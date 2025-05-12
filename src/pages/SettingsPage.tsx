@@ -9,6 +9,7 @@ import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
 import { PanelKeys } from '../AppServiceTypes';
+import { PageNames } from '../AppServiceTypes';
 
 /**
  * Page for managing user settings, including username, avatar, and identity keys.
@@ -406,6 +407,23 @@ export default function SettingsPage() {
                                 }}
                             >
                                 Wipe All Data
+                            </button>
+                        </div>
+                    </TitledPanelComp>
+
+                    <TitledPanelComp title="Diagnostics" collapsibleKey={PanelKeys.settings_Diagnostics}>
+                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-lg font-medium text-blue-300">System Logs</h4>
+                            </div>
+                            <p className="text-sm text-gray-300 mb-4">
+            View system logs for troubleshooting and diagnostic purposes.
+                            </p>
+                            <button 
+                                className="btn-primary"
+                                onClick={() => app.goToPage(PageNames.logViewer)}
+                            >
+            View Logs
                             </button>
                         </div>
                     </TitledPanelComp>

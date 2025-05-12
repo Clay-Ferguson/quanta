@@ -20,6 +20,7 @@ import AlertModalComp from './components/AlertModalComp.tsx';
 import {ConfirmModalComp} from './components/ConfirmModalComp.tsx';
 import { PromptModalComp } from './components/PromptModalComp.tsx';
 import {logInit} from './ClientLogger.ts';
+import LogViewerPage from './pages/LogViewerPage';
 
 logInit(); // Initialize the logger
 
@@ -83,12 +84,13 @@ function PageRouter() {
         return <RoomsAdminPage />;
     case PageNames.userProfile:
         return <UserProfilePage />;
+    case PageNames.logViewer:
+        return <LogViewerPage />;
     case PageNames.quantaChat: // fall thru. to default
     default:
         return <QuantaChatPage />;
     }
 }
-
 
 // #FullWebApp
 createRoot(document.getElementById('root')!).render(

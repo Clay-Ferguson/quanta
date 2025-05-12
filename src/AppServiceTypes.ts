@@ -34,6 +34,7 @@ export enum PanelKeys {
     settings_options = 'settings_options',
     settings_identityKeys = 'settings_identityKeys',
     settings_dangerZone = 'settings_dangerZone',
+    settings_Diagnostics = 'settings_Diagnostics',
 }
 
 export enum PageNames{
@@ -47,5 +48,6 @@ export enum PageNames{
     rooms = 'RoomsPage',
     roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
+    logViewer = "LogViewer",
 }
 

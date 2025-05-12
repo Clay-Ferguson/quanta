@@ -61,7 +61,8 @@ const initialState: GlobalState = {
         PanelKeys.settings_storageSpace,
         PanelKeys.settings_options,
         PanelKeys.settings_identityKeys,
-        PanelKeys.settings_dangerZone
+        PanelKeys.settings_dangerZone,
+        PanelKeys.settings_Diagnostics,
     ]),
 };
 
