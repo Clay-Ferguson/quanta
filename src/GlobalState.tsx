@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
 import { PageNames, PanelKeys, RoomHistoryItem } from './AppServiceTypes';
 import { ChatMessage, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes';
@@ -108,5 +108,64 @@ const useGlobalDispatch = (): React.Dispatch<GlobalAction> => {
     return context;
 };
 
+let globalDispatch: React.Dispatch<GlobalAction> | null = null;
+let globalStateRef: React.RefObject<GlobalState> | null = null;
+
+// Create a getter for the global state that always accesses the latest state
+function gs(): GlobalState {
+    if (!globalStateRef || !globalStateRef.current) {
+        throw new Error('Global state ref not initialized');
+    }
+    return globalStateRef.current;
+}
+    
+// Create a dispatch method that automatically updates both React state and our ref
+// todo-0: fina all calls to this method that can make use of return value and update them.
+function gd(action: GlobalAction): GlobalState {
+    if (!globalDispatch) {
+        throw new Error('Global dispatch not initialized');
+    }
+      
+    // First, update our local state ref with the expected new state
+    if (globalStateRef && globalStateRef.current) {
+        globalStateRef.current = {
+            ...globalStateRef.current,
+            ...action.payload
+        };
+    }
+      
+    // Then dispatch to React's state management
+    globalDispatch(action);
+    if (globalStateRef) {
+        return globalStateRef.current;
+    }
+    else throw new Error('Global state ref not initialized');
+}
+
+// Create a component that connects AppService to the global state
+function AppServiceConnector() {
+    const gd = useGlobalDispatch();
+    const gs = useGlobalState();
+    
+    // Create a ref that always points to the latest state
+    const stateRef = useRef<GlobalState>(gs);
+    
+    // Keep the ref updated with the latest state
+    useEffect(() => {
+        stateRef.current = gs;
+    }, [gs]);
+    
+    useEffect(() => {
+        globalDispatch = gd;
+        globalStateRef = stateRef;
+        return () => {
+            // Optional cleanup if needed
+        };
+    }, [gd]);
+    
+    return null; // This component doesn't render anything
+}
+
+
 // eslint-disable-next-line react-refresh/only-export-components
-export { GlobalStateProvider, useGlobalState, useGlobalDispatch};
+export { GlobalStateProvider, useGlobalState, useGlobalDispatch, gs, gd, AppServiceConnector};

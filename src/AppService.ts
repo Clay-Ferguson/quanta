@@ -2,7 +2,7 @@ import IndexedDB from './IndexedDB.ts';
 
 import {util} from './Util.js';
 import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
-import {GlobalAction, GlobalState} from './GlobalState.tsx';
+import {gd, GlobalState, gs} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import WebRTC from './WebRTC.ts';
@@ -21,10 +21,6 @@ declare const SECURE: string;
 export class AppService implements AppServiceIntf  {
     public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
-    private static initComplete: boolean = false;
-
-    private globalDispatch: React.Dispatch<GlobalAction> | null = null;
-    private globalStateRef: React.RefObject<GlobalState> | null = null;
 
     async init() {
         console.log("Quanta Chat AppService init");
@@ -39,12 +35,12 @@ export class AppService implements AppServiceIntf  {
             await this.createIdentity(false);
         }
         else {
-            this.gd!({ type: 'setIdentity', payload: { 
+            gd({ type: 'setIdentity', payload: { 
                 keyPair
             }});
         }
 
-        this.gd!({ type: 'setAppInitialized', payload: { 
+        gd({ type: 'setAppInitialized', payload: { 
             appInitialized: true
         }});
 
@@ -55,52 +51,11 @@ export class AppService implements AppServiceIntf  {
         }, 10000);
     }
 
-    // Create a getter for the global state that always accesses the latest state
-    private get gs(): GlobalState {
-        if (!this.globalStateRef || !this.globalStateRef.current) {
-            throw new Error('Global state ref not initialized');
-        }
-        return this.globalStateRef.current;
-    }
-
-    // Create a dispatch method that automatically updates both React state and our ref
-    private gd(action: GlobalAction): void {
-        if (!this.globalDispatch) {
-            throw new Error('Global dispatch not initialized');
-        }
-  
-        // First, update our local state ref with the expected new state
-        if (this.globalStateRef && this.globalStateRef.current) {
-            this.globalStateRef.current = {
-                ...this.globalStateRef.current,
-                ...action.payload
-            };
-        }
-  
-        // Then dispatch to React's state management
-        this.globalDispatch(action);
-    }
-
-    // Update the setGlobals method
-    setGlobals = (dispatch: React.Dispatch<GlobalAction>, stateRef: React.RefObject<GlobalState>) => {
-        if (!dispatch || !stateRef) {
-            console.warn('Global dispatch or state not yet available');
-            return;
-        }
-  
-        this.globalDispatch = dispatch;
-        this.globalStateRef = stateRef;
-  
-        if (!AppService.initComplete) {
-            AppService.initComplete = true;
-            this.init();
-        }
-    }
-
     toggleHeaderExpand = () => {
-        this.gs!.headerExpanded = !this.gs!.headerExpanded;
-        this.gd!({ type: 'toggleHeaderExpand', payload: this.gs});
-        this.storage?.setItem(DBKeys.headerExpanded, this.gs!.headerExpanded);
+        let _gs = gs();
+        _gs.headerExpanded = !_gs.headerExpanded;
+        _gs = gd({ type: 'toggleHeaderExpand', payload: _gs});
+        this.storage?.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
     }
 
     runRoomCleanup = async () => {
@@ -114,7 +69,7 @@ export class AppService implements AppServiceIntf  {
                 if (roomData?.messages) {
                     const cleanedSome = await this.cleanRoomMessages(roomData);
                     if (cleanedSome) {
-                        console.log(`Removed messages from room: ${roomKey} older than ${this.gs?.daysOfHistory || 30} days`);
+                        console.log(`Removed messages from room: ${roomKey} older than ${gs().daysOfHistory || 30} days`);
                         await this.storage?.setItem(roomKey, roomData);
                     }
                 }
@@ -126,15 +81,15 @@ export class AppService implements AppServiceIntf  {
     // Gets the messages for this room from IndexedDB by roomName, and then removes the messageId one and then resaves the room messsages
     // back into indexedDb
     inboundDeleteMessage = async (roomName: string, messageId: string) => {
-    
+        let _gs = gs();
         // if the room is the current room, then we need to remove it from the global state
-        if (roomName == this.gs?.roomName) {
+        if (roomName == _gs.roomName) {
             // if the room is the current room, then we need to remove it from the global state
-            const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+            const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
             if (messageIndex !== undefined && messageIndex >= 0) {
-                this.gs!.messages!.splice(messageIndex, 1);
-                this.gd!({ type: 'deleteMessage', payload: this.gs});
-                this.saveMessages(roomName, this.gs!.messages!);
+                _gs.messages!.splice(messageIndex, 1);
+                _gs = gd({ type: 'deleteMessage', payload: _gs});
+                this.saveMessages(roomName, _gs.messages!);
             }
         }
         // else we will delete from some other room.
@@ -153,20 +108,19 @@ export class AppService implements AppServiceIntf  {
     deleteMessage = async (messageId: string) => {
         const confirmed = await this.confirm(`Delete message?`);
         if (!confirmed) return;
-
-        const messageIndex = this.gs?.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+        let _gs = gs();
+        const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
         if (messageIndex !== undefined && messageIndex >= 0) {
-            this.gs!.messages!.splice(messageIndex, 1);
-            this.gd!({ type: 'deleteMessage', payload: this.gs});
-            this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+            _gs.messages!.splice(messageIndex, 1);
+            _gs = gd({ type: 'deleteMessage', payload: _gs});
+            this.saveMessages(_gs.roomName!, _gs.messages!);
 
             try {
                 // Make the secure POST request with body
-                await httpClientUtil.secureHttpPost('/api/delete-message', this.gs!.keyPair!, {
+                await httpClientUtil.secureHttpPost('/api/delete-message', _gs.keyPair!, {
                     messageId,
-                    roomName: this.gs!.roomName
+                    roomName: _gs.roomName
                 });
-                
             } catch (error) {
                 console.error('Error deleting message from server:', error);
             }
@@ -183,7 +137,7 @@ export class AppService implements AppServiceIntf  {
             return false; // No messages to clean
         }
         const now = new Date().getTime();
-        let days = this.gs?.daysOfHistory || 30; // default to 30 days if not set
+        let days = gs().daysOfHistory || 30; // default to 30 days if not set
         if (days < 2) {
             days = 2;
         }
@@ -207,9 +161,10 @@ export class AppService implements AppServiceIntf  {
 
     showUserProfile = async (publicKey: string) => {
         // set page to userprofile 
-        this.setTopPage(this.gs, PageNames.userProfile);
-        this.gs!.userProfile = {name: '', publicKey, description: '', avatar: null};
-        this.gd!({ type: 'setUserProfile', payload: this.gs});
+        const _gs = gs();
+        this.setTopPage(_gs, PageNames.userProfile);
+        _gs.userProfile = {name: '', publicKey, description: '', avatar: null};
+        gd({ type: 'setUserProfile', payload: _gs});
     }
     
     prompt = (message: string, defaultValue: string = ''): Promise<string | null> => {
@@ -218,7 +173,7 @@ export class AppService implements AppServiceIntf  {
             setPromptHandlers({ resolve });
             
             // Display the prompt dialog
-            this.gd!({ type: 'openPrompt', payload: { 
+            gd({ type: 'openPrompt', payload: { 
                 promptMessage: message,
                 promptDefaultValue: defaultValue
             }});
@@ -226,7 +181,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     closePrompt = () => {
-        this.gd!({ type: 'closePrompt', payload: { 
+        gd({ type: 'closePrompt', payload: { 
             promptMessage: null,
             promptDefaultValue: null
         }});
@@ -238,14 +193,14 @@ export class AppService implements AppServiceIntf  {
             setConfirmHandler({ resolve });
             
             // Display the confirmation dialog
-            this.gd!({ type: 'openConfirm', payload: { 
+            gd({ type: 'openConfirm', payload: { 
                 confirmMessage: message
             }});
         });
     }
 
     closeConfirm = () => {
-        this.gd({ type: 'closeConfirm', payload: { 
+        gd({ type: 'closeConfirm', payload: { 
             confirmMessage: null,
         }});
     }
@@ -256,14 +211,14 @@ export class AppService implements AppServiceIntf  {
             setAlertHandler({ resolve });
             
             console.log("Alert: " + message);
-            this.gd!({ type: 'openAlert', payload: { 
+            gd({ type: 'openAlert', payload: { 
                 modalMessage: message,
             }});
         });
     }
 
     closeAlert = () => {
-        this.gd!({ type: 'closeAlert', payload: { 
+        gd({ type: 'closeAlert', payload: { 
             modalMessage: null,
         }});
     }
@@ -320,14 +275,16 @@ export class AppService implements AppServiceIntf  {
             state.pages?.push(PageNames.settings);
         }
 
-        this.gd!({ type: 'restoreSavedValues', payload: state});
+        gd({ type: 'restoreSavedValues', payload: state});
     }
     
     setFullSizeImage = (att: FileBase64Intf | null) => {
-        this.gs!.fullSizeImage = att ? {src: att.data, name: att.name} : null;
-        this.gd!({ type: 'setFullSizeImage', payload: this.gs});
+        const _gs = gs();
+        _gs.fullSizeImage = att ? {src: att.data, name: att.name} : null;
+        gd({ type: 'setFullSizeImage', payload: _gs});
     }
 
+    // todo-0: why are we passing 'gs' in?
     setTopPage = (gs: GlobalState | null, page: string): Array<string> | undefined => {
         // if the page is NOT already on top of the stack, then push it
         if (gs!.pages && gs!.pages[gs!.pages.length - 1] !== page) {
@@ -337,37 +294,39 @@ export class AppService implements AppServiceIntf  {
     }
 
     goToPage = (page: string) => {
-        this.setTopPage(this.gs, page);
-        this.gd!({ type: 'setPage', payload: this.gs });
+        const _gs = gs();
+        this.setTopPage(_gs, page);
+        gd({ type: 'setPage', payload: _gs });
     }
 
     goBack = () => {
-        if (this.gs && this.gs.pages && this.gs.pages.length > 1) {
+        const _gs = gs();
+        if (_gs.pages && _gs.pages.length > 1) {
             // Remove the last page from the stack
-            this.gs.pages.pop();
+            _gs.pages.pop();
         }
-        this.gd!({ type: 'setPage', payload: this.gs });
+        gd({ type: 'setPage', payload: _gs });
     }
 
     saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
-        this.gd!({ type: `setUserInfo`, payload: { 
+        gd({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
         }});
         await this.storage?.setItem(DBKeys.userName, userName);
         await this.storage?.setItem(DBKeys.userDescription, userDescription);
         await this.storage?.setItem(DBKeys.userAvatar, userAvatar);
 
+        const _gs = gs();
         // Save user info to server if saving to server is enabled
-        if (this.gs?.saveToServer && this.gs?.keyPair?.publicKey) {
+        if (_gs.saveToServer && _gs.keyPair?.publicKey) {
             try {
                 const userProfile: UserProfile = {
-                    publicKey: this.gs.keyPair.publicKey,
+                    publicKey: _gs.keyPair!.publicKey,
                     name: userName,
                     description: userDescription,
                     avatar: userAvatar
                 };
-
-                await httpClientUtil.secureHttpPost('/api/users/info', this.gs!.keyPair!, userProfile);
+                await httpClientUtil.secureHttpPost('/api/users/info', _gs.keyPair!, userProfile);
             } catch (error) {
                 console.error('Error saving user info to server:', error);
             }
@@ -388,7 +347,7 @@ export class AppService implements AppServiceIntf  {
 
     // we have this method only for effeciency to do a single state update.
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
-        this.gd!({ type: `setRoomAndUser`, payload: { 
+        gd({ type: `setRoomAndUser`, payload: { 
             roomName, userName
         }});
         // Save the keyPair to IndexedDB
@@ -398,7 +357,7 @@ export class AppService implements AppServiceIntf  {
 
     persistGlobalValue = async (key: string, value: any) => {
         // save to global state
-        this.gd!({ type: `persistGlobal-${key}`, payload: { 
+        gd({ type: `persistGlobal-${key}`, payload: { 
             [key]: value
         }});
         // Save the keyPair to IndexedDB
@@ -406,7 +365,8 @@ export class AppService implements AppServiceIntf  {
     }
 
     importKeyPair = async () => {
-        if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
+        const _gs = gs();
+        if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
             if (!await this.confirm("Are you sure? This will overwrite your existing key pair.")) {
                 return;
             }
@@ -423,7 +383,7 @@ export class AppService implements AppServiceIntf  {
             console.error("Invalid private key provided.");
             return;
         }
-        this.gd!({ type: 'importIdentity', payload: { 
+        gd({ type: 'importIdentity', payload: { 
             keyPair
         }});
         // Save the keyPair to IndexedDB
@@ -431,15 +391,16 @@ export class AppService implements AppServiceIntf  {
     }
 
     createIdentity = async (askFirst: boolean = true) => {
+        const _gs = gs();
         // if they already have a keyPair, ask if they want to create a new one
-        if (askFirst && this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {
+        if (askFirst && _gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
             if (! await this.confirm("Create new Identity Keys?\n\nWARNING: This will overwrite your existing keys.")) {
                 return;
             }
         }
 
         const keyPair: KeyPairHex= crypt.generateKeypair();
-        this.gd!({ type: 'creatIdentity', payload: { 
+        gd({ type: 'creatIdentity', payload: { 
             keyPair
         }});
         // Save the keyPair to IndexedDB
@@ -447,14 +408,14 @@ export class AppService implements AppServiceIntf  {
     }
 
     rtcStateChange = () => {
-        if (!this.gd || !this.rtc) {
+        if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
         
         const participants = this.rtc.participants || new Map<string, User>();
         const connected = this.rtc.connected || false;
-        this.gd!({ 
+        gd({ 
             type: 'updateRtcState', 
             payload: { 
                 participants,
@@ -465,14 +426,15 @@ export class AppService implements AppServiceIntf  {
 
     // userName is optional and will default to global state if not provided
     connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
-        userName = userName || this.gs!.userName!;
-        keyPair = keyPair || this.gs!.keyPair!;
+        const _gs = gs();
+        userName = userName || _gs.userName!;
+        keyPair = keyPair || _gs.keyPair!;
 
         if (!this.rtc) {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
-        this.gd!({ type: 'connect', payload: { 
+        gd({ type: 'connect', payload: { 
             connecting: true
         }});
 
@@ -480,7 +442,7 @@ export class AppService implements AppServiceIntf  {
         messages = await this.resendFailedMessages(roomName, messages);
         const success = await this.rtc._connect(userName!, keyPair, roomName);
         if (!success) {
-            this.gd!({ type: 'connectTooSoon', payload: { 
+            gd({ type: 'connectTooSoon', payload: { 
                 connected: false,
                 connecting: false
             }});
@@ -489,14 +451,14 @@ export class AppService implements AppServiceIntf  {
         await this.setRoomAndUserName(roomName, userName!);
         
         const roomHistory: RoomHistoryItem[] = await this.updateRoomHistory(roomName);
-        this.gd!({ type: 'connect', payload: { 
+        gd({ type: 'connect', payload: { 
             userName,
             roomName,
             messages,
             connected: true,
             connecting: false,
             roomHistory,
-            pages: this.setTopPage(this.gs, PageNames.quantaChat)
+            pages: this.setTopPage(gs(), PageNames.quantaChat)
         }});
         await this.storage?.setItem(DBKeys.connected, true);
 
@@ -511,11 +473,12 @@ export class AppService implements AppServiceIntf  {
 
     // DO NOT DELETE THIS METHOD 
     reSendFailedMessages = () => {
-        if (!this.rtc || !this.gs || !this.gs.messages) {
+        let _gs = gs();
+        if (!this.rtc || !_gs.messages) {
             console.warn('Cannot resend messages: RTC not initialized or no messages available');
             return;
         }
-        const unsentMessages = this.gs.messages.filter(msg => msg.state !== MessageStates.SENT && msg.publicKey === this.gs!.keyPair?.publicKey);
+        const unsentMessages = _gs.messages.filter(msg => msg.state !== MessageStates.SENT && msg.publicKey === _gs.keyPair?.publicKey);
         
         if (unsentMessages.length > 0) {
             console.log(`Attempting to resend ${unsentMessages.length} unsent messages`);
@@ -529,8 +492,8 @@ export class AppService implements AppServiceIntf  {
             }
             
             // Update the global state and save messages after resending
-            this.gd!({ type: 'resendMessages', payload: this.gs });
-            this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+            _gs = gd({ type: 'resendMessages', payload: _gs });
+            this.saveMessages(_gs.roomName!, _gs.messages!);
         } else {
             console.log('No unsent messages to resend');
         }
@@ -545,7 +508,6 @@ export class AppService implements AppServiceIntf  {
 
         // Check if the room is already in the history
         const roomExists = roomHistory.some((item) => item.name === roomName);
-
         if (!roomExists) {
             // Add the new room to the history
             roomHistory.push({ name: roomName });
@@ -561,7 +523,7 @@ export class AppService implements AppServiceIntf  {
         
         try {
             // Make the secure POST request with body
-            const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', this.gs!.keyPair!, {
+            const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', gs().keyPair!, {
                 pub_key: publicKey.trim()
             });
             await app.alert(`Success: ${response.message}`);
@@ -573,7 +535,7 @@ export class AppService implements AppServiceIntf  {
 
     setContacts = (contacts: any) => {
         // Save into global state
-        this.gd!({ type: 'setContacts', payload: { contacts }});
+        gd({ type: 'setContacts', payload: { contacts }});
 
         // Save to IndexedDB
         this.storage?.setItem(DBKeys.contacts, contacts);
@@ -581,15 +543,15 @@ export class AppService implements AppServiceIntf  {
 
     setMessages = (messages: ChatMessageIntf[]) => {
         // Save into global state
-        this.gd!({ type: 'setMessages', payload: { messages }});
+        gd({ type: 'setMessages', payload: { messages }});
 
         // Save to IndexedDB
-        this.saveMessages(this.gs!.roomName!, messages);
+        this.saveMessages(gs().roomName!, messages);
     }
 
     disconnect = async () => {
         this.rtc?._disconnect();
-        this.gd!({ type: 'disconnect', payload: { 
+        gd({ type: 'disconnect', payload: { 
             messages: [], 
             participants: new Map<string, User>(), 
             connected: false, 
@@ -600,15 +562,17 @@ export class AppService implements AppServiceIntf  {
     forgetRoom = async (roomName: string) => {
         if (!await this.confirm("Clear all chat history for room?")) return;
         
-        if (!this.gs || !this.gs!.connected) {
+        let _gs = gs();
+        if (!_gs.connected) {
             console.log("Not connected, cannot clear messages.");
             return;
         }
 
         // if deleting current room disconnect
-        if (roomName===this.gs!.roomName) {
+        if (roomName===_gs.roomName) {
             await this.disconnect();
-                this.gs!.messages = []; 
+            _gs = gs();
+            _gs.messages = []; 
         }
 
         // remove room from history
@@ -618,13 +582,14 @@ export class AppService implements AppServiceIntf  {
             roomHistory.splice(roomIndex, 1);
             await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
         }
-        this.gs.roomHistory = roomHistory;
+
+        _gs.roomHistory = roomHistory;
 
         // remove room from IndexedDB
         await this.storage?.removeItem(DBKeys.roomPrefix + roomName);
         console.log("Cleared messages for room: " + roomName);
 
-        this.gd!({ type: 'forgetRoom', payload: this.gs });
+        gd({ type: 'forgetRoom', payload: _gs });
     }
 
     sendMessage = async (message: string, selectedFiles: any) => {
@@ -633,11 +598,12 @@ export class AppService implements AppServiceIntf  {
             return;
         }
         if (message || selectedFiles.length > 0) {
-            const msg: ChatMessage = this.createMessage(message, this.gs!.userName!, selectedFiles);
+            let _gs = gs();
+            const msg: ChatMessage = this.createMessage(message, _gs.userName!, selectedFiles);
             
-            if (this.gs!.keyPair && this.gs!.keyPair.publicKey && this.gs!.keyPair.privateKey) {   
+            if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {   
                 try {
-                    await crypt.signObject(msg, canon.canonical_ChatMessage, this.gs!.keyPair);
+                    await crypt.signObject(msg, canon.canonical_ChatMessage, _gs.keyPair!);
                     msg.sigOk = true;
                 } catch (error) {
                     console.error('Error signing message:', error);
@@ -648,20 +614,21 @@ export class AppService implements AppServiceIntf  {
             msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
 
             // persist in global state
-            this.gs!.messages!.push(msg);
-            this.gd!({ type: 'persistMessage', payload: this.gs});
+            _gs.messages!.push(msg);
+            _gs = gd({ type: 'persistMessage', payload: _gs});
 
             // persist in IndexedDB
-            await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+            await this.saveMessages(_gs.roomName!, _gs.messages!);
 
             setTimeout(async () => {
+                const _gs = gs();
                 // after a few seconds check if the message was acknowledged by the server
                 // todo-1: we could add a resend button for these kinds of messages, which would
                 // come in handy for P2P mode also, which also needs to have some kind of ACK 
                 // mechanism, which we don't have yet.
-                if (this.gs!.messages && this.gs?.saveToServer) {
+                if (_gs.messages && _gs.saveToServer) {
                     // lookup the message by 'id' and verify it has the 'ack' state on it now.
-                    const message = this.gs!.messages!.find((m: ChatMessage) => m.id === msg.id);
+                    const message = _gs.messages!.find((m: ChatMessage) => m.id === msg.id);
                     if (message && message.state!==MessageStates.SAVED) {
                         await this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                     }
@@ -677,16 +644,17 @@ export class AppService implements AppServiceIntf  {
     }
 
     acknowledgeMessage = async (id: string): Promise<void> => {
-        if (!this.gs || !this.gs!.messages) {
+        let _gs = gs();
+        if (!_gs.messages) {
             console.warn('No messages available to acknowledge');
             return;
         }
 
-        const message = this.gs!.messages.find((msg: ChatMessage) => msg.id === id);
+        const message = _gs.messages!.find((msg: ChatMessage) => msg.id === id);
         if (message) {
             message.state = MessageStates.SAVED;
-            this.gd!({ type: 'acknowledgeMessage', payload: this.gs});
-            await this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+            _gs = gd({ type: 'acknowledgeMessage', payload: _gs});
+            await this.saveMessages(_gs.roomName!, _gs.messages!);
             console.log(`Message ID ${id} acknowledged`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
@@ -695,7 +663,6 @@ export class AppService implements AppServiceIntf  {
 
     persistInboundMessage = async (msg: ChatMessage) => {
         // console.log("App Persisting message: ", msg);
-
         if (this.messageExists(msg)) {
             return; // Message already exists, do not save again
         }
@@ -712,20 +679,22 @@ export class AppService implements AppServiceIntf  {
             msg.sigOk = false;
         }
 
-        this.gs!.messages!.push(msg);
+        let _gs = gs();   
+        _gs.messages!.push(msg);
         try {
             await this.pruneDB(msg);
+            _gs = gs();
         } catch (error) {
             console.log('Error checking storage or saving message: ' + error);
         }
 
-        this.gd!({ type: 'persistMessage', payload: this.gs});
-        this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+        _gs = gd({ type: 'persistMessage', payload: _gs});
+        this.saveMessages(_gs.roomName!, _gs.messages!);
     }
 
     setPanelCollapsed = (collapsibleKey: string, isCollapsed: boolean) => {
         // Clone the current set of collapsed panels (or create a new one if it doesn't exist)
-        const collapsedPanels = new Set(this.gs.collapsedPanels || new Set<string>());
+        const collapsedPanels = new Set(gs().collapsedPanels || new Set<string>());
     
         if (isCollapsed) {
         // If collapsing, add the key to the set
@@ -736,37 +705,38 @@ export class AppService implements AppServiceIntf  {
         }
         
         // Update the global state with the new set
-        this.gd!({ type: 'setPanelCollapsed', payload: { collapsedPanels }});
+        gd({ type: 'setPanelCollapsed', payload: { collapsedPanels }});
     }
 
     addContact = async (user: User) => {
-        if (!this.gs || !this.gs!.contacts) {
+        const _gs = gs();
+        if (!_gs.contacts) {
             console.warn('No contacts available to add a new contact');
             return;
         }
 
         // Check if the user is already in the contacts
-        const existingContact = this.gs!.contacts.find((contact: Contact) => contact.publicKey === user.publicKey);
+        const existingContact = _gs.contacts!.find((contact: Contact) => contact.publicKey === user.publicKey);
         if (existingContact) {
             console.warn('User is already in contacts');
             return;
         }
 
         // Add the new contact
-        this.gs!.contacts.push({
+        _gs.contacts!.push({
             publicKey: user.publicKey,
             alias: user.name,
         });
 
-        await this.storage?.setItem(DBKeys.contacts, this.gs!.contacts);
-        this.gd!({ type: 'addContact', payload: this.gs});
+        await this.storage?.setItem(DBKeys.contacts, _gs.contacts);
+        gd({ type: 'addContact', payload: _gs});
     }
 
     existsInContacts(msg: ChatMessage) {
-        if (!this.gs || !this.gs!.contacts) {
+        if (!gs().contacts) {
             return false;
         }
-        return this.gs!.contacts.some((contact: any) => contact.publicKey === msg.publicKey);
+        return gs().contacts!.some((contact: any) => contact.publicKey === msg.publicKey);
     }
 
     pruneDB = async (msg: any) => {
@@ -787,13 +757,14 @@ export class AppService implements AppServiceIntf  {
                     `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
 
                 if (await this.confirm(warningMsg)) {
+                    const _gs = gs();
                     // Sort messages by timestamp and remove oldest 20%
-                    this.gs!.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
-                    const countToRemove = Math.ceil(this.gs!.messages!.length * 0.20);
-                    this.gs!.messages = this.gs!.messages!.slice(countToRemove);
+                    _gs.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
+                    const countToRemove = Math.ceil(_gs.messages!.length * 0.20);
+                    _gs.messages = _gs.messages!.slice(countToRemove);
 
                     // Save the pruned messages
-                    this.saveMessages(this.gs!.roomName!, this.gs!.messages!);
+                    this.saveMessages(_gs.roomName!, _gs.messages!);
                     console.log(`Removed ${countToRemove} old messages due to storage constraints`);
                 }
             }
@@ -826,7 +797,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     messageExists(msg: ChatMessage) {
-        return this.gs!.messages!.some((message: any) =>
+        return gs().messages!.some((message: any) =>
             message.timestamp === msg.timestamp &&
             message.sender === msg.sender &&
             message.content === msg.content &&
@@ -851,7 +822,7 @@ export class AppService implements AppServiceIntf  {
      * builds up a list of those messages to send to the server, and sends them. 
      */
     resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
-        if (!this.gs?.saveToServer) return messages;
+        if (!gs().saveToServer) return messages;
         if (!roomName) {
             console.warn('No room name available for resending messages');
             return messages;
@@ -860,7 +831,7 @@ export class AppService implements AppServiceIntf  {
         // iterate with a for loop to get the messages from the server
         for (const message of messages) {
             // if this is our message, and it doesn't have state==SAVED, then we need to resend it
-            if (message.publicKey===this.gs.keyPair?.publicKey && message.state !== MessageStates.SAVED) {
+            if (message.publicKey===gs().keyPair?.publicKey && message.state !== MessageStates.SAVED) {
                 messagesToSend.push(message);
                 console.log("Will resend message: " + message.id);
             }
@@ -875,7 +846,7 @@ export class AppService implements AppServiceIntf  {
             // Send the messages to the server
             const response = await httpClientUtil.secureHttpPost(
                 `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
-                    this.gs.keyPair!, 
+                    gs().keyPair!, 
                     { messages: messagesToSend }
             );
                 
@@ -940,10 +911,10 @@ export class AppService implements AppServiceIntf  {
         }
 
         // Next get room messages from server
-        if (this.gs!.saveToServer) {
+        if (gs().saveToServer) {
             let messagesDirty = false;
             try {
-                const daysOfHistory = this.gs?.daysOfHistory || 30;
+                const daysOfHistory = gs().daysOfHistory || 30;
                 // Get all message IDs from the server for this room
                 const respIds: GetMessageIdsForRoom_Response = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${daysOfHistory}`);
                

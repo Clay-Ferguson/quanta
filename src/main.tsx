@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { StrictMode, useEffect, useRef } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
 import QuantaChatPage from './pages/QuantaChatPage.tsx';
@@ -11,8 +11,7 @@ import RoomsPage from './pages/RoomsPage.tsx';
 import RoomsAdminPage from './pages/RoomsAdminPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import RecentAttachmentsPage from './pages/RecentAttachmentsPage.tsx';
-import { GlobalState, GlobalStateProvider, useGlobalDispatch, useGlobalState } from './GlobalState'; 
-import {app} from './AppService';
+import {  AppServiceConnector, GlobalStateProvider, useGlobalState } from './GlobalState'; 
 import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
@@ -21,33 +20,9 @@ import {ConfirmModalComp} from './components/ConfirmModalComp.tsx';
 import { PromptModalComp } from './components/PromptModalComp.tsx';
 import {logInit} from './ClientLogger.ts';
 import LogViewerPage from './pages/LogViewerPage';
+import { app } from './AppService.ts';
 
 logInit(); // Initialize the logger
-
-// Create a component that connects AppService to the global state
-function AppServiceConnector() {
-    const gd = useGlobalDispatch();
-    const gs = useGlobalState();
-    
-    // Create a ref that always points to the latest state
-    const stateRef = useRef<GlobalState>(gs);
-    
-    // Keep the ref updated with the latest state
-    useEffect(() => {
-        stateRef.current = gs;
-    }, [gs]);
-    
-    useEffect(() => {
-        // Pass the dispatcher and the state ref
-        app.setGlobals(gd, stateRef);
-        
-        return () => {
-            // Optional cleanup if needed
-        };
-    }, [gd]);
-    
-    return null; // This component doesn't render anything
-}
 
 // Component to handle conditional page rendering
 // #PageRouter
@@ -104,3 +79,7 @@ createRoot(document.getElementById('root')!).render(
         </GlobalStateProvider>
     </StrictMode>,
 );
+
+setTimeout(() => {
+    app.init();
+}, 250)
