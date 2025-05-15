@@ -35,7 +35,6 @@ export function Transactional() {
             } catch (error) {
                 // todo-0: I'm pretty sure there's a bug in this 'error' handling where 'error' doesn't get printed in the console
                 console.error('Transaction error:', error);
-                console.trace();
                 if (tranCounter === 1) {
                     try {
                         await dbManager!.run('ROLLBACK');
