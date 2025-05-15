@@ -106,7 +106,6 @@ class HttpClientUtil {
             'Signature': signatureHex
         };
     }
-    
 }
 
 export const httpClientUtil = new HttpClientUtil();    

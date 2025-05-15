@@ -120,7 +120,6 @@ function gs(): GlobalState {
 }
     
 // Create a dispatch method that automatically updates both React state and our ref
-// todo-0: fina all calls to this method that can make use of return value and update them.
 function gd(action: GlobalAction): GlobalState {
     if (!globalDispatch) {
         throw new Error('Global dispatch not initialized');
@@ -142,7 +141,7 @@ function gd(action: GlobalAction): GlobalState {
     else throw new Error('Global state ref not initialized');
 }
 
-// Create a component that connects AppService to the global state
+// Component that connects AppService to the global state
 function AppServiceConnector() {
     const gd = useGlobalDispatch();
     const gs = useGlobalState();

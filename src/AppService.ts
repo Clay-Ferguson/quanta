@@ -284,7 +284,6 @@ export class AppService implements AppServiceIntf  {
         gd({ type: 'setFullSizeImage', payload: _gs});
     }
 
-    // todo-0: why are we passing 'gs' in?
     setTopPage = (gs: GlobalState | null, page: string): Array<string> | undefined => {
         // if the page is NOT already on top of the stack, then push it
         if (gs!.pages && gs!.pages[gs!.pages.length - 1] !== page) {
@@ -309,14 +308,13 @@ export class AppService implements AppServiceIntf  {
     }
 
     saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
-        gd({ type: `setUserInfo`, payload: { 
+        const _gs = gd({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
         }});
         await this.storage?.setItem(DBKeys.userName, userName);
         await this.storage?.setItem(DBKeys.userDescription, userDescription);
         await this.storage?.setItem(DBKeys.userAvatar, userAvatar);
 
-        const _gs = gs();
         // Save user info to server if saving to server is enabled
         if (_gs.saveToServer && _gs.keyPair?.publicKey) {
             try {
@@ -415,8 +413,7 @@ export class AppService implements AppServiceIntf  {
         
         const participants = this.rtc.participants || new Map<string, User>();
         const connected = this.rtc.connected || false;
-        gd({ 
-            type: 'updateRtcState', 
+        gd({type: 'updateRtcState', 
             payload: { 
                 participants,
                 connected
@@ -426,7 +423,7 @@ export class AppService implements AppServiceIntf  {
 
     // userName is optional and will default to global state if not provided
     connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
-        const _gs = gs();
+        let _gs = gs();
         userName = userName || _gs.userName!;
         keyPair = keyPair || _gs.keyPair!;
 
@@ -434,7 +431,7 @@ export class AppService implements AppServiceIntf  {
             console.warn('Global dispatch not yet available for RTC state change');
             return;
         }
-        gd({ type: 'connect', payload: { 
+        _gs = gd({ type: 'connect', payload: { 
             connecting: true
         }});
 
