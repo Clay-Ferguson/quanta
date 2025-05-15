@@ -81,29 +81,36 @@ function customError(...args: any[]) {
         message = args.map(arg => String(arg)).join(' ');
     }
     
-    const logMessage = `${format(new Date(), 'MM-dd-yy h:mm:ss a')}: ***ERROR*** ${message}`;
+    let logMessage = `${format(new Date(), 'MM-dd-yy h:mm:ss a')}: ***ERROR*** ${message}`;
     
+    // Format the error for the log file if it exists
+    if (error) {
+        if (error instanceof Error) {
+            logMessage += `\n  ${error.message}`;
+
+            // if stack is empty or contains no newlines, add a new stack trace
+            if (!error.stack || error.stack.indexOf('\n') === -1) { 
+                logMessage += `\n  Stack: ${new Error().stack}`;
+            }
+            else {
+                logMessage += `\n  Stack: ${error.stack}`;
+            }
+        } else if (typeof error === 'object') {
+            try {
+                logMessage = `\n  ${JSON.stringify(error, null, 2)}`;
+            } catch {
+                logMessage = `\n  ${String(error)}`;
+            }
+        } else {
+            logMessage = `\n  ${String(error)}`;
+        }
+    }
+
     // Output to original console.error
     originalConsoleError(logMessage);
     
-    // Format the error for the log array if it exists
-    let errorString = '';
-    if (error) {
-        if (error instanceof Error) {
-            errorString = `\n  Error: ${error.message}\n  Stack: ${error.stack}`;
-        } else if (typeof error === 'object') {
-            try {
-                errorString = `\n  ${JSON.stringify(error, null, 2)}`;
-            } catch {
-                errorString = `\n  ${String(error)}`;
-            }
-        } else {
-            errorString = `\n  ${String(error)}`;
-        }
-    }
-    
     // Add to log array
-    logMessages.push(logMessage + errorString);
+    logMessages.push(logMessage);
     pruneLogArray();
 }
 
