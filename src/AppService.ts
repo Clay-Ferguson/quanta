@@ -22,7 +22,7 @@ export class AppService implements AppServiceIntf  {
         console.log("Quanta Chat AppService init");
         setApplyStateRules(this.applyStateRules);
         await idb.init("quantaChatDB", "quantaChatStore", 1);
-        const saveToServer = await idb.getItem(DBKeys.saveToServer);
+        const saveToServer = await idb.getItem(DBKeys.saveToServer, true);
         rtc.init(this, HOST, PORT, SECURE==='y', saveToServer);
         await this.restoreSavedValues();
 
@@ -48,6 +48,8 @@ export class AppService implements AppServiceIntf  {
         }, 10000);
     }
 
+    /* This is just a global hook where we can make a final alteration of the state if needed, that
+    will apply across all state updates. */
     applyStateRules = (gs: GlobalState) => {
         // If not connected show the header to user cannot get confused/lost
         if (!gs.connected) {
@@ -255,12 +257,12 @@ export class AppService implements AppServiceIntf  {
         const userName: string= await idb.getItem(DBKeys.userName);
         const contacts: Contact[] = await idb.getItem(DBKeys.contacts);
         const roomName: string = await idb.getItem(DBKeys.roomName);
-        const saveToServer: boolean = await idb.getItem(DBKeys.saveToServer);
+        const saveToServer: boolean = await idb.getItem(DBKeys.saveToServer, true) === true;
         const daysOfHistory: number = await idb.getItem(DBKeys.daysOfHistory) || 30;
         const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
         const userDescription: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
-        const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded) || false;
+        const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
 
         const state: GlobalState = {
             userName,

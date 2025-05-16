@@ -70,20 +70,36 @@ class IndexedDB {
     /**
      * Retrieve a value from the database
      * @param {string} key - The key to retrieve
+     * @param {any} defaultValue - Default value to return and store if key doesn't exist
      * @returns {Promise<any>} Promise that resolves with the retrieved value
      */
-    async getItem(key: string) {
+    async getItem(key: string, defaultValue: any = null) {
         this.checkDB();
         try {
             return new Promise<any>((resolve, reject) => {
                 const transaction = this.db!.transaction(this.storeName, 'readonly');
                 const store = transaction.objectStore(this.storeName);
                 const request = store.get(key);
-            
-                request.onsuccess = () => {
-                    // console.log(`getItem: ${key} val=`, request.result);
-                    return resolve(request.result);
-                }
+        
+                request.onsuccess = async () => {
+                    // If the key doesn't exist and a non-null default is provided,
+                    // set the default value in the database
+                    if (request.result === undefined && defaultValue !== null) {
+                        try {
+                            // We need a new transaction since the current one is readonly
+                            await this.setItem(key, defaultValue);
+                            resolve(defaultValue);
+                        } catch (error) {
+                            console.error(`Error setting default value for key '${key}':`, error);
+                            // Still resolve with the default value even if saving fails
+                            resolve(defaultValue);
+                        }
+                    } else {
+                        // Key exists or no default value to set
+                        // console.log(`getItem: ${key} val=`, request.result);
+                        resolve(request.result === undefined ? defaultValue : request.result);
+                    }
+                };
                 request.onerror = (event: Event) => reject((event.target as IDBRequest).error);
             });
         } catch (error) {
