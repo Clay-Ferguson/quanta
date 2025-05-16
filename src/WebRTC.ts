@@ -35,7 +35,6 @@ class WebRTC {
     // for debugging
     pingChecks = false;
 
-    // todo-0: export this instance, and just use 'init' to setup.
     init(app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.app = app;
         this.host = host;
@@ -44,8 +43,7 @@ class WebRTC {
         this.secure = secure;
     }
 
-    // todo-0: rename to initSocket
-    initRTC() {
+    initSocket() {
         if (this.socket) {
             console.error('******** WebRTC ran with existing socket. Should be closed first.');
             return;
@@ -462,7 +460,7 @@ class WebRTC {
         this.keyPair = keyPair;
         this.roomId = roomName;
 
-        this.initRTC();
+        this.initSocket();
         return true;
     }
 
