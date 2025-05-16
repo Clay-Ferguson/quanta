@@ -3,7 +3,6 @@ import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTy
 import {gd, GlobalState, gs} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
-import WebRTC from './WebRTC.ts';
 import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
@@ -11,6 +10,7 @@ import { httpClientUtil } from './HttpClientUtil.ts';
 import { canon } from '../common/Canonicalizer.ts';
 import { setAlertHandler } from './components/AlertModalComp.tsx';
 import {idb} from './IndexedDB.ts';
+import {rtc} from './WebRTC.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -18,13 +18,11 @@ declare const PORT: string;
 declare const SECURE: string;
 
 export class AppService implements AppServiceIntf  {
-    public rtc: WebRTC | null = null;
-
     async init() {
         console.log("Quanta Chat AppService init");
         await idb.init("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await idb.getItem(DBKeys.saveToServer);
-        this.rtc = new WebRTC(this, HOST, PORT, SECURE==='y', saveToServer);
+        rtc.init(this, HOST, PORT, SECURE==='y', saveToServer);
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
@@ -331,9 +329,7 @@ export class AppService implements AppServiceIntf  {
 
     setSaveToServer  = async (saveToServer: boolean) => {
         this.persistGlobalValue(DBKeys.saveToServer, saveToServer);
-        if (this.rtc) {
-            this.rtc.setSaveToServer(saveToServer);
-        }
+        rtc.setSaveToServer(saveToServer);
     }
 
     setDaysOfHistory  = async (days: number) => {
@@ -404,13 +400,8 @@ export class AppService implements AppServiceIntf  {
     }
 
     rtcStateChange = () => {
-        if (!this.rtc) {
-            console.warn('Global dispatch not yet available for RTC state change');
-            return;
-        }
-        
-        const participants = this.rtc.participants || new Map<string, User>();
-        const connected = this.rtc.connected || false;
+        const participants = rtc.participants || new Map<string, User>();
+        const connected = rtc.connected || false;
         gd({type: 'updateRtcState', 
             payload: { 
                 participants,
@@ -425,17 +416,13 @@ export class AppService implements AppServiceIntf  {
         userName = userName || _gs.userName!;
         keyPair = keyPair || _gs.keyPair!;
 
-        if (!this.rtc) {
-            console.warn('Global dispatch not yet available for RTC state change');
-            return;
-        }
         _gs = gd({ type: 'connect', payload: { 
             connecting: true
         }});
 
         let messages = await this.loadRoomMessages(roomName);
         messages = await this.resendFailedMessages(roomName, messages);
-        const success = await this.rtc._connect(userName!, keyPair, roomName);
+        const success = await rtc._connect(userName!, keyPair, roomName);
         if (!success) {
             gd({ type: 'connectTooSoon', payload: { 
                 connected: false,
@@ -469,7 +456,7 @@ export class AppService implements AppServiceIntf  {
     // DO NOT DELETE THIS METHOD 
     reSendFailedMessages = () => {
         let _gs = gs();
-        if (!this.rtc || !_gs.messages) {
+        if (!_gs.messages) {
             console.warn('Cannot resend messages: RTC not initialized or no messages available');
             return;
         }
@@ -480,7 +467,7 @@ export class AppService implements AppServiceIntf  {
             
             for (const msg of unsentMessages) {
                 console.log(`Resending message: ${msg.id}`);
-                const sentOk = this.rtc._sendMessage(msg);
+                const sentOk = rtc._sendMessage(msg);
                 // we really need a more robust way to verify the server did indeed get saved on the server
                 // because we can't do it thru WebRTC
                 msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
@@ -545,7 +532,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     disconnect = async () => {
-        this.rtc?._disconnect();
+        rtc._disconnect();
         gd({ type: 'disconnect', payload: { 
             messages: [], 
             participants: new Map<string, User>(), 
@@ -588,10 +575,6 @@ export class AppService implements AppServiceIntf  {
     }
 
     sendMessage = async (message: string, selectedFiles: any) => {
-        if (!this.rtc) {
-            console.warn('RTC instance not available for sending message');
-            return;
-        }
         if (message || selectedFiles.length > 0) {
             let _gs = gs();
             const msg: ChatMessage = this.createMessage(message, _gs.userName!, selectedFiles);
@@ -605,7 +588,7 @@ export class AppService implements AppServiceIntf  {
                 }
             }
             
-            const sentOk = this.rtc._sendMessage(msg);
+            const sentOk = rtc._sendMessage(msg);
             msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
 
             // persist in global state

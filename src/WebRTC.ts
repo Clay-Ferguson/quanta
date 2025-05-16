@@ -10,7 +10,7 @@ import { canon } from '../common/Canonicalizer.ts';
  * 
  * Designed as a singleton that can be instantiated once and reused
  */
-export default class WebRTC {
+class WebRTC {
     disconnectTime: number = 0;
     // Maps RTCPeerConnection by PublicKey
     peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -36,7 +36,7 @@ export default class WebRTC {
     pingChecks = false;
 
     // todo-0: export this instance, and just use 'init' to setup.
-    constructor(app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
+    init(app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.app = app;
         this.host = host;
         this.port = port;
@@ -44,6 +44,7 @@ export default class WebRTC {
         this.secure = secure;
     }
 
+    // todo-0: rename to initSocket
     initRTC() {
         if (this.socket) {
             console.error('******** WebRTC ran with existing socket. Should be closed first.');
@@ -638,3 +639,5 @@ export default class WebRTC {
         this.socket!.send(JSON.stringify(msg));
     }
 }
+
+export const rtc = new WebRTC();
