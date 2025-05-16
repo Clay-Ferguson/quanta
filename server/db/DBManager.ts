@@ -104,7 +104,7 @@ export class DBManager implements DBManagerIntf {
     checkDb = (): void => {
         if (!this.db) {
             console.trace();
-            throw new Error('Database not initialized. Call getInstance() first.');   
+            throw new Error('Database not initialized.');   
         }
     }
 

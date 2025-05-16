@@ -1,5 +1,3 @@
-import IndexedDB from './IndexedDB.ts';
-
 import {util} from './Util.js';
 import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs} from './GlobalState.tsx';
@@ -12,6 +10,7 @@ import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
 import { canon } from '../common/Canonicalizer.ts';
 import { setAlertHandler } from './components/AlertModalComp.tsx';
+import {idb} from './IndexedDB.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -19,18 +18,17 @@ declare const PORT: string;
 declare const SECURE: string;
 
 export class AppService implements AppServiceIntf  {
-    public storage: IndexedDB | null = null;
     public rtc: WebRTC | null = null;
 
     async init() {
         console.log("Quanta Chat AppService init");
-        this.storage = await IndexedDB.getInst("quantaChatDB", "quantaChatStore", 1);
-        const saveToServer = await this.storage?.getItem(DBKeys.saveToServer);
-        this.rtc = new WebRTC(this.storage, this, HOST, PORT, SECURE==='y', saveToServer);
+        await idb.init("quantaChatDB", "quantaChatStore", 1);
+        const saveToServer = await idb.getItem(DBKeys.saveToServer);
+        this.rtc = new WebRTC(this, HOST, PORT, SECURE==='y', saveToServer);
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
-        const keyPair: KeyPairHex = await this.storage?.getItem(DBKeys.keyPair);
+        const keyPair: KeyPairHex = await idb.getItem(DBKeys.keyPair);
         if (!keyPair) {
             await this.createIdentity(false);
         }
@@ -55,22 +53,22 @@ export class AppService implements AppServiceIntf  {
         let _gs = gs();
         _gs.headerExpanded = !_gs.headerExpanded;
         _gs = gd({ type: 'toggleHeaderExpand', payload: _gs});
-        this.storage?.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
+        idb.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
     }
 
     runRoomCleanup = async () => {
         // Get all room keys
-        const roomKeys = await this.storage?.findKeysByPrefix(DBKeys.roomPrefix);
+        const roomKeys = await idb.findKeysByPrefix(DBKeys.roomPrefix);
         if (roomKeys) {
             // Loop through each room and delete all messages older than gs.daysOfHistory
             for (const roomKey of roomKeys) {
                 console.log(`Cleaning up room: ${roomKey}`);
-                const roomData: any = await this.storage?.getItem(roomKey);
+                const roomData: any = await idb.getItem(roomKey);
                 if (roomData?.messages) {
                     const cleanedSome = await this.cleanRoomMessages(roomData);
                     if (cleanedSome) {
                         console.log(`Removed messages from room: ${roomKey} older than ${gs().daysOfHistory || 30} days`);
-                        await this.storage?.setItem(roomKey, roomData);
+                        await idb.setItem(roomKey, roomData);
                     }
                 }
             }
@@ -94,7 +92,7 @@ export class AppService implements AppServiceIntf  {
         }
         // else we will delete from some other room.
         else {
-            const roomData: any = await this.storage?.getItem(DBKeys.roomPrefix + roomName);
+            const roomData: any = await idb.getItem(DBKeys.roomPrefix + roomName);
             if (roomData && roomData.messages) {
                 const messageIndex = roomData.messages.findIndex((msg: ChatMessage) => msg.id === messageId);
                 if (messageIndex !== undefined && messageIndex >= 0) {
@@ -225,20 +223,20 @@ export class AppService implements AppServiceIntf  {
 
     saveLinkPreviewInfo = async (url: string, data: any) => {
         // Save the link preview data to IndexedDB
-        await this.storage?.setItem(DBKeys.linkPreview + url, data);
+        await idb.setItem(DBKeys.linkPreview + url, data);
     }
 
     getLinkPreviewInfo = async (url: string): Promise<any> => {
         // Retrieve the link preview data from IndexedDB
-        const data = await this.storage?.getItem(DBKeys.linkPreview + url);
+        const data = await idb.getItem(DBKeys.linkPreview + url);
         return data;
     }
 
     restoreConnection = async () => {
-        const userName = await this.storage?.getItem(DBKeys.userName);
-        const keyPair = await this.storage?.getItem(DBKeys.keyPair);
-        const roomName = await this.storage?.getItem(DBKeys.roomName);
-        const connected = await this.storage?.getItem(DBKeys.connected);
+        const userName = await idb.getItem(DBKeys.userName);
+        const keyPair = await idb.getItem(DBKeys.keyPair);
+        const roomName = await idb.getItem(DBKeys.roomName);
+        const connected = await idb.getItem(DBKeys.connected);
 
         if (userName && roomName && connected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
@@ -248,15 +246,15 @@ export class AppService implements AppServiceIntf  {
 
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
-        const userName: string= await this.storage?.getItem(DBKeys.userName);
-        const contacts: Contact[] = await this.storage?.getItem(DBKeys.contacts);
-        const roomName: string = await this.storage?.getItem(DBKeys.roomName);
-        const saveToServer: boolean = await this.storage?.getItem(DBKeys.saveToServer);
-        const daysOfHistory: number = await this.storage?.getItem(DBKeys.daysOfHistory) || 30;
-        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
-        const userDescription: string = await this.storage?.getItem(DBKeys.userDescription);
-        const userAvatar: FileBase64Intf = await this.storage?.getItem(DBKeys.userAvatar);
-        const headerExpanded: boolean = await this.storage?.getItem(DBKeys.headerExpanded) || false;
+        const userName: string= await idb.getItem(DBKeys.userName);
+        const contacts: Contact[] = await idb.getItem(DBKeys.contacts);
+        const roomName: string = await idb.getItem(DBKeys.roomName);
+        const saveToServer: boolean = await idb.getItem(DBKeys.saveToServer);
+        const daysOfHistory: number = await idb.getItem(DBKeys.daysOfHistory) || 30;
+        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
+        const userDescription: string = await idb.getItem(DBKeys.userDescription);
+        const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
+        const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded) || false;
 
         const state: GlobalState = {
             userName,
@@ -311,9 +309,9 @@ export class AppService implements AppServiceIntf  {
         const _gs = gd({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
         }});
-        await this.storage?.setItem(DBKeys.userName, userName);
-        await this.storage?.setItem(DBKeys.userDescription, userDescription);
-        await this.storage?.setItem(DBKeys.userAvatar, userAvatar);
+        await idb.setItem(DBKeys.userName, userName);
+        await idb.setItem(DBKeys.userDescription, userDescription);
+        await idb.setItem(DBKeys.userAvatar, userAvatar);
 
         // Save user info to server if saving to server is enabled
         if (_gs.saveToServer && _gs.keyPair?.publicKey) {
@@ -349,8 +347,8 @@ export class AppService implements AppServiceIntf  {
             roomName, userName
         }});
         // Save the keyPair to IndexedDB
-        await this.storage?.setItem(DBKeys.roomName, roomName);
-        await this.storage?.setItem(DBKeys.userName, userName);
+        await idb.setItem(DBKeys.roomName, roomName);
+        await idb.setItem(DBKeys.userName, userName);
     }        
 
     persistGlobalValue = async (key: string, value: any) => {
@@ -359,7 +357,7 @@ export class AppService implements AppServiceIntf  {
             [key]: value
         }});
         // Save the keyPair to IndexedDB
-        await this.storage?.setItem(key, value);
+        await idb.setItem(key, value);
     }
 
     importKeyPair = async () => {
@@ -385,7 +383,7 @@ export class AppService implements AppServiceIntf  {
             keyPair
         }});
         // Save the keyPair to IndexedDB
-        await this.storage?.setItem(DBKeys.keyPair, keyPair);
+        await idb.setItem(DBKeys.keyPair, keyPair);
     }
 
     createIdentity = async (askFirst: boolean = true) => {
@@ -402,7 +400,7 @@ export class AppService implements AppServiceIntf  {
             keyPair
         }});
         // Save the keyPair to IndexedDB
-        await this.storage?.setItem(DBKeys.keyPair, keyPair);
+        await idb.setItem(DBKeys.keyPair, keyPair);
     }
 
     rtcStateChange = () => {
@@ -457,7 +455,7 @@ export class AppService implements AppServiceIntf  {
             roomHistory,
             pages: this.setTopPage(gs(), PageNames.quantaChat)
         }});
-        await this.storage?.setItem(DBKeys.connected, true);
+        await idb.setItem(DBKeys.connected, true);
 
         // DO NOT DELETE
         // Not currently used. We send all directly to server now, in one single call, BUT we may need to do something similar to this for pure P2P in the future.
@@ -501,14 +499,14 @@ export class AppService implements AppServiceIntf  {
      */
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {
         // Get the current room history from IndexedDB
-        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
+        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
 
         // Check if the room is already in the history
         const roomExists = roomHistory.some((item) => item.name === roomName);
         if (!roomExists) {
             // Add the new room to the history
             roomHistory.push({ name: roomName });
-            await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
+            await idb.setItem(DBKeys.roomHistory, roomHistory);
         }
         return roomHistory;
     }
@@ -535,7 +533,7 @@ export class AppService implements AppServiceIntf  {
         gd({ type: 'setContacts', payload: { contacts }});
 
         // Save to IndexedDB
-        this.storage?.setItem(DBKeys.contacts, contacts);
+        idb.setItem(DBKeys.contacts, contacts);
     }
 
     setMessages = (messages: ChatMessageIntf[]) => {
@@ -553,7 +551,7 @@ export class AppService implements AppServiceIntf  {
             participants: new Map<string, User>(), 
             connected: false, 
         }});
-        await this.storage?.setItem(DBKeys.connected, false);
+        await idb.setItem(DBKeys.connected, false);
     }
 
     forgetRoom = async (roomName: string) => {
@@ -573,17 +571,17 @@ export class AppService implements AppServiceIntf  {
         }
 
         // remove room from history
-        const roomHistory: RoomHistoryItem[] = await this.storage?.getItem(DBKeys.roomHistory) || [];
+        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
         const roomIndex = roomHistory.findIndex((item) => item.name === roomName);
         if (roomIndex !== -1) {
             roomHistory.splice(roomIndex, 1);
-            await this.storage?.setItem(DBKeys.roomHistory, roomHistory);
+            await idb.setItem(DBKeys.roomHistory, roomHistory);
         }
 
         _gs.roomHistory = roomHistory;
 
         // remove room from IndexedDB
-        await this.storage?.removeItem(DBKeys.roomPrefix + roomName);
+        await idb.removeItem(DBKeys.roomPrefix + roomName);
         console.log("Cleared messages for room: " + roomName);
 
         gd({ type: 'forgetRoom', payload: _gs });
@@ -725,7 +723,7 @@ export class AppService implements AppServiceIntf  {
             alias: user.name,
         });
 
-        await this.storage?.setItem(DBKeys.contacts, _gs.contacts);
+        await idb.setItem(DBKeys.contacts, _gs.contacts);
         gd({ type: 'addContact', payload: _gs});
     }
 
@@ -770,11 +768,6 @@ export class AppService implements AppServiceIntf  {
 
     /* Saves messages into the room by roomName to IndexedDB */
     saveMessages = async (roomName: string, messages: ChatMessage[]) => {
-        if (!this.storage) { 
-            console.warn('No storage instance available for saving messages');
-            return;
-        }
-
         if (!roomName) {
             console.error('No room name available for saving messages');
             return;
@@ -786,7 +779,7 @@ export class AppService implements AppServiceIntf  {
                 lastUpdated: new Date().toISOString()
             };
 
-            await this.storage.setItem(DBKeys.roomPrefix + roomName, roomData);
+            await idb.setItem(DBKeys.roomPrefix + roomName, roomData);
             console.log('Saved ' + messages!.length + ' messages for room: ' + roomName);
         } catch (error) {
             console.log('Error saving messages: ' + error);
@@ -877,23 +870,18 @@ export class AppService implements AppServiceIntf  {
      */
     loadRoomMessages = async (roomId: string): Promise<ChatMessage[]> => {
         let messages: ChatMessage[] = [];
-        
-        if (!this.storage) {
-            console.warn('No storage instance available for loading messages');
-            return [];
-        }
         console.log("Loading messages for room: " + roomId);
         
         // First get room messages from local storage
         try {
-            const roomData: any = await this.storage.getItem(DBKeys.roomPrefix + roomId);
+            const roomData: any = await idb.getItem(DBKeys.roomPrefix + roomId);
             if (roomData) {
                 const cleanedSome: boolean = await this.cleanRoomMessages(roomData);
                 console.log("cleanedSome = " + cleanedSome);
                 if (cleanedSome) {
                     console.log("Saving new room data after cleaning old messages for room: " + roomId);
                     // If we cleaned old messages, save the updated room data
-                    await this.storage.setItem(DBKeys.roomPrefix + roomId, roomData);
+                    await idb.setItem(DBKeys.roomPrefix + roomId, roomData);
                     console.log(`Cleaned old messages for room: ${roomId}`);
                 }
 
@@ -983,7 +971,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     clear = async () => {
-        await this.storage?.clear();
+        await idb.clear();
         console.log("Cleared IndexedDB");
         // refresh browser page
         window.location.reload();

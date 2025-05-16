@@ -2,30 +2,16 @@
  * IndexedDB Storage wrapper class
  * Provides a Promise-based API for using IndexedDB
  */
-export default class IndexedDB {
-    private static inst: IndexedDB | null = null;
+class IndexedDB {
     private db: IDBDatabase | null = null;
     private dbName: string = '';
     private storeName: string = '';
     private dbVersion: number = 1;
 
-    static async getInst(dbName: string, storeName: string, dbVersion: number) {
-        // Create instance if it doesn't exist
-        if (!IndexedDB.inst) {
-            IndexedDB.inst = new IndexedDB();
-
-            console.log("Waiting for DB")
-            await IndexedDB.inst.initDB(dbName, storeName, dbVersion);
-            console.log("DB ready")
-        }
-
-        return IndexedDB.inst;
-    }
-
     /**
      * Initialize the IndexedDB database
      */
-    async initDB(dbName: string, storeName: string, dbVersion: number) {
+    async init(dbName: string, storeName: string, dbVersion: number) {
         this.dbName = dbName;
         this.storeName = storeName;
         this.dbVersion = dbVersion;
@@ -198,3 +184,5 @@ export default class IndexedDB {
         }
     }
 }
+
+export const idb = new IndexedDB();

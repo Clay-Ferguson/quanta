@@ -1,7 +1,6 @@
 import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceIntf} from './AppServiceTypes.ts';
-import IndexedDB from './IndexedDB.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
 import { canon } from '../common/Canonicalizer.ts';
@@ -27,7 +26,6 @@ export default class WebRTC {
     // all room participants by publicKey
     participants = new Map<string, User>();
     connected: boolean = false;
-    storage: IndexedDB | null = null;
     app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
@@ -37,8 +35,8 @@ export default class WebRTC {
     // for debugging
     pingChecks = false;
 
-    constructor(storage: IndexedDB, app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
-        this.storage = storage;
+    // todo-0: export this instance, and just use 'init' to setup.
+    constructor(app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.app = app;
         this.host = host;
         this.port = port;
