@@ -9,42 +9,36 @@ import { dbAttachments } from './DBAttachments.js';
 import { dbUsers } from './DBUsers.js';
 import { setDBManager } from './Transactional.js';
 
+const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
+if (!dbPath) {
+    throw new Error('Database path is not set');
+}
+
 export class DBManager implements DBManagerIntf {
     private db: Database | null = null;
-    private static instance: DBManager | null = null;
-    private dbPath: string;
     private tranCounter = 0;
 
-    private constructor(dbPath: string) {
-        this.dbPath = dbPath;
-        setDBManager(this);
-    }
-
-    public static async getInstance(dbPath: string): Promise<DBManager> {
-        console.log('DBManager.getInstance', dbPath);
-        if (!DBManager.instance) {
-            DBManager.instance = new DBManager(dbPath);
-            await DBManager.instance.initialize();
-        }
-        return DBManager.instance;
+    constructor() {
+        setDBManager(this); // todo-0: we can get rid of is and just import the 'db'
+        this.initialize();
     }
 
     private async initialize(): Promise<void> {
         // Ensure data directory exists
-        const dbDir = path.dirname(this.dbPath);
+        const dbDir = path.dirname(dbPath!);
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
         }
 
         // Open and initialize the database
-        console.log('Opening database:', this.dbPath);
+        console.log('Opening database:', dbPath);
         this.db = await open({
-            filename: this.dbPath,
+            filename: dbPath!,
             driver: sqlite3.Database
         });
 
         if (!this.db) {
-            throw new Error('Failed to open database: ' + this.dbPath);
+            throw new Error('Failed to open database: ' + dbPath);
         }
 
         dbRoom.dbm = this;
@@ -140,4 +134,6 @@ export class DBManager implements DBManagerIntf {
         return this.db!.run(sql, ...params);
     }
 }
+
+export const dbMgr = new DBManager();
 

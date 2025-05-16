@@ -7,9 +7,8 @@ import http from 'http';
 import {crypt} from '../common/Crypto.js';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
 import {controller} from './Contoller.js';
-// NOTE: In Node.js (non-bundled ESM) we use ".js" extension for imports. This is correct.
 import WebRTCServer from './WebRTCServer.js';
-import { DBManager } from './db/DBManager.js';
+import {dbMgr} from './db/DBManager.js';
 import { logInit } from './ServerLogger.js';
 
 logInit();
@@ -22,11 +21,7 @@ if (!dbPath) {
     throw new Error('Database path is not set');
 }
 
-const db = await DBManager.getInstance(dbPath);
-if (!db) {
-    throw new Error('Failed to initialize database');
-}
-controller.db = db;
+controller.db = dbMgr;
 
 const app = express();
 
@@ -158,5 +153,6 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-const rtc: WebRTCServer = await WebRTCServer.getInst(db, HOST, PORT, server);
+// todo-0: we can have WebRTCServer import 'dbMgr' directly and get rid of this
+const rtc: WebRTCServer = await WebRTCServer.getInst(dbMgr, HOST, PORT, server);
 controller.rtc = rtc;

@@ -33,7 +33,6 @@ export function Transactional() {
                 ret = await originalMethod.apply(this, args); // call wrapped function
                 await dbManager!.run('COMMIT');
             } catch (error) {
-                // todo-0: I'm pretty sure there's a bug in this 'error' handling where 'error' doesn't get printed in the console
                 console.error('Transaction error:', error);
                 if (tranCounter === 1) {
                     try {

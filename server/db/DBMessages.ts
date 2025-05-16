@@ -155,7 +155,6 @@ class DBMessages {
                     };
                 });
             }
-    
             return messages;
         } catch (error) {
             console.error('Error retrieving messages:', error);
@@ -213,15 +212,12 @@ class DBMessages {
             
             // Add room_id as the last parameter
             const params = [...messageIds, room.id];
-            const rows = await this.dbm!.all(query, params);
-            
-            // Process the result into proper structure
+            const rows = await this.dbm!.all(query, params);            
             const messageMap = new Map<string, ChatMessageIntf>();
             
             for (const row of rows) {
                 // If this is a new message id we haven't processed yet
                 if (!messageMap.has(row.id)) {
-                    // Create a new message object
                     const message: ChatMessageIntf = {
                         id: row.id,
                         state: MessageStates.SAVED, // anything from the DB is a SAVED state by definition
@@ -243,12 +239,12 @@ class DBMessages {
                         dataUrl = `data:${row.type};base64,${Buffer.from(row.data).toString('base64')}`;
                     }
                     
-                        message.attachments!.push({
-                            name: row.name,
-                            type: row.type,
-                            size: row.size,
-                            data: dataUrl
-                        });
+                    message.attachments!.push({
+                        name: row.name,
+                        type: row.type,
+                        size: row.size,
+                        data: dataUrl
+                    });
                 }
             }
             
