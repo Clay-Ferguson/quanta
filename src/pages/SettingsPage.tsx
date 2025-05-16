@@ -169,7 +169,7 @@ export default function SettingsPage() {
                     <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
                         <h2 className="text-2xl font-bold text-blue-300 mb-2">Welcome to Quanta Chat!</h2>
                         <p className="text-lg text-gray-200">
-                            Please enter a username below to get started. Your username helps identify you in conversations.
+                            Please enter a username below to get started.  
                         </p>
                     </div>
                 )} 

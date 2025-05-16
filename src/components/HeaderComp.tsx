@@ -134,13 +134,13 @@ export default function HeaderComp() {
                     {!gs.headerExpanded && !gs.connected && gs.userName && 
                 <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
 
-                    <button 
+                    {gs.connected && <button 
                         onClick={() => app.toggleHeaderExpand()}
                         className="btn-icon"
                         aria-label={gs.headerExpanded ? "Collapse header" : "Expand header"}
                     >
                         <FontAwesomeIcon icon={gs.headerExpanded ? faChevronUp : faChevronDown} className="h-5 w-5" />
-                    </button>
+                    </button>}
                 </div>
             </div>
         </header>

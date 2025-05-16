@@ -5,6 +5,14 @@ import { ChatMessage, Contact, FileBase64Intf, User, UserProfile } from '../comm
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
+
+let applyStateRules: ((gs: GlobalState) => void) | null = null;
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function setApplyStateRules(apply: (gs: GlobalState) => void) {
+    applyStateRules = apply;
+}
+
 export interface GlobalState {
     keyPair?: KeyPairHex;
     // page history so we can go back (we generally don's support going forward tho)
@@ -70,10 +78,16 @@ export type GlobalAction = { type: string, payload: any};
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
     console.log('Dispatching action: '+ action.type);
-    return {
+    const ret = {
         ...state,
         ...action.payload
     };
+
+    // Callback to allow domain specific rules to be applied.
+    if (applyStateRules) {
+        applyStateRules(ret);
+    }
+    return ret;
 };
 
 interface GlobalStateProviderProps {

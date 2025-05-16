@@ -1,6 +1,6 @@
 import {util} from './Util.js';
 import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
-import {gd, GlobalState, gs} from './GlobalState.tsx';
+import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
@@ -20,6 +20,7 @@ declare const SECURE: string;
 export class AppService implements AppServiceIntf  {
     async init() {
         console.log("Quanta Chat AppService init");
+        setApplyStateRules(this.applyStateRules);
         await idb.init("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await idb.getItem(DBKeys.saveToServer);
         rtc.init(this, HOST, PORT, SECURE==='y', saveToServer);
@@ -45,6 +46,13 @@ export class AppService implements AppServiceIntf  {
         setTimeout(() => {
             this.runRoomCleanup();
         }, 10000);
+    }
+
+    applyStateRules = (gs: GlobalState) => {
+        // If not connected show the header to user cannot get confused/lost
+        if (!gs.connected) {
+            gs.headerExpanded = true;
+        }
     }
 
     toggleHeaderExpand = () => {
