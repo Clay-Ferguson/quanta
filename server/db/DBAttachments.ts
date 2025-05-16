@@ -1,7 +1,6 @@
-import { AttachmentInfo, DBManagerIntf, FileBlob } from "../../common/CommonTypes.js";
-
+import { AttachmentInfo, FileBlob } from "../../common/CommonTypes.js";
+import {dbMgr} from "./DBManager.js";
 class DBAttachments {
-    dbm: DBManagerIntf | null = null;
 
     /**
      * Retrieves an attachment by its ID
@@ -10,7 +9,7 @@ class DBAttachments {
      */
     getAttachmentById = async (id: number): Promise<FileBlob | null> => {
         try {
-            const attachment = await this.dbm!.get(
+            const attachment = await dbMgr.get(
                 'SELECT data, type, name, size FROM attachments WHERE id = ?',
                 [id]
             );
@@ -40,14 +39,14 @@ class DBAttachments {
             }
 
             // First verify the attachment exists
-            const attachment = await this.dbm!.get('SELECT id FROM attachments WHERE id = ?', [id]);
+            const attachment = await dbMgr.get('SELECT id FROM attachments WHERE id = ?', [id]);
             if (!attachment) {
                 console.log(`Attachment with ID ${id} not found`);
                 return false;
             }
 
             // Delete the attachment
-            const result: any = await this.dbm!.run('DELETE FROM attachments WHERE id = ?', [id]);
+            const result: any = await dbMgr!.run('DELETE FROM attachments WHERE id = ?', [id]);
             
             // Check if a row was affected
             const success = result.changes > 0;
@@ -89,7 +88,7 @@ class DBAttachments {
                     LIMIT ?
                 `;
                 
-            const attachments = await this.dbm!.all(query, [limit]);
+            const attachments = await dbMgr!.all(query, [limit]);
             return attachments;
         } catch (error) {
             console.error('Error getting recent attachments:', error);

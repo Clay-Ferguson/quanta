@@ -1,5 +1,4 @@
 import {WebSocketServer, WebSocket} from 'ws';
-import { DBManager } from './db/DBManager.js';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
 import { User, WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.js';
@@ -20,22 +19,11 @@ interface ClientInfo {
 }
 
 export default class WebRTCServer {
-    private static inst: WebRTCServer | null = null;
-    private db!: DBManager;
     private wss: WebSocketServer | null = null;
     private clientsMap = new Map<WebSocket, ClientInfo>(); 
 
     // map of RoomInfo objects, keyed by room name
     private roomsMap = new Map<string, RoomInfo>(); 
-
-    static getInst(db: DBManager,host: string, port: string, server: any) {
-        // Create instance if it doesn't exist
-        if (!WebRTCServer.inst) {
-            WebRTCServer.inst = new WebRTCServer();
-            WebRTCServer.inst.init(db, host, port, server);
-        }
-        return WebRTCServer.inst;
-    }
 
     // Get room by room name
     getOrCreateRoom = (name: string): RoomInfo => {
@@ -284,8 +272,7 @@ export default class WebRTCServer {
         }
     }
 
-    async init(db: DBManager, host: string, port: string, server: any) {
-        this.db = db;
+    async init(host: string, port: string, server: any) {
         this.wss = new WebSocketServer({host, server });
         console.log(`Signaling Server running on ${host}:${port}`);
 
@@ -340,3 +327,4 @@ export default class WebRTCServer {
     }
 }
 
+export const rtc = new WebRTCServer();

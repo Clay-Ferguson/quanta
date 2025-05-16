@@ -1,9 +1,8 @@
-import { DBManagerIntf, RoomInfo } from "../../common/CommonTypes.js";
+import { RoomInfo } from "../../common/CommonTypes.js";
 import { Transactional } from "./Transactional.js";
+import { dbMgr } from "./DBManager.js";
 
 class DBRoom {
-    dbm: DBManagerIntf | null = null;
-
     constructor() {
         this.deleteRoom = this.deleteRoom.bind(this);
         this.wipeRoom = this.wipeRoom.bind(this);
@@ -21,7 +20,7 @@ class DBRoom {
         
         try {
             // First, get the room ID
-            const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
             if (!room) {
                 console.log(`Room '${roomName}' not found, nothing to delete`);
                 return false;
@@ -31,7 +30,7 @@ class DBRoom {
             console.log(`Found room ID ${roomId} for room '${roomName}'`);
                 
             // Get all message IDs in this room to delete their attachments
-            const messages = await this.dbm!.all('SELECT id FROM messages WHERE room_id = ?', roomId);
+            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', roomId);
             const messageIds = messages.map(msg => msg.id);
                 
             // If there are messages, delete their attachments first
@@ -41,7 +40,7 @@ class DBRoom {
                 const placeholders = messageIds.map(() => '?').join(',');
                     
                 // Delete all attachments associated with these messages
-                const attachmentResult = await this.dbm!.run(
+                const attachmentResult = await dbMgr.run(
                     `DELETE FROM attachments WHERE message_id IN (${placeholders})`, 
                     messageIds
                 );
@@ -50,12 +49,12 @@ class DBRoom {
                 
             // Delete all messages in the room
             console.log(`Deleting messages in room '${roomName}'`);
-            const messageResult = await this.dbm!.run('DELETE FROM messages WHERE room_id = ?', roomId);
+            const messageResult = await dbMgr.run('DELETE FROM messages WHERE room_id = ?', roomId);
             console.log(`Deleted ${messageResult.changes} messages`);
                 
             // Finally, delete the room itself
             console.log(`Deleting room '${roomName}'`);
-            const roomResult: any = await this.dbm!.run('DELETE FROM rooms WHERE id = ?', roomId);
+            const roomResult: any = await dbMgr.run('DELETE FROM rooms WHERE id = ?', roomId);
                 
             const success = roomResult.changes > 0;
             if (success) {
@@ -79,14 +78,14 @@ class DBRoom {
         console.log(`Wiping all messages from room: ${roomName}`);
             
         // Get the room ID
-        const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+        const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
         if (!room) {
             console.log(`Room '${roomName}' not found, nothing to wipe`);
             return;
         }
             
         // Get all message IDs in this room to delete their attachments
-        const messages = await this.dbm!.all('SELECT id FROM messages WHERE room_id = ?', room.id);
+        const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', room.id);
         const messageIds = messages.map((msg: any) => msg.id);
             
         // If there are messages, delete their attachments first
@@ -95,11 +94,11 @@ class DBRoom {
             const placeholders = messageIds.map(() => '?').join(',');
                 
             // Delete all attachments associated with these messages
-            await this.dbm!.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, messageIds);
+            await dbMgr.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, messageIds);
         }
             
         // Delete all messages in the room
-        const result = await this.dbm!.run('DELETE FROM messages WHERE room_id = ?', room.id);
+        const result = await dbMgr.run('DELETE FROM messages WHERE room_id = ?', room.id);
         console.log(`Successfully wiped ${result.changes} messages from room '${roomName}'`);
     }
     
@@ -135,7 +134,7 @@ class DBRoom {
                 const messageId = `test-msg-${messageNumber}-${timestamp}`;
                         
                 // Insert the message
-                await this.dbm!.run(
+                await dbMgr.run(
                     `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
                              VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
@@ -155,13 +154,13 @@ class DBRoom {
 
     async getOrCreateRoom(roomName: string): Promise<number> {
         // Check if room exists
-        let result = await this.dbm!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+        let result = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
         if (result) {
             return result.id;
         }
         
         // Create new room if it doesn't exist
-        result = await this.dbm!.run('INSERT INTO rooms (name) VALUES (?)', roomName);
+        result = await dbMgr.run('INSERT INTO rooms (name) VALUES (?)', roomName);
         return result.lastID;
     }
 
@@ -183,7 +182,7 @@ class DBRoom {
             ORDER BY r.name ASC
         `;
         
-            const rooms = await this.dbm!.all(query);
+            const rooms = await dbMgr.all(query);
             return rooms.map(room => ({
                 id: room.id,
                 name: room.name,

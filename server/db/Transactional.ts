@@ -1,11 +1,6 @@
-import { DBManagerIntf } from "../../common/CommonTypes.js";
+import { dbMgr } from "./DBManager.js";
 
-let dbManager: DBManagerIntf | null = null;
 let tranCounter = 0;
-
-export function setDBManager(dbm: DBManagerIntf) {
-    dbManager = dbm;
-}
 
 /**
  * Transactional decorator for methods that require database transactions. We simply can put
@@ -17,7 +12,7 @@ export function Transactional() {
       
         descriptor.value = async function(...args: any[]) {
             // 'this' will be the class instance when the decorated method is called
-            dbManager!.checkDb();
+            dbMgr.checkDb();
             let ret = null;
         
             // Increment counter BEFORE starting transaction
@@ -29,14 +24,14 @@ export function Transactional() {
                     return await originalMethod.apply(this, args); // call wrapped function
                 }
           
-                await dbManager!.run('BEGIN TRANSACTION');
+                await dbMgr.run('BEGIN TRANSACTION');
                 ret = await originalMethod.apply(this, args); // call wrapped function
-                await dbManager!.run('COMMIT');
+                await dbMgr.run('COMMIT');
             } catch (error) {
                 console.error('Transaction error:', error);
                 if (tranCounter === 1) {
                     try {
-                        await dbManager!.run('ROLLBACK');
+                        await dbMgr.run('ROLLBACK');
                     } catch (rollbackError) {
                         console.error('Transaction error:', rollbackError);
                     }

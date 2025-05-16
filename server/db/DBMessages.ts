@@ -1,9 +1,8 @@
-import { ChatMessageIntf, DBManagerIntf, MessageStates,  } from "../../common/CommonTypes.js";
+import { ChatMessageIntf, MessageStates,  } from "../../common/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
 import { Transactional } from './Transactional.js';
-
+import {dbMgr} from './DBManager.js';
 class DBMessages {
-    dbm: DBManagerIntf | null = null;
 
     constructor() {
         // Bind methods that need 'this' context but can't use decorators
@@ -15,7 +14,7 @@ class DBMessages {
     // Because of @Transactional() decorator, we can't use fat-arrow function so we bind to this in constructor.
     async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         
-        const existingMessage = await this.dbm!.get(
+        const existingMessage = await dbMgr.get(
             'SELECT rowid FROM messages WHERE id = ?',
             [message.id]
         );
@@ -38,7 +37,7 @@ class DBMessages {
         // with the state SAVED (acknowledged) so they're up to date immediately with correct state on the object.
         message.state = MessageStates.SAVED; 
 
-        const result: any = await this.dbm!.run(
+        const result: any = await dbMgr.run(
             `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -72,7 +71,7 @@ class DBMessages {
                     }
                 }
 
-                await this.dbm!.run(
+                await dbMgr.run(
                     `INSERT INTO attachments (message_id, name, type, size, data)
                          VALUES (?, ?, ?, ?, ?)`,
                     [
@@ -115,13 +114,13 @@ class DBMessages {
     getMessagesForRoom = async (roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> => {
         try {
             // Get the room ID
-            const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
             if (!room) {
                 return [];
             }
     
             // Get messages
-            const messages = await this.dbm!.all(`
+            const messages = await dbMgr.all(`
                     SELECT m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature
                     FROM messages m
                     WHERE m.room_id = ?
@@ -134,7 +133,7 @@ class DBMessages {
                 // This came from DB so no matter what states is consider id 'ack'
                 message.state = MessageStates.SAVED;
 
-                const attachments = await this.dbm!.all(`
+                const attachments = await dbMgr.all(`
                         SELECT name, type, size, data
                         FROM attachments
                         WHERE message_id = ?
@@ -168,12 +167,12 @@ class DBMessages {
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
             // First, get the room_id from the name or id
-            const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
             if (!room) {
                 return [];
             }
                 
-            const messages = await this.dbm!.all('SELECT id FROM messages WHERE room_id = ?', [room.id]);
+            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', [room.id]);
             return messages.map(msg => msg.id);
         } catch (error) {
             console.error('Error retrieving message IDs for room:', error);
@@ -191,7 +190,7 @@ class DBMessages {
     
         try {
             // First, get the room_id from the name or id
-            const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
             if (!room) {
                 return [];
             }
@@ -212,7 +211,7 @@ class DBMessages {
             
             // Add room_id as the last parameter
             const params = [...messageIds, room.id];
-            const rows = await this.dbm!.all(query, params);            
+            const rows = await dbMgr.all(query, params);            
             const messageMap = new Map<string, ChatMessageIntf>();
             
             for (const row of rows) {
@@ -262,13 +261,13 @@ class DBMessages {
     getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {
             // First, get the room_id from the room name
-            const room = await this.dbm!.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
             if (!room) {
                 return [];
             }
                 
             // Add timestamp filter to only get messages after the cutoff date
-            const messages = await this.dbm!.all(
+            const messages = await dbMgr.all(
                 'SELECT id FROM messages WHERE room_id = ? AND timestamp >= ?', 
                 [room.id, cutoffTimestamp]
             );
@@ -293,7 +292,7 @@ class DBMessages {
         try {
             // Select the public key of the message to verify ownership, we already trust the publicKey argument because 
             // the HTTP request was verified by the server
-            const results = await this.dbm!.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
+            const results = await dbMgr.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
 
             // Check if the message exists and the public key matches
             if (results.length === 0) {
@@ -308,14 +307,14 @@ class DBMessages {
             }
                 
             // Delete all attachments associated with this message
-            const attachmentResult = await this.dbm!.run(
+            const attachmentResult = await dbMgr.run(
                 'DELETE FROM attachments WHERE message_id = ?', 
                 messageId
             );
             console.log(`Deleted ${attachmentResult.changes} attachments for message ${messageId}`);
                 
             // Delete the message itself
-            const messageResult: any = await this.dbm!.run(
+            const messageResult: any = await dbMgr.run(
                 'DELETE FROM messages WHERE id = ?',
                 messageId
             );

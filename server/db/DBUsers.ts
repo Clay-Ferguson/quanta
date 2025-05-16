@@ -1,7 +1,7 @@
-import { DBManagerIntf, FileBase64Intf, UserProfile } from "../../common/CommonTypes.js";
+import { FileBase64Intf, UserProfile } from "../../common/CommonTypes.js";
+import { dbMgr } from "./DBManager.js";
 
 class DBUsers {
-    dbm: DBManagerIntf | null = null;
 
     public async isUserBlocked(pub_key: string): Promise<boolean> {
         try {
@@ -9,7 +9,7 @@ class DBUsers {
                 return false; // Can't check an empty key
             }
         
-            const result = await this.dbm!.get(
+            const result = await dbMgr.get(
                 'SELECT pub_key FROM blocked_keys WHERE pub_key = ?',
                 [pub_key]
             );
@@ -28,13 +28,13 @@ class DBUsers {
                 return false;
             }
 
-            await this.dbm!.run(
+            await dbMgr.run(
                 'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = ?)',
                 [pub_key]
             );
 
             // Delete messages and attachments associated with the public key
-            await this.dbm!.run(
+            await dbMgr.run(
                 'DELETE FROM messages WHERE public_key = ?',
                 [pub_key]
             );
@@ -54,7 +54,7 @@ class DBUsers {
             }
         
             // Use INSERT OR IGNORE to avoid errors if the key is already blocked
-            await this.dbm!.run(
+            await dbMgr.run(
                 'INSERT OR IGNORE INTO blocked_keys (pub_key) VALUES (?)',
                 [pub_key]
             );
@@ -81,7 +81,7 @@ class DBUsers {
             }
 
             // Use INSERT OR REPLACE to handle both insert and update cases
-            await this.dbm!.run(
+            await dbMgr.run(
                 `INSERT OR REPLACE INTO user_info 
             (pub_key, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -115,7 +115,7 @@ class DBUsers {
                 return null;
             }
 
-            const userInfo = await this.dbm!.get(
+            const userInfo = await dbMgr.get(
                 `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
              FROM user_info 
              WHERE pub_key = ?`,

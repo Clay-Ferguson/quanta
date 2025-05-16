@@ -1,14 +1,11 @@
 import { DeleteRoom_Response, FileBlob, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "../common/CommonTypes.js";
-import { DBManager } from "./db/DBManager.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
 import { dbUsers } from "./db/DBUsers.js";
-import WebRTCServer from "./WebRTCServer.js";
+import { rtc } from './WebRTCServer.js';
 
 class Controller {
-    public db: DBManager | null = null;
-    public rtc: WebRTCServer | null = null;
     public adminPubKey: string | null = null;
     
     setAdminPublicKey(adminPubKey: string | undefined) {
@@ -233,7 +230,7 @@ class Controller {
             const success = await dbMessages.deleteMessage(messageId, publicKey, this.adminPubKey);
 
             // to cause the message to vanish from the room in realtime on all the clients we call the rtc method.
-            this.rtc?.sendDeleteMessage(roomName, messageId, publicKey);
+            rtc.sendDeleteMessage(roomName, messageId, publicKey);
         
             if (success) {
                 res.json({ success: true, message: `Message "${messageId}" deleted successfully` });

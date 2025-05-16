@@ -7,8 +7,7 @@ import http from 'http';
 import {crypt} from '../common/Crypto.js';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
 import {controller} from './Contoller.js';
-import WebRTCServer from './WebRTCServer.js';
-import {dbMgr} from './db/DBManager.js';
+import { rtc } from './WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
 
 logInit();
@@ -20,8 +19,6 @@ const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
 if (!dbPath) {
     throw new Error('Database path is not set');
 }
-
-controller.db = dbMgr;
 
 const app = express();
 
@@ -153,6 +150,4 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-// todo-0: we can have WebRTCServer import 'dbMgr' directly and get rid of this
-const rtc: WebRTCServer = await WebRTCServer.getInst(dbMgr, HOST, PORT, server);
-controller.rtc = rtc;
+rtc.init(HOST, PORT, server);

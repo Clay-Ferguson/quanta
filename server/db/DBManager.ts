@@ -2,12 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
-import { dbRoom } from './DBRoom.js';
 import {DBManagerIntf} from '../../common/CommonTypes.js';
-import { dbMessages } from './DBMessages.js';
-import { dbAttachments } from './DBAttachments.js';
-import { dbUsers } from './DBUsers.js';
-import { setDBManager } from './Transactional.js';
 
 const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
 if (!dbPath) {
@@ -19,7 +14,6 @@ export class DBManager implements DBManagerIntf {
     private tranCounter = 0;
 
     constructor() {
-        setDBManager(this); // todo-0: we can get rid of is and just import the 'db'
         this.initialize();
     }
 
@@ -40,11 +34,6 @@ export class DBManager implements DBManagerIntf {
         if (!this.db) {
             throw new Error('Failed to open database: ' + dbPath);
         }
-
-        dbRoom.dbm = this;
-        dbMessages.dbm = this; 
-        dbAttachments.dbm = this; 
-        dbUsers.dbm = this;
 
         // Create tables if they don't exist
         console.log('Initializing database schema');
