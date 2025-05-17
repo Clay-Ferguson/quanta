@@ -1,73 +1,17 @@
-/* eslint-disable react-refresh/only-export-components */
+ 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/main.scss'; 
-import QuantaChatPage from './pages/QuantaChatPage.tsx';
-import SettingsPage from './pages/SettingsPage.tsx';
-import ContactsPage from './pages/ContactsPage.tsx';
-import DocViewerPage from './pages/DocViewerPage.tsx'; 
-import RoomInfoPage from './pages/RoomInfoPage.tsx';    
-import RoomsPage from './pages/RoomsPage.tsx';
-import RoomsAdminPage from './pages/RoomsAdminPage.tsx';
-import AdminPage from './pages/AdminPage.tsx';
-import RecentAttachmentsPage from './pages/RecentAttachmentsPage.tsx';
-import {  AppServiceConnector, GlobalStateProvider, useGlobalState } from './GlobalState'; 
-import { PageNames } from './AppServiceTypes.ts';
-import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
-import UserProfilePage from './pages/UserProfilePage.tsx';
+import {  AppServiceConnector, GlobalStateProvider } from './GlobalState'; 
 import AlertModalComp from './components/AlertModalComp.tsx';
 import {ConfirmModalComp} from './components/ConfirmModalComp.tsx';
 import { PromptModalComp } from './components/PromptModalComp.tsx';
 import {logInit} from './ClientLogger.ts';
-import LogViewerPage from './pages/LogViewerPage';
 import { app } from './AppService.ts';
+import PageRouter from './PageRouter.tsx';
 
 logInit(); // Initialize the logger
 
-// Component to handle conditional page rendering
-// #PageRouter
-function PageRouter() {
-    const gs = useGlobalState();
-
-    // Show loading indicator while app is initializing
-    if (!gs.appInitialized) {
-        return <LoadingIndicator />;
-    }
-
-    // Until user enters a username, show the settings page, which will tell them why they're seeing it.
-    if (!gs.userName) {
-        console.log('No username set, in PageRouter, showing settings page');
-        return <SettingsPage />;
-    }
-    
-    switch (gs.pages![gs.pages!.length - 1]) {
-    case PageNames.settings:
-        return <SettingsPage />;
-    case PageNames.contacts:
-        return <ContactsPage />;
-    case PageNames.userGuide:
-        return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
-    case PageNames.recentAttachments:
-        return <RecentAttachmentsPage />;
-    case PageNames.admin:
-        return <AdminPage />;
-    case PageNames.roomMembers:
-        return <RoomInfoPage />;
-    case PageNames.rooms:
-        return <RoomsPage />;
-    case PageNames.roomsAdmin:
-        return <RoomsAdminPage />;
-    case PageNames.userProfile:
-        return <UserProfilePage />;
-    case PageNames.logViewer:
-        return <LogViewerPage />;
-    case PageNames.quantaChat: // fall thru. to default
-    default:
-        return <QuantaChatPage />;
-    }
-}
-
-// #FullWebApp
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <GlobalStateProvider> 
@@ -77,9 +21,11 @@ createRoot(document.getElementById('root')!).render(
             <ConfirmModalComp />
             <PromptModalComp />
         </GlobalStateProvider>
-    </StrictMode>,
+    </StrictMode>
 );
 
+// We do the initialization on a delay so that a render cycle is guaranteed to have completed 
+// before we start the app, which is important to get our global state ref set up correctly.
 setTimeout(() => {
     app.init();
 }, 250)

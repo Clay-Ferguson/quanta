@@ -18,8 +18,11 @@ declare const PORT: string;
 declare const SECURE: string;
 
 export class AppService implements AppServiceIntf  {
+    // number of times the user has pressed 'd' key, while on settings page, without a rerender. Three presses triggers dev mode,
+    // which essentially just give the settings page a link to show logs.
     dCount = 0;
 
+    // Initializes the AppService, setting up the IndexedDB and WebRTC connection.
     async init() {
         console.log("Quanta Chat AppService init");
         setApplyStateRules(this.applyStateRules);
@@ -52,7 +55,6 @@ export class AppService implements AppServiceIntf  {
     }
 
     handleKeyDown = (event: KeyboardEvent) => {
-        // detect 'd' key
         if (event.key === 'd' && this.getPageName() === PageNames.settings) {
             if (++this.dCount >= 3) {
                 this.dCount = 0;

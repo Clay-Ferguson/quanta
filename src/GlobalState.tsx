@@ -8,6 +8,7 @@ const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undef
 
 let applyStateRules: ((gs: GlobalState) => void) | null = null;
 
+// This function allows us to set a callback that will be called whenever the global state is updated.
 // eslint-disable-next-line react-refresh/only-export-components
 export function setApplyStateRules(apply: (gs: GlobalState) => void) {
     applyStateRules = apply;
