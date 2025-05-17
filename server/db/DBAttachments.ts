@@ -1,11 +1,17 @@
 import { AttachmentInfo, FileBlob } from "../../common/CommonTypes.js";
-import {dbMgr} from "./DBManager.js";
+import { dbMgr } from "./DBManager.js";
+
+/**
+ * Database operations for handling file attachments.
+ * Provides methods to retrieve, delete, and query attachment records.
+ */
 class DBAttachments {
 
     /**
-     * Retrieves an attachment by its ID
-     * @param id The ID of the attachment
-     * @returns The attachment data with type information
+     * Retrieves an attachment by its ID.
+     * 
+     * @param id - The numeric ID of the attachment to retrieve
+     * @returns A Promise resolving to the attachment data with type information, or null if not found
      */
     getAttachmentById = async (id: number): Promise<FileBlob | null> => {
         try {
@@ -18,7 +24,7 @@ class DBAttachments {
                 return null;
             }
                 
-            const ret: FileBlob ={
+            const ret: FileBlob = {
                 data: attachment.data,
                 type: attachment.type,
                 name: attachment.name,
@@ -31,6 +37,12 @@ class DBAttachments {
         }
     }
     
+    /**
+     * Deletes an attachment from the database by its ID.
+     * 
+     * @param id - The numeric ID of the attachment to delete
+     * @returns A Promise resolving to true if deletion was successful, false otherwise
+     */
     deleteAttachmentById = async (id: number): Promise<boolean> => {
         try {
             if (isNaN(id) || id <= 0) {
@@ -64,9 +76,13 @@ class DBAttachments {
     }
 
     /**
-     * Gets the most recent attachments
-     * @param limit Maximum number of attachments to return
-     * @returns Array of recent attachments with their details
+     * Retrieves the most recent attachments with additional metadata.
+     * 
+     * Returns attachment information along with associated message and room details.
+     * Results are ordered by message timestamp, most recent first.
+     * 
+     * @param limit - Maximum number of attachments to return (defaults to 100)
+     * @returns A Promise resolving to an array of attachment information objects
      */
     getRecentAttachments = async (limit = 100): Promise<AttachmentInfo[]> => {
         try {
@@ -97,4 +113,7 @@ class DBAttachments {
     }
 }
 
+/**
+ * Singleton instance of the DBAttachments class for managing attachment operations.
+ */
 export const dbAttachments = new DBAttachments();

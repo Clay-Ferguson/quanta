@@ -1,8 +1,18 @@
 import { FileBase64Intf, UserProfile } from "../../common/CommonTypes.js";
 import { dbMgr } from "./DBManager.js";
 
+/**
+ * Database operations for managing user data.
+ * Provides methods to handle user profiles, content moderation, and access control.
+ */
 class DBUsers {
 
+    /**
+     * Checks if a user is blocked in the system.
+     * 
+     * @param pub_key - The public key of the user to check
+     * @returns A Promise resolving to true if the user is blocked, false otherwise
+     */
     public async isUserBlocked(pub_key: string): Promise<boolean> {
         try {
             if (!pub_key) {
@@ -21,6 +31,13 @@ class DBUsers {
         }
     }
 
+    /**
+     * Deletes all content (messages and attachments) associated with a user.
+     * Useful for content moderation and user data removal requests.
+     * 
+     * @param pub_key - The public key of the user whose content should be deleted
+     * @returns A Promise resolving to true if deletion was successful, false otherwise
+     */
     deleteUserContent = async (pub_key: string): Promise<boolean> => {
         try {
             if (!pub_key) {
@@ -28,12 +45,13 @@ class DBUsers {
                 return false;
             }
 
+            // First delete all attachments associated with this user's messages
             await dbMgr.run(
                 'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = ?)',
                 [pub_key]
             );
 
-            // Delete messages and attachments associated with the public key
+            // Then delete all messages associated with the public key
             await dbMgr.run(
                 'DELETE FROM messages WHERE public_key = ?',
                 [pub_key]
@@ -47,10 +65,18 @@ class DBUsers {
         }
     }
 
+    /**
+     * Blocks a user by adding their public key to the blocked_keys table.
+     * Uses INSERT OR IGNORE to prevent duplicates.
+     * 
+     * @param pub_key - The public key of the user to block
+     * @returns A Promise that resolves when the operation is complete
+     */
     blockUser = async (pub_key: string) => {
         try {
             if (!pub_key) {
                 console.error('Cannot block an empty public key');
+                return;
             }
         
             // Use INSERT OR IGNORE to avoid errors if the key is already blocked
@@ -64,6 +90,13 @@ class DBUsers {
         }
     }
 
+    /**
+     * Saves or updates a user's profile information in the database.
+     * Handles avatar binary data conversion from base64 encoding.
+     * 
+     * @param userProfile - The user profile object containing name, description, avatar, and public key
+     * @returns A Promise resolving to true if the save operation was successful, false otherwise
+     */
     saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
         try {
             if (!userProfile.publicKey) {
@@ -104,9 +137,11 @@ class DBUsers {
     }
 
     /**
-     * Retrieves user information from the database
-     * @param publicKey The user's public key
-     * @returns The user information or null if not found
+     * Retrieves a user's profile information from the database.
+     * Converts binary avatar data back to a base64 data URL if available.
+     * 
+     * @param publicKey - The public key of the user to retrieve
+     * @returns A Promise resolving to the user profile object or null if not found
      */
     getUserInfo = async (publicKey: string): Promise<UserProfile | null> => {
         try {
@@ -151,4 +186,7 @@ class DBUsers {
     }
 }
 
+/**
+ * Singleton instance of the DBUsers class for managing user operations.
+ */
 export const dbUsers = new DBUsers();

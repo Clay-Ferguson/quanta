@@ -1,7 +1,12 @@
-import { ChatMessageIntf, MessageStates,  } from "../../common/CommonTypes.js";
+import { ChatMessageIntf, MessageStates } from "../../common/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
 import { Transactional } from './Transactional.js';
-import {dbMgr} from './DBManager.js';
+import { dbMgr } from './DBManager.js';
+
+/**
+ * Database operations for handling chat messages.
+ * Provides methods to persist, retrieve, and delete messages and their attachments.
+ */
 class DBMessages {
 
     constructor() {
@@ -10,6 +15,14 @@ class DBMessages {
         this.deleteMessage = this.deleteMessage.bind(this);
     }
 
+    /**
+     * Persists a message to a room identified by name.
+     * Uses a transaction to ensure database consistency.
+     * 
+     * @param roomName - Name of the room where the message belongs
+     * @param message - The chat message to persist
+     * @returns A Promise resolving to true if the message was saved successfully
+     */
     @Transactional()
     // Because of @Transactional() decorator, we can't use fat-arrow function so we bind to this in constructor.
     async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
@@ -32,7 +45,15 @@ class DBMessages {
         return true;
     }
 
-    persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> =>{        
+    /**
+     * Persists a message to a room identified by ID.
+     * Also stores any attachments associated with the message.
+     * 
+     * @param roomId - ID of the room where the message belongs
+     * @param message - The chat message to persist
+     * @returns A Promise resolving to true if the message was saved successfully
+     */
+    persistMessageToRoomId = async (roomId: number, message: ChatMessageIntf): Promise<boolean> => {        
         // This is important to set because for example during a broadcast the message needs to arrive to the clients
         // with the state SAVED (acknowledged) so they're up to date immediately with correct state on the object.
         message.state = MessageStates.SAVED; 
@@ -90,7 +111,12 @@ class DBMessages {
     }
 
     /**
-     * Saves multiple messages to the database and returns their database IDs
+     * Saves multiple messages to the database in a single transaction.
+     * Creates the room if it doesn't exist.
+     * 
+     * @param roomName - Name of the room where the messages belong
+     * @param messages - Array of chat messages to save
+     * @returns A Promise resolving to the number of successfully saved messages
      */
     @Transactional()
     async saveMessages(roomName: string, messages: ChatMessageIntf[]): Promise<number> {
@@ -111,6 +137,15 @@ class DBMessages {
         return numSaved;
     }
 
+    /**
+     * Retrieves messages for a specific room with pagination support.
+     * Includes all message data and associated attachments.
+     * 
+     * @param roomName - Name of the room to get messages from
+     * @param limit - Maximum number of messages to retrieve (defaults to 100)
+     * @param offset - Number of messages to skip for pagination (defaults to 0)
+     * @returns A Promise resolving to an array of chat messages with attachments
+     */
     getMessagesForRoom = async (roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> => {
         try {
             // Get the room ID
@@ -162,7 +197,11 @@ class DBMessages {
     }
     
     /**
-     * Get all message IDs for a specific room
+     * Gets all message IDs for a specific room.
+     * 
+     * @param roomId - ID or name of the room
+     * @returns A Promise resolving to an array of message IDs
+     * @throws Error if database operation fails
      */
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
@@ -181,8 +220,14 @@ class DBMessages {
     }
     
     /**
-         * Get multiple messages by their IDs (filtering by room for security)
-         */
+     * Retrieves multiple messages by their IDs, filtered by room for security.
+     * Efficiently retrieves messages with their attachments in a single query.
+     * 
+     * @param messageIds - Array of message IDs to retrieve
+     * @param roomId - ID or name of the room for security filtering
+     * @returns A Promise resolving to an array of chat messages with attachments
+     * @throws Error if database operation fails
+     */
     getMessagesByIds = async (messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> => {
         if (!messageIds || messageIds.length === 0) {
             return [];
@@ -256,8 +301,14 @@ class DBMessages {
     }
     
     /**
-         * Get message IDs for a specific room, filtered by timestamp
-         */
+     * Gets message IDs for a specific room, filtered by timestamp.
+     * Useful for synchronization and retrieving only new messages.
+     * 
+     * @param roomId - ID or name of the room
+     * @param cutoffTimestamp - Minimum timestamp for messages to include
+     * @returns A Promise resolving to an array of message IDs
+     * @throws Error if database operation fails
+     */
     getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {
             // First, get the room_id from the room name
@@ -280,10 +331,14 @@ class DBMessages {
     }
 
     /**
-     * Deletes a message and all associated attachments by message ID
-     * @param messageId The ID of the message to delete
-     * @param publicKey The public key of the user requesting the deletion
-     * @returns Whether the operation was successful
+     * Deletes a message and all associated attachments by message ID.
+     * Verifies ownership using the provided public key for security.
+     * Runs in a transaction to ensure consistency.
+     * 
+     * @param messageId - The ID of the message to delete
+     * @param publicKey - The public key of the user requesting the deletion
+     * @param adminPubKey - Optional admin public key that can delete any message
+     * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
     @Transactional()
     async deleteMessage(messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> {
@@ -334,4 +389,7 @@ class DBMessages {
     }
 }
 
+/**
+ * Singleton instance of the DBMessages class for managing chat message operations.
+ */
 export const dbMessages = new DBMessages();

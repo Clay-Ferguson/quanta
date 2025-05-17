@@ -2,17 +2,24 @@ import { RoomInfo } from "../../common/CommonTypes.js";
 import { Transactional } from "./Transactional.js";
 import { dbMgr } from "./DBManager.js";
 
+/**
+ * Database operations for managing chat rooms.
+ * Provides methods to create, delete, and manipulate rooms and their contents.
+ */
 class DBRoom {
     constructor() {
+        // Bind methods that need 'this' context but can't use decorators
         this.deleteRoom = this.deleteRoom.bind(this);
         this.wipeRoom = this.wipeRoom.bind(this);
         this.createTestData = this.createTestData.bind(this);
     }
 
     /**
-     * Deletes a room and all associated data (messages and attachments)
-     * @param roomName The name of the room to delete
-     * @returns Whether the operation was successful
+     * Deletes a room and all associated data (messages and attachments).
+     * Uses a transaction to ensure database consistency.
+     * 
+     * @param roomName - The name of the room to delete
+     * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
     @Transactional()
     async deleteRoom(roomName: string): Promise<boolean> {
@@ -71,8 +78,12 @@ class DBRoom {
     }
     
     /**
-    * Removes all messages from a specified room
-    */
+     * Removes all messages and attachments from a specified room while keeping the room itself.
+     * Uses a transaction to ensure database consistency.
+     * 
+     * @param roomName - The name of the room to clear of messages
+     * @returns A Promise that resolves when the operation is complete
+     */
     @Transactional()
     public async wipeRoom(roomName: string): Promise<void> {
         console.log(`Wiping all messages from room: ${roomName}`);
@@ -102,6 +113,13 @@ class DBRoom {
         console.log(`Successfully wiped ${result.changes} messages from room '${roomName}'`);
     }
     
+    /**
+     * Creates test data in a dedicated 'test' room.
+     * Generates 70 test messages (10 per day for a week) with timestamps.
+     * First wipes the existing 'test' room to ensure clean data.
+     * 
+     * @returns A Promise that resolves when test data creation is complete
+     */
     @Transactional()
     async createTestData(): Promise<void> {
         const roomName = 'test';
@@ -152,6 +170,12 @@ class DBRoom {
         console.log('Successfully created 70 test messages in the "test" room');
     }
 
+    /**
+     * Gets an existing room by name or creates it if it doesn't exist.
+     * 
+     * @param roomName - The name of the room to find or create
+     * @returns A Promise resolving to the numeric ID of the room
+     */
     async getOrCreateRoom(roomName: string): Promise<number> {
         // Check if room exists
         let result = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
@@ -165,8 +189,11 @@ class DBRoom {
     }
 
     /**
-     * Gets information about all rooms including their message counts
-     * @returns An array of room information objects
+     * Gets information about all rooms including their message counts.
+     * Results are ordered alphabetically by room name.
+     * 
+     * @returns A Promise resolving to an array of room information objects
+     * @throws Error if the database operation fails
      */
     getAllRoomsInfo = async (): Promise<RoomInfo[]> => {
         try {
@@ -195,4 +222,7 @@ class DBRoom {
     }
 }
 
+/**
+ * Singleton instance of the DBRoom class for managing chat room operations.
+ */
 export const dbRoom = new DBRoom();
