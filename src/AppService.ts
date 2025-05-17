@@ -18,6 +18,8 @@ declare const PORT: string;
 declare const SECURE: string;
 
 export class AppService implements AppServiceIntf  {
+    dCount = 0;
+
     async init() {
         console.log("Quanta Chat AppService init");
         setApplyStateRules(this.applyStateRules);
@@ -42,15 +44,29 @@ export class AppService implements AppServiceIntf  {
         }});
 
         this.restoreConnection();
+        window.addEventListener('keydown', this.handleKeyDown);
 
         setTimeout(() => {
             this.runRoomCleanup();
         }, 10000);
     }
 
+    handleKeyDown = (event: KeyboardEvent) => {
+        // detect 'd' key
+        if (event.key === 'd' && this.getPageName() === PageNames.settings) {
+            if (++this.dCount >= 3) {
+                this.dCount = 0;
+                gd({ type: 'devModeOn', payload: { 
+                    devMode: true
+                }});
+            }
+        }
+    }
+
     /* This is just a global hook where we can make a final alteration of the state if needed, that
     will apply across all state updates. */
     applyStateRules = (gs: GlobalState) => {
+        this.dCount = 0;
         // If not connected show the header to user cannot get confused/lost
         if (!gs.connected) {
             gs.headerExpanded = true;
@@ -290,9 +306,17 @@ export class AppService implements AppServiceIntf  {
         gd({ type: 'setFullSizeImage', payload: _gs});
     }
 
+    getPageName = (): string => {
+        const _gs = gs();
+        if (!_gs || !_gs.pages || _gs.pages.length === 0) {
+            return PageNames.quantaChat;
+        }
+        return _gs.pages[_gs.pages.length - 1];
+    }
+
     setTopPage = (gs: GlobalState | null, page: string): Array<string> | undefined => {
         // if the page is NOT already on top of the stack, then push it
-        if (gs!.pages && gs!.pages[gs!.pages.length - 1] !== page) {
+        if (this.getPageName() !== page) {
             gs!.pages?.push(page);
         } 
         return gs!.pages;

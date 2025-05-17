@@ -39,6 +39,7 @@ export interface GlobalState {
     promptDefaultValue?: string | null;
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
+    devMode?: boolean;
 }
 
 const initialState: GlobalState = {
@@ -64,6 +65,7 @@ const initialState: GlobalState = {
     promptMessage: null,
     promptDefaultValue: null,
     headerExpanded: false,
+    devMode: false,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

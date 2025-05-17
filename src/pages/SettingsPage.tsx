@@ -411,22 +411,22 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    <TitledPanelComp title="Diagnostics" collapsibleKey={PanelKeys.settings_Diagnostics}>
+                    {gs.devMode && <TitledPanelComp title="Diagnostics" collapsibleKey={PanelKeys.settings_Diagnostics}>
                         <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-lg font-medium text-blue-300">System Logs</h4>
                             </div>
                             <p className="text-sm text-gray-300 mb-4">
-            View system logs for troubleshooting and diagnostic purposes.
+                                View system logs for troubleshooting and diagnostic purposes.
                             </p>
                             <button 
                                 className="btn-primary"
                                 onClick={() => app.goToPage(PageNames.logViewer)}
                             >
-            View Logs
+                                View Logs
                             </button>
                         </div>
-                    </TitledPanelComp>
+                    </TitledPanelComp>}
                 </div>
             </div>
         </div>
