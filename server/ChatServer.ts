@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import {crypt} from '../common/Crypto.js';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
 import {controller} from './Contoller.js';
 import { rtc } from './WebRTCServer.js';
@@ -19,8 +18,6 @@ const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
 if (!dbPath) {
     throw new Error('Database path is not set');
 }
-
-const app = express();
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = process.env.QUANTA_CHAT_HOST;
@@ -44,8 +41,6 @@ const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 if (!ADMIN_PUBLIC_KEY) {
     console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
 }
-crypt.setAdminPublicKey(ADMIN_PUBLIC_KEY);
-controller.setAdminPublicKey(ADMIN_PUBLIC_KEY);
 
 // print out all env vars above that we just used
 console.log(`Environment Variables:
@@ -55,6 +50,7 @@ console.log(`Environment Variables:
     QUANTA_CHAT_ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY}
 `);
 
+const app = express();
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
@@ -128,6 +124,7 @@ app.get('*', serveIndexHtml);
 
 let server = null;
 
+// Run for PROD (https)
 if (SECURE === 'y') {
     try {
         const CERT_PATH = process.env.QUANTA_CHAT_CERT_PATH;
@@ -142,6 +139,7 @@ if (SECURE === 'y') {
         throw error;
     }
 }
+// run for localhost/dev (http)
 else {
     server = http.createServer(app);
 }

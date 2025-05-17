@@ -4,23 +4,22 @@ import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
 import { dbUsers } from "./db/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
+import { Request, Response } from 'express';
+import { BlockUserRequest, DeleteMessageRequest, DeleteRoomRequest, GetMessagesByIdsRequest, SendMessagesRequest } from "./EndpointTypes.js";
+
+const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
 class Controller {
-    public adminPubKey: string | null = null;
-    
-    setAdminPublicKey(adminPubKey: string | undefined) {
-        this.adminPubKey = adminPubKey || null;
-    }
-
     /**
      * API handler for getting all message IDs for a specific room
      */
-    getMessageIdsForRoom = async (req: any, res: any): Promise<void> => {
+    getMessageIdsForRoom = async (req: Request<{ roomId: string }, any, any, { daysOfHistory?: string }>, res: Response): Promise<void> => {
         console.log('Received request to get message IDs for room:', req.params?.roomId);
         try {
             const roomId = req.params?.roomId;
             if (!roomId) {
-                return res.status(400).json({ error: 'Room ID is required' });
+                res.status(400).json({ error: 'Room ID is required' });
+                return;
             }
                 
             // Parse daysOfHistory parameter
@@ -43,24 +42,26 @@ class Controller {
         }
     }
 
-    serveAttachment = async (req: any, res: any): Promise<void> => {
+    serveAttachment = async (req: Request<{ attachmentId: string }>, res: Response): Promise<void> => {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
             if (isNaN(attachmentId)) {
-                return res.status(400).send('Invalid attachment ID');
+                res.status(400).send('Invalid attachment ID');
+                return;
             }
                     
             const attachment: FileBlob | null = await dbAttachments.getAttachmentById(attachmentId); 
                     
             if (!attachment) {
-                return res.status(404).send('Attachment not found');
+                res.status(404).send('Attachment not found');
+                return;
             }
                     
             // Set the appropriate content type
             res.set('Content-Type', attachment.type);
 
             // Set the Content-Length header using the size property
-            res.set('Content-Length', attachment.size);
+            res.set('Content-Length', attachment.size.toString());
                     
             // Set content disposition for downloads (optional)
             res.set('Content-Disposition', `inline; filename="${attachment.name}"`);
@@ -74,11 +75,12 @@ class Controller {
     }
     
     // Add a new method to retrieve message history
-    getMessageHistory = async (req: any, res: any) => {
+    getMessageHistory = async (req: Request<any, any, any, { roomName?: string, limit?: string, offset?: string }>, res: Response): Promise<void> => {
         const { roomName, limit, offset } = req.query;
             
         if (!roomName) {
-            return res.status(400).json({ error: 'Room name is required' });
+            res.status(400).json({ error: 'Room name is required' });
+            return;
         }
             
         try {
@@ -96,11 +98,12 @@ class Controller {
         }
     } 
 
-    getUserProfile = async (req: any, res: any): Promise<void> => {
+    getUserProfile = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
         try {
             const publicKey = req.params.pubKey;
             if (!publicKey) {
-                return res.status(400).json({ error: 'Public key is required' });
+                res.status(400).json({ error: 'Public key is required' });
+                return;
             }
             const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
             if (userProfile) {
@@ -114,24 +117,27 @@ class Controller {
         }
     }
 
-    serveAvatar = async (req: any, res: any): Promise<void> => {
+    serveAvatar = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
         try {
             const publicKey = req.params.pubKey;
             if (!publicKey) {
-                return res.status(400).json({ error: 'Public key is required' });
+                res.status(400).json({ error: 'Public key is required' });
+                return;
             }
                 
             // Get user info from the database
             const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
             if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
                 // Return a 404 for missing avatars
-                return res.status(404).send('Avatar not found');
+                res.status(404).send('Avatar not found');
+                return;
             }
                 
             // Extract content type and base64 data
             const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
             if (!matches || matches.length !== 3) {
-                return res.status(400).send('Invalid avatar data format');
+                res.status(400).send('Invalid avatar data format');
+                return;
             }
                 
             const contentType = matches[1];
@@ -151,7 +157,7 @@ class Controller {
         }
     }    
 
-    getRoomInfo = async (req: any, res: any) => {
+    getRoomInfo = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Getting room information');
             const rooms = await dbRoom.getAllRoomsInfo();
@@ -163,7 +169,7 @@ class Controller {
         }
     }
 
-    deleteRoom = async (req: any, res: any) => {
+    deleteRoom = async (req: Request<any, any, DeleteRoomRequest>, res: Response): Promise<void> => {
         try {
             const { roomName } = req.body;
             
@@ -172,6 +178,7 @@ class Controller {
                     success: false, 
                     error: 'Room name is required' 
                 });
+                return;
             }
             
             console.log('Admin request: Deleting room:', roomName);
@@ -192,7 +199,7 @@ class Controller {
         }
     }
 
-    getRecentAttachments = async (req: any, res: any) => {
+    getRecentAttachments = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Getting recent attachments');
             const attachments = await dbAttachments.getRecentAttachments();
@@ -204,7 +211,7 @@ class Controller {
         }
     }
 
-    createTestData = async (req: any, res: any): Promise<void> => {
+    createTestData = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Creating test data');
             await dbRoom.createTestData();
@@ -215,19 +222,20 @@ class Controller {
         }
     }
 
-    deleteMessage = async (req: any, res: any) => {
+    deleteMessage = async (req: Request<any, any, DeleteMessageRequest>, res: Response): Promise<void> => {
         try {
             const { messageId, roomName, publicKey } = req.body;
         
             if (!messageId) {
-                return res.status(400).json({ 
+                res.status(400).json({ 
                     success: false, 
                     error: 'Message ID is required' 
                 });
+                return;
             }
         
             console.log('Admin request: Deleting message:', messageId);
-            const success = await dbMessages.deleteMessage(messageId, publicKey, this.adminPubKey);
+            const success = await dbMessages.deleteMessage(messageId, publicKey, ADMIN_PUBLIC_KEY!);
 
             // to cause the message to vanish from the room in realtime on all the clients we call the rtc method.
             rtc.sendDeleteMessage(roomName, messageId, publicKey);
@@ -246,15 +254,16 @@ class Controller {
         }
     }
 
-    blockUser = async (req: any, res: any) => {
+    blockUser = async (req: Request<any, any, BlockUserRequest>, res: Response): Promise<void> => {
         try {
             const { pub_key } = req.body;
             
             if (!pub_key) {
-                return res.status(400).json({ 
+                res.status(400).json({ 
                     success: false, 
                     error: 'Missing pub_key parameter' 
                 });
+                return;
             }
             
             console.log('Admin request: Blocking user with public key:', pub_key);
@@ -275,11 +284,12 @@ class Controller {
         }
     }
 
-    deleteAttachment = async (req: any, res: any): Promise<void> => {
+    deleteAttachment = async (req: Request<{ attachmentId: string }>, res: Response): Promise<void> => {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
             if (isNaN(attachmentId)) {
-                return res.status(400).json({ error: 'Invalid attachment ID' });
+                res.status(400).json({ error: 'Invalid attachment ID' });
+                return;
             }
             const success = await dbAttachments.deleteAttachmentById(attachmentId);
                 
@@ -297,17 +307,19 @@ class Controller {
     /**
      * API handler for getting messages by IDs for a specific room
      */
-    getMessagesByIds = async (req: any, res: any): Promise<void> => {
+    getMessagesByIds = async (req: Request<{ roomId: string }, any, GetMessagesByIdsRequest>, res: Response): Promise<void> => {
         try {
-            const { ids } = req.body || {};
-            const roomId = req.params?.roomId;
+            const { ids } = req.body || { ids: [] };
+            const roomId = req.params.roomId;
             
             if (!roomId) {
-                return res.status(400).json({ error: 'Room ID is required' });
+                res.status(400).json({ error: 'Room ID is required' });
+                return;
             }
             
             if (!ids || !Array.isArray(ids)) {
-                return res.status(400).json({ error: 'Invalid request. Expected array of message IDs' });
+                res.status(400).json({ error: 'Invalid request. Expected array of message IDs' });
+                return;
             }
             
             const messages = await dbMessages.getMessagesByIds(ids, roomId);
@@ -319,11 +331,12 @@ class Controller {
         }
     }
 
-    saveUserProfile = async (req: any, res: any): Promise<void> => {
+    saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
         try {
             const userProfile: UserProfile = req.body;
             if (!userProfile.publicKey) {
-                return res.status(400).json({ error: 'Public key is required' });
+                res.status(400).json({ error: 'Public key is required' });
+                return;
             }
             const success = await dbUsers.saveUserInfo(userProfile); 
             if (success) {
@@ -343,10 +356,11 @@ class Controller {
      * @param messages Array of messages to save
      * @returns Array of database IDs in the same order as the input messages
      */
-    sendMessages = async (req: any, res: any): Promise<void> => {
+    sendMessages = async (req: Request<{ roomId: string }, any, SendMessagesRequest>, res: Response): Promise<void> => {
         const roomId = req.params.roomId;
         if (!req.body.messages || req.body.messages.length === 0) {
-            return res.status(400).json({ error: 'Invalid or empty messages array' });
+            res.status(400).json({ error: 'Invalid or empty messages array' });
+            return;
         }
         
         // Send messages to controller and get back database IDs
@@ -358,4 +372,3 @@ class Controller {
 }
 
 export const controller = new Controller();
-        

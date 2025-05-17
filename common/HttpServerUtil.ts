@@ -2,6 +2,8 @@ import { crypt } from "../common/Crypto.js";
 import { Request, Response } from 'express';
 import { SignableObject } from "./CommonTypes.js";
 
+const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY
+
 class HttpServerUtil {
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         const { publicKey }: SignableObject = req.body;
@@ -13,7 +15,7 @@ class HttpServerUtil {
     }
 
     verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
-        return this.verifyHTTPSignature(req, res, crypt.adminPubKey!, next);
+        return this.verifyHTTPSignature(req, res, ADMIN_PUBLIC_KEY!, next);
     }
 
     // Note: This is AI-Generated implementation for "RFC 9421 - HTTP Message Signatures" which looks ok to me
@@ -148,7 +150,7 @@ class HttpServerUtil {
             }
     
             // Verify the signature using the admin public key
-            if (!crypt.adminPubKey) {
+            if (!ADMIN_PUBLIC_KEY) {
                 console.error('Admin public key not set');
                 res.status(401).json({ 
                     success: false, 
@@ -164,7 +166,7 @@ class HttpServerUtil {
             const sigBuf = Buffer.from(signature.toString(), 'hex');
         
             // Use your existing verifySignatureBytes method
-            const isValid = await crypt.verifySignatureBytes(msgHash, sigBuf, crypt.adminPubKey);
+            const isValid = await crypt.verifySignatureBytes(msgHash, sigBuf, ADMIN_PUBLIC_KEY);
     
             if (!isValid) {
                 console.error('Invalid admin signature');

@@ -6,11 +6,6 @@ import { SignableObject } from './CommonTypes.js';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {
-    adminPubKey: string | null = null;
-
-    setAdminPublicKey(adminPubKey: string | undefined) {
-        this.adminPubKey = adminPubKey || null;
-    }
         
     // Function to generate a new keypair
     generateKeypair(): KeyPairHex {
