@@ -6,9 +6,9 @@ When you are doing a new task, you will walk the user thru each of these steps o
 
 When you are asked to add a new page, here are the steps:
 
-Step #1: The first step is to update file `/src/AppServiceTypes.ts` by adding the appropriate new 'enum' entry into the `PageNames` enum.  
+Step #1: The first step is to update file `/client/AppServiceTypes.ts` by adding the appropriate new 'enum' entry into the `PageNames` enum.  
 
-Step #2: The next step is to look at the example page named `/src/pages/AdminPage.tsx` to understand how to do the main page layout, including the back button, and then create the new page file following that example, only for the overall styling and layout.
+Step #2: The next step is to look at the example page named `/client/pages/AdminPage.tsx` to understand how to do the main page layout, including the back button, and then create the new page file following that example, only for the overall styling and layout.
 
 Notice we're using TailwindCSS for styling. Notice where `AdminPage.tsx` has `div`, `header`, `LogoBlockComp`, `BackButtonComp`, and don't deviate from that exact pattern. Try to use the same elements in the same way.
 

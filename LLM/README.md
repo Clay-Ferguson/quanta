@@ -1,6 +1,6 @@
 # Using LLMs to Write Code 
 
-## Notes to Humans.
+## Notes to Humans
 
 *NOTE: The LLMs folder where you are reading this is *not* part of the actual implementation of the application, or used by the application. This folder contains only AI prompts that are helpful for AI-Assisted coding related to adding features to this app. So you can completely delete the LLM folder and it will not affect the app at all.*
 

@@ -14,7 +14,7 @@ if (!isDev) {
             preprocessorOptions: {
                 scss: {
                     // Add any global SCSS variables you want available everywhere
-                    // additionalData: `@import "./src/styles/variables.scss";`
+                    // additionalData: `@import "./client/styles/variables.scss";`
                 },
             },
         },
@@ -29,7 +29,7 @@ else {
             preprocessorOptions: {
                 scss: {
                     // Add any global SCSS variables you want available everywhere
-                    // additionalData: `@import "./src/styles/variables.scss";`
+                    // additionalData: `@import "./client/styles/variables.scss";`
                 },
             },
         },
