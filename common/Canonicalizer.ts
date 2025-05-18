@@ -1,4 +1,5 @@
-import { ChatMessage, WebRTCJoin, WebRTCOffer } from "./types/CommonTypes.js";
+import { ChatMessage} from "./types/CommonTypes.js";
+import { WebRTCJoin, WebRTCOffer } from "./types/WebRTCTypes.js";
 
 class Canonicalizer {
     // Helper function for deterministic JSON serialization
