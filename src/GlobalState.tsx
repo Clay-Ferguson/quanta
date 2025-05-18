@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { KeyPairHex } from '../common/CryptoIntf';
 import { PageNames, PanelKeys, RoomHistoryItem } from './AppServiceTypes';
-import { ChatMessage, Contact, FileBase64Intf, User, UserProfile } from '../common/CommonTypes';
+import { ChatMessage, Contact, FileBase64Intf, User, UserProfile } from '../common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 

@@ -2,7 +2,7 @@ import {util} from '../Util';
 import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
-import { FileBase64Intf } from '../../common/CommonTypes';
+import { FileBase64Intf } from '../../common/types/CommonTypes';
 
 interface AttachmentCompProps {
   attachment: FileBase64Intf;

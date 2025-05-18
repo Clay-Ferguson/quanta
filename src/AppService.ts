@@ -3,7 +3,7 @@ import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTy
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
-import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
+import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, MessageStates, User, UserProfile } from '../common/types/CommonTypes.ts';
 import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
@@ -11,7 +11,7 @@ import { canon } from '../common/Canonicalizer.ts';
 import { setAlertHandler } from './components/AlertModalComp.tsx';
 import {idb} from './IndexedDB.ts';
 import {rtc} from './WebRTC.ts';
-import { BlockUser_Request, DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from '../common/EndpointTypes.ts';
+import { BlockUser_Request, DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from '../common/types/EndpointTypes.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;

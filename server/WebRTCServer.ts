@@ -1,7 +1,7 @@
 import {WebSocketServer, WebSocket} from 'ws';
 import {crypt} from '../common/Crypto.js';
 import {canon} from '../common/Canonicalizer.js';
-import { User, WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.js';
+import { User, WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../common/types/CommonTypes.js';
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
 

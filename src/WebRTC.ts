@@ -1,4 +1,4 @@
-import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/CommonTypes.ts';
+import { ChatMessage, User, WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft } from '../common/types/CommonTypes.ts';
 import { KeyPairHex } from '../common/CryptoIntf.ts';
 import {AppServiceIntf} from './AppServiceTypes.ts';
 import {util} from './Util.ts';

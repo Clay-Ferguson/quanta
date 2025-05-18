@@ -1,6 +1,6 @@
 import { crypt } from "../common/Crypto.js";
 import { Request, Response } from 'express';
-import { SignableObject } from "./CommonTypes.js";
+import { SignableObject } from "./types/CommonTypes.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY
 

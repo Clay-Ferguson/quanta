@@ -4,7 +4,7 @@ import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
 import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
-import { Contact } from '../../common/CommonTypes';
+import { Contact } from '../../common/types/CommonTypes';
 
 /**
  * Displays the list of members in the room. This includes the user themselves, and all other participants.

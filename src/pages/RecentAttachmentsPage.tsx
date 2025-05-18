@@ -9,8 +9,8 @@ import AvatarImageComp from '../components/AvatarImageComp';
 import { app } from '../AppService';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
-import { AttachmentInfo } from '../../common/CommonTypes';
-import { GetRecentAttachments_Response } from '../../common/EndpointTypes';
+import { AttachmentInfo } from '../../common/types/CommonTypes';
+import { GetRecentAttachments_Response } from '../../common/types/EndpointTypes';
 
 declare const ADMIN_PUBLIC_KEY: string;
 

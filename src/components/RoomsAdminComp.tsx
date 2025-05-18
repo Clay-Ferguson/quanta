@@ -4,7 +4,7 @@ import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { httpClientUtil } from '../HttpClientUtil';
-import { DeleteRoom_Request, GetRoomInfo_Response } from '../../common/EndpointTypes';
+import { DeleteRoom_Request, GetRoomInfo_Response } from '../../common/types/EndpointTypes';
 
 // Define interface for room info
 interface RoomInfo {

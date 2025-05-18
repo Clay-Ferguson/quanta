@@ -8,7 +8,7 @@ import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
 import { app } from '../AppService';
 import AvatarImageComp from './AvatarImageComp';
-import { ChatMessage, Contact, MessageStates } from '../../common/CommonTypes';
+import { ChatMessage, Contact, MessageStates } from '../../common/types/CommonTypes';
 
 declare const ADMIN_PUBLIC_KEY: string; 
 

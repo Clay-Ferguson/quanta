@@ -2,7 +2,7 @@ import * as secp from '@noble/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyPairHex } from './CryptoIntf.js';
-import { SignableObject } from './CommonTypes.js';
+import { SignableObject } from './types/CommonTypes.js';
 
 // See also: https://www.npmjs.com/package/@noble/secp256k1
 class Crypto {

@@ -1,11 +1,11 @@
-import { FileBlob, UserProfile } from "../common/CommonTypes.js";
+import { FileBlob, UserProfile } from "../common/types/CommonTypes.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
 import { dbUsers } from "./db/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
-import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/EndpointTypes.js";
+import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/types/EndpointTypes.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 

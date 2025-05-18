@@ -1,4 +1,4 @@
-import { ChatMessageIntf, MessageStates } from "../../common/CommonTypes.js";
+import { ChatMessageIntf, MessageStates } from "../../common/types/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
 import { Transactional } from './Transactional.js';
 import { dbMgr } from './DBManager.js';

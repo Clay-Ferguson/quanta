@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
-import {DBManagerIntf} from '../../common/CommonTypes.js';
+import {DBManagerIntf} from '../../common/types/CommonTypes.js';
 
 const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
 if (!dbPath) {

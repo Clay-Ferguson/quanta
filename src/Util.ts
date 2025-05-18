@@ -1,4 +1,4 @@
-import { ChatMessage, FileBase64Intf } from "../common/CommonTypes";
+import { ChatMessage, FileBase64Intf } from "../common/types/CommonTypes";
 
 class Util {
     resizeEffect = () => {

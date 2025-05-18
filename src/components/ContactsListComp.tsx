@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
-import { Contact } from '../../common/CommonTypes';
+import { Contact } from '../../common/types/CommonTypes';
 
 /**
  * Displays a list of contacts with options to add, edit, delete, and select multiple contacts.

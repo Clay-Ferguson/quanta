@@ -1,4 +1,4 @@
-import { ChatMessage } from "../common/CommonTypes";
+import { ChatMessage } from "../common/types/CommonTypes";
 
 export interface AppServiceIntf {
     rtcStateChange(): void;
