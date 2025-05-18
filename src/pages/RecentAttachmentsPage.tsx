@@ -10,6 +10,7 @@ import { app } from '../AppService';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { AttachmentInfo } from '../../common/CommonTypes';
+import { GetRecentAttachments_Response } from '../../common/EndpointTypes';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -26,8 +27,8 @@ export default function RecentAttachmentsPage() {
     const getAttachmentsInfo = async () => {
         setLoading(true);
         try {
-            const response = await httpClientUtil.secureHttpPost(`/api/admin/get-recent-attachments`, gs.keyPair!);
-            if (response.attachments) {
+            const response: GetRecentAttachments_Response | null = await httpClientUtil.secureHttpPost<any, GetRecentAttachments_Response>(`/api/admin/get-recent-attachments`, gs.keyPair!);
+            if (response && response.attachments) {
                 setAttachments(response.attachments);
             } else {
                 setError('Failed to retrieve attachment data');
@@ -73,12 +74,7 @@ export default function RecentAttachmentsPage() {
             return;
         }
                
-        await httpClientUtil.secureHttpPost(`/api/attachments/${id}/delete`, gs.keyPair!, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        await httpClientUtil.secureHttpPost(`/api/attachments/${id}/delete`, gs.keyPair!);
         
         const updatedAttachments = attachments.filter(att => att.id !== id);
         setAttachments(updatedAttachments);

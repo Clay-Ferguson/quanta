@@ -1,11 +1,11 @@
-import { DeleteRoom_Response, FileBlob, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetRecentAttachments_Response, GetRoomInfo_Response, UserProfile } from "../common/CommonTypes.js";
+import { FileBlob, UserProfile } from "../common/CommonTypes.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
 import { dbUsers } from "./db/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
-import { BlockUserRequest, DeleteMessageRequest, DeleteRoomRequest, GetMessagesByIdsRequest, SendMessagesRequest } from "./EndpointTypes.js";
+import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/EndpointTypes.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
@@ -169,7 +169,7 @@ class Controller {
         }
     }
 
-    deleteRoom = async (req: Request<any, any, DeleteRoomRequest>, res: Response): Promise<void> => {
+    deleteRoom = async (req: Request<any, any, DeleteRoom_Request>, res: Response): Promise<void> => {
         try {
             const { roomName } = req.body;
             
@@ -222,7 +222,7 @@ class Controller {
         }
     }
 
-    deleteMessage = async (req: Request<any, any, DeleteMessageRequest>, res: Response): Promise<void> => {
+    deleteMessage = async (req: Request<any, any, DeleteMessage_Request>, res: Response): Promise<void> => {
         try {
             const { messageId, roomName, publicKey } = req.body;
         
@@ -254,7 +254,7 @@ class Controller {
         }
     }
 
-    blockUser = async (req: Request<any, any, BlockUserRequest>, res: Response): Promise<void> => {
+    blockUser = async (req: Request<any, any, BlockUser_Request>, res: Response): Promise<void> => {
         try {
             const { pub_key } = req.body;
             
@@ -307,7 +307,7 @@ class Controller {
     /**
      * API handler for getting messages by IDs for a specific room
      */
-    getMessagesByIds = async (req: Request<{ roomId: string }, any, GetMessagesByIdsRequest>, res: Response): Promise<void> => {
+    getMessagesByIds = async (req: Request<{ roomId: string }, any, GetMessagesByIds_Request>, res: Response): Promise<void> => {
         try {
             const { ids } = req.body || { ids: [] };
             const roomId = req.params.roomId;
@@ -356,7 +356,7 @@ class Controller {
      * @param messages Array of messages to save
      * @returns Array of database IDs in the same order as the input messages
      */
-    sendMessages = async (req: Request<{ roomId: string }, any, SendMessagesRequest>, res: Response): Promise<void> => {
+    sendMessages = async (req: Request<{ roomId: string }, any, SendMessages_Request>, res: Response): Promise<void> => {
         const roomId = req.params.roomId;
         if (!req.body.messages || req.body.messages.length === 0) {
             res.status(400).json({ error: 'Invalid or empty messages array' });

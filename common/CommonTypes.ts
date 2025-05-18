@@ -162,26 +162,3 @@ export interface WebRTCUserLeft {
     room: string;
 }
 
-export type GetMessageIdsForRoom_Response = {
-    messageIds: string[];
-}
-
-export type GetMessageHistory_Response = {
-    messages: ChatMessageIntf[];
-}
-
-export type GetRoomInfo_Response = {
-    rooms: RoomInfo[];
-}
-
-export type DeleteRoom_Response = {
-    message: string;
-}
-
-export type GetRecentAttachments_Response = {
-    attachments: AttachmentInfo[]
-}
-
-export type GetMessagesByIds_Response = {
-    messages: ChatMessageIntf[];
-}

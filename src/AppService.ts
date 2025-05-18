@@ -3,7 +3,7 @@ import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTy
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { KeyPairHex } from '../common/CryptoIntf.ts';
-import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
+import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, MessageStates, User, UserProfile } from '../common/CommonTypes.ts';
 import { setConfirmHandler } from './components/ConfirmModalComp';
 import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
@@ -11,6 +11,7 @@ import { canon } from '../common/Canonicalizer.ts';
 import { setAlertHandler } from './components/AlertModalComp.tsx';
 import {idb} from './IndexedDB.ts';
 import {rtc} from './WebRTC.ts';
+import { BlockUser_Request, DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from '../common/EndpointTypes.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -141,9 +142,10 @@ export class AppService implements AppServiceIntf  {
 
             try {
                 // Make the secure POST request with body
-                await httpClientUtil.secureHttpPost('/api/delete-message', _gs.keyPair!, {
+                await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', _gs.keyPair!, {
                     messageId,
-                    roomName: _gs.roomName
+                    roomName: _gs.roomName!,
+                    publicKey: _gs.keyPair!.publicKey
                 });
             } catch (error) {
                 console.error('Error deleting message from server:', error);
@@ -356,7 +358,7 @@ export class AppService implements AppServiceIntf  {
                     description: userDescription,
                     avatar: userAvatar
                 };
-                await httpClientUtil.secureHttpPost('/api/users/info', _gs.keyPair!, userProfile);
+                await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', _gs.keyPair!, userProfile);
             } catch (error) {
                 console.error('Error saving user info to server:', error);
             }
@@ -541,7 +543,7 @@ export class AppService implements AppServiceIntf  {
         
         try {
             // Make the secure POST request with body
-            const response = await httpClientUtil.secureHttpPost('/api/admin/block-user', gs().keyPair!, {
+            const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', gs().keyPair!, {
                 pub_key: publicKey.trim()
             });
             await app.alert(`Success: ${response.message}`);
@@ -853,7 +855,7 @@ export class AppService implements AppServiceIntf  {
         try {
             console.log("Resending " + messagesToSend.length + " messages to server: ", messagesToSend);
             // Send the messages to the server
-            const response = await httpClientUtil.secureHttpPost(
+            const response = await httpClientUtil.secureHttpPost<SendMessages_Request, any>(
                 `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
                     gs().keyPair!, 
                     { messages: messagesToSend }
