@@ -1,6 +1,5 @@
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
-import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
 import { PageNames } from '../AppServiceTypes';
@@ -14,7 +13,6 @@ declare const ADMIN_PUBLIC_KEY: string;
  * AdminPage component for managing server settings and test data.
  */
 export default function AdminPage() {
-    const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);
     
     if (!ADMIN_PUBLIC_KEY) {
@@ -23,7 +21,7 @@ export default function AdminPage() {
     }
 
     const createTestData = async () => {
-        await httpClientUtil.secureHttpPost(`/api/admin/create-test-data`, gs.keyPair!);
+        await httpClientUtil.secureHttpPost(`/api/admin/create-test-data`);
     };
 
     const getRoomInfo = async () => {

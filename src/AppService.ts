@@ -142,7 +142,7 @@ export class AppService implements AppServiceIntf  {
 
             try {
                 // Make the secure POST request with body
-                await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', _gs.keyPair!, {
+                await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
                     messageId,
                     roomName: _gs.roomName!,
                     publicKey: _gs.keyPair!.publicKey
@@ -358,7 +358,7 @@ export class AppService implements AppServiceIntf  {
                     description: userDescription,
                     avatar: userAvatar
                 };
-                await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', _gs.keyPair!, userProfile);
+                await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
             } catch (error) {
                 console.error('Error saving user info to server:', error);
             }
@@ -543,8 +543,8 @@ export class AppService implements AppServiceIntf  {
         
         try {
             // Make the secure POST request with body
-            const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', gs().keyPair!, {
-                pub_key: publicKey.trim()
+            const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', {
+                publicKey: publicKey.trim()
             });
             await app.alert(`Success: ${response.message}`);
         } catch (error) {
@@ -857,8 +857,7 @@ export class AppService implements AppServiceIntf  {
             // Send the messages to the server
             const response = await httpClientUtil.secureHttpPost<SendMessages_Request, any>(
                 `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
-                    gs().keyPair!, 
-                    { messages: messagesToSend }
+                { messages: messagesToSend }
             );
                 
             if (response && response.allOk) {

@@ -1,5 +1,6 @@
 import { crypt } from "../common/Crypto";
 import { KeyPairHex } from "../common/CryptoIntf";
+import { gs } from "./GlobalState";
 
 class HttpClientUtil {
     httpPost = async (url: string, obj: any) => {
@@ -28,21 +29,13 @@ class HttpClientUtil {
         return ret;
     }
 
-    // todo-0: we don't need to pass keyPair here, we can get it from the global state.
-    secureHttpPost = async <TRequest = any, TResponse = any> (url: string, keyPair: KeyPairHex, body?: TRequest): Promise<TResponse | null> => {
-        if (!keyPair.publicKey) {
-            console.error("Attempting secure post with invalid keyPair");
-        }
-
-        // todo-0: this is ugly here, and probably not even needed.
-        if (body && !(body as any).publicKey) {
-            (body as any).publicKey = keyPair.publicKey;
-        }
-        console.log(`secureHttpPost: ${url} publicKey=${keyPair.publicKey}`);
+    secureHttpPost = async <TRequest = any, TResponse = any> (url: string, body?: TRequest): Promise<TResponse | null> => {
+        const _gs = gs();
+        console.log(`secureHttpPost: ${url}`);
 
         let response: TResponse | null = null;
         try {
-            const headers = await this.buildSecureHeaders(url, keyPair!);
+            const headers = await this.buildSecureHeaders(url, _gs.keyPair!);
             const opts: RequestInit = {
                 method: 'POST',
                 headers

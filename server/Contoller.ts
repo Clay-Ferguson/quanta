@@ -256,9 +256,9 @@ class Controller {
 
     blockUser = async (req: Request<any, any, BlockUser_Request>, res: Response): Promise<void> => {
         try {
-            const { pub_key } = req.body;
+            const { publicKey } = req.body;
             
-            if (!pub_key) {
+            if (!publicKey) {
                 res.status(400).json({ 
                     success: false, 
                     error: 'Missing pub_key parameter' 
@@ -266,9 +266,9 @@ class Controller {
                 return;
             }
             
-            console.log('Admin request: Blocking user with public key:', pub_key);
-            await dbUsers.deleteUserContent(pub_key);
-            await dbUsers.blockUser(pub_key);
+            console.log('Admin request: Blocking user with public key:', publicKey);
+            await dbUsers.deleteUserContent(publicKey);
+            await dbUsers.blockUser(publicKey);
                     
             res.json({ 
                 success: true, 

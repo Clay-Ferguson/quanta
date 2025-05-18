@@ -11,7 +11,7 @@ export type DeleteMessage_Request = {
 }
 
 export type BlockUser_Request = {
-    pub_key: string;
+    publicKey: string;
 }
 
 export type GetMessagesByIds_Request = {

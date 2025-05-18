@@ -27,7 +27,8 @@ export default function RecentAttachmentsPage() {
     const getAttachmentsInfo = async () => {
         setLoading(true);
         try {
-            const response: GetRecentAttachments_Response | null = await httpClientUtil.secureHttpPost<any, GetRecentAttachments_Response>(`/api/admin/get-recent-attachments`, gs.keyPair!);
+            const response: GetRecentAttachments_Response | null = 
+                await httpClientUtil.secureHttpPost<any, GetRecentAttachments_Response>(`/api/admin/get-recent-attachments`);
             if (response && response.attachments) {
                 setAttachments(response.attachments);
             } else {
@@ -73,8 +74,8 @@ export default function RecentAttachmentsPage() {
         if (!await app.confirm(`Are you sure you want to delete this attachment?`)) {
             return;
         }
-               
-        await httpClientUtil.secureHttpPost(`/api/attachments/${id}/delete`, gs.keyPair!);
+         
+        await httpClientUtil.secureHttpPost(`/api/attachments/${id}/delete`);
         
         const updatedAttachments = attachments.filter(att => att.id !== id);
         setAttachments(updatedAttachments);

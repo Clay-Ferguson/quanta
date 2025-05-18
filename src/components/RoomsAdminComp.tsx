@@ -29,7 +29,7 @@ export default function RoomsAdminComp() {
             setError(null);
             
             try {
-                const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`, gs.keyPair!);
+                const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`);
                 if (response && Array.isArray(response.rooms)) {
                     setRoomsData(response.rooms);
                 } else {
@@ -57,7 +57,7 @@ export default function RoomsAdminComp() {
         setError(null);
         
         try {
-            const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`, gs.keyPair!);
+            const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`);
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
             } else {
@@ -79,7 +79,7 @@ export default function RoomsAdminComp() {
         }
 
         try {
-            await httpClientUtil.secureHttpPost<DeleteRoom_Request, any>(`/api/admin/delete-room`, gs.keyPair!, {
+            await httpClientUtil.secureHttpPost<DeleteRoom_Request, any>(`/api/admin/delete-room`, {
                 roomName
             });
             
