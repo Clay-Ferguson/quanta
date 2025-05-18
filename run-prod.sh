@@ -14,6 +14,9 @@ export QUANTA_CHAT_ADMIN_PUBLIC_KEY="0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa
 # NOTE: This var is not acutally used because we're not doing the build here.
 export QUANTA_DEV="true"
 
+# Just in case nginx is running, after certbot use of it. It will be sitting on port 443.
+sudo systemctl stop nginx
+
 # Note: the -E flag preserves the environment variables
 sudo -E node dist/server/ChatServer.js
 

@@ -1,6 +1,4 @@
 import express, { Request, Response } from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
@@ -11,44 +9,27 @@ import { logInit } from './ServerLogger.js';
 
 logInit();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const dbPath: string | undefined = process.env.QUANTA_CHAT_DB_FILE_NAME;
-if (!dbPath) {
-    throw new Error('Database path is not set');
+function getEnvVar(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Environment variable ${name} is not set`);
+    }
+    else {
+        console.log(`ENV VAR: ${name}==[${value}]`);
+    }
+    return value;
 }
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
-const HOST = process.env.QUANTA_CHAT_HOST;
-if (!HOST) {
-    throw new Error('QUANTA_CHAT_HOST environment variable is not set');
-}
+const HOST = getEnvVar("QUANTA_CHAT_HOST");
 
 // This is the port for the web app. It will be 443 for prod, or 80 for dev on localhost
-const PORT = process.env.QUANTA_CHAT_PORT;
-if (!PORT) {
-    throw new Error('QUANTA_CHAT_PORT environment variable is not set');
-}
+const PORT = getEnvVar("QUANTA_CHAT_PORT");
 
 // This is the port for the web app. It will be 'https' for prod, or 'http' for dev on localho
-const SECURE = process.env.QUANTA_CHAT_SECURE;
-if (!SECURE) {
-    throw new Error('QUANTA_CHAT_SECURE environment variable is not set');
-}
+const SECURE = getEnvVar("QUANTA_CHAT_SECURE");
 
-const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
-if (!ADMIN_PUBLIC_KEY) {
-    console.warn('QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable is not set. Admin features will be disabled.');
-}
-
-// print out all env vars above that we just used
-console.log(`Environment Variables:
-    QUANTA_CHAT_HOST: ${HOST}
-    QUANTA_CHAT_PORT: ${PORT}
-    QUANTA_CHAT_SECURE: ${SECURE}
-    QUANTA_CHAT_ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY}
-`);
+const ADMIN_PUBLIC_KEY = getEnvVar("QUANTA_CHAT_ADMIN_PUBLIC_KEY");
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -88,12 +69,8 @@ app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controlle
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
-const distPath = path.join(__dirname, '../../dist');
-
 const serveIndexHtml = (req: Request, res: Response) => {
-    const filePath = path.resolve(distPath, 'index.html');
-
-    fs.readFile(filePath, 'utf8', (err, data) => {
+    fs.readFile("./dist/index.html", 'utf8', (err, data) => {
         if (err) {
             console.error('Error reading index.html:', err);
             return res.status(500).send('Error loading page');
@@ -101,10 +78,10 @@ const serveIndexHtml = (req: Request, res: Response) => {
 
         // Replace the placeholders with actual values
         const result = data
-            .replace('{{HOST}}', process.env.QUANTA_CHAT_HOST || '')
-            .replace('{{PORT}}', process.env.QUANTA_CHAT_PORT || '')
-            .replace('{{SECURE}}', process.env.QUANTA_CHAT_SECURE || '')
-            .replace('{{ADMIN_PUBLIC_KEY}}', process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY || '');
+            .replace('{{HOST}}', HOST)
+            .replace('{{PORT}}', PORT)
+            .replace('{{SECURE}}', SECURE)
+            .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY);
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');
@@ -117,20 +94,17 @@ const serveIndexHtml = (req: Request, res: Response) => {
 app.get('/', serveIndexHtml);
 
 // Serve static files from the dist directory, but disable index serving
-app.use(express.static(distPath, { index: false }));
+app.use(express.static("./dist", { index: false }));
 
 // Fallback for any other routes not handled above
 app.get('*', serveIndexHtml);
 
 let server = null;
 
-// Run for PROD (https)
+// PRODUCTION: run on 'https' with certificates
 if (SECURE === 'y') {
     try {
-        const CERT_PATH = process.env.QUANTA_CHAT_CERT_PATH;
-        if (!CERT_PATH) {
-            throw new Error('QUANTA_CHAT_CERT_PATH environment variable is not set');
-        }
+        const CERT_PATH = getEnvVar("QUANTA_CHAT_CERT_PATH");
         const key = fs.readFileSync(`${CERT_PATH}/privkey.pem`, 'utf8');
         const cert = fs.readFileSync(`${CERT_PATH}/fullchain.pem`, 'utf8');
         server = https.createServer({key, cert}, app);
@@ -139,7 +113,7 @@ if (SECURE === 'y') {
         throw error;
     }
 }
-// run for localhost/dev (http)
+// LOCALHOST: For development/testing, run on 'http', without certificates
 else {
     server = http.createServer(app);
 }
