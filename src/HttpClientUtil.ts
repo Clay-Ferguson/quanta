@@ -1,5 +1,5 @@
 import { crypt } from "../common/Crypto";
-import { KeyPairHex } from "../common/CryptoIntf";
+import { KeyPairHex } from "../common/types/CommonTypes";
 import { gs } from "./GlobalState";
 
 class HttpClientUtil {

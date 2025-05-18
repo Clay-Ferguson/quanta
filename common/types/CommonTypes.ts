@@ -4,6 +4,12 @@ export interface DBManagerIntf {
     run(sql: any, ...params: any[]): Promise<any>;
     checkDb: () => void;
 }
+
+export type KeyPairHex = {
+    privateKey: string;
+    publicKey: string
+};
+
 export interface SignableObject {
     signature?: string;
     publicKey?: string;
