@@ -6,6 +6,7 @@ import { PageNames } from '../AppServiceTypes';
 import { httpClientUtil } from '../HttpClientUtil';
 import { useEffect } from 'react';
 import { util } from '../Util';
+import { promptModal } from '../components/PromptModalComp';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -29,7 +30,7 @@ export default function AdminPage() {
     };
 
     const blockUser = async () => {
-        const pubKey = await app.prompt("Enter User Public Key to block");
+        const pubKey = await promptModal("Enter User Public Key to block");
         if (!pubKey || pubKey.trim() === '') {
             return;
         }

@@ -4,6 +4,7 @@ import {AppServiceIntf} from './AppServiceTypes.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
 import { canon } from '../common/Canonicalizer.ts';
+import { alertModal } from './components/AlertModalComp.tsx';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -447,7 +448,9 @@ class WebRTC {
             const timeSinceDisconnect = Date.now() - this.disconnectTime;
             if (timeSinceDisconnect < 5000) {
                 console.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
-                this.app!.alert('Too soon after disconnect. Please wait a few seconds before reconnecting.');
+
+                // todo-0: instead of alerting just wait 3 seconds and try again. And yes change it to 3 not 5 seconds.
+                await alertModal('Too soon after disconnect. Please wait a few seconds before reconnecting.');
                 return false;
             }
         }

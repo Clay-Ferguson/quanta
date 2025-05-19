@@ -1,5 +1,4 @@
-import { app } from '../AppService';
-import { useGlobalState } from '../GlobalState';
+import { gd, useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
 interface ConfirmationPromiseHandler {
@@ -12,6 +11,19 @@ let activeConfirmHandler: ConfirmationPromiseHandler | null = null;
 // eslint-disable-next-line react-refresh/only-export-components
 export function setConfirmHandler(handler: ConfirmationPromiseHandler | null) {
     activeConfirmHandler = handler;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function confirmModal(message: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        // Set the handlers for this confirmation dialog
+        setConfirmHandler({ resolve });
+            
+        // Display the confirmation dialog
+        gd({ type: 'openConfirm', payload: { 
+            confirmMessage: message
+        }});
+    });
 }
 
 /**
@@ -27,7 +39,9 @@ export function ConfirmModalComp() {
             activeConfirmHandler.resolve(result);
             setConfirmHandler(null);
         }
-        app.closeConfirm();
+        gd({ type: 'closeConfirm', payload: { 
+            confirmMessage: null,
+        }});
     };
     
     return (

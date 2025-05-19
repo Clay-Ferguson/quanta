@@ -3,14 +3,14 @@ import {AppServiceIntf, DBKeys, PageNames, RoomHistoryItem} from './AppServiceTy
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {crypt} from '../common/Crypto.ts';  
 import { ChatMessage, ChatMessageIntf, Contact, FileBase64Intf, KeyPairHex, MessageStates, User, UserProfile } from '../common/types/CommonTypes.ts';
-import { setConfirmHandler } from './components/ConfirmModalComp';
-import { setPromptHandlers } from './components/PromptModalComp';
 import { httpClientUtil } from './HttpClientUtil.ts';
 import { canon } from '../common/Canonicalizer.ts';
-import { setAlertHandler } from './components/AlertModalComp.tsx';
 import {idb} from './IndexedDB.ts';
 import {rtc} from './WebRTC.ts';
 import { BlockUser_Request, DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from '../common/types/EndpointTypes.ts';
+import { confirmModal } from './components/ConfirmModalComp.tsx';
+import { promptModal } from './components/PromptModalComp.tsx';
+import { alertModal } from './components/AlertModalComp.tsx';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -130,7 +130,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     deleteMessage = async (messageId: string) => {
-        const confirmed = await this.confirm(`Delete message?`);
+        const confirmed = await confirmModal(`Delete message?`);
         if (!confirmed) return;
         let _gs = gs();
         const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
@@ -188,63 +188,6 @@ export class AppService implements AppServiceIntf  {
         gd({ type: 'setUserProfile', payload: _gs});
     }
     
-    prompt = (message: string, defaultValue: string = ''): Promise<string | null> => {
-        return new Promise((resolve) => {
-            // Set the handlers for this prompt dialog
-            setPromptHandlers({ resolve });
-            
-            // Display the prompt dialog
-            gd({ type: 'openPrompt', payload: { 
-                promptMessage: message,
-                promptDefaultValue: defaultValue
-            }});
-        });
-    }
-
-    closePrompt = () => {
-        gd({ type: 'closePrompt', payload: { 
-            promptMessage: null,
-            promptDefaultValue: null
-        }});
-    }
-
-    confirm = (message: string): Promise<boolean> => {
-        return new Promise((resolve) => {
-            // Set the handlers for this confirmation dialog
-            setConfirmHandler({ resolve });
-            
-            // Display the confirmation dialog
-            gd({ type: 'openConfirm', payload: { 
-                confirmMessage: message
-            }});
-        });
-    }
-
-    closeConfirm = () => {
-        gd({ type: 'closeConfirm', payload: { 
-            confirmMessage: null,
-        }});
-    }
-
-    // todo-0: All these alert-related methods need to go in their own file.
-    alert = (message: string): Promise<void> => {
-        return new Promise((resolve) => {
-            // Set the handlers for this confirmation dialog
-            setAlertHandler({ resolve });
-            
-            console.log("Alert: " + message);
-            gd({ type: 'openAlert', payload: { 
-                modalMessage: message,
-            }});
-        });
-    }
-
-    closeAlert = () => {
-        gd({ type: 'closeAlert', payload: { 
-            modalMessage: null,
-        }});
-    }
-
     saveLinkPreviewInfo = async (url: string, data: any) => {
         // Save the link preview data to IndexedDB
         await idb.setItem(DBKeys.linkPreview + url, data);
@@ -389,11 +332,11 @@ export class AppService implements AppServiceIntf  {
     importKeyPair = async () => {
         const _gs = gs();
         if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
-            if (!await this.confirm("Are you sure? This will overwrite your existing key pair.")) {
+            if (!await confirmModal("Are you sure? This will overwrite your existing key pair.")) {
                 return;
             }
         }
-        const privateKey = await app.prompt("Enter Private Key");
+        const privateKey = await promptModal("Enter Private Key");
         console.log("Importing Key Pair: " + privateKey);
         
         if (!privateKey) {
@@ -416,7 +359,7 @@ export class AppService implements AppServiceIntf  {
         const _gs = gs();
         // if they already have a keyPair, ask if they want to create a new one
         if (askFirst && _gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
-            if (! await this.confirm("Create new Identity Keys?\n\nWARNING: This will overwrite your existing keys.")) {
+            if (! await confirmModal("Create new Identity Keys?\n\nWARNING: This will overwrite your existing keys.")) {
                 return;
             }
         }
@@ -529,7 +472,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     blockUser = async (publicKey: string) => {
-        if (!await this.confirm("Are you sure? This will delete all messages from this user and block them.")) {
+        if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
             return;
         }
         
@@ -538,7 +481,7 @@ export class AppService implements AppServiceIntf  {
             publicKey: publicKey.trim()
         });
         if (response) {
-            await app.alert(`Success: ${response.message}`);
+            await alertModal(`Success: ${response.message}`);
         }
     }
 
@@ -569,7 +512,7 @@ export class AppService implements AppServiceIntf  {
     }
 
     forgetRoom = async (roomName: string) => {
-        if (!await this.confirm("Clear all chat history for room?")) return;
+        if (!await confirmModal("Clear all chat history for room?")) return;
         
         let _gs = gs();
         if (!_gs.connected) {
@@ -635,7 +578,7 @@ export class AppService implements AppServiceIntf  {
                     // lookup the message by 'id' and verify it has the 'ack' state on it now.
                     const message = _gs.messages!.find((m: ChatMessage) => m.id === msg.id);
                     if (message && message.state!==MessageStates.SAVED) {
-                        await this.alert('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
+                        await alertModal('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                     }
                 }
 
@@ -761,7 +704,7 @@ export class AppService implements AppServiceIntf  {
                 const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
                     `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
 
-                if (await this.confirm(warningMsg)) {
+                if (await confirmModal(warningMsg)) {
                     const _gs = gs();
                     // Sort messages by timestamp and remove oldest 20%
                     _gs.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
@@ -845,8 +788,10 @@ export class AppService implements AppServiceIntf  {
             console.log("Resending " + messagesToSend.length + " messages to server: ", messagesToSend);
             // Send the messages to the server
             const response = await httpClientUtil.secureHttpPost<SendMessages_Request, any>(
-                `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, 
-                { messages: messagesToSend }
+                `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, { 
+                    messages: messagesToSend,
+                    publicKey: gs().keyPair!.publicKey
+                }
             );
                 
             if (response && response.allOk) {

@@ -11,6 +11,7 @@ import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { AttachmentInfo } from '../../common/types/CommonTypes';
 import { GetRecentAttachments_Response } from '../../common/types/EndpointTypes';
+import { confirmModal } from '../components/ConfirmModalComp';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -68,7 +69,7 @@ export default function RecentAttachmentsPage() {
     };
 
     const deleteAttachment = async (id: number) => {
-        if (!await app.confirm(`Are you sure you want to delete this attachment?`)) {
+        if (!await confirmModal(`Are you sure you want to delete this attachment?`)) {
             return;
         }
          

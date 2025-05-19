@@ -10,6 +10,8 @@ import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
 import { PanelKeys } from '../AppServiceTypes';
 import { PageNames } from '../AppServiceTypes';
+import { alertModal } from '../components/AlertModalComp';
+import { confirmModal } from '../components/ConfirmModalComp';
 
 /**
  * Page for managing user settings, including username, avatar, and identity keys.
@@ -102,9 +104,9 @@ export default function SettingsPage() {
         const days = parseInt(daysOfHistory);
         if (!isNaN(days) && days >= 0) {
             app.setDaysOfHistory(days);
-            await app.alert(`Saved successfully.`);
+            await alertModal(`Saved successfully.`);
         } else {
-            await app.alert("Please enter a valid number of days (0 or greater)");
+            await alertModal("Please enter a valid number of days (0 or greater)");
         }
     };
     
@@ -119,7 +121,7 @@ export default function SettingsPage() {
             const file = e.target.files[0];
             // Only accept image files
             if (!file.type.startsWith('image/')) {
-                await app.alert('Please select an image file for your avatar');
+                await alertModal('Please select an image file for your avatar');
                 return;
             }
             
@@ -152,7 +154,7 @@ export default function SettingsPage() {
 
         await app.saveUserInfo(userName, userDescription, userAvatar);
         if (showConfirm) {
-            await app.alert("Profile information saved successfully!");
+            await alertModal("Profile information saved successfully!");
         }
     };
 
@@ -401,7 +403,7 @@ export default function SettingsPage() {
                             <button 
                                 className="btn-danger"
                                 onClick={async () => {
-                                    if (await app.confirm("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
+                                    if (await confirmModal("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
                                         app.clear();
                                     }
                                 }}

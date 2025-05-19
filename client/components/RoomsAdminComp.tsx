@@ -5,6 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { httpClientUtil } from '../HttpClientUtil';
 import { DeleteRoom_Request, GetRoomInfo_Response } from '../../common/types/EndpointTypes';
+import { alertModal } from './AlertModalComp';
+import { confirmModal } from './ConfirmModalComp';
 
 // Define interface for room info
 interface RoomInfo {
@@ -34,7 +36,7 @@ export default function RoomsAdminComp() {
                     setRoomsData(response.rooms);
                 } else {
                     setError('Failed to retrieve room information');
-                    await app.alert('Failed to retrieve room information');
+                    await alertModal('Failed to retrieve room information');
                 }
             } finally {
                 setLoading(false);
@@ -58,7 +60,7 @@ export default function RoomsAdminComp() {
                 setRoomsData(response.rooms);
             } else {
                 setError('Failed to retrieve room information');
-                await app.alert('Failed to retrieve room information');
+                await alertModal('Failed to retrieve room information');
             }
         } finally {
             setLoading(false);
@@ -66,7 +68,7 @@ export default function RoomsAdminComp() {
     };
 
     const deleteRoom = async (roomName: string) => {
-        if (!await app.confirm(`Are you sure you want to delete the room "${roomName}"?`)) {
+        if (!await confirmModal(`Are you sure you want to delete the room "${roomName}"?`)) {
             return;
         }
 
@@ -77,7 +79,7 @@ export default function RoomsAdminComp() {
         if (res) {
             // Remove the deleted room from the state
             setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
-            await app.alert(`Room "${roomName}" deleted successfully`);
+            await alertModal(`Room "${roomName}" deleted successfully`);
         }
     };
 

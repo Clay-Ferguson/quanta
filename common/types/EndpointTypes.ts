@@ -20,6 +20,7 @@ export type GetMessagesByIds_Request = {
 
 export type SendMessages_Request = {
     messages: ChatMessage[];
+    publicKey: string;
 }
 
 export type GetMessageIdsForRoom_Response = {

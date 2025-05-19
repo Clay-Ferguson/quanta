@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { app } from '../AppService';
-import { useGlobalState } from '../GlobalState';
+import { gd, useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
 // Store resolution functions for active prompt dialogs
@@ -14,6 +13,20 @@ let activePromptHandlers: PromptPromiseHandlers | null = null;
 // eslint-disable-next-line react-refresh/only-export-components
 export function setPromptHandlers(handlers: PromptPromiseHandlers | null) {
     activePromptHandlers = handlers;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function promptModal(message: string, defaultValue: string = ''): Promise<string | null> {
+    return new Promise((resolve) => {
+        // Set the handlers for this prompt dialog
+        setPromptHandlers({ resolve });
+            
+        // Display the prompt dialog
+        gd({ type: 'openPrompt', payload: { 
+            promptMessage: message,
+            promptDefaultValue: defaultValue
+        }});
+    });
 }
 
 /**
@@ -49,7 +62,10 @@ export function PromptModalComp() {
             activePromptHandlers.resolve(result ? inputValue : null);
             setPromptHandlers(null);
         }
-        app.closePrompt();
+        gd({ type: 'closePrompt', payload: { 
+            promptMessage: null,
+            promptDefaultValue: null
+        }});
         // Reset the input value after closing
         setInputValue('');
     };

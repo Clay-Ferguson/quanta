@@ -1,4 +1,4 @@
-import { app } from "../AppService";
+import { alertModal } from "./AlertModalComp";
 
 interface HexKeyCompProps {
   hexKey: string;
@@ -22,9 +22,9 @@ export default function HexKeyComp({ hexKey }: HexKeyCompProps) {
             </span>
             <button 
                 className="ml-2 text-xs bg-amber-700 hover:bg-amber-600 px-2 py-0.5 rounded"
-                onClick={() => {
+                onClick={async () => {
                     navigator.clipboard.writeText(hexKey);
-                    app.alert("Key copied to clipboard");
+                    await alertModal("Key copied to clipboard");
                 }}
             >
                 Copy 

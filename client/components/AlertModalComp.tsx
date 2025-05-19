@@ -1,5 +1,4 @@
-import { app } from '../AppService';
-import { useGlobalState } from '../GlobalState';
+import { gd, useGlobalState } from '../GlobalState';
 import Markdown from './MarkdownComp';
 
 interface AlertPromiseHandler {
@@ -12,6 +11,19 @@ let activeAlertHandler: AlertPromiseHandler | null = null;
 // eslint-disable-next-line react-refresh/only-export-components
 export function setAlertHandler(handler: AlertPromiseHandler | null) {
     activeAlertHandler = handler;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function alertModal(message: string): Promise<void> {
+    return new Promise((resolve) => {
+        // Set the handlers for this confirmation dialog
+        setAlertHandler({ resolve });
+            
+        console.log("Alert: " + message);
+        gd({ type: 'openAlert', payload: { 
+            modalMessage: message,
+        }});
+    });
 }
 
 /**
@@ -27,7 +39,9 @@ export default function AlertModalComp() {
             activeAlertHandler.resolve();
             setAlertHandler(null);
         }
-        app.closeAlert();
+        gd({ type: 'closeAlert', payload: { 
+            modalMessage: null,
+        }});
     };
 
     return (

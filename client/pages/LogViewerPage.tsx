@@ -3,7 +3,7 @@ import BackButtonComp from '../components/BackButtonComp';
 import { useEffect, useState } from 'react';
 import { util } from '../Util';
 import * as ClientLogger from '../ClientLogger';
-import { app } from '../AppService';
+import { alertModal } from '../components/AlertModalComp';
 
 /**
  * LogViewerPage component for viewing system logs
@@ -32,8 +32,8 @@ export default function LogViewerPage() {
     
     const copyToClipboard = () => {
         navigator.clipboard.writeText(logs)
-            .then(() => {
-                app.alert('Logs copied to clipboard');
+            .then(async () => {
+                await alertModal('Logs copied to clipboard');
             })
             .catch(err => {
                 console.error('Failed to copy logs to clipboard', err);

@@ -1,6 +1,6 @@
 import { crypt } from "../common/Crypto";
 import { KeyPairHex } from "../common/types/CommonTypes";
-import { app } from "./AppService";
+import { alertModal } from "./components/AlertModalComp";
 import { gs } from "./GlobalState";
 
 class HttpClientUtil {
@@ -39,7 +39,6 @@ class HttpClientUtil {
      */
     secureHttpPost = async <TRequest = any, TResponse = any> (url: string, body?: TRequest): Promise<TResponse | null> => {
         const _gs = gs();
-        console.log(`>>>>>>>>>> secureHttpPost: ${url}`);
 
         let response: TResponse | null = null;
         try {
@@ -68,7 +67,7 @@ class HttpClientUtil {
                 console.error(msg);
 
                 // Show a less frightening error message to the user
-                await app.alert("An error occurred while processing your request. Please try again later.");
+                await alertModal("An error occurred while processing your request. Please try again later.");
                 return null;
             }
         } catch (error) {

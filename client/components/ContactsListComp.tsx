@@ -6,6 +6,8 @@ import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/types/CommonTypes';
+import { confirmModal } from './ConfirmModalComp';
+import { alertModal } from './AlertModalComp';
 
 /**
  * Displays a list of contacts with options to add, edit, delete, and select multiple contacts.
@@ -56,7 +58,7 @@ export default function ContactsListComp() {
     };
 
     const handleDelete = async (contact: Contact) => {
-        if (!await app.confirm(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
+        if (!await confirmModal(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
         const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
         app.setContacts(updatedContacts);
     };
@@ -69,7 +71,7 @@ export default function ContactsListComp() {
 
     const saveContact = async (contact: Contact) => {
         if (!contact.publicKey || !contact.alias) {
-            await app.alert('Public Key and Alias is required');
+            await alertModal('Public Key and Alias is required');
             return;
         }
         contact.publicKey = contact.publicKey.trim();
@@ -77,13 +79,13 @@ export default function ContactsListComp() {
 
         // If alias exists show error about that
         if (gs.contacts!.some(c => c.alias === contact.alias)) {
-            await app.alert('Alias already exists');
+            await alertModal('Alias already exists');
             return;
         }
 
         // If alias exists show error about that
         if (gs.contacts!.some(c => c.publicKey === contact.publicKey)) {
-            await app.alert('Alias already exists');
+            await alertModal('Alias already exists');
             return;
         }
         
