@@ -9,6 +9,8 @@ import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRo
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
+// todo-0: get rid of 'success' in all return values.
+
 class Controller {
     /**
      * API handler for getting all message IDs for a specific room
@@ -37,8 +39,7 @@ class Controller {
             const ret: GetMessageIdsForRoom_Response = {messageIds}
             res.json(ret);
         } catch (error) {
-            console.error('Error in getMessageIdsForRoom handler:', error);
-            res.status(500).json({ error: 'Failed to retrieve message IDs' });
+            this.handleError(error, res, 'Failed to retrieve message IDs');
         }
     }
 
@@ -69,8 +70,7 @@ class Controller {
             // Send the binary data
             res.send(attachment.data);
         } catch (error) {
-            console.error('Error serving attachment:', error);
-            res.status(500).send('Server error');
+            this.handleError(error, res, 'Failed to retrieve attachment'); 
         }
     }
     
@@ -93,8 +93,7 @@ class Controller {
             const response: GetMessageHistory_Response = {messages};
             res.json(response);
         } catch (error) {
-            console.error('Error retrieving message history:', error);
-            res.status(500).json({ error: 'Failed to retrieve message history' });
+            this.handleError(error, res, 'Failed to retrieve message history');
         }
     } 
 
@@ -112,8 +111,7 @@ class Controller {
                 res.status(404).json({ error: 'User information not found' });
             }
         } catch (error) {
-            console.error('Error in getUserInfo handler:', error);
-            res.status(500).json({ error: 'Server error' });
+            this.handleError(error, res, 'Failed to retrieve user profile');
         }
     }
 
@@ -152,8 +150,7 @@ class Controller {
             // Send the binary image data
             res.send(binaryData);
         } catch (error) {
-            console.error('Error serving avatar:', error);
-            res.status(500).send('Server error');
+            this.handleError(error, res, 'Failed to retrieve avatar');
         }
     }    
 
@@ -164,8 +161,7 @@ class Controller {
             const response: GetRoomInfo_Response = { rooms };
             res.json(response);
         } catch (error) {
-            console.error('Error getting room information:', error);
-            res.status(500).json({ success: false, error: 'Failed to get room information' });
+            this.handleError(error, res, 'Failed to retrieve room information');
         }
     }
 
@@ -191,11 +187,7 @@ class Controller {
                 res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
             }
         } catch (error) {
-            console.error('Error deleting room:', error);
-            res.status(500).json({ 
-                success: false, 
-                error: 'Server error while attempting to delete room' 
-            });
+            this.handleError(error, res, 'Server error while attempting to delete room');
         }
     }
 
@@ -206,8 +198,7 @@ class Controller {
             const response: GetRecentAttachments_Response = { attachments };
             res.json(response);
         } catch (error) {
-            console.error('Error getting recent attachments:', error);
-            res.status(500).json({ success: false, error: 'Failed to get recent attachments' });
+            this.handleError(error, res, 'Failed to retrieve recent attachments');
         }
     }
 
@@ -217,8 +208,7 @@ class Controller {
             await dbRoom.createTestData();
             res.json({ success: true, message: 'Test data created successfully' });
         } catch (error) {
-            console.error('Error creating test data:', error);
-            res.status(500).json({ error: 'Failed to create test data' });
+            this.handleError(error, res, 'Failed to create test data');
         }
     }
 
@@ -246,11 +236,7 @@ class Controller {
                 res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
             }
         } catch (error) {
-            console.error('Error deleting message:', error);
-            res.status(500).json({ 
-                success: false, 
-                error: 'Server error while attempting to delete message' 
-            });
+            this.handleError(error, res, 'Server error while attempting to delete message');
         }
     }
 
@@ -276,11 +262,7 @@ class Controller {
             });
     
         } catch (error) {
-            console.error('Error blocking user:', error);
-            res.status(500).json({ 
-                success: false, 
-                error: 'Server error while attempting to block user' 
-            });
+            this.handleError(error, res, 'Server error while attempting to block user');
         }
     }
 
@@ -299,8 +281,7 @@ class Controller {
                 res.status(404).json({ error: 'Attachment not found or could not be deleted' });
             }
         } catch (error) {
-            console.error('Error in deleteAttachment handler:', error);
-            res.status(500).json({ error: 'Server error' });
+            this.handleError(error, res, 'Failed to delete attachment');
         }
     }
 
@@ -326,8 +307,7 @@ class Controller {
             const response: GetMessagesByIds_Response = { messages };
             res.json(response);
         } catch (error) {
-            console.error('Error in getMessagesByIds handler:', error);
-            res.status(500).json({ error: 'Failed to retrieve messages' });
+            this.handleError(error, res, 'Failed to retrieve messages by IDs');
         }
     }
 
@@ -345,8 +325,7 @@ class Controller {
                 res.status(500).json({ error: 'Failed to save user information' });
             }
         } catch (error) {
-            console.error('Error in saveUserInfo handler:', error);
-            res.status(500).json({ error: 'Server error' });
+            this.handleError(error, res, 'Failed to save user profile');
         }
     }
 
@@ -357,17 +336,28 @@ class Controller {
      * @returns Array of database IDs in the same order as the input messages
      */
     sendMessages = async (req: Request<{ roomId: string }, any, SendMessages_Request>, res: Response): Promise<void> => {
-        const roomId = req.params.roomId;
-        if (!req.body.messages || req.body.messages.length === 0) {
-            res.status(400).json({ error: 'Invalid or empty messages array' });
-            return;
+        try {
+            const roomId = req.params.roomId;
+            if (!req.body.messages || req.body.messages.length === 0) {
+                res.status(400).json({ error: 'Invalid or empty messages array' });
+                return;
+            }
+        
+            // Send messages to controller and get back database IDs
+            const numSaved = await dbMessages.saveMessages(roomId, req.body.messages);
+        
+            // Return the database IDs to the client
+            res.json({ allOk: req.body.messages.length === numSaved});
         }
-        
-        // Send messages to controller and get back database IDs
-        const numSaved = await dbMessages.saveMessages(roomId, req.body.messages);
-        
-        // Return the database IDs to the client
-        res.json({ allOk: req.body.messages.length === numSaved});
+        catch (error) {
+            this.handleError(error, res, 'Failed to save messages');
+        }
+    }
+
+    // using 'unknown' is a little better than 'any' here.
+    handleError = (error: unknown, res: Response, message: string): void => {
+        console.error(`ERROR: ${message}`, error);
+        res.status(500).json({ error: message });
     }
 }
 
