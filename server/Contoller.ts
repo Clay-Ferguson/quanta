@@ -171,7 +171,6 @@ class Controller {
             
             if (!roomName) {
                 res.status(400).json({ 
-                    success: false, 
                     error: 'Room name is required' 
                 });
                 return;

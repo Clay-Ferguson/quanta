@@ -139,16 +139,12 @@ export class AppService implements AppServiceIntf  {
             _gs = gd({ type: 'deleteMessage', payload: _gs});
             this.saveMessages(_gs.roomName!, _gs.messages!);
 
-            try {
-                // Make the secure POST request with body
-                await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
-                    messageId,
-                    roomName: _gs.roomName!,
-                    publicKey: _gs.keyPair!.publicKey
-                });
-            } catch (error) {
-                console.error('Error deleting message from server:', error);
-            }
+            // Make the secure POST request with body
+            await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
+                messageId,
+                roomName: _gs.roomName!,
+                publicKey: _gs.keyPair!.publicKey
+            });
         }
     }
 
@@ -230,6 +226,7 @@ export class AppService implements AppServiceIntf  {
         }});
     }
 
+    // todo-0: All these alert-related methods need to go in their own file.
     alert = (message: string): Promise<void> => {
         return new Promise((resolve) => {
             // Set the handlers for this confirmation dialog
@@ -350,17 +347,13 @@ export class AppService implements AppServiceIntf  {
 
         // Save user info to server if saving to server is enabled
         if (_gs.saveToServer && _gs.keyPair?.publicKey) {
-            try {
-                const userProfile: UserProfile = {
-                    publicKey: _gs.keyPair!.publicKey,
-                    name: userName,
-                    description: userDescription,
-                    avatar: userAvatar
-                };
-                await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
-            } catch (error) {
-                console.error('Error saving user info to server:', error);
-            }
+            const userProfile: UserProfile = {
+                publicKey: _gs.keyPair!.publicKey,
+                name: userName,
+                description: userDescription,
+                avatar: userAvatar
+            };
+            await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
         }
     }
 
@@ -540,16 +533,13 @@ export class AppService implements AppServiceIntf  {
             return;
         }
         
-        try {
-            // Make the secure POST request with body
-            const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', {
-                publicKey: publicKey.trim()
-            });
+        // Make the secure POST request with body
+        const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', {
+            publicKey: publicKey.trim()
+        });
+        if (response) {
             await app.alert(`Success: ${response.message}`);
-        } catch (error) {
-            console.error('Error blocking user:', error);
-            await app.alert(`Failed to block user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        } 
+        }
     }
 
     setContacts = (contacts: any) => {

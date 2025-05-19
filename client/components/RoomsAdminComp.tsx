@@ -25,10 +25,10 @@ export default function RoomsAdminComp() {
     // Load rooms data on component mount
     useEffect(() => {
         const loadRoomsData = async () => {
-            setLoading(true);
             setError(null);
             
             try {
+                setLoading(true);
                 const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`);
                 if (response && Array.isArray(response.rooms)) {
                     setRoomsData(response.rooms);
@@ -36,10 +36,6 @@ export default function RoomsAdminComp() {
                     setError('Failed to retrieve room information');
                     await app.alert('Failed to retrieve room information');
                 }
-            } catch (error) {
-                console.error('Error fetching room info:', error);
-                setError('An error occurred while fetching room information');
-                await app.alert('An error occurred while fetching room information');
             } finally {
                 setLoading(false);
             }
@@ -53,10 +49,10 @@ export default function RoomsAdminComp() {
     }, [gs.keyPair]);
 
     const refreshRooms = async () => {
-        setLoading(true);
         setError(null);
         
         try {
+            setLoading(true);
             const response: GetRoomInfo_Response | null = await httpClientUtil.secureHttpPost<any, GetRoomInfo_Response>(`/api/admin/get-room-info`);
             if (response && Array.isArray(response.rooms)) {
                 setRoomsData(response.rooms);
@@ -64,10 +60,6 @@ export default function RoomsAdminComp() {
                 setError('Failed to retrieve room information');
                 await app.alert('Failed to retrieve room information');
             }
-        } catch (error) {
-            console.error('Error fetching room info:', error);
-            setError('An error occurred while fetching room information');
-            await app.alert('An error occurred while fetching room information');
         } finally {
             setLoading(false);
         }
@@ -78,17 +70,14 @@ export default function RoomsAdminComp() {
             return;
         }
 
-        try {
-            await httpClientUtil.secureHttpPost<DeleteRoom_Request, any>(`/api/admin/delete-room`, {
-                roomName
-            });
+        const res = await httpClientUtil.secureHttpPost<DeleteRoom_Request, any>(`/api/admin/delete-room`, {
+            roomName
+        });
             
+        if (res) {
             // Remove the deleted room from the state
             setRoomsData(prevRooms => prevRooms.filter(room => room.name !== roomName));
             await app.alert(`Room "${roomName}" deleted successfully`);
-        } catch (error) {
-            console.error('Error deleting room:', error);
-            await app.alert(`An error occurred while deleting room "${roomName}"`);
         }
     };
 

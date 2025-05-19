@@ -34,9 +34,6 @@ export default function RecentAttachmentsPage() {
             } else {
                 setError('Failed to retrieve attachment data');
             }
-        } catch (error) {
-            console.error('Error fetching attachments info:', error);
-            setError('An error occurred while fetching attachment information');
         } finally {
             setLoading(false);
         }

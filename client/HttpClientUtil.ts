@@ -1,5 +1,6 @@
 import { crypt } from "../common/Crypto";
 import { KeyPairHex } from "../common/types/CommonTypes";
+import { app } from "./AppService";
 import { gs } from "./GlobalState";
 
 class HttpClientUtil {
@@ -29,9 +30,16 @@ class HttpClientUtil {
         return ret;
     }
 
+    /**
+     * Posts using a digital signature for authentication.
+     * 
+     * @param url 
+     * @param body 
+     * @returns null if error, or else the response object
+     */
     secureHttpPost = async <TRequest = any, TResponse = any> (url: string, body?: TRequest): Promise<TResponse | null> => {
         const _gs = gs();
-        console.log(`secureHttpPost: ${url}`);
+        console.log(`>>>>>>>>>> secureHttpPost: ${url}`);
 
         let response: TResponse | null = null;
         try {
@@ -56,7 +64,12 @@ class HttpClientUtil {
             }
             else {
                 const errorData = await res.json();
-                alert(`Failed to post to ${url}: ${errorData.error || 'Unknown error'}`);
+                const msg = `Failed to post to ${url}: ${errorData.error || 'Unknown error'}`;
+                console.error(msg);
+
+                // Show a less frightening error message to the user
+                await app.alert("An error occurred while processing your request. Please try again later.");
+                return null;
             }
         } catch (error) {
             console.error(`Error posting to ${url}:`, error);
