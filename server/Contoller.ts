@@ -9,8 +9,6 @@ import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRo
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
-// todo-0: get rid of 'success' in all return values.
-
 class Controller {
     /**
      * API handler for getting all message IDs for a specific room

@@ -34,6 +34,7 @@ export interface GlobalState {
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile | null;
     modalMessage?: string | null;
+    showModalButton?: boolean;
     confirmMessage?: string | null;
     promptMessage?: string | null;
     promptDefaultValue?: string | null;
@@ -61,6 +62,7 @@ const initialState: GlobalState = {
     userAvatar: null,
     userProfile: null,
     modalMessage: null,
+    showModalButton: true,
     confirmMessage: null,
     promptMessage: null,
     promptDefaultValue: null,

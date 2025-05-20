@@ -446,12 +446,10 @@ class WebRTC {
     _connect = async (userName: string, keyPair: KeyPairHex, roomName: string): Promise<boolean> => {
         if (this.disconnectTime > 0) {
             const timeSinceDisconnect = Date.now() - this.disconnectTime;
-            if (timeSinceDisconnect < 5000) {
-                console.log('WebRTC: Attempting to reconnect too quickly after disconnect. Waiting...');
 
-                // todo-0: instead of alerting just wait 3 seconds and try again. And yes change it to 3 not 5 seconds.
-                await alertModal('Too soon after disconnect. Please wait a few seconds before reconnecting.');
-                return false;
+            // If user is trying to reconnect too quickly, show a message and delay before reconnecting
+            if (timeSinceDisconnect < 4000) {
+                await alertModal(`Connecting to ${roomName}...`, 4000); // to NOT await here for alertModal.
             }
         }
 
