@@ -8,6 +8,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { app } from '../AppService';
 import { useEffect } from 'react';
 import { util } from '../Util';
+import appRooms from '../AppRooms';
 
 /**
  * Page for displaying the list of rooms the user has previously joined.
@@ -73,7 +74,7 @@ export default function RoomsPage() {
                                                            Join
                                                             </button>)}
                                                         <button 
-                                                            onClick={() => app.forgetRoom(room.name)}
+                                                            onClick={() => appRooms.forgetRoom(room.name)}
                                                             className="text-red-400 hover:text-red-300 focus:outline-none"
                                                             aria-label={`Delete ${room.name}`}
                                                         >

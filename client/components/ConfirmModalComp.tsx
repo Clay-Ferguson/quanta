@@ -33,7 +33,7 @@ export function ConfirmModalComp() {
     const gs = useGlobalState();
     if (!gs.confirmMessage) return null;
     
-    const handleConfirm = (result: boolean) => {
+    const closeConfirmModal = (result: boolean) => {
         // Resolve the promise with the user's choice
         if (activeConfirmHandler) {
             activeConfirmHandler.resolve(result);
@@ -59,14 +59,14 @@ export function ConfirmModalComp() {
                     <button
                         type="button"
                         className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        onClick={() => handleConfirm(false)}
+                        onClick={() => closeConfirmModal(false)}
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        onClick={() => handleConfirm(true)}
+                        onClick={() => closeConfirmModal(true)}
                     >
                         OK
                     </button>

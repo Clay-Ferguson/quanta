@@ -1,10 +1,11 @@
 import { ChatMessage, KeyPairHex, User } from '../common/types/CommonTypes.ts';
 import {WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft} from '../common/types/WebRTCTypes.ts';
-import {AppServiceIntf} from './AppServiceTypes.ts';
+import appMessages from './AppMessages.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
 import { canon } from '../common/Canonicalizer.ts';
 import { alertModal } from './components/AlertModalComp.tsx';
+import { app } from './AppService.ts';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -27,7 +28,6 @@ class WebRTC {
     // all room participants by publicKey
     participants = new Map<string, User>();
     connected: boolean = false;
-    app: AppServiceIntf | null = null;
     host: string = "";
     port: string = "";
     secure: boolean = false;
@@ -36,8 +36,7 @@ class WebRTC {
     // for debugging
     pingChecks = false;
 
-    init(app: AppServiceIntf, host: string, port: string, secure: boolean, saveToServer: boolean) {
-        this.app = app;
+    init(host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.host = host;
         this.port = port;
         this.saveToServer=saveToServer;
@@ -266,17 +265,17 @@ class WebRTC {
     }
 
     _onAcknowledge = (evt: WebRTCAck) => {
-        this.app?.acknowledgeMessage(evt.id);
+        appMessages.acknowledgeMessage(evt.id);
     }
 
     _onDeleteMsg = (evt: WebRTCDeleteMsg) => {
         console.log('Delete message received for message ID: ' + evt.messageId);
-        this.app?.inboundDeleteMessage(evt.room, evt.messageId);
+        appMessages.inboundDeleteMessage(evt.room, evt.messageId);
     }
 
     _onBroadcast = (evt: WebRTCBroadcast) => {
         console.log('broadcast. Received broadcast message from ' + evt.sender!.name);
-        this.app?.persistInboundMessage(evt.message);           
+        appMessages.persistInboundMessage(evt.message);           
     }
 
     _onmessage = (event: any) => {
@@ -314,7 +313,7 @@ class WebRTC {
         default:
             console.log('Unknown message type: ' + evt.type);
         } 
-        this.app?.rtcStateChange();
+        app.rtcStateChange();
     }
 
     _onopen = async () => {
@@ -335,20 +334,20 @@ class WebRTC {
             this.signedSocketSend(joinMessage, canon.canonical_WebRTCJoin);
         }
         console.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        this.app?.rtcStateChange();
+        app.rtcStateChange();
     }
 
     _onerror = (error: any) => {
         console.log('WebSocket error: ' + error);
         this.connected = false;
-        this.app?.rtcStateChange();
+        app.rtcStateChange();
     };
 
     _onclose = () => {
         console.log('Disconnected from signaling server');
         this.connected = false;
         this.closeAllConnections();
-        this.app?.rtcStateChange();
+        app.rtcStateChange();
     }
 
     //peerName = user.name
@@ -487,7 +486,7 @@ class WebRTC {
         this.connected = false;
     
         console.log('Disconnected from WebRTC session');
-        this.app?.rtcStateChange();
+        app.rtcStateChange();
     }
 
     closeAllConnections() {
@@ -539,7 +538,7 @@ class WebRTC {
         channel.onopen = () => {
             console.log(`Data channel OPENED with ${user.name}`);
             this.participants.set(user.publicKey, user);
-            this.app?.rtcStateChange();
+            app.rtcStateChange();
             if (this.pingChecks) {
                 // Try sending a test message to confirm functionality
                 try {
@@ -568,7 +567,7 @@ class WebRTC {
                         console.log('Received message without signature, ignoring.');
                         return;
                     }
-                    this.app?.persistInboundMessage(msg);
+                    appMessages.persistInboundMessage(msg);
                 }
             } catch (error) {
                 console.log('Error parsing message: ' + error);

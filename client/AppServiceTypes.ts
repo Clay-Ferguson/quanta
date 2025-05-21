@@ -1,12 +1,3 @@
-import { ChatMessage } from "../common/types/CommonTypes";
-
-export interface AppServiceIntf {
-    rtcStateChange(): void;
-    persistInboundMessage(msg: ChatMessage): Promise<void>;
-    acknowledgeMessage(id: string): Promise<void>;
-    inboundDeleteMessage(roomName: string, id: string): Promise<void>;
-}
-
 export interface RoomHistoryItem {
     name: string;
 }

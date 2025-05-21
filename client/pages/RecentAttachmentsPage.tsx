@@ -6,12 +6,12 @@ import HexKeyComp from '../components/HexKeyComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash} from '@fortawesome/free-solid-svg-icons';
 import AvatarImageComp from '../components/AvatarImageComp';
-import { app } from '../AppService';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { AttachmentInfo } from '../../common/types/CommonTypes';
 import { GetRecentAttachments_Response } from '../../common/types/EndpointTypes';
 import { confirmModal } from '../components/ConfirmModalComp';
+import appMessages from '../AppMessages';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -85,7 +85,7 @@ export default function RecentAttachmentsPage() {
             }
             return msg;
         });
-        app.setMessages(gs.messages)
+        appMessages.setMessages(gs.messages)
     };
 
     return (

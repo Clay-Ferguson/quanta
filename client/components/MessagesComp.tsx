@@ -9,6 +9,7 @@ import { scrollEffects } from '../ScrollEffects';
 import { app } from '../AppService';
 import AvatarImageComp from './AvatarImageComp';
 import { ChatMessage, Contact, MessageStates } from '../../common/types/CommonTypes';
+import appMessages from '../AppMessages';
 
 declare const ADMIN_PUBLIC_KEY: string; 
 
@@ -124,7 +125,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                                         <FontAwesomeIcon 
                                             icon={faTrash} 
                                             className="h-4 w-4 text-gray-500 hover:text-red-500 cursor-pointer transition-colors" 
-                                            onClick={() => app.deleteMessage(msg.id)}
+                                            onClick={() => appMessages.deleteMessage(msg.id)}
                                             title="Delete message"
                                         />
                                     </div>

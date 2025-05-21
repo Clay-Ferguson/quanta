@@ -1,8 +1,8 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import {app} from '../AppService';
 import {util} from '../Util';
 import { useGlobalState } from '../GlobalState';
+import appMessages from '../AppMessages';
 
 /**
  * Footer component for the chat application. It includes a textarea for typing messages,
@@ -132,7 +132,7 @@ export default function FooterComp() {
             }
         } 
         // Send message without attachments
-        await app.sendMessage(message.trim(), processedFiles);
+        await appMessages.sendMessage(message.trim(), processedFiles);
         
         setMessage(''); 
         setSelectedFiles([]); 
