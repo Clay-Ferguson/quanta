@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useGlobalState } from '../GlobalState';
-import { app } from '../AppService';
+import { gd, useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from './HexKeyComp';
@@ -8,6 +7,8 @@ import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/types/CommonTypes';
 import { confirmModal } from './ConfirmModalComp';
 import { alertModal } from './AlertModalComp';
+import { DBKeys } from '../AppServiceTypes';
+import { idb } from '../IndexedDB';
 
 /**
  * Displays a list of contacts with options to add, edit, delete, and select multiple contacts.
@@ -17,6 +18,15 @@ export default function ContactsListComp() {
     if (!gs.contacts) {
         gs.contacts = [];
     }
+
+    function setContacts(contacts: any) {
+        // Save into global state
+        gd({ type: 'setContacts', payload: { contacts }});
+
+        // Save to IndexedDB
+        idb.setItem(DBKeys.contacts, contacts);
+    }
+
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
     const [editingContact, setEditingContact] = useState<string | null>(null);
     const [newContact, setNewContact] = useState<Contact | null>(null);
@@ -60,12 +70,12 @@ export default function ContactsListComp() {
     const handleDelete = async (contact: Contact) => {
         if (!await confirmModal(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
         const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
-        app.setContacts(updatedContacts);
+        setContacts(updatedContacts);
     };
 
     const handleDeleteSelected = () => {
         const updatedContacts = gs.contacts!.filter(contact => !selectedContacts.has(contact.publicKey));
-        app.setContacts(updatedContacts);
+        setContacts(updatedContacts);
         setSelectedContacts(new Set());
     };
 
@@ -89,7 +99,7 @@ export default function ContactsListComp() {
             return;
         }
         
-        app.setContacts([...gs.contacts!, contact]);
+        setContacts([...gs.contacts!, contact]);
         setNewContact(null);
     }
 
@@ -161,7 +171,7 @@ export default function ContactsListComp() {
                                             const updatedContacts = gs.contacts!.map(c => 
                                                 c.publicKey === contact.publicKey ? updatedContact : c
                                             );
-                                            app.setContacts(updatedContacts);
+                                            setContacts(updatedContacts);
                                             setEditingContact(null);
                                         }}
                                         onCancel={() => setEditingContact(null)}

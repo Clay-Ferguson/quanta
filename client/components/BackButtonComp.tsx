@@ -1,6 +1,15 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons/faArrowLeft";
-import { app } from "../AppService";
+import { gd, gs } from "../GlobalState";
+
+function goBack() {
+    const _gs = gs();
+    if (_gs.pages && _gs.pages.length > 1) {
+        // Remove the last page from the stack
+        _gs.pages.pop();
+    }
+    gd({ type: 'setPage', payload: _gs });
+}
 
 /**
  * The universal back button component use in every page of the app. We maintain a stack of pages, so we can sort of pop
@@ -9,7 +18,7 @@ import { app } from "../AppService";
 export default function BackButtonComp() {
     return (
         <button 
-            onClick={() => app.goBack()}
+            onClick={goBack}
             className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
             title="Back"
         >

@@ -4,14 +4,34 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
-import { useGlobalState } from '../GlobalState';
+import { gd, useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
-import { PanelKeys } from '../AppServiceTypes';
+import { DBKeys, PanelKeys } from '../AppServiceTypes';
 import { PageNames } from '../AppServiceTypes';
 import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
+import { idb } from '../IndexedDB';
+import appUsers from '../AppUsers';
+import { rtc } from '../WebRTC';
+import appRooms from '../AppRooms';
+
+async function clear() {
+    await idb.clear();
+    console.log("Cleared IndexedDB");
+    // refresh browser page is the cleanest way to restart from scratch
+    window.location.reload();
+}
+
+async function persistGlobalValue(key: string, value: any) {
+    // save to global state
+    gd({ type: `persistGlobal-${key}`, payload: { 
+        [key]: value
+    }});
+    // Save the keyPair to IndexedDB
+    await idb.setItem(key, value);
+}
 
 /**
  * Page for managing user settings, including username, avatar, and identity keys.
@@ -91,7 +111,8 @@ export default function SettingsPage() {
     const handleSaveToServerChange = (e: any) => {
         const isChecked = e.target.checked;
         setSaveToServer(isChecked);
-        app.setSaveToServer(isChecked);
+        persistGlobalValue(DBKeys.saveToServer, isChecked);
+        rtc.setSaveToServer(isChecked);
     };
     
     const handleDaysOfHistoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +124,8 @@ export default function SettingsPage() {
         // Convert to number and save to global state
         const days = parseInt(daysOfHistory);
         if (!isNaN(days) && days >= 0) {
-            app.setDaysOfHistory(days);
+            persistGlobalValue(DBKeys.daysOfHistory, days);
+            appRooms.runRoomCleanup();
             await alertModal(`Saved successfully.`);
         } else {
             await alertModal("Please enter a valid number of days (0 or greater)");
@@ -133,7 +155,7 @@ export default function SettingsPage() {
     
     const previewUserInfo = async () => {
         await saveUserInfo(false);
-        app.showUserProfile(gs.keyPair!.publicKey);
+        appUsers.showUserProfile(gs.keyPair!.publicKey);
     };
 
     const saveUserInfo = async (showConfirm: boolean) => {
@@ -152,7 +174,7 @@ export default function SettingsPage() {
             userAvatar = gs.userAvatar
         }
 
-        await app.saveUserInfo(userName, userDescription, userAvatar);
+        await appUsers.saveUserInfo(userName, userDescription, userAvatar);
         if (showConfirm) {
             await alertModal("Profile information saved successfully!");
         }
@@ -374,8 +396,8 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-3 mt-4">
                             <div className="flex space-x-4">
-                                <button className="btn-primary" onClick={() => app.createIdentity(true)}>Create New Keys</button>
-                                <button className="btn-primary" onClick={app.importKeyPair}>Import Keys</button>
+                                <button className="btn-primary" onClick={() => appUsers.createIdentity(true)}>Create New Keys</button>
+                                <button className="btn-primary" onClick={appUsers.importKeyPair}>Import Keys</button>
                             </div>
                         </div>
                     </TitledPanelComp>
@@ -404,7 +426,7 @@ export default function SettingsPage() {
                                 className="btn-danger"
                                 onClick={async () => {
                                     if (await confirmModal("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
-                                        app.clear();
+                                        clear();
                                     }
                                 }}
                             >

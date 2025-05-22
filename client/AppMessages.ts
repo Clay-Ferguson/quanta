@@ -3,7 +3,6 @@ import { crypt } from "../common/Crypto.ts";
 import { ChatMessage, ChatMessageIntf, MessageStates } from "../common/types/CommonTypes.ts";
 import { DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from "../common/types/EndpointTypes.ts";
 import appRooms from "./AppRooms.ts";
-import { app } from "./AppService";
 import { DBKeys } from "./AppServiceTypes.ts";
 import { alertModal } from "./components/AlertModalComp.tsx";
 import { confirmModal } from "./components/ConfirmModalComp";
@@ -99,7 +98,7 @@ export class AppMessages {
                     }
     
                     try {
-                        app.pruneDB(msg);
+                        this.pruneDB(msg);
                     } catch (error) {
                         console.log('Error checking storage or saving message: ' + error);
                     }
@@ -146,7 +145,7 @@ export class AppMessages {
         let _gs = gs();   
             _gs.messages!.push(msg);
             try {
-                await app.pruneDB(msg);
+                await this.pruneDB(msg);
                 _gs = gs();
             } catch (error) {
                 console.log('Error checking storage or saving message: ' + error);
@@ -395,6 +394,38 @@ export class AppMessages {
         }
         console.log("**** Final: Loaded " + messages.length + " messages for room: " + roomId);
         return messages;
+    }
+
+    pruneDB = async (msg: any) => {
+        if (navigator.storage && navigator.storage.estimate) {
+            const estimate: any = await navigator.storage.estimate();
+            const remainingStorage = estimate.quota - estimate.usage;
+            const usagePercentage = (estimate.usage / estimate.quota) * 100;
+            const forceClean = false; // set to true to simuilate low storage, and cause pruning, after every message send
+    
+            console.log(`Storage: (${Math.round(usagePercentage)}% used). Quota: ${util.formatStorageSize(estimate.quota)}`);
+    
+            // Calculate message size and check storage limits
+            const msgSize = util.calculateMessageSize(msg);
+    
+            // If we're within 10% of storage limit
+            if (remainingStorage < msgSize || usagePercentage > 90 || forceClean) {
+                const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
+                        `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
+    
+                if (await confirmModal(warningMsg)) {
+                    const _gs = gs();
+                        // Sort messages by timestamp and remove oldest 20%
+                        _gs.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
+                        const countToRemove = Math.ceil(_gs.messages!.length * 0.20);
+                        _gs.messages = _gs.messages!.slice(countToRemove);
+    
+                        // Save the pruned messages
+                        appMessages.saveMessages(_gs.roomName!, _gs.messages!);
+                        console.log(`Removed ${countToRemove} old messages due to storage constraints`);
+                }
+            }
+        }
     }
 }
 

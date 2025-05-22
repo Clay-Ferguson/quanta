@@ -1,17 +1,11 @@
-import {util} from './Util.js';
 import {DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
-import {crypt} from '../common/Crypto.ts';  
-import { ChatMessage, Contact, FileBase64Intf, KeyPairHex, User, UserProfile } from '../common/types/CommonTypes.ts';
-import { httpClientUtil } from './HttpClientUtil.ts';
+import { Contact, FileBase64Intf, KeyPairHex, User } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import {rtc} from './WebRTC.ts';
-import { BlockUser_Request } from '../common/types/EndpointTypes.ts';
-import { confirmModal } from './components/ConfirmModalComp.tsx';
-import { promptModal } from './components/PromptModalComp.tsx';
-import { alertModal } from './components/AlertModalComp.tsx';
 import appMessages from './AppMessages.ts';
 import appRooms from './AppRooms.ts';
+import appUsers from './AppUsers.ts';
 
 // Vars are injected diretly into HTML by server
 declare const HOST: string;
@@ -35,7 +29,7 @@ export class AppService {
         // Load the keyPair from IndexedDB
         const keyPair: KeyPairHex = await idb.getItem(DBKeys.keyPair);
         if (!keyPair) {
-            await this.createIdentity(false);
+            await appUsers.createIdentity(false);
         }
         else {
             gd({ type: 'setIdentity', payload: { 
@@ -74,32 +68,6 @@ export class AppService {
         if (!gs.connected) {
             gs.headerExpanded = true;
         }
-    }
-
-    toggleHeaderExpand = () => {
-        let _gs = gs();
-        _gs.headerExpanded = !_gs.headerExpanded;
-        _gs = gd({ type: 'toggleHeaderExpand', payload: _gs});
-        idb.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
-    }
-
-    showUserProfile = async (publicKey: string) => {
-        // set page to userprofile 
-        const _gs = gs();
-        this.setTopPage(_gs, PageNames.userProfile);
-        _gs.userProfile = {name: '', publicKey, description: '', avatar: null};
-        gd({ type: 'setUserProfile', payload: _gs});
-    }
-    
-    saveLinkPreviewInfo = async (url: string, data: any) => {
-        // Save the link preview data to IndexedDB
-        await idb.setItem(DBKeys.linkPreview + url, data);
-    }
-
-    getLinkPreviewInfo = async (url: string): Promise<any> => {
-        // Retrieve the link preview data from IndexedDB
-        const data = await idb.getItem(DBKeys.linkPreview + url);
-        return data;
     }
 
     restoreConnection = async () => {
@@ -142,14 +110,7 @@ export class AppService {
         if (!userName) {
             state.pages?.push(PageNames.settings);
         }
-
         gd({ type: 'restoreSavedValues', payload: state});
-    }
-    
-    setFullSizeImage = (att: FileBase64Intf | null) => {
-        const _gs = gs();
-        _gs.fullSizeImage = att ? {src: att.data, name: att.name} : null;
-        gd({ type: 'setFullSizeImage', payload: _gs});
     }
 
     getPageName = (): string => {
@@ -174,45 +135,6 @@ export class AppService {
         gd({ type: 'setPage', payload: _gs });
     }
 
-    goBack = () => {
-        const _gs = gs();
-        if (_gs.pages && _gs.pages.length > 1) {
-            // Remove the last page from the stack
-            _gs.pages.pop();
-        }
-        gd({ type: 'setPage', payload: _gs });
-    }
-
-    saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
-        const _gs = gd({ type: `setUserInfo`, payload: { 
-            userName, userDescription, userAvatar
-        }});
-        await idb.setItem(DBKeys.userName, userName);
-        await idb.setItem(DBKeys.userDescription, userDescription);
-        await idb.setItem(DBKeys.userAvatar, userAvatar);
-
-        // Save user info to server if saving to server is enabled
-        if (_gs.saveToServer && _gs.keyPair?.publicKey) {
-            const userProfile: UserProfile = {
-                publicKey: _gs.keyPair!.publicKey,
-                name: userName,
-                description: userDescription,
-                avatar: userAvatar
-            };
-            await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
-        }
-    }
-
-    setSaveToServer  = async (saveToServer: boolean) => {
-        this.persistGlobalValue(DBKeys.saveToServer, saveToServer);
-        rtc.setSaveToServer(saveToServer);
-    }
-
-    setDaysOfHistory  = async (days: number) => {
-        this.persistGlobalValue(DBKeys.daysOfHistory, days);
-        appRooms.runRoomCleanup();
-    }
-
     // we have this method only for effeciency to do a single state update.
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
         gd({ type: `setRoomAndUser`, payload: { 
@@ -222,69 +144,6 @@ export class AppService {
         await idb.setItem(DBKeys.roomName, roomName);
         await idb.setItem(DBKeys.userName, userName);
     }        
-
-    persistGlobalValue = async (key: string, value: any) => {
-        // save to global state
-        gd({ type: `persistGlobal-${key}`, payload: { 
-            [key]: value
-        }});
-        // Save the keyPair to IndexedDB
-        await idb.setItem(key, value);
-    }
-
-    importKeyPair = async () => {
-        const _gs = gs();
-        if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
-            if (!await confirmModal("Are you sure? This will overwrite your existing key pair.")) {
-                return;
-            }
-        }
-        const privateKey = await promptModal("Enter Private Key");
-        console.log("Importing Key Pair: " + privateKey);
-        
-        if (!privateKey) {
-            return;
-        }
-
-        const keyPair = crypt.makeKeysFromPrivateKeyHex(privateKey);
-        if (!keyPair) {
-            console.error("Invalid private key provided.");
-            return;
-        }
-        gd({ type: 'importIdentity', payload: { 
-            keyPair
-        }});
-        // Save the keyPair to IndexedDB
-        await idb.setItem(DBKeys.keyPair, keyPair);
-    }
-
-    createIdentity = async (askFirst: boolean = true) => {
-        const _gs = gs();
-        // if they already have a keyPair, ask if they want to create a new one
-        if (askFirst && _gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
-            if (! await confirmModal("Create new Identity Keys?\n\nWARNING: This will overwrite your existing keys.")) {
-                return;
-            }
-        }
-
-        const keyPair: KeyPairHex= crypt.generateKeypair();
-        gd({ type: 'creatIdentity', payload: { 
-            keyPair
-        }});
-        // Save the keyPair to IndexedDB
-        await idb.setItem(DBKeys.keyPair, keyPair);
-    }
-
-    rtcStateChange = () => {
-        const participants = rtc.participants || new Map<string, User>();
-        const connected = rtc.connected || false;
-        gd({type: 'updateRtcState', 
-            payload: { 
-                participants,
-                connected
-            }
-        });
-    }
 
     // userName is optional and will default to global state if not provided
     connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
@@ -325,30 +184,7 @@ export class AppService {
         // setTimeout(() => {
         //     this.reSendFailedMessages();
         // }, 500);
-
         console.log("Connected to room: " + roomName);
-    }
-
-    blockUser = async (publicKey: string) => {
-        if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
-            return;
-        }
-        
-        // Make the secure POST request with body
-        const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', {
-            publicKey: publicKey.trim()
-        });
-        if (response) {
-            await alertModal(`Success: ${response.message}`);
-        }
-    }
-
-    setContacts = (contacts: any) => {
-        // Save into global state
-        gd({ type: 'setContacts', payload: { contacts }});
-
-        // Save to IndexedDB
-        idb.setItem(DBKeys.contacts, contacts);
     }
 
     disconnect = async () => {
@@ -359,92 +195,6 @@ export class AppService {
             connected: false, 
         }});
         await idb.setItem(DBKeys.connected, false);
-    }
-
-    setPanelCollapsed = (collapsibleKey: string, isCollapsed: boolean) => {
-        // Clone the current set of collapsed panels (or create a new one if it doesn't exist)
-        const collapsedPanels = new Set(gs().collapsedPanels || new Set<string>());
-    
-        if (isCollapsed) {
-        // If collapsing, add the key to the set
-            collapsedPanels.add(collapsibleKey);
-        } else {
-        // If expanding, remove the key from the set
-            collapsedPanels.delete(collapsibleKey);
-        }
-        
-        // Update the global state with the new set
-        gd({ type: 'setPanelCollapsed', payload: { collapsedPanels }});
-    }
-
-    addContact = async (user: User) => {
-        const _gs = gs();
-        if (!_gs.contacts) {
-            console.warn('No contacts available to add a new contact');
-            return;
-        }
-
-        // Check if the user is already in the contacts
-        const existingContact = _gs.contacts!.find((contact: Contact) => contact.publicKey === user.publicKey);
-        if (existingContact) {
-            console.warn('User is already in contacts');
-            return;
-        }
-
-        // Add the new contact
-        _gs.contacts!.push({
-            publicKey: user.publicKey,
-            alias: user.name,
-        });
-
-        await idb.setItem(DBKeys.contacts, _gs.contacts);
-        gd({ type: 'addContact', payload: _gs});
-    }
-
-    existsInContacts(msg: ChatMessage) {
-        if (!gs().contacts) {
-            return false;
-        }
-        return gs().contacts!.some((contact: any) => contact.publicKey === msg.publicKey);
-    }
-
-    pruneDB = async (msg: any) => {
-        if (navigator.storage && navigator.storage.estimate) {
-            const estimate: any = await navigator.storage.estimate();
-            const remainingStorage = estimate.quota - estimate.usage;
-            const usagePercentage = (estimate.usage / estimate.quota) * 100;
-            const forceClean = false; // set to true to simuilate low storage, and cause pruning, after every message send
-
-            console.log(`Storage: (${Math.round(usagePercentage)}% used). Quota: ${util.formatStorageSize(estimate.quota)}`);
-
-            // Calculate message size and check storage limits
-            const msgSize = util.calculateMessageSize(msg);
-
-            // If we're within 10% of storage limit
-            if (remainingStorage < msgSize || usagePercentage > 90 || forceClean) {
-                const warningMsg = `You're running low on storage space (${Math.round(usagePercentage)}% used). ` +
-                    `Would you like to remove the oldest 20% of messages from the current room to free up space?`;
-
-                if (await confirmModal(warningMsg)) {
-                    const _gs = gs();
-                    // Sort messages by timestamp and remove oldest 20%
-                    _gs.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
-                    const countToRemove = Math.ceil(_gs.messages!.length * 0.20);
-                    _gs.messages = _gs.messages!.slice(countToRemove);
-
-                    // Save the pruned messages
-                    appMessages.saveMessages(_gs.roomName!, _gs.messages!);
-                    console.log(`Removed ${countToRemove} old messages due to storage constraints`);
-                }
-            }
-        }
-    }
-
-    clear = async () => {
-        await idb.clear();
-        console.log("Cleared IndexedDB");
-        // refresh browser page
-        window.location.reload();
     }
 }
 

@@ -3,10 +3,18 @@ import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown  } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
-import { PageNames } from '../AppServiceTypes';
-import { useGlobalState } from '../GlobalState';
+import { DBKeys, PageNames } from '../AppServiceTypes';
+import { gd, gs, useGlobalState } from '../GlobalState';
+import { idb } from '../IndexedDB';
 
 declare const ADMIN_PUBLIC_KEY: string;
+
+function toggleHeaderExpand() {
+    let _gs = gs();
+    _gs.headerExpanded = !_gs.headerExpanded;
+    _gs = gd({ type: 'toggleHeaderExpand', payload: _gs});
+    idb.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
+}
 
 /**
  * Header component for the chat application. It includes a logo, room name input, and buttons for joining/leaving rooms.
@@ -135,7 +143,7 @@ export default function HeaderComp() {
                 <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
 
                     {gs.connected && <button 
-                        onClick={() => app.toggleHeaderExpand()}
+                        onClick={toggleHeaderExpand}
                         className="btn-icon"
                         aria-label={gs.headerExpanded ? "Collapse header" : "Expand header"}
                     >

@@ -1,6 +1,5 @@
 import React from 'react';
-import { useGlobalState } from '../GlobalState';
-import { app } from '../AppService';
+import { gd, gs, useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
@@ -12,13 +11,29 @@ interface TitledPanelProps {
   collapsibleKey?: string;
 }
 
+function setPanelCollapsed(collapsibleKey: string, isCollapsed: boolean) {
+    // Clone the current set of collapsed panels (or create a new one if it doesn't exist)
+    const collapsedPanels = new Set(gs().collapsedPanels || new Set<string>());
+    
+    if (isCollapsed) {
+        // If collapsing, add the key to the set
+        collapsedPanels.add(collapsibleKey);
+    } else {
+        // If expanding, remove the key from the set
+        collapsedPanels.delete(collapsibleKey);
+    }
+        
+    // Update the global state with the new set
+    gd({ type: 'setPanelCollapsed', payload: { collapsedPanels }});
+}
+
 /**
  * Displays a titled panel with a title and content area. The title is styled with a blue background and the content area has a gray background.
  * Can be made collapsible by providing a collapsibleKey. If provided, the panel will show collapse/expand controls and maintain its state in global state.
  */
 export default function TitledPanelComp({ title, children, collapsibleKey }: TitledPanelProps) {
     const gs = useGlobalState();
-    
+
     // Determine if this panel is currently collapsed based on global state
     const isCollapsible = !!collapsibleKey;
     const isCollapsed = isCollapsible && gs.collapsedPanels?.has(collapsibleKey);
@@ -27,7 +42,7 @@ export default function TitledPanelComp({ title, children, collapsibleKey }: Tit
     const toggleCollapse = () => {
         if (collapsibleKey) {
             // Call the app method to update global state
-            app.setPanelCollapsed(collapsibleKey, !isCollapsed);
+            setPanelCollapsed(collapsibleKey, !isCollapsed);
         }
     };
     

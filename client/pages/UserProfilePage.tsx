@@ -9,9 +9,9 @@ import HexKeyComp from '../components/HexKeyComp';
 import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 import TitledPanelComp from '../components/TitledPanelComp';
-import { app } from '../AppService';
 import { httpClientUtil } from '../HttpClientUtil';
 import { util } from '../Util';
+import appUsers from '../AppUsers';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -127,7 +127,7 @@ export default function UserProfilePage() {
                                                 This user is not in your contacts
                                             </span>
                                             <button
-                                                onClick={() => app.addContact({
+                                                onClick={() => appUsers.addContact({
                                                     name: profileData.name || "Unnamed User",
                                                     publicKey: profileData.publicKey
                                                 })}
@@ -151,7 +151,7 @@ export default function UserProfilePage() {
                     <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 
-                                onClick={() => app.blockUser(profileData.publicKey)}
+                                onClick={() => appUsers.blockUser(profileData.publicKey)}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors duration-200"
                             >
                             Block User

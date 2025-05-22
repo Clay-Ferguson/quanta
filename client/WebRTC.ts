@@ -5,7 +5,7 @@ import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
 import { canon } from '../common/Canonicalizer.ts';
 import { alertModal } from './components/AlertModalComp.tsx';
-import { app } from './AppService.ts';
+import { gd } from './GlobalState.tsx';
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
@@ -41,6 +41,17 @@ class WebRTC {
         this.port = port;
         this.saveToServer=saveToServer;
         this.secure = secure;
+    }
+
+    rtcStateChange = () => {
+        const participants = rtc.participants || new Map<string, User>();
+        const connected = rtc.connected || false;
+        gd({type: 'updateRtcState', 
+            payload: { 
+                participants,
+                connected
+            }
+        });
     }
 
     initSocket() {
@@ -313,7 +324,7 @@ class WebRTC {
         default:
             console.log('Unknown message type: ' + evt.type);
         } 
-        app.rtcStateChange();
+        this.rtcStateChange();
     }
 
     _onopen = async () => {
@@ -334,20 +345,20 @@ class WebRTC {
             this.signedSocketSend(joinMessage, canon.canonical_WebRTCJoin);
         }
         console.log('Joining room: ' + this.roomId + ' as ' + this.userName);
-        app.rtcStateChange();
+        this.rtcStateChange();
     }
 
     _onerror = (error: any) => {
         console.log('WebSocket error: ' + error);
         this.connected = false;
-        app.rtcStateChange();
+        this.rtcStateChange();
     };
 
     _onclose = () => {
         console.log('Disconnected from signaling server');
         this.connected = false;
         this.closeAllConnections();
-        app.rtcStateChange();
+        this.rtcStateChange();
     }
 
     //peerName = user.name
@@ -486,7 +497,7 @@ class WebRTC {
         this.connected = false;
     
         console.log('Disconnected from WebRTC session');
-        app.rtcStateChange();
+        this.rtcStateChange();
     }
 
     closeAllConnections() {
@@ -538,7 +549,7 @@ class WebRTC {
         channel.onopen = () => {
             console.log(`Data channel OPENED with ${user.name}`);
             this.participants.set(user.publicKey, user);
-            app.rtcStateChange();
+            this.rtcStateChange();
             if (this.pingChecks) {
                 // Try sending a test message to confirm functionality
                 try {

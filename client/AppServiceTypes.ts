@@ -12,7 +12,6 @@ export enum DBKeys {
     roomPrefix = 'room_',
     connected = 'connected',
     saveToServer = 'saveToServer',
-    linkPreview = 'linkPreview',
     daysOfHistory = 'daysOfHistory',
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',

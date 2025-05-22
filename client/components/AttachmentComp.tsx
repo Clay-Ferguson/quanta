@@ -1,8 +1,8 @@
 import {util} from '../Util';
-import { app } from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
 import { FileBase64Intf } from '../../common/types/CommonTypes';
+import { setFullSizeImage } from './ImageViewerComp';
 
 interface AttachmentCompProps {
   attachment: FileBase64Intf;
@@ -23,7 +23,7 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
                             src={att.data}
                             alt={att.name}
                             className="max-w-full rounded cursor-pointer max-h-40 object-contain"
-                            onClick={() => app.setFullSizeImage(att)}
+                            onClick={() => setFullSizeImage(att)}
                             title="Click to view full size"
                         />
                         <button 

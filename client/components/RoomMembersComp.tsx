@@ -1,11 +1,11 @@
 import { useGlobalState } from '../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { app } from '../AppService';
 import HexKeyComp from './HexKeyComp';
 import AvatarImageComp from './AvatarImageComp';
 import { Contact } from '../../common/types/CommonTypes';
 import { alertModal } from './AlertModalComp';
+import appUsers from '../AppUsers';
 
 /**
  * Displays the list of members in the room. This includes the user themselves, and all other participants.
@@ -81,7 +81,7 @@ export default function RoomMembersComp() {
                                             <button 
                                                 className="text-xs bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded flex items-center"
                                                 onClick={async () => {
-                                                    app.addContact(member);
+                                                    appUsers.addContact(member);
                                                     await alertModal(`Added ${member.name} to contacts`);
                                                 }}
                                                 title="Add to contacts"

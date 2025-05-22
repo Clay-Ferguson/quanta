@@ -7,6 +7,7 @@ import { httpClientUtil } from '../HttpClientUtil';
 import { useEffect } from 'react';
 import { util } from '../Util';
 import { promptModal } from '../components/PromptModalComp';
+import appUsers from '../AppUsers';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -35,7 +36,7 @@ export default function AdminPage() {
             return;
         }
 
-        app.blockUser(pubKey);
+        appUsers.blockUser(pubKey);
     }
 
     return (

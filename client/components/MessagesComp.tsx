@@ -6,10 +6,10 @@ import { faTriangleExclamation, faCertificate, faTrash } from '@fortawesome/free
 import { useGlobalState } from '../GlobalState';
 import {util} from '../Util';
 import { scrollEffects } from '../ScrollEffects';
-import { app } from '../AppService';
 import AvatarImageComp from './AvatarImageComp';
 import { ChatMessage, Contact, MessageStates } from '../../common/types/CommonTypes';
 import appMessages from '../AppMessages';
+import appUsers from '../AppUsers';
 
 declare const ADMIN_PUBLIC_KEY: string; 
 
@@ -89,7 +89,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                         >
                             <div className="flex">
                                 <div className="flex flex-col mr-3 min-w-[100px] text-left" title={title}>
-                                    <div className="flex items-center" onClick={() => app.showUserProfile(msg.publicKey!)}>
+                                    <div className="flex items-center" onClick={() => appUsers.showUserProfile(msg.publicKey!)}>
                                         {/* Avatar */}
                                         <div className="mr-2 flex-shrink-0">
                                             <AvatarImageComp
