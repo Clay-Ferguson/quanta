@@ -4,7 +4,21 @@ import { SignableObject } from "./types/CommonTypes.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY
 
+/**
+ * Utility class for HTTP signature verification and authentication middleware.
+ * Implements RFC 9421 - HTTP Message Signatures for secure API authentication.
+ * Provides methods for verifying both request body signatures and query parameter signatures.
+ */
 class HttpServerUtil {
+    /**
+     * Express middleware that verifies HTTP signatures using the public key from the request body.
+     * Extracts the public key from req.body and delegates to verifyHTTPSignature.
+     * 
+     * @param req - Express request object containing the public key in the body
+     * @param res - Express response object for sending error responses
+     * @param next - Express next function to continue to the next middleware
+     * @returns Promise<void>
+     */
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         const { publicKey }: SignableObject = req.body;
         if (!publicKey) {
@@ -14,12 +28,42 @@ class HttpServerUtil {
         return this.verifyHTTPSignature(req, res, publicKey, next);
     }
 
+    /**
+     * Express middleware that verifies HTTP signatures using the admin public key.
+     * Uses the ADMIN_PUBLIC_KEY environment variable for signature verification.
+     * 
+     * @param req - Express request object
+     * @param res - Express response object for sending error responses
+     * @param next - Express next function to continue to the next middleware
+     * @returns Promise<void>
+     */
     verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         return this.verifyHTTPSignature(req, res, ADMIN_PUBLIC_KEY!, next);
     }
 
-    // Note: This is AI-Generated implementation for "RFC 9421 - HTTP Message Signatures" which looks ok to me
-    // and is working but I haven't fully scrutenized it yet.
+    /**
+     * Core HTTP signature verification method implementing RFC 9421 - HTTP Message Signatures.
+     * Verifies the signature and signature-input headers against the provided public key.
+     * 
+     * The signature-input header format: sig1=("@method" "@target-uri" "@created" "content-type");created=1618884475;keyid="admin-key"
+     * 
+     * Validation includes:
+     * - Public key presence
+     * - Required headers (signature, signature-input)
+     * - Signature-input format parsing
+     * - Key ID verification (must be "admin-key")
+     * - Timestamp validation (within 2-minute window)
+     * - Signature base construction and verification
+     * 
+     * Note: This is AI-Generated implementation for "RFC 9421 - HTTP Message Signatures" which looks ok to me
+     * and is working but I haven't fully scrutenized it yet.
+     * 
+     * @param req - Express request object containing headers and request data
+     * @param res - Express response object for sending error responses
+     * @param publicKey - The public key to use for signature verification
+     * @param next - Express next function to continue to the next middleware
+     * @returns Promise<void>
+     */
     verifyHTTPSignature = async (req: Request, res: Response, publicKey: string, next: any): Promise<void> => {
         try {
             if (!publicKey) {
@@ -109,7 +153,26 @@ class HttpServerUtil {
         }
     };
 
-    // Middleware for verifying admin signature in query parameters (for GET requests)
+    /**
+     * Express middleware for verifying admin signature in query parameters (designed for GET requests).
+     * Validates timestamp and signature query parameters against the admin public key.
+     * 
+     * Expected query parameters:
+     * - timestamp: Unix timestamp (in milliseconds) of when the request was created
+     * - signature: Hex-encoded signature of the timestamp
+     * 
+     * Validation includes:
+     * - Required parameters presence
+     * - Timestamp format validation
+     * - Timestamp freshness (within 5-minute window)
+     * - Admin public key availability
+     * - Signature verification against timestamp hash
+     * 
+     * @param req - Express request object containing timestamp and signature in query parameters
+     * @param res - Express response object for sending error responses
+     * @param next - Express next function to continue to the next middleware
+     * @returns Promise<void>
+     */
     verifyAdminHTTPQuerySig = async (req: Request, res: Response, next: any): Promise<void> => {
         const { timestamp, signature } = req.query;
 
@@ -190,4 +253,8 @@ class HttpServerUtil {
     }
 }
 
+/**
+ * Singleton instance of HttpServerUtil for use throughout the application.
+ * Provides access to HTTP signature verification middleware methods.
+ */
 export const httpServerUtil = new HttpServerUtil();    
