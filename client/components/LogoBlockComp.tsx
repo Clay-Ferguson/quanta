@@ -21,7 +21,7 @@ export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCom
                     className="object-contain border-2 border-gray-200/30 rounded"
                 />
             </div>
-            <div className="overflow-hidden cursor-pointer" onClick={handleLogoClick}>
+            <div className="overflow-hidden cursor-pointer w-64 min-w-[200px]" onClick={handleLogoClick}>
                 <h3 className="font-semibold text-blue-400 text-base">Quanta Chat</h3>
                 <h5 className="font-semibold text-gray-300 truncate text-sm">{subText}</h5>
             </div>

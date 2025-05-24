@@ -38,10 +38,10 @@ export default function HeaderComp() {
                  subText={!gs.connected && gs.userName ? `Hi ${gs.userName}` : ''}
              />}
             
-            <div className="flex flex-col sm:flex-row w-full gap-3 justify-between">
+            <div className="flex flex-col lg:flex-row w-full gap-3">
                 
                 {gs.headerExpanded && 
-                    <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+                    <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full lg:w-auto flex-grow">
                         {!gs.connected ? (
                             <>
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
@@ -107,7 +107,7 @@ export default function HeaderComp() {
                     </div>
                 }
 
-                <div id="chatButtonBar" className="flex justify-end gap-4 mt-2 md:mt-0 flex-shrink-0 ml-auto">
+                <div id="chatButtonBar" className="flex flex-wrap justify-center lg:justify-end gap-2 lg:gap-4 w-full lg:w-auto lg:flex-shrink-0">
                     {gs.headerExpanded && <button 
                         onClick={() => app.goToPage(PageNames.contacts)}
                         className="btn-icon"
