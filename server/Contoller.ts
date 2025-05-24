@@ -9,9 +9,15 @@ import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRo
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
+/**
+ * Main controller class that handles all HTTP API endpoints for the QuantaChat application.
+ * Provides methods for managing rooms, messages, attachments, users, and administrative functions.
+ */
 class Controller {
     /**
-     * API handler for getting all message IDs for a specific room
+     * API handler for getting all message IDs for a specific room with optional date filtering
+     * @param req - Express request object containing roomId in params and optional daysOfHistory query parameter
+     * @param res - Express response object
      */
     getMessageIdsForRoom = async (req: Request<{ roomId: string }, any, any, { daysOfHistory?: string }>, res: Response): Promise<void> => {
         console.log('Received request to get message IDs for room:', req.params?.roomId);
@@ -41,6 +47,11 @@ class Controller {
         }
     }
 
+    /**
+     * Serves attachment files by their ID, returning the binary data with appropriate headers
+     * @param req - Express request object containing attachmentId in params
+     * @param res - Express response object
+     */
     serveAttachment = async (req: Request<{ attachmentId: string }>, res: Response): Promise<void> => {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
@@ -72,7 +83,11 @@ class Controller {
         }
     }
     
-    // Add a new method to retrieve message history
+    /**
+     * Retrieves message history for a specific room with pagination support
+     * @param req - Express request object with query parameters: roomName (required), limit (optional), offset (optional)
+     * @param res - Express response object
+     */
     getMessageHistory = async (req: Request<any, any, any, { roomName?: string, limit?: string, offset?: string }>, res: Response): Promise<void> => {
         const { roomName, limit, offset } = req.query;
             
@@ -95,6 +110,11 @@ class Controller {
         }
     } 
 
+    /**
+     * Retrieves user profile information by public key
+     * @param req - Express request object containing pubKey in params
+     * @param res - Express response object
+     */
     getUserProfile = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
         try {
             const publicKey = req.params.pubKey;
@@ -113,6 +133,11 @@ class Controller {
         }
     }
 
+    /**
+     * Serves user avatar images by public key, returning the binary image data
+     * @param req - Express request object containing pubKey in params
+     * @param res - Express response object
+     */
     serveAvatar = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
         try {
             const publicKey = req.params.pubKey;
@@ -152,6 +177,11 @@ class Controller {
         }
     }    
 
+    /**
+     * Administrative endpoint to retrieve information about all rooms in the system
+     * @param req - Express request object
+     * @param res - Express response object
+     */
     getRoomInfo = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Getting room information');
@@ -163,6 +193,11 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to delete a room by name
+     * @param req - Express request object containing DeleteRoom_Request in body
+     * @param res - Express response object
+     */
     deleteRoom = async (req: Request<any, any, DeleteRoom_Request>, res: Response): Promise<void> => {
         try {
             const { roomName } = req.body;
@@ -188,6 +223,11 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to retrieve recently uploaded attachments
+     * @param req - Express request object
+     * @param res - Express response object
+     */
     getRecentAttachments = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Getting recent attachments');
@@ -199,6 +239,11 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to create test data for development and testing purposes
+     * @param req - Express request object
+     * @param res - Express response object
+     */
     createTestData = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log('Admin request: Creating test data');
@@ -209,6 +254,12 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to delete a specific message from a room
+     * Sends real-time updates to all connected clients via WebRTC
+     * @param req - Express request object containing DeleteMessage_Request in body
+     * @param res - Express response object
+     */
     deleteMessage = async (req: Request<any, any, DeleteMessage_Request>, res: Response): Promise<void> => {
         try {
             const { messageId, roomName, publicKey } = req.body;
@@ -237,6 +288,11 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to block a user and delete all their content
+     * @param req - Express request object containing BlockUser_Request in body
+     * @param res - Express response object
+     */
     blockUser = async (req: Request<any, any, BlockUser_Request>, res: Response): Promise<void> => {
         try {
             const { publicKey } = req.body;
@@ -263,6 +319,11 @@ class Controller {
         }
     }
 
+    /**
+     * Administrative endpoint to delete an attachment by its ID
+     * @param req - Express request object containing attachmentId in params
+     * @param res - Express response object
+     */
     deleteAttachment = async (req: Request<{ attachmentId: string }>, res: Response): Promise<void> => {
         try {
             const attachmentId = parseInt(req.params.attachmentId);
@@ -283,7 +344,9 @@ class Controller {
     }
 
     /**
-     * API handler for getting messages by IDs for a specific room
+     * API handler for getting specific messages by their IDs within a room
+     * @param req - Express request object containing roomId in params and GetMessagesByIds_Request in body
+     * @param res - Express response object
      */
     getMessagesByIds = async (req: Request<{ roomId: string }, any, GetMessagesByIds_Request>, res: Response): Promise<void> => {
         try {
@@ -308,6 +371,11 @@ class Controller {
         }
     }
 
+    /**
+     * Saves or updates user profile information in the database
+     * @param req - Express request object containing UserProfile in body
+     * @param res - Express response object
+     */
     saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
         try {
             const userProfile: UserProfile = req.body;
@@ -327,10 +395,9 @@ class Controller {
     }
 
     /**
-     * Saves multiple messages to the database and returns an array of database IDs
-     * @param roomId The ID of the room
-     * @param messages Array of messages to save
-     * @returns Array of database IDs in the same order as the input messages
+     * Saves multiple messages to the database for a specific room
+     * @param req - Express request object containing roomId in params and SendMessages_Request in body
+     * @param res - Express response object
      */
     sendMessages = async (req: Request<{ roomId: string }, any, SendMessages_Request>, res: Response): Promise<void> => {
         try {
@@ -351,7 +418,12 @@ class Controller {
         }
     }
 
-    // using 'unknown' is a little better than 'any' here.
+    /**
+     * Centralized error handling method for all controller endpoints
+     * @param error - The error object or message
+     * @param res - Express response object
+     * @param message - Custom error message to include in the response
+     */
     handleError = (error: unknown, res: Response, message: string): void => {
         console.error(`ERROR: ${message}`, error);
         res.status(500).json({ error: message });
