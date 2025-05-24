@@ -12,14 +12,38 @@ import {idb} from './IndexedDB.ts';
 import { util } from "./Util.ts";
 import { rtc } from "./WebRTC.ts";
 
+/**
+ * AppMessages - Centralized message management service for the Quanta Chat application
+ * 
+ * This class handles all message-related operations including:
+ * - Creating, sending, and receiving chat messages
+ * - Message persistence in IndexedDB and server synchronization
+ * - Message deletion and acknowledgment
+ * - Cryptographic signing and verification of messages
+ * - Storage management and automatic pruning
+ * - Resending failed messages
+ * - Loading and synchronizing messages between local storage and server
+ * 
+ * The class maintains message state consistency between:
+ * - Global application state (for current room display)
+ * - Local IndexedDB storage (for offline access)
+ * - Remote server storage (for persistence and multi-device sync)
+ * 
+ * Message states: SENT (via WebRTC), SAVED (acknowledged by server), FAILED
+ */
 export class AppMessages {
-    // Gets the messages for this room from IndexedDB by roomName, and then removes the messageId one and then resaves the room messsages
-    // back into indexedDb
+    /**
+     * Handles inbound message deletion requests from other users or the server.
+     * Removes the specified message from both global state (if current room) and IndexedDB.
+     * 
+     * @param roomName - The name of the room containing the message to delete
+     * @param messageId - The unique identifier of the message to delete
+     */
     inboundDeleteMessage = async (roomName: string, messageId: string) => {
         let _gs = gs();
-        // if the room is the current room, then we need to remove it from the global state
+        
+        // Handle deletion for the currently active room
         if (roomName == _gs.roomName) {
-            // if the room is the current room, then we need to remove it from the global state
             const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
             if (messageIndex !== undefined && messageIndex >= 0) {
                 _gs.messages!.splice(messageIndex, 1);
@@ -27,7 +51,7 @@ export class AppMessages {
                 this.saveMessages(roomName, _gs.messages!);
             }
         }
-        // else we will delete from some other room.
+        // Handle deletion for non-active rooms (update IndexedDB only)
         else {
             const roomData: any = await idb.getItem(DBKeys.roomPrefix + roomName);
             if (roomData && roomData.messages) {
@@ -40,6 +64,12 @@ export class AppMessages {
         }
     }
 
+    /**
+     * Initiates message deletion by the current user with confirmation dialog.
+     * Removes message from local state, IndexedDB, and sends deletion request to server.
+     * 
+     * @param messageId - The unique identifier of the message to delete
+     */
     deleteMessage = async (messageId: string) => {
         const confirmed = await confirmModal(`Delete message?`);
         if (!confirmed) return;
@@ -59,6 +89,18 @@ export class AppMessages {
         }
     }
 
+    /**
+     * Sends a new message with optional file attachments.
+     * Handles the complete message lifecycle:
+     * - Creates and cryptographically signs the message
+     * - Sends via WebRTC to other room participants
+     * - Persists to global state and IndexedDB
+     * - Monitors for server acknowledgment
+     * - Triggers storage pruning if needed
+     * 
+     * @param message - The text content of the message
+     * @param selectedFiles - Array of file attachments to include with the message
+     */
     sendMessage = async (message: string, selectedFiles: any) => {
         if (message || selectedFiles.length > 0) {
             let _gs = gs();
@@ -85,18 +127,17 @@ export class AppMessages {
     
                 setTimeout(async () => {
                     const _gs = gs();
-                    // after a few seconds check if the message was acknowledged by the server
-                    // todo-1: we could add a resend button for these kinds of messages, which would
-                    // come in handy for P2P mode also, which also needs to have some kind of ACK 
-                    // mechanism, which we don't have yet.
+                    // Monitor for server acknowledgment after 3 seconds
+                    // TODO: Add resend button for failed messages (useful for P2P mode)
+                    // P2P mode also needs ACK mechanism which is not yet implemented
                     if (_gs.messages && _gs.saveToServer) {
-                        // lookup the message by 'id' and verify it has the 'ack' state on it now.
+                        // Verify the message has been acknowledged by the server
                         const message = _gs.messages!.find((m: ChatMessage) => m.id === msg.id);
                         if (message && message.state!==MessageStates.SAVED) {
                             await alertModal('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                         }
                     }
-    
+        
                     try {
                         this.pruneDB(msg);
                     } catch (error) {
@@ -106,6 +147,12 @@ export class AppMessages {
         }
     }
     
+    /**
+     * Marks a message as acknowledged (SAVED state) by the server.
+     * Updates both global state and IndexedDB to reflect server confirmation.
+     * 
+     * @param id - The unique identifier of the message to acknowledge
+     */
     acknowledgeMessage = async (id: string): Promise<void> => {
         let _gs = gs();
         if (!_gs.messages) {
@@ -124,6 +171,13 @@ export class AppMessages {
         }
     }
     
+    /**
+     * Processes and persists incoming messages from other users.
+     * Performs message validation, cryptographic verification, and deduplication
+     * before adding to global state and IndexedDB.
+     * 
+     * @param msg - The incoming ChatMessage to persist
+     */
     persistInboundMessage = async (msg: ChatMessage) => {
         // console.log("App Persisting message: ", msg);
         if (this.messageExists(msg)) {
@@ -155,7 +209,13 @@ export class AppMessages {
             this.saveMessages(_gs.roomName!, _gs.messages!);
     }
     
-    /* Saves messages into the room by roomName to IndexedDB */
+    /**
+     * Saves messages to IndexedDB for a specific room.
+     * Creates a room data structure with messages and timestamp for persistence.
+     * 
+     * @param roomName - The name of the room to save messages for
+     * @param messages - Array of ChatMessage objects to save
+     */
     saveMessages = async (roomName: string, messages: ChatMessage[]) => {
         if (!roomName) {
             console.error('No room name available for saving messages');
@@ -175,6 +235,13 @@ export class AppMessages {
         }
     }
     
+    /**
+     * Checks if a message already exists in the current global state.
+     * Uses timestamp, sender, content, and state for duplicate detection.
+     * 
+     * @param msg - The ChatMessage to check for existence
+     * @returns True if the message already exists, false otherwise
+     */
     messageExists(msg: ChatMessage) {
         return gs().messages!.some((message: any) =>
             message.timestamp === msg.timestamp &&
@@ -184,6 +251,14 @@ export class AppMessages {
         );
     }
     
+    /**
+     * Creates a new ChatMessage object with generated ID and current timestamp.
+     * 
+     * @param content - The text content of the message
+     * @param sender - The username of the message sender
+     * @param attachments - Optional array of file attachments (defaults to empty array)
+     * @returns A new ChatMessage object ready for sending
+     */
     createMessage(content: string, sender: string, attachments = []): ChatMessage {
         // console.log("Creating message from sender: " + sender);
         const msg: ChatMessage = {
@@ -196,6 +271,12 @@ export class AppMessages {
         return msg;
     }
 
+    /**
+     * Sets the complete message list for the current room.
+     * Updates both global state and IndexedDB with the provided messages.
+     * 
+     * @param messages - Array of ChatMessageIntf objects to set as the current messages
+     */
     setMessages = (messages: ChatMessageIntf[]) => {
         // Save into global state
         gd({ type: 'setMessages', payload: { messages }});
@@ -204,7 +285,16 @@ export class AppMessages {
         this.saveMessages(gs().roomName!, messages);
     }
 
-    // DO NOT DELETE THIS METHOD 
+    /**
+     * Resends messages that failed to send via WebRTC.
+     * Filters for unsent messages from the current user and attempts to resend them.
+     * Updates message states and persists changes to storage.
+     * 
+     * Note: This method handles WebRTC transmission failures, not server acknowledgment.
+     * For server-side failures, use resendFailedMessages() instead.
+     * 
+     * DO NOT DELETE THIS METHOD - Required for WebRTC failure recovery
+     */
     reSendFailedMessages = () => {
         let _gs = gs();
         if (!_gs.messages) {
@@ -233,8 +323,13 @@ export class AppMessages {
     }
 
     /**
-     * Finds all messages that have failed to send to server, by detecting which ones are not state==SAVED, and then
-     * builds up a list of those messages to send to the server, and sends them. 
+     * Resends messages that failed to be acknowledged by the server.
+     * Identifies messages from the current user that aren't in SAVED state and attempts
+     * to resend them to the server for persistence. Updates message states upon success.
+     * 
+     * @param roomName - The name of the room containing messages to resend
+     * @param messages - Array of ChatMessage objects to check for failed sends
+     * @returns Promise resolving to the updated messages array
      */
     resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
         if (!gs().saveToServer) return messages;
@@ -243,9 +338,9 @@ export class AppMessages {
             return messages;
         }
         const messagesToSend: ChatMessage[] = [];
-        // iterate with a for loop to get the messages from the server
+        // Identify messages from current user that need server acknowledgment
         for (const message of messages) {
-            // if this is our message, and it doesn't have state==SAVED, then we need to resend it
+            // Check if this is our message and hasn't been saved to server yet
             if (message.publicKey===gs().keyPair?.publicKey && message.state !== MessageStates.SAVED) {
                 messagesToSend.push(message);
                 console.log("Will resend message: " + message.id);
@@ -254,8 +349,7 @@ export class AppMessages {
 
         if (messagesToSend.length == 0) return messages;
 
-        // todo-1: let's ask user to confirm they want to resend because this also indicates to them
-        // there may be a problem with their connectivity to the server.
+        // TODO: Ask user to confirm resend as this indicates potential connectivity issues
         try {
             console.log("Resending " + messagesToSend.length + " messages to server: ", messagesToSend);
             // Send the messages to the server
@@ -292,7 +386,20 @@ export class AppMessages {
     }
 
     /**
-     * Loads messages for a specific room from local storage and also gets any from server what we don't have yet.
+     * Loads and synchronizes messages for a specific room from multiple sources.
+     * 
+     * This method performs a comprehensive message loading and synchronization process:
+     * 1. Loads messages from local IndexedDB storage
+     * 2. Cleans old messages if necessary (via appRooms.cleanRoomMessages)
+     * 3. Fetches message IDs from server within the specified history window
+     * 4. Synchronizes local and server message states:
+     *    - Marks server-confirmed messages as SAVED
+     *    - Removes locally SAVED messages that no longer exist on server
+     *    - Identifies and fetches missing messages from server
+     * 5. Sorts messages chronologically and saves updated state
+     * 
+     * @param roomId - The unique identifier of the room to load messages for
+     * @returns Promise resolving to array of ChatMessage objects for the room
      */
     loadRoomMessages = async (roomId: string): Promise<ChatMessage[]> => {
         let messages: ChatMessage[] = [];
@@ -396,6 +503,23 @@ export class AppMessages {
         return messages;
     }
 
+    /**
+     * Monitors and manages local storage usage, automatically pruning old messages when needed.
+     * 
+     * This method performs storage management by:
+     * 1. Checking current storage quota and usage via Navigator Storage API
+     * 2. Calculating the size of the incoming message
+     * 3. Triggering cleanup if storage usage exceeds 90% or insufficient space remains
+     * 4. Prompting user to confirm removal of oldest 20% of messages from current room
+     * 5. Sorting messages by timestamp and removing the oldest ones
+     * 
+     * Storage cleanup helps prevent:
+     * - Browser storage quota exceeded errors
+     * - Performance degradation from large message datasets
+     * - Application crashes due to storage constraints
+     * 
+     * @param msg - The message being processed (used for size calculation)
+     */
     pruneDB = async (msg: any) => {
         if (navigator.storage && navigator.storage.estimate) {
             const estimate: any = await navigator.storage.estimate();
@@ -429,5 +553,9 @@ export class AppMessages {
     }
 }
 
+/**
+ * Singleton instance of AppMessages for use throughout the application.
+ * Provides centralized access to all message management functionality.
+ */
 const appMessages = new AppMessages();
 export default appMessages;
