@@ -10,32 +10,64 @@ import { gd } from './GlobalState.tsx';
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.
  * 
- * Designed as a singleton that can be instantiated once and reused
+ * This class manages peer-to-peer connections using WebRTC technology, handling
+ * signaling through a WebSocket server, establishing data channels for direct
+ * communication between clients, and managing room participants.
+ * 
+ * Designed as a singleton that can be instantiated once and reused throughout
+ * the application lifecycle.
  */
 class WebRTC {
+    /** Timestamp when the connection was last disconnected */
     disconnectTime: number = 0;
-    // Maps RTCPeerConnection by PublicKey
+    
+    /** Maps RTCPeerConnection objects by user's public key */
     peerConnections: Map<string, RTCPeerConnection> = new Map();
 
-    // maps user names to their RTCDataChannel objects
+    /** Maps RTCDataChannel objects by user's public key for direct P2P messaging */
     dataChannels: Map<string, RTCDataChannel> = new Map();
 
+    /** WebSocket connection to the signaling server */
     socket: WebSocket | null = null;
+    
+    /** Current room identifier */
     roomId = "";
+    
+    /** Current user's display name */
     userName = "";
+    
+    /** Current user's cryptographic key pair for signing and verification */
     keyPair: KeyPairHex | null = null;
 
-    // all room participants by publicKey
+    /** All room participants mapped by their public key */
     participants = new Map<string, User>();
+    
+    /** Whether connected to the signaling server */
     connected: boolean = false;
+    
+    /** Signaling server hostname */
     host: string = "";
+    
+    /** Signaling server port */
     port: string = "";
+    
+    /** Whether to use secure WebSocket (WSS) connection */
     secure: boolean = false;
+    
+    /** Whether messages should be saved to server (non-P2P mode) */
     saveToServer: boolean = false;
 
-    // for debugging
+    /** Debug flag to enable ping checks between peers */
     pingChecks = false;
 
+    /**
+     * Initialize the WebRTC configuration with server connection details.
+     * 
+     * @param host - The signaling server hostname
+     * @param port - The signaling server port
+     * @param secure - Whether to use secure WebSocket (WSS) connection
+     * @param saveToServer - Whether messages should be saved to server (non-P2P mode)
+     */
     init(host: string, port: string, secure: boolean, saveToServer: boolean) {
         this.host = host;
         this.port = port;
@@ -43,6 +75,10 @@ class WebRTC {
         this.secure = secure;
     }
 
+    /**
+     * Notifies the global state about RTC connection changes.
+     * Updates the application state with current participants and connection status.
+     */
     rtcStateChange = () => {
         const participants = rtc.participants || new Map<string, User>();
         const connected = rtc.connected || false;
@@ -54,6 +90,10 @@ class WebRTC {
         });
     }
 
+    /**
+     * Initialize the WebSocket connection to the signaling server.
+     * Sets up event handlers for connection lifecycle and message handling.
+     */
     initSocket() {
         if (this.socket) {
             console.error('******** WebRTC ran with existing socket. Should be closed first.');
@@ -71,10 +111,21 @@ class WebRTC {
         this.socket.onclose = this._onclose;
     }
 
+    /**
+     * Updates the saveToServer setting for message handling mode.
+     * 
+     * @param save - Whether messages should be saved to server instead of pure P2P
+     */
     setSaveToServer = (save: boolean) => {
         this.saveToServer = save;
     }
 
+    /**
+     * Handles room information received from the signaling server.
+     * Establishes peer connections with all existing room participants.
+     * 
+     * @param evt - Room information event containing participant list
+     */
     _onRoomInfo = async (evt: WebRTCRoomInfo) => {
         console.log('Room info received with participants');
         this.participants = new Map<string, User>();
@@ -101,7 +152,10 @@ class WebRTC {
         }, 5000);
     }
 
-    // Recovery method
+    /**
+     * Attempts to recover failed or stalled peer connections.
+     * Checks all participant connections and recreates them if necessary.
+     */
     attemptConnectionRecovery() {
         console.log('Checking participant connectivity');
         
@@ -121,12 +175,24 @@ class WebRTC {
         });
     }
 
+    /**
+     * Checks if there's an open data channel for the specified public key.
+     * 
+     * @param publicKey - The user's public key to check
+     * @returns True if an open data channel exists for the user
+     */
     hasOpenChannelFor(publicKey: string) {
         const channel = this.dataChannels.get(publicKey);
         return channel && channel.readyState === 'open';
     }
 
-    // NOTE: this kind of event is redundant based on our current design, and is never called but let's keep it here for now.
+    /**
+     * Handles user joined events from the signaling server.
+     * Note: This event is currently redundant based on the design and is never called,
+     * but kept for potential future use.
+     * 
+     * @param evt - User joined event containing the new user information
+     */
     _onUserJoined = (evt: WebRTCUserJoined) => {
         const user: User = evt.user;
         if (!user.publicKey) {
@@ -146,6 +212,12 @@ class WebRTC {
         }
     }
 
+    /**
+     * Handles user left events from the signaling server.
+     * Cleans up peer connections and data channels for the departed user.
+     * 
+     * @param evt - User left event containing the departing user information
+     */
     _onUserLeft = (evt: WebRTCUserLeft) => {
         const user: User = evt.user;
         console.log('User left: ' + user.name);
@@ -163,6 +235,13 @@ class WebRTC {
         }
     }
 
+    /**
+     * Handles WebRTC offer messages from other peers.
+     * Verifies the signature, handles signaling conflicts (glare condition),
+     * and creates an answer to establish the connection.
+     * 
+     * @param evt - Offer event containing the WebRTC offer and sender information
+     */
     _onOffer = async (evt: WebRTCOffer) => {
         if (!evt.sender) {
             console.log('Received offer without sender, ignoring.');
@@ -240,6 +319,12 @@ class WebRTC {
             .catch((error: any) => console.log('Error creating answer: ' + error));
     }
 
+    /**
+     * Handles WebRTC answer messages from other peers.
+     * Sets the remote description to complete the connection establishment.
+     * 
+     * @param evt - Answer event containing the WebRTC answer and sender information
+     */
     _onAnswer = (evt: WebRTCAnswer) => {
         if (!evt.sender) {
             console.log('Received answer without sender, ignoring.');
@@ -263,6 +348,12 @@ class WebRTC {
         }
     }
 
+    /**
+     * Handles ICE candidate messages from other peers.
+     * Adds the ICE candidate to the appropriate peer connection for NAT traversal.
+     * 
+     * @param evt - ICE candidate event containing the candidate and sender information
+     */
     _onIceCandidate = (evt: WebRTCICECandidate) => {
         console.log('Received ICE candidate from ' + evt.sender!.name);
         const pc = this.peerConnections.get(evt.sender!.publicKey);
@@ -275,20 +366,44 @@ class WebRTC {
         }
     }
 
+    /**
+     * Handles message acknowledgment events.
+     * Marks messages as acknowledged in the message system.
+     * 
+     * @param evt - Acknowledgment event containing the message ID
+     */
     _onAcknowledge = (evt: WebRTCAck) => {
         appMessages.acknowledgeMessage(evt.id);
     }
 
+    /**
+     * Handles message deletion events.
+     * Removes the specified message from the message system.
+     * 
+     * @param evt - Delete message event containing the message ID and room
+     */
     _onDeleteMsg = (evt: WebRTCDeleteMsg) => {
         console.log('Delete message received for message ID: ' + evt.messageId);
         appMessages.inboundDeleteMessage(evt.room, evt.messageId);
     }
 
+    /**
+     * Handles broadcast message events from the signaling server.
+     * Persists the received message to the local message store.
+     * 
+     * @param evt - Broadcast event containing the message and sender information
+     */
     _onBroadcast = (evt: WebRTCBroadcast) => {
         console.log('broadcast. Received broadcast message from ' + evt.sender!.name);
         appMessages.persistInboundMessage(evt.message);           
     }
 
+    /**
+     * Handles incoming WebSocket messages from the signaling server.
+     * Routes messages to appropriate handlers based on message type.
+     * 
+     * @param event - WebSocket message event containing the JSON data
+     */
     _onmessage = (event: any) => {
         const evt = JSON.parse(event.data);
         console.log('Received RCT Type: ' + event.type);
@@ -327,6 +442,10 @@ class WebRTC {
         this.rtcStateChange();
     }
 
+    /**
+     * Handles successful WebSocket connection to the signaling server.
+     * Sends a join message to enter the specified room.
+     */
     _onopen = async () => {
         console.log('Connected to signaling server.');
         this.connected = true;
@@ -348,12 +467,22 @@ class WebRTC {
         this.rtcStateChange();
     }
 
+    /**
+     * Handles WebSocket connection errors.
+     * Updates connection state and notifies the application.
+     * 
+     * @param error - The WebSocket error that occurred
+     */
     _onerror = (error: any) => {
         console.log('WebSocket error: ' + error);
         this.connected = false;
         this.rtcStateChange();
     };
 
+    /**
+     * Handles WebSocket connection closure.
+     * Cleans up all connections and updates the application state.
+     */
     _onclose = () => {
         console.log('Disconnected from signaling server');
         this.connected = false;
@@ -361,7 +490,14 @@ class WebRTC {
         this.rtcStateChange();
     }
 
-    //peerName = user.name
+    /**
+     * Creates a new peer connection with another user.
+     * Sets up ICE candidates, data channels, and connection monitoring.
+     * 
+     * @param user - The user to establish a connection with
+     * @param isInitiator - Whether this peer should initiate the connection (create offer)
+     * @returns Promise that resolves to the created RTCPeerConnection
+     */
     createPeerConnection = async (user: User, isInitiator: boolean): Promise<RTCPeerConnection> => {
         console.log('Creating peer connection with ' + user.name + (isInitiator ? ' (as initiator)' : ''));
         const pc = new RTCPeerConnection({
@@ -453,6 +589,15 @@ class WebRTC {
         return pc;
     }
 
+    /**
+     * Connects to a WebRTC room with the specified credentials.
+     * Handles reconnection timing and initializes the WebSocket connection.
+     * 
+     * @param userName - The display name for the user
+     * @param keyPair - The user's cryptographic key pair
+     * @param roomName - The room identifier to join
+     * @returns Promise that resolves to true if connection was initiated successfully
+     */
     _connect = async (userName: string, keyPair: KeyPairHex, roomName: string): Promise<boolean> => {
         if (this.disconnectTime > 0) {
             const timeSinceDisconnect = Date.now() - this.disconnectTime;
@@ -475,6 +620,10 @@ class WebRTC {
         return true;
     }
 
+    /**
+     * Disconnects from the current WebRTC session.
+     * Closes the WebSocket connection, all peer connections, and resets state.
+     */
     _disconnect = () => {
         // Close the signaling socket if it exists and is open
         if (this.socket) {
@@ -500,6 +649,10 @@ class WebRTC {
         this.rtcStateChange();
     }
 
+    /**
+     * Closes all peer connections and data channels.
+     * Records the disconnect time for reconnection timing logic.
+     */
     closeAllConnections() {
         // Close all data channels first
         this.dataChannels.forEach((channel, publicKey) => {
@@ -521,7 +674,10 @@ class WebRTC {
         this.disconnectTime = Date.now();
     }
 
-    // Add this new method to help diagnose channel issues
+    /**
+     * Outputs debugging information about current data channel states.
+     * Helps diagnose connection issues and channel establishment problems.
+     */
     debugDataChannels() {
         console.log('---------- DATA CHANNEL DEBUG INFO ----------');
         if (this.dataChannels.size === 0) {
@@ -542,6 +698,13 @@ class WebRTC {
         console.log('------------------------------------------');
     }
 
+    /**
+     * Sets up event handlers for a data channel.
+     * Handles channel lifecycle events and incoming messages.
+     * 
+     * @param channel - The RTCDataChannel to configure
+     * @param user - The user associated with this data channel
+     */
     setupDataChannel(channel: RTCDataChannel, user: User) {
         console.log('Setting up data channel for ' + user.name);
         this.dataChannels.set(user.publicKey, channel);
@@ -590,8 +753,14 @@ class WebRTC {
         };
     }
 
-    // Returns false if unable to send to anyone at all, else true of sent to at lest one person. If the user trie to send
-    // chat messages too fast before connections are 'open' we return false here and the calling method can retry.
+    /**
+     * Sends a chat message to connected peers.
+     * In P2P mode, sends directly through data channels.
+     * In server mode, sends via signaling server broadcast.
+     * 
+     * @param msg - The chat message to send
+     * @returns True if the message was sent to at least one recipient, false otherwise
+     */
     _sendMessage = (msg: ChatMessage): boolean => {
         let sent = false;
         
@@ -639,11 +808,22 @@ class WebRTC {
         return sent;
     }
 
+    /**
+     * Signs a message with the user's private key and sends it via WebSocket.
+     * 
+     * @param msg - The message object to sign and send
+     * @param canonicalizr - The canonicalization function for consistent signing
+     */
     signedSocketSend = async (msg: any, canonicalizr: (obj: any) => string) => {
         await crypt.signObject(msg, canonicalizr, this.keyPair!);
         this.socketSend(msg);
     }
 
+    /**
+     * Sends a message through the WebSocket connection.
+     * 
+     * @param msg - The message object to send (will be JSON stringified)
+     */
     socketSend(msg: any) {
         this.socket!.send(JSON.stringify(msg));
     }
