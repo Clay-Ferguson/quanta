@@ -1,6 +1,11 @@
 import { ChatMessage} from "./types/CommonTypes.js";
 import { WebRTCJoin, WebRTCOffer } from "./types/WebRTCTypes.js";
 
+/**
+ * Common methods used by both client and server to canonicalize messages.
+ * This is used to ensure that the same message is serialized in the same way 
+ * primarily so that we can generate a hash of the message for signing.
+ */
 class Canonicalizer {
     // Helper function for deterministic JSON serialization
     getCanonicalJSON = (obj: any): string => {

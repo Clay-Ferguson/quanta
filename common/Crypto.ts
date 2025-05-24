@@ -3,10 +3,21 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { KeyPairHex, SignableObject } from './types/CommonTypes.js';
 
-// See also: https://www.npmjs.com/package/@noble/secp256k1
+/**
+ * Cryptographic utility class providing SECP256K1 elliptic curve cryptography operations.
+ * 
+ * This class handles key generation, digital signatures, and signature verification
+ * using the @noble/secp256k1 library. It supports both object signing with canonicalization
+ * and raw data signing operations.
+ * 
+ * See also: https://www.npmjs.com/package/@noble/secp256k1
+ */
 class Crypto {
-        
-    // Function to generate a new keypair
+    /**
+     * Generates a new SECP256K1 key pair with cryptographically secure random private key.
+     * 
+     * @returns A new key pair containing both private and public keys in hexadecimal format
+     */
     generateKeypair(): KeyPairHex {
         // Generate a random private key (32 bytes)
         const privKeyBytes = secp.utils.randomPrivateKey();
@@ -22,7 +33,13 @@ class Crypto {
         };
     }
 
-    // Function to create a KeyPairHex object from a private key hex string
+    /**
+     * Creates a KeyPairHex object from an existing private key hex string.
+     * Derives the corresponding public key and validates the private key.
+     * 
+     * @param privKeyHex - The private key as a 64-character hexadecimal string
+     * @returns A key pair object containing both private and public keys, or null if the private key is invalid
+     */
     makeKeysFromPrivateKeyHex(privKeyHex: string): KeyPairHex | null {
         try {
             // Convert hex to bytes
@@ -48,6 +65,15 @@ class Crypto {
         }
     }
 
+    /**
+     * Signs a SignableObject by canonicalizing it and creating a digital signature.
+     * Modifies the object in-place by adding signature and publicKey properties.
+     * 
+     * @param obj - The object to be signed (will be modified in-place)
+     * @param canonicalizr - Function to convert the object to a canonical string representation
+     * @param keyPair - The key pair containing the private key for signing
+     * @throws Error if the private key is invalid
+     */
     signObject = async (obj: SignableObject, canonicalizr: (obj: any) => string, keyPair: KeyPairHex) => {
         const privKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
         if (!privKeyBytes) {
@@ -62,6 +88,13 @@ class Crypto {
         // this.verifySignature(msg, canonicalizr);
     }
 
+    /**
+     * Converts a private key from hexadecimal string format to Uint8Array bytes.
+     * Validates the key format and length before conversion.
+     * 
+     * @param privKeyHex - The private key as a 64-character hexadecimal string
+     * @returns The private key as a Uint8Array, or null if the key is invalid
+     */
     importPrivateKey(privKeyHex: string): Uint8Array | null {
         if (!privKeyHex || privKeyHex.length !== 64) {
             console.log("Invalid private key hex string.");
@@ -75,6 +108,13 @@ class Crypto {
         }
     }
 
+    /**
+     * Verifies the digital signature of a SignableObject using its embedded signature and public key.
+     * 
+     * @param msg - The signed object containing signature and publicKey properties
+     * @param canonicalizr - Function to convert the object to a canonical string representation
+     * @returns True if the signature is valid, false otherwise
+     */
     verifySignature = async (msg: SignableObject, canonicalizr: (obj: any) => string): Promise<boolean> => {
         if (!msg.signature || !msg.publicKey) {
             console.warn("Message is missing signature or public key.");
@@ -105,6 +145,15 @@ class Crypto {
         }
     }
 
+    /**
+     * Verifies a digital signature using raw message hash, signature bytes, and public key.
+     * This is a lower-level verification method that works with byte arrays directly.
+     * 
+     * @param msgHash - The SHA256 hash of the original message as a Uint8Array
+     * @param sigBytes - The signature bytes as a Uint8Array
+     * @param pubKeyHex - The public key as a hexadecimal string
+     * @returns True if the signature is valid, false otherwise
+     */
     verifySignatureBytes = async (msgHash: Uint8Array, sigBytes: Uint8Array, pubKeyHex: string): Promise<boolean> => {
         try {
             const pubKeyBytes = hexToBytes(pubKeyHex);
@@ -128,6 +177,12 @@ class Crypto {
         }
     }
 
+    /**
+     * Computes the SHA256 hash of a string and returns it as a Uint8Array.
+     * 
+     * @param str - The input string to hash
+     * @returns The SHA256 hash as a Uint8Array
+     */
     getHashBytesOfString(str: string): Uint8Array {
         const strBytes: Uint8Array = new TextEncoder().encode(str);
         const hashBytes: Uint8Array = sha256(strBytes);
@@ -135,12 +190,15 @@ class Crypto {
     }
     
     /**
-    * Opens the recent attachments page in a new tab with admin authentication
-    * 
-    * DO NOT DELETE: This is no longer being used but this and the server-side code are being kept
-    * as a reference for how to implement admin authentication for HTTP GET requests. Also this method is specific
-    * to attachments and for that reason didn't belong in this class either, but we keep it for now.
-    */
+     * Opens the recent attachments page in a new tab with admin authentication.
+     * Creates a timestamp-based signature for secure access to admin endpoints.
+     * 
+     * DO NOT DELETE: This is no longer being used but this and the server-side code are being kept
+     * as a reference for how to implement admin authentication for HTTP GET requests. Also this method is specific
+     * to attachments and for that reason didn't belong in this class either, but we keep it for now.
+     * 
+     * @param keyPair - The admin key pair for authentication
+     */
     openRecentAttachments = async (keyPair: KeyPairHex) => {
         // Current timestamp
         const timestamp = Date.now().toString();
@@ -157,6 +215,14 @@ class Crypto {
         window.open(url, '_blank');
     }
 
+    /**
+     * Signs arbitrary string data with a private key and returns the signature as hexadecimal.
+     * 
+     * @param data - The string data to sign
+     * @param keyPair - The key pair containing the private key for signing
+     * @returns The signature as a hexadecimal string
+     * @throws Error if no private key is available or if the private key is invalid
+     */
     signWithPrivateKey = async (data: string, keyPair: KeyPairHex) => {
         if (!keyPair || !keyPair.privateKey) {
             throw new Error("No private key available");
@@ -172,7 +238,14 @@ class Crypto {
         return sigHex;
     }
 
-    // Takes the hash of 's' and signs it with the private key, returning the hex of the signature
+    /**
+     * Signs the SHA256 hash of a string using SECP256K1 private key bytes.
+     * Returns the signature in compact hexadecimal format.
+     * 
+     * @param s - The string to hash and sign
+     * @param keyBytes - The private key as a Uint8Array
+     * @returns The signature as a compact hexadecimal string
+     */
     getSigHexOfString = async (s: string, keyBytes: Uint8Array) => {
         const hash = this.getHashBytesOfString(s);    
         const sig = await secp.signAsync(hash, keyBytes);    
@@ -180,4 +253,7 @@ class Crypto {
     }
 }
 
+/**
+ * Global singleton instance of the Crypto class for convenient access throughout the application.
+ */
 export const crypt = new Crypto();
