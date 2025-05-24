@@ -6,27 +6,55 @@ import { WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
 
-// Represents a room, it's name and participants
+/**
+ * Represents a chat room with its name and participants.
+ */
 interface RoomInfo {
+    /** The unique name identifier for the room */
     name: string;
-    // all Users in the room by publicKey.
+    /** Map of all Users in the room, keyed by their public key */
     participants: Map<string, User>;
 }
 
-// Represents a specific user+room per WebSocket connection
+/**
+ * Represents the association between a WebSocket connection and the user/room it belongs to.
+ */
 interface ClientInfo {
+    /** The name of the room this client is connected to */
     room: string;
+    /** The user information for this client connection */
     user: User;
 }
 
+/**
+ * WebRTC signaling server that manages chat rooms and peer-to-peer communication.
+ * 
+ * This server handles WebSocket connections from chat clients and provides signaling
+ * services for WebRTC peer-to-peer communication. It manages chat rooms, user sessions,
+ * message broadcasting, and message persistence to the database.
+ * 
+ * Key responsibilities:
+ * - Managing WebSocket connections and client sessions
+ * - Handling room creation and user join/leave operations
+ * - Facilitating WebRTC signaling between peers (offers, answers, ICE candidates)
+ * - Broadcasting messages to room participants
+ * - Persisting messages to the database with signature verification
+ * - User blocking and moderation features
+ */
 export default class WebRTCServer {
+    /** The WebSocket server instance */
     private wss: WebSocketServer | null = null;
+    /** Map of WebSocket connections to their associated client information */
     private clientsMap = new Map<WebSocket, ClientInfo>(); 
 
-    // map of RoomInfo objects, keyed by room name
+    /** Map of room information objects, keyed by room name */
     private roomsMap = new Map<string, RoomInfo>(); 
 
-    // Get room by room name
+    /**
+     * Gets an existing room or creates a new one if it doesn't exist.
+     * @param name - The name of the room to get or create
+     * @returns The RoomInfo object for the specified room
+     */
     getOrCreateRoom = (name: string): RoomInfo => {
         // Check if the room already exists
         let room = this.roomsMap.get(name);
@@ -38,6 +66,11 @@ export default class WebRTCServer {
         return room;
     }
 
+    /**
+     * Handles incoming WebSocket messages and routes them to appropriate handlers.
+     * @param ws - The WebSocket connection that sent the message
+     * @param message - The raw message data from the client
+     */
     onMessage = (ws: WebSocket, message: any) => {
         try {
             const msg = JSON.parse(message);
@@ -67,7 +100,12 @@ export default class WebRTCServer {
         }
     }
     
-    // Finds the target client for this msg and sends the message to them
+    /**
+     * Handles WebRTC signaling messages (offer, answer, ICE candidate) between peers.
+     * Finds the target client and forwards the signaling message to them.
+     * @param ws - The WebSocket connection sending the signaling message
+     * @param msg - The WebRTC signaling message containing target and signaling data
+     */
     onSignaling = (ws: WebSocket, msg: WebRTCSignal) => {
         if (!msg.target) {
             console.error("No target in signaling message");
@@ -97,7 +135,12 @@ export default class WebRTCServer {
         }
     }
 
-    // Broadcasts a message to all clients in the same room, except the sender
+    /**
+     * Broadcasts a chat message to all clients in the same room except the sender.
+     * Also persists the message to the database and sends an ACK back to the sender.
+     * @param ws - The WebSocket connection sending the broadcast message
+     * @param msg - The broadcast message containing the chat message and room information
+     */
     onBroadcast = async (ws: WebSocket, msg: WebRTCBroadcast) => {
         if (!msg.room) {
             console.error("No room in broadcast message");
@@ -138,6 +181,12 @@ export default class WebRTCServer {
         }
     }
 
+    /**
+     * Handles a client joining a chat room. Verifies the signature, stores client info,
+     * adds user to room participants, and sends current room information to the new client.
+     * @param ws - The WebSocket connection of the joining client
+     * @param msg - The join message containing user information and target room
+     */
     onJoin = (ws: WebSocket, msg: WebRTCJoin) => {
         if (!msg.user.publicKey) {
             console.error("No publicKey in join message");
@@ -185,6 +234,13 @@ export default class WebRTCServer {
         // ------------------------------
     }
 
+    /**
+     * Sends a delete message notification to all clients in a room except the sender.
+     * Used for message deletion moderation functionality.
+     * @param roomName - The name of the room where the message was deleted
+     * @param messageId - The ID of the message that was deleted
+     * @param publicKey - The public key of the user who deleted the message (to exclude from notification)
+     */
     sendDeleteMessage = (roomName: string, messageId: string, publicKey: string) => {
         console.log(`Sending delete message for ID ${messageId} in room ${roomName}`);
         const deleteMsg: WebRTCDeleteMsg = {
@@ -206,6 +262,12 @@ export default class WebRTCServer {
         });
     }
 
+    /**
+     * Notifies all other clients in a room when a new user joins.
+     * Note: This functionality is currently disabled as it's redundant with client-side connection initiation.
+     * @param ws - The WebSocket connection of the joining user
+     * @param msg - The join message containing user and room information
+     */
     sendUserJoined = (ws: WebSocket, msg: WebRTCJoin) => {
         // NOTE: We don't sign this message because, comming fom the server, we trust it.
         const userJoined: WebRTCUserJoined = {
@@ -226,6 +288,13 @@ export default class WebRTCServer {
         });
     }
 
+    /**
+     * Handles WebSocket connection closure. Removes the user from their room,
+     * cleans up empty rooms, and notifies other participants of the user leaving.
+     * @param ws - The WebSocket connection that was closed
+     * @param code - The close code indicating why the connection was closed
+     * @param reason - Additional reason information for the connection closure
+     */
     onClose = (ws: WebSocket, code: any, reason: any) => {
         const msgClientInfo = this.clientsMap.get(ws);
         if (msgClientInfo) {
@@ -263,6 +332,11 @@ export default class WebRTCServer {
         }
     }
 
+    /**
+     * Handles WebSocket errors and logs error information.
+     * @param ws - The WebSocket connection that encountered an error
+     * @param error - The error that occurred
+     */
     onError = (ws: WebSocket, error: any) => {
         console.error("WebSocket client error", error);
 
@@ -273,6 +347,13 @@ export default class WebRTCServer {
         }
     }
 
+    /**
+     * Initializes the WebSocket server and sets up event handlers.
+     * Also configures global error handlers for uncaught exceptions and promise rejections.
+     * @param host - The host address to bind the server to
+     * @param port - The port number for the server (used only for logging)
+     * @param server - The HTTP server instance to attach the WebSocket server to
+     */
     async init(host: string, port: string, server: any) {
         this.wss = new WebSocketServer({host, server });
         console.log(`Signaling Server running on ${host}:${port}`);
@@ -302,6 +383,11 @@ export default class WebRTCServer {
         console.log("ChatServer initialization complete");
     }
 
+    /**
+     * Persists a broadcast message to the database after verifying its signature.
+     * Checks if the user is blocked before saving the message.
+     * @param data - The broadcast data containing the message to persist
+     */
     persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
             // todo-1: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
@@ -328,4 +414,7 @@ export default class WebRTCServer {
     }
 }
 
+/**
+ * Singleton instance of the WebRTCServer for managing WebRTC signaling operations.
+ */
 export const rtc = new WebRTCServer();
