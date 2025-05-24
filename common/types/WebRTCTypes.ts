@@ -1,6 +1,6 @@
 import { ChatMessageIntf, SignableObject, User } from "./CommonTypes.js";
 
-export interface WebRTCJoin extends SignableObject {
+export type WebRTCJoin = SignableObject & {
     type: 'join';
     room: string,
     user: User;
@@ -8,7 +8,7 @@ export interface WebRTCJoin extends SignableObject {
     signature?: string;
 }
 
-export interface WebRTCBroadcast extends SignableObject {
+export type WebRTCBroadcast = SignableObject & {
     type: 'broadcast',
     message: ChatMessageIntf,
     room: string,
@@ -17,7 +17,7 @@ export interface WebRTCBroadcast extends SignableObject {
     signature?: string;
 }
 
-export interface WebRTCDeleteMsg extends SignableObject {
+export type WebRTCDeleteMsg = SignableObject & {
     type: 'delete-msg',
     messageId: string,
     room: string,
@@ -25,12 +25,12 @@ export interface WebRTCDeleteMsg extends SignableObject {
     signature?: string;
 }
 
-export interface WebRTCAck extends SignableObject{
+export type WebRTCAck = SignableObject & {
     type: 'ack',
     id: string, // message that is being acknowledged
 }
 
-export interface WebRTCSignal {
+export type WebRTCSignal = {
     id?: string;
     type: string;
     target: User;
@@ -38,7 +38,7 @@ export interface WebRTCSignal {
     room?: string;
 }
 
-export interface WebRTCOffer extends WebRTCSignal, SignableObject {
+export type WebRTCOffer = WebRTCSignal & SignableObject & {
     type: 'offer';
     offer: RTCSessionDescription;
     target: User;
@@ -47,24 +47,24 @@ export interface WebRTCOffer extends WebRTCSignal, SignableObject {
     signature?: string;
 }
 
-export interface WebRTCAnswer extends WebRTCSignal {    
+export type WebRTCAnswer = WebRTCSignal & {    
     type: 'answer';
     answer: RTCSessionDescription;
 }
 
-export interface WebRTCICECandidate extends WebRTCSignal {
+export type WebRTCICECandidate = WebRTCSignal & {
     type: 'ice-candidate',
     candidate: RTCIceCandidate;
 }
 
-export interface WebRTCRoomInfo {
+export type WebRTCRoomInfo = {
     type: 'room-info',
     participants: User[];
     room: string;
 }
 
 // NOTE: This object not signed because it only originates from server, not peers
-export interface WebRTCUserJoined  {
+export type WebRTCUserJoined = {
     type: 'user-joined';
     user: User;
     room: string;
@@ -73,7 +73,7 @@ export interface WebRTCUserJoined  {
 }
 
 // NOTE: This object not signed because it only originates from server, not peers
-export interface WebRTCUserLeft {
+export type WebRTCUserLeft = {
     type: 'user-left';
     user: User;
     room: string;
