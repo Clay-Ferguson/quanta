@@ -74,12 +74,9 @@ export default function HeaderComp() {
                             </>
                         ) : (
                             <>
-                                <div className="flex items-center w-full sm:w-auto">
-                                    <div className="w-3 h-3 rounded-full bg-green-500 mr-2 animate-pulse" title="Connected"></div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
-                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.roomName} (${gs.participants!.size} others)`}</span></span>
-                                    </div>
+                                <div className="flex flex-col w-full sm:w-auto">
+                                    <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                    <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.roomName} (${gs.participants!.size} others)`}</span></span>
                                 </div>
                             
                                 <div className="flex gap-2 w-full sm:w-auto">
