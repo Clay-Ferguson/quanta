@@ -7,17 +7,27 @@ import appMessages from './AppMessages.ts';
 import appRooms from './AppRooms.ts';
 import appUsers from './AppUsers.ts';
 
-// Vars are injected diretly into HTML by server
+// Vars are injected directly into HTML by server
 declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 
+/**
+ * Main application service that manages the lifecycle and state of the Quanta Chat application.
+ * Handles initialization, connection management, page navigation, and state persistence.
+ */
 export class AppService {
-    // number of times the user has pressed 'd' key, while on settings page, without a rerender. Three presses triggers dev mode,
-    // which essentially just give the settings page a link to show logs.
+    /**
+     * Number of times the user has pressed 'd' key while on settings page, without a rerender. 
+     * Three presses triggers dev mode, which gives the settings page a link to show logs.
+     */
     dCount = 0;
 
-    // Initializes the AppService, setting up the IndexedDB and WebRTC connection.
+    /**
+     * Initializes the AppService, setting up IndexedDB, WebRTC connection, and application state.
+     * Restores saved values, loads user identity, and sets up event listeners.
+     * Runs room cleanup after initialization.
+     */
     async init() {
         console.log("Quanta Chat AppService init");
         setApplyStateRules(this.applyStateRules);
@@ -49,6 +59,11 @@ export class AppService {
         }, 10000);
     }
 
+    /**
+     * Handles keyboard events, specifically the 'd' key press on the settings page.
+     * Three consecutive 'd' presses enable developer mode.
+     * @param event - The keyboard event containing the key information
+     */
     handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'd' && this.getPageName() === PageNames.settings) {
             if (++this.dCount >= 3) {
@@ -60,8 +75,11 @@ export class AppService {
         }
     }
 
-    /* This is just a global hook where we can make a final alteration of the state if needed, that
-    will apply across all state updates. */
+    /**
+     * Global hook that applies final state alterations across all state updates.
+     * Resets the 'd' key counter and ensures header is expanded when not connected.
+     * @param gs - The global state object to modify
+     */
     applyStateRules = (gs: GlobalState) => {
         this.dCount = 0;
         // If not connected show the header to user cannot get confused/lost
@@ -70,6 +88,10 @@ export class AppService {
         }
     }
 
+    /**
+     * Restores a previous connection if valid credentials and connection state are found in IndexedDB.
+     * Automatically reconnects the user to their previous room if they were previously connected.
+     */
     restoreConnection = async () => {
         const userName = await idb.getItem(DBKeys.userName);
         const keyPair = await idb.getItem(DBKeys.keyPair);
@@ -82,6 +104,11 @@ export class AppService {
         }
     }
 
+    /**
+     * Restores all saved user preferences and application state from IndexedDB.
+     * Loads user profile, contacts, room history, and settings.
+     * Redirects to settings page if no username is found.
+     */
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
         const userName: string= await idb.getItem(DBKeys.userName);
@@ -113,6 +140,11 @@ export class AppService {
         gd({ type: 'restoreSavedValues', payload: state});
     }
 
+    /**
+     * Gets the name of the currently active page from the page stack.
+     * Returns the default QuantaChat page if no pages are in the stack.
+     * @returns The name of the current page
+     */
     getPageName = (): string => {
         const _gs = gs();
         if (!_gs || !_gs.pages || _gs.pages.length === 0) {
@@ -121,6 +153,13 @@ export class AppService {
         return _gs.pages[_gs.pages.length - 1];
     }
 
+    /**
+     * Sets the specified page as the top page in the navigation stack.
+     * Only pushes the page if it's not already at the top of the stack.
+     * @param gs - The global state object containing the page stack
+     * @param page - The name of the page to set as the top page
+     * @returns The updated pages array
+     */
     setTopPage = (gs: GlobalState | null, page: string): Array<string> | undefined => {
         // if the page is NOT already on top of the stack, then push it
         if (this.getPageName() !== page) {
@@ -129,13 +168,22 @@ export class AppService {
         return gs!.pages;
     }
 
+    /**
+     * Navigates to the specified page by updating the global state.
+     * @param page - The name of the page to navigate to
+     */
     goToPage = (page: string) => {
         const _gs = gs();
         this.setTopPage(_gs, page);
         gd({ type: 'setPage', payload: _gs });
     }
 
-    // we have this method only for effeciency to do a single state update.
+    /**
+     * Sets both room name and user name in a single state update for efficiency.
+     * Also persists these values to IndexedDB.
+     * @param roomName - The name of the room to join
+     * @param userName - The user's display name
+     */
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
         gd({ type: `setRoomAndUser`, payload: { 
             roomName, userName
@@ -145,7 +193,13 @@ export class AppService {
         await idb.setItem(DBKeys.userName, userName);
     }        
 
-    // userName is optional and will default to global state if not provided
+    /**
+     * Establishes a connection to a chat room with the specified credentials.
+     * Loads room messages, handles failed message resending, and updates the application state.
+     * @param userName - The user's display name (optional, defaults to global state)
+     * @param keyPair - The user's cryptographic key pair (optional, defaults to global state)
+     * @param roomName - The name of the room to connect to
+     */
     connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
         let _gs = gs();
         userName = userName || _gs.userName!;
@@ -187,6 +241,10 @@ export class AppService {
         console.log("Connected to room: " + roomName);
     }
 
+    /**
+     * Disconnects from the current chat room and clears connection-related state.
+     * Resets messages, participants, and connection status in both memory and IndexedDB.
+     */
     disconnect = async () => {
         rtc._disconnect();
         gd({ type: 'disconnect', payload: { 
