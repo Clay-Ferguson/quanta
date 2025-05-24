@@ -40,69 +40,71 @@ export default function HeaderComp() {
             
             <div className="flex flex-col lg:flex-row w-full gap-3">
                 
-                {gs.headerExpanded && 
-                    <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full lg:w-auto flex-grow">
-                        {!gs.connected ? (
-                            <>
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                                    <label htmlFor="roomName" className="text-gray-300">Room:</label>
-                                    <input 
-                                        id="roomName"
-                                        type="text" 
-                                        value={roomName} 
-                                        onChange={(e) => setRoomName(e.target.value)}
-                                        className="input-field w-full sm:w-auto" 
-                                    />
-                                </div>
-                            
-                                <div className="flex gap-2 w-full sm:w-auto">
-                                    <button 
-                                        disabled={!gs.userName || !roomName}
-                                        onClick={() => app.connect(null, null, roomName)}
-                                        className="btn-green w-full sm:w-auto"
-                                    >
-                                    Join
-                                    </button>
+                <div className="flex-grow">
+                    {gs.headerExpanded && 
+                        <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-fit">
+                            {!gs.connected ? (
+                                <>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                                        <label htmlFor="roomName" className="text-gray-300">Room:</label>
+                                        <input 
+                                            id="roomName"
+                                            type="text" 
+                                            value={roomName} 
+                                            onChange={(e) => setRoomName(e.target.value)}
+                                            className="input-field w-full sm:w-auto" 
+                                        />
+                                    </div>
                                 
-                                    <button 
-                                        onClick={() => app.goToPage(PageNames.rooms)}
-                                        className="btn-secondary w-full sm:w-auto"
-                                    >
-                                    Rooms
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex flex-col w-full sm:w-auto">
-                                    <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
-                                    <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.roomName} (${gs.participants!.size} others)`}</span></span>
-                                </div>
-                            
-                                <div className="flex gap-2 w-full sm:w-auto">
-                                    <button 
-                                        onClick={app.disconnect}
-                                        className="btn-danger w-full sm:w-auto"
-                                    >
-                                    Leave
-                                    </button>
-                                    <button 
-                                        onClick={() => app.goToPage(PageNames.roomMembers)}
-                                        className="btn-secondary w-full sm:w-auto"
-                                    >
-                                    Info
-                                    </button>
-                                    <button 
-                                        onClick={() => app.goToPage(PageNames.rooms)}
-                                        className="btn-secondary w-full sm:w-auto"
-                                    >
-                                    Rooms
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                }
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        <button 
+                                            disabled={!gs.userName || !roomName}
+                                            onClick={() => app.connect(null, null, roomName)}
+                                            className="btn-green w-full sm:w-auto"
+                                        >
+                                        Join
+                                        </button>
+                                    
+                                        <button 
+                                            onClick={() => app.goToPage(PageNames.rooms)}
+                                            className="btn-secondary w-full sm:w-auto"
+                                        >
+                                        Rooms
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col w-full sm:w-auto">
+                                        <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.roomName} (${gs.participants!.size} others)`}</span></span>
+                                    </div>
+                                
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        <button 
+                                            onClick={app.disconnect}
+                                            className="btn-danger w-full sm:w-auto"
+                                        >
+                                        Leave
+                                        </button>
+                                        <button 
+                                            onClick={() => app.goToPage(PageNames.roomMembers)}
+                                            className="btn-secondary w-full sm:w-auto"
+                                        >
+                                        Info
+                                        </button>
+                                        <button 
+                                            onClick={() => app.goToPage(PageNames.rooms)}
+                                            className="btn-secondary w-full sm:w-auto"
+                                        >
+                                        Rooms
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    }
+                </div>
 
                 <div id="chatButtonBar" className="flex flex-wrap justify-center lg:justify-end gap-2 lg:gap-4 w-full lg:w-auto lg:flex-shrink-0">
                     {gs.headerExpanded && <button 
