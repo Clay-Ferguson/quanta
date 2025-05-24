@@ -10,7 +10,7 @@ export type KeyPairHex = {
     publicKey: string
 };
 
-export interface SignableObject {
+export type SignableObject = {
     signature?: string;
     publicKey?: string;
 }
@@ -21,7 +21,8 @@ export enum MessageStates {
     SAVED = 'a' // acknowledged by server (stored in DB)
 }
 
-export interface ChatMessageIntf extends SignableObject {
+// Note: type inherits from SignableObject
+export type ChatMessageIntf = SignableObject & {
     id: string;
     timestamp: number;
     sender: string;
@@ -32,7 +33,7 @@ export interface ChatMessageIntf extends SignableObject {
     state?: MessageStates;
 }
 
-export interface UserProfile {
+export type UserProfile = {
     name: string;
     description: string;
     avatar: FileBase64Intf | null;
@@ -40,7 +41,7 @@ export interface UserProfile {
     signature?: string; // will be null if not signed
 }
 
-export interface User {
+export type User = {
     name: string;
     publicKey: string;
 }
@@ -61,7 +62,7 @@ export type Contact = {
     publicKey: string;
 }
 
-export interface FileBase64Intf {
+export type FileBase64Intf = {
     id?: number; // Attachments table ID if stored in DB
     name: string;
     type: string;
@@ -69,7 +70,7 @@ export interface FileBase64Intf {
     data: string; // base64 encoded
 }
 
-export interface FileBlob {
+export type FileBlob = {
     id?: number; // Attachments table ID if stored in DB
     name: string;
     type: string;
