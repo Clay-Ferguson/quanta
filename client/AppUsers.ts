@@ -10,7 +10,30 @@ import { gd, gs } from "./GlobalState";
 import { httpClientUtil } from "./HttpClientUtil";
 import { idb } from "./IndexedDB";
 
+/**
+ * AppUsers class manages user-related operations and data persistence in the Quanta Chat application.
+ * 
+ * This class provides functionality for:
+ * - User profile management and display
+ * - User information persistence to IndexedDB and server
+ * - Cryptographic identity management (key pair generation and import)
+ * - Contact management and user blocking operations
+ * - User avatar and description handling
+ * 
+ * The class works closely with IndexedDB for client-side persistence and optionally
+ * syncs user data with the server when `saveToServer` mode is enabled. It also
+ * integrates with the cryptographic system for identity verification and signing.
+ */
 class AppUsers {
+    /**
+     * Displays a user's profile page by setting the current page to userProfile.
+     * 
+     * This method navigates to the user profile page and initializes the profile
+     * state with the provided public key. The profile data (name, description, avatar)
+     * is initially empty and will be populated by other components or methods.
+     * 
+     * @param publicKey The public key of the user whose profile should be displayed
+     */
     showUserProfile = async (publicKey: string) => {
         // set page to userprofile 
         const _gs = gs();
@@ -19,6 +42,20 @@ class AppUsers {
         gd({ type: 'setUserProfile', payload: _gs});
     }
 
+    /**
+     * Saves user information to both local IndexedDB storage and optionally to the server.
+     * 
+     * This method performs a comprehensive save operation:
+     * 1. Updates the global state with the new user information
+     * 2. Persists the data to IndexedDB for offline access
+     * 3. If `saveToServer` is enabled and a key pair exists, sends the user profile to the server
+     * 
+     * The server sync allows for multi-device access and backup of user profile data.
+     * 
+     * @param userName The display name for the user
+     * @param userDescription A description or bio text for the user
+     * @param userAvatar The user's avatar image as a base64-encoded file interface, or null if no avatar
+     */
     saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
         const _gs = gd({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
@@ -39,6 +76,19 @@ class AppUsers {
         }
     }
 
+    /**
+     * Imports a cryptographic key pair from a provided private key.
+     * 
+     * This method allows users to restore their identity by importing a private key.
+     * The process includes:
+     * 1. Confirmation check if an existing key pair would be overwritten
+     * 2. Prompting the user for their private key
+     * 3. Generating the corresponding public key from the private key
+     * 4. Updating global state and persisting the key pair to IndexedDB
+     * 
+     * Key pairs are essential for message signing, verification, and user authentication
+     * in the Quanta Chat cryptographic system.
+     */
     importKeyPair = async () => {
         const _gs = gs();
         if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {
@@ -65,6 +115,21 @@ class AppUsers {
         await idb.setItem(DBKeys.keyPair, keyPair);
     }
 
+    /**
+     * Creates a new cryptographic identity by generating a fresh key pair.
+     * 
+     * This method generates a new public/private key pair for the user's cryptographic
+     * identity. The process includes:
+     * 1. Optional confirmation check if an existing key pair would be overwritten
+     * 2. Generating a new cryptographic key pair using the crypto library
+     * 3. Updating global state with the new identity
+     * 4. Persisting the key pair to IndexedDB for future sessions
+     * 
+     * Warning: This operation will overwrite any existing keys, so users should
+     * back up their private key before proceeding.
+     * 
+     * @param askFirst Whether to show a confirmation modal before creating new keys (defaults to true)
+     */
     createIdentity = async (askFirst: boolean = true) => {
         const _gs = gs();
         // if they already have a keyPair, ask if they want to create a new one
@@ -82,6 +147,19 @@ class AppUsers {
         await idb.setItem(DBKeys.keyPair, keyPair);
     }
 
+    /**
+     * Blocks a user and deletes all their messages from the system.
+     * 
+     * This administrative function performs a comprehensive blocking operation:
+     * 1. Shows a confirmation modal to prevent accidental blocking
+     * 2. Sends a secure request to the server to block the user by their public key
+     * 3. The server handles deletion of all messages from the blocked user
+     * 4. Displays a success message upon completion
+     * 
+     * This is typically an admin-only operation for content moderation purposes.
+     * 
+     * @param publicKey The public key of the user to block and remove messages from
+     */
     blockUser = async (publicKey: string) => {
         if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
             return;
@@ -96,6 +174,21 @@ class AppUsers {
         }
     }
     
+    /**
+     * Adds a user to the current user's contact list.
+     * 
+     * This method manages the contact list by:
+     * 1. Checking if a contacts list exists in the global state
+     * 2. Verifying the user is not already in the contacts to prevent duplicates
+     * 3. Adding the new contact with their public key and name as alias
+     * 4. Persisting the updated contacts list to IndexedDB
+     * 5. Updating the global state to reflect the changes
+     * 
+     * Contacts are used for easy access to frequently messaged users and for
+     * cryptographic verification of known users.
+     * 
+     * @param user The user object containing name and publicKey to add to contacts
+     */
     addContact = async (user: User) => {
         const _gs = gs();
         if (!_gs.contacts) {
@@ -121,5 +214,12 @@ class AppUsers {
     }    
 }
 
+/**
+ * Singleton instance of the AppUsers class for managing user operations.
+ * 
+ * This exported instance provides a centralized interface for all user-related
+ * operations throughout the application. Other modules can import and use this
+ * instance to perform user management, identity operations, and contact handling.
+ */
 const appUsers = new AppUsers();
 export default appUsers;
