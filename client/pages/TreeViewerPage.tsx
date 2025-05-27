@@ -73,8 +73,17 @@ export default function TreeViewerPage() {
     // Edit mode button handlers
     const handleEditClick = (node: TreeNode, index: number) => {
         console.log('Edit clicked for:', node.name, 'at index:', index);
-        // Only allow editing of files, not folders
-        if (node.mimeType !== 'folder') {
+        
+        if (node.mimeType === 'folder') {
+            // For folders, we're doing rename functionality
+            // Strip the numeric prefix from the folder name for editing
+            const folderNameWithoutPrefix = formatFileName(node.name);
+            gd({ type: 'setFolderEditingState', payload: { 
+                editingNode: node,
+                newFolderName: folderNameWithoutPrefix
+            }});
+        } else {
+            // Only allow editing of files, not folders
             gd({ type: 'setEditingState', payload: { 
                 editingNode: node,
                 editingContent: node.content || ''
@@ -115,6 +124,23 @@ export default function TreeViewerPage() {
         }
     };
 
+    const renameFolderOnServer = async (oldFolderName: string, newFolderName: string) => {
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                oldFolderName: oldFolderName,
+                newFolderName: newFolderName,
+                treeFolder: treeFolder
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/rename-folder/', requestBody);
+            console.log('Folder renamed on server successfully:', response);
+        } catch (error) {
+            console.error('Error renaming folder on server:', error);
+            // TODO: Show error message to user
+        }
+    };
+
     const handleSaveClick = () => {
         if (gs.editingNode && gs.editingContent !== null) {
             // Find the node in treeNodes and update its content
@@ -138,17 +164,61 @@ export default function TreeViewerPage() {
         }
     };
 
+    const handleRenameClick = () => {
+        if (gs.editingNode && gs.newFolderName !== null) {
+            // Extract the numeric prefix from the original folder name
+            const originalName = gs.editingNode.name;
+            const underscoreIndex = originalName.indexOf('_');
+            const numericPrefix = underscoreIndex !== -1 ? originalName.substring(0, underscoreIndex + 1) : '';
+            
+            // Create the new full folder name with the numeric prefix
+            const newFullFolderName = numericPrefix + gs.newFolderName;
+            
+            // Find the node in treeNodes and update its name
+            const updatedNodes = treeNodes.map(node => 
+                node === gs.editingNode 
+                    ? { ...node, name: newFullFolderName }
+                    : node
+            );
+            setTreeNodes(updatedNodes);
+            
+            // Clear editing state
+            gd({ type: 'clearFolderEditingState', payload: { 
+                editingNode: null,
+                newFolderName: null
+            }});
+
+            // Rename on server with a delay to ensure UI updates first
+            setTimeout(() => {
+                renameFolderOnServer(gs.editingNode!.name, newFullFolderName);
+            }, 500);
+        }
+    };
+
     const handleCancelClick = () => {
         // Clear editing state without saving
-        gd({ type: 'clearEditingState', payload: { 
-            editingNode: null,
-            editingContent: null
-        }});
+        if (gs.editingNode?.mimeType === 'folder') {
+            gd({ type: 'clearFolderEditingState', payload: { 
+                editingNode: null,
+                newFolderName: null
+            }});
+        } else {
+            gd({ type: 'clearEditingState', payload: { 
+                editingNode: null,
+                editingContent: null
+            }});
+        }
     };
 
     const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         gd({ type: 'setEditingContent', payload: { 
             editingContent: event.target.value
+        }});
+    };
+
+    const handleFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        gd({ type: 'setNewFolderName', payload: { 
+            newFolderName: event.target.value
         }});
     };
 
@@ -232,49 +302,85 @@ export default function TreeViewerPage() {
                                     {/* Display content based on mimeType */}
                                     {node.mimeType === 'folder' ? (
                                         <div className="flex items-center justify-between">
-                                            <div 
-                                                className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
-                                                onClick={() => handleFolderClick(node.name)}
-                                            >
-                                                <FontAwesomeIcon 
-                                                    icon={faFolder} 
-                                                    className="text-blue-400 text-lg mr-3" 
-                                                />
-                                                <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
-                                                    {formatFileName(node.name)}
-                                                </span>
-                                            </div>
-                                            {gs.editMode && (
-                                                <div className="flex items-center gap-2 ml-4">
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
-                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
-                                                        title="Edit"
-                                                    >
-                                                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(node, index); }}
-                                                        className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
-                                                        title="Delete"
-                                                    >
-                                                        <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
-                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                        title="Move Up"
-                                                    >
-                                                        <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
-                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                        title="Move Down"
-                                                    >
-                                                        <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
-                                                    </button>
+                                            {/* Check if this folder is currently being edited */}
+                                            {gs.editingNode === node ? (
+                                                <div className="flex items-center flex-grow">
+                                                    <FontAwesomeIcon 
+                                                        icon={faFolder} 
+                                                        className="text-blue-400 text-lg mr-3" 
+                                                    />
+                                                    <div className="flex-grow">
+                                                        <input
+                                                            type="text"
+                                                            value={gs.newFolderName || ''}
+                                                            onChange={handleFolderNameChange}
+                                                            className="w-full bg-gray-800 border border-gray-600 rounded-lg text-gray-200 text-lg font-medium px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                            placeholder="Enter folder name..."
+                                                            autoFocus
+                                                        />
+                                                        <div className="flex gap-2 mt-2">
+                                                            <button
+                                                                onClick={handleRenameClick}
+                                                                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                                                            >
+                                                                Rename
+                                                            </button>
+                                                            <button
+                                                                onClick={handleCancelClick}
+                                                                className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                            ) : (
+                                                <>
+                                                    <div 
+                                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
+                                                        onClick={() => handleFolderClick(node.name)}
+                                                    >
+                                                        <FontAwesomeIcon 
+                                                            icon={faFolder} 
+                                                            className="text-blue-400 text-lg mr-3" 
+                                                        />
+                                                        <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
+                                                            {formatFileName(node.name)}
+                                                        </span>
+                                                    </div>
+                                                    {gs.editMode && (
+                                                        <div className="flex items-center gap-2 ml-4">
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
+                                                                className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                                                                title="Edit"
+                                                            >
+                                                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(node, index); }}
+                                                                className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
+                                                                title="Delete"
+                                                            >
+                                                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
+                                                                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                title="Move Up"
+                                                            >
+                                                                <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
+                                                                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                title="Move Down"
+                                                            >
+                                                                <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     ) : node.mimeType.startsWith('image/') ? (

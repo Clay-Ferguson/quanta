@@ -567,6 +567,67 @@ class Controller {
     }
 
     /**
+     * Renames a folder on the server for the tree viewer feature
+     * @param req - Express request object containing oldFolderName and newFolderName in body
+     * @param res - Express response object
+     */
+    renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string }>, res: Response): Promise<void> => {
+        console.log("Rename Folder Request");
+        try {
+            const { oldFolderName, newFolderName, treeFolder } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!oldFolderName || !newFolderName || !treeFolder) {
+                res.status(400).json({ error: 'Old folder name, new folder name, and treeFolder are required' });
+                return;
+            }
+
+            // Construct the absolute paths
+            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const oldAbsolutePath = path.join(absoluteParentPath, oldFolderName);
+            const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
+
+            // Check if the parent directory exists
+            if (!fs.existsSync(absoluteParentPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            // Check if the old folder exists
+            if (!fs.existsSync(oldAbsolutePath)) {
+                res.status(404).json({ error: 'Old folder not found' });
+                return;
+            }
+
+            // Check if it's actually a directory
+            const stat = fs.statSync(oldAbsolutePath);
+            if (!stat.isDirectory()) {
+                res.status(400).json({ error: 'Path is not a directory' });
+                return;
+            }
+
+            // Check if the new name already exists
+            if (fs.existsSync(newAbsolutePath)) {
+                res.status(409).json({ error: 'A folder with the new name already exists' });
+                return;
+            }
+
+            // Rename the folder
+            fs.renameSync(oldAbsolutePath, newAbsolutePath);
+            
+            console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
+            res.json({ success: true, message: 'Folder renamed successfully' });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to rename folder');
+        }
+    }
+
+    /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
      * @param res - Express response object

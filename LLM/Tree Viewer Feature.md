@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #8"
+Current Status of this feature: The LLM is about to do "Step #9"
 
 ## Overview
 
@@ -62,7 +62,7 @@ Here's how to handle the state during editing: Let's create a new `GlobalState` 
 
 That will complete this step. Don't try to implement the server call to actually update the file. That will be the next step we'll do, but all we want for this current step (Step 7) is to update the in memory value for the content, as described.
 
-### Step 8: (doing this now)
+### Step 8: (completed)
 
 Building on Step 7, we can now implement the code to save the edited file content to the server. Based on all of the above you probably can do this without my guidance, but I'll give some info about my preferences to how to implement:
 
@@ -70,3 +70,10 @@ Building on Step 7, we can now implement the code to save the edited file conten
 
 * On the client, to call this server save method, create another new method in our component called `saveToServer` which does the call to the server to post up the new file content, and then call that from our existing save handler, but put it into a timer to delay the call to the server for half a second, so that nothign blocks the GUI from updating instantly. This delay is probably not needed becasue our state updater probably already takes care of it, but let's use a delay timer for the server call regardless.
 
+### Step 9: (doing this now)
+
+Now that we've already done the "Edit" capability for files, we can do a similar thing for folders, which will be just a folder 'rename' operation. In Step 7, above we had added `editingNode` which we can reuse for when we're "editing" a folder (i.e. renaming it), but let's create a new Global State variable called `newFolderName` to use almost identically to how we used `editingContent`. So let's go ahead and implement basically what we already did in Step 7 and Step 8 above, but for folder names. We already have the 'edit' icon on folders, so when the user clicks that we'll put an HTML text field right where the folder name was on the `TreeViewerPage` to again do a kind of inline edit of the folder name. So when the user starts editing we'll put into the `newFolderName` the value of the folder name with the numeric prefix (like: "0234_My-Folder-Name") removed. Then when we do the save to the server we'll send the full folder name with the correct numeric prefix added. 
+
+This renaming is a bit tricky, unless you see what we're doing, so let me clarify a bit more: We use the `formatFileName` function in `TreeViewerPage` to strip off the numeric prefix before presenting the folder name to the user, and this clean version of the folder name is also what we want them to see during editing. So just before they do a save we can look in the `editingNode` to get the original prefix from the file name, and then prefix that to what the user enters for their new folder name. So in other words they're editing everything but the prefix, which stays the same always.
+
+Let's use a server HTTP POST endpoint again, just like 'save-file' but let's call this one `/api/docs/rename-folder/`. Of course it will consist of a posted object which contains the `oldFolderName` and `newFolderName`, so we can do the rename of old to new. Once again, put the actual implementation on the `Controller.ts`. On the GUI, let's call the buttons "Rename" and "Cancel", and you will know how to implement them both based on the prior steps we've already done.
