@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder } from '@fortawesome/free-solid-svg-icons'; 
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons'; 
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -68,6 +68,27 @@ export default function TreeViewerPage() {
         gd({ type: 'setEditMode', payload: { 
             editMode: !gs.editMode
         }});
+    };
+
+    // Edit mode button handlers
+    const handleEditClick = (node: TreeNode, index: number) => {
+        console.log('Edit clicked for:', node.name, 'at index:', index);
+        // TODO: Implement edit functionality
+    };
+
+    const handleDeleteClick = (node: TreeNode, index: number) => {
+        console.log('Delete clicked for:', node.name, 'at index:', index);
+        // TODO: Implement delete functionality
+    };
+
+    const handleMoveUpClick = (node: TreeNode, index: number) => {
+        console.log('Move up clicked for:', node.name, 'at index:', index);
+        // TODO: Implement move up functionality
+    };
+
+    const handleMoveDownClick = (node: TreeNode, index: number) => {
+        console.log('Move down clicked for:', node.name, 'at index:', index);
+        // TODO: Implement move down functionality
     };
 
     useEffect(() => {
@@ -149,17 +170,51 @@ export default function TreeViewerPage() {
                                 <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
                                     {/* Display content based on mimeType */}
                                     {node.mimeType === 'folder' ? (
-                                        <div 
-                                            className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors"
-                                            onClick={() => handleFolderClick(node.name)}
-                                        >
-                                            <FontAwesomeIcon 
-                                                icon={faFolder} 
-                                                className="text-blue-400 text-lg mr-3" 
-                                            />
-                                            <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
-                                                {formatFileName(node.name)}
-                                            </span>
+                                        <div className="flex items-center justify-between">
+                                            <div 
+                                                className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
+                                                onClick={() => handleFolderClick(node.name)}
+                                            >
+                                                <FontAwesomeIcon 
+                                                    icon={faFolder} 
+                                                    className="text-blue-400 text-lg mr-3" 
+                                                />
+                                                <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
+                                                    {formatFileName(node.name)}
+                                                </span>
+                                            </div>
+                                            {gs.editMode && (
+                                                <div className="flex items-center gap-2 ml-4">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
+                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Edit"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(node, index); }}
+                                                        className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Delete"
+                                                    >
+                                                        <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
+                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Move Up"
+                                                    >
+                                                        <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
+                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Move Down"
+                                                    >
+                                                        <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : node.mimeType.startsWith('image/') ? (
                                         <div className="flex justify-center">
@@ -184,8 +239,40 @@ export default function TreeViewerPage() {
                                     
                                     {/* Display file metadata - only for non-folders */}
                                     {node.mimeType !== 'folder' && (
-                                        <div className="mt-3 text-xs text-gray-500">
+                                        <div className="mt-3 text-xs text-gray-500 flex justify-between items-center">
                                             <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span>
+                                            {gs.editMode && (
+                                                <div className="flex items-center gap-2">
+                                                    <button 
+                                                        onClick={() => handleEditClick(node, index)}
+                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Edit"
+                                                    >
+                                                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteClick(node, index)}
+                                                        className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Delete"
+                                                    >
+                                                        <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleMoveUpClick(node, index)}
+                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Move Up"
+                                                    >
+                                                        <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleMoveDownClick(node, index)}
+                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                        title="Move Down"
+                                                    >
+                                                        <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
