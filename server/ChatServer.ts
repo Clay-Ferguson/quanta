@@ -81,7 +81,7 @@ const serveIndexHtml = (req: Request, res: Response) => {
             .replace('{{HOST}}', HOST)
             .replace('{{PORT}}', PORT)
             .replace('{{SECURE}}', SECURE)
-            .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY);
+            .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');

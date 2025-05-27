@@ -2,6 +2,7 @@ import QuantaChatPage from './pages/QuantaChatPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ContactsPage from './pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
+import TreeViewerPage from './pages/TreeViewerPage.tsx';
 import RoomInfoPage from './pages/RoomInfoPage.tsx';    
 import RoomsPage from './pages/RoomsPage.tsx';
 import RoomsAdminPage from './pages/RoomsAdminPage.tsx';
@@ -39,6 +40,8 @@ export default function PageRouter() {
         return <ContactsPage />;
     case PageNames.userGuide:
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
+    case PageNames.treeViewerPage:
+        return <TreeViewerPage />;
     case PageNames.recentAttachments:
         return <RecentAttachmentsPage />;
     case PageNames.admin:

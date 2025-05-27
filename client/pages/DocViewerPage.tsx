@@ -65,8 +65,6 @@ export default function DocViewerPage({
     useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
-    //console.log('DocViewerPage: '+docContent);
-    // Handle back button click
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
