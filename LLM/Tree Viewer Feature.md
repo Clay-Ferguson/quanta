@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #2"
+Current Status of this feature: The LLM is about to do "Step #4"
 
 ## Overview
 
@@ -12,7 +12,7 @@ The `GlobalState` variable named `treeFolder` controls which folder is currently
 
 ## Steps
 
-### Step 1: (already completed)
+### Step 1: (completed)
 
 For this first step, here are the instructions to the AI Agent for what to do:
 
@@ -27,6 +27,14 @@ Summary: So we're just creating a way to let the browser/client request a direct
 
 STATUS UPDATE: Step 1 has been completed. `TreeRender_Response` is the type of what this endpoint responds with.
 
-### Step 2: (doing this now)
+### Step 2: (completed)
 
 In this step you will add basic rendering in `TreeViewerPage` component, by calling the endpoint to get the array of file content first, inside the partially implemented `fetchTree` method. In the place we currently have a `Markdown` react component in there just to prove the page works, we need to adjust that to instead iterate over the `TreeNode` array and display each one in a separate `Markdown` component, for all mimeTypes that are not images. For mime types which are images, we should display them in an HTML IMG tag instead of a `Markdown` component. Take your best guess at getting the URL correct for the image URLs, but as long as it's close I can fix it. I mean, the relative path aspect of the images might be tricky so just take your first guess at it, because it will be easy for me to fix that later. I will also probably adjust my endpoint to have a specific URL just for these document images, and that step hasn't been done yet. It will probably be in Step 3. So now that I think of it, just a placeholder URL that doesn't even work yet will be fine.
+
+### Step 3: (completed)
+
+In this step you will make the folders in the `TreeViewerPage` be clickable to drill down into any folder to view that folder.
+
+### Step 4: (doing this now)
+
+You'll add the "Parent" button to the page, to navigate back up the folder tree. On the `TreeViewerPage` will now add a button to the left of the back button that has a folder icon, and says "Parent" for the button text. This will alter the `treeFolder` global state variable (using the `gd` function) to make the tree viewer jump up to the parent folder of the current folder. So this is just a matter or removing the ending path part from `treeFolder` of course. You can hide this button if the `treeFolder` reaches a value of an empty strin or just a backslash.

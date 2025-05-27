@@ -33,6 +33,30 @@ export default function TreeViewerPage() {
         }});
     };
 
+    // Handle parent navigation (go up one level in folder tree)
+    const handleParentClick = () => {
+        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
+        // Remove the last path segment to go up one level
+        const lastSlashIndex = currentFolder.lastIndexOf('/');
+        if (lastSlashIndex > 0) {
+            const parentFolder = currentFolder.substring(0, lastSlashIndex);
+            gd({ type: 'setTreeFolder', payload: { 
+                treeFolder: parentFolder
+            }});
+        } else if (lastSlashIndex === 0 && currentFolder.length > 1) {
+            // If we're in a direct subfolder of root, go to root
+            gd({ type: 'setTreeFolder', payload: { 
+                treeFolder: '/'
+            }});
+        }
+    };
+
+    // Check if parent button should be shown
+    const shouldShowParentButton = () => {
+        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
+        return currentFolder !== '/' && currentFolder !== '' && currentFolder !== '/Quanta-User-Guide';
+    };
+
     useEffect(() => {
         const fetchTree = async () => {
             setIsLoading(true);
@@ -72,6 +96,16 @@ export default function TreeViewerPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Tree Viewer"/>
                 <div className="flex items-center space-x-4">
+                    {shouldShowParentButton() && (
+                        <button 
+                            onClick={handleParentClick}
+                            className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
+                            title="Go to parent folder"
+                        >
+                            <FontAwesomeIcon icon={faFolder} className="h-5 w-5 mr-1" />
+                            Parent
+                        </button>
+                    )}
                     <BackButtonComp/>
                 </div>
             </header>
