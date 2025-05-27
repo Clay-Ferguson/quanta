@@ -98,6 +98,23 @@ export default function TreeViewerPage() {
     };
 
     // Editing handlers
+    const saveToServer = async (filename: string, content: string) => {
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                filename: filename,
+                content: content,
+                treeFolder: treeFolder
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/save-file/', requestBody);
+            console.log('File saved to server successfully:', response);
+        } catch (error) {
+            console.error('Error saving file to server:', error);
+            // TODO: Show error message to user
+        }
+    };
+
     const handleSaveClick = () => {
         if (gs.editingNode && gs.editingContent !== null) {
             // Find the node in treeNodes and update its content
@@ -113,6 +130,11 @@ export default function TreeViewerPage() {
                 editingNode: null,
                 editingContent: null
             }});
+
+            // Save to server with a delay to ensure UI updates first
+            setTimeout(() => {
+                saveToServer(gs.editingNode!.name, gs.editingContent || '');
+            }, 500);
         }
     };
 

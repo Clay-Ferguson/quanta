@@ -519,6 +519,54 @@ class Controller {
     }
 
     /**
+     * Saves file content to the server for the tree viewer feature
+     * @param req - Express request object containing filename and content in body
+     * @param res - Express response object
+     */
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string }>, res: Response): Promise<void> => {
+        console.log("Save File Request");
+        try {
+            const { filename, content, treeFolder } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!filename || content === undefined || !treeFolder) {
+                res.status(400).json({ error: 'Filename, content, and treeFolder are required' });
+                return;
+            }
+
+            // Construct the absolute path
+            const absoluteFolderPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteFilePath = path.join(absoluteFolderPath, filename);
+
+            // Check if the directory exists
+            if (!fs.existsSync(absoluteFolderPath)) {
+                res.status(404).json({ error: 'Directory not found' });
+                return;
+            }
+
+            // Check if it's actually a directory
+            const stat = fs.statSync(absoluteFolderPath);
+            if (!stat.isDirectory()) {
+                res.status(400).json({ error: 'Path is not a directory' });
+                return;
+            }
+
+            // Write the content to the file
+            fs.writeFileSync(absoluteFilePath, content, 'utf8');
+            
+            console.log(`File saved successfully: ${absoluteFilePath}`);
+            res.json({ success: true, message: 'File saved successfully' });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to save file');
+        }
+    }
+
+    /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
      * @param res - Express response object
