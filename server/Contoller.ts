@@ -520,13 +520,13 @@ class Controller {
 
     /**
      * Saves file content to the server for the tree viewer feature
-     * @param req - Express request object containing filename and content in body
+     * @param req - Express request object containing filename, content, and optional newFileName in body
      * @param res - Express response object
      */
-    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string }>, res: Response): Promise<void> => {
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string }>, res: Response): Promise<void> => {
         console.log("Save File Request");
         try {
-            const { filename, content, treeFolder } = req.body;
+            const { filename, content, treeFolder, newFileName } = req.body;
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
@@ -556,10 +556,32 @@ class Controller {
                 return;
             }
 
-            // Write the content to the file
-            fs.writeFileSync(absoluteFilePath, content, 'utf8');
+            let finalFilePath = absoluteFilePath;
+
+            // If newFileName is provided and different from filename, rename the file first
+            if (newFileName && newFileName !== filename) {
+                const newAbsoluteFilePath = path.join(absoluteFolderPath, newFileName);
+                
+                // Check if the file to be renamed exists
+                if (fs.existsSync(absoluteFilePath)) {
+                    // Check if the new name already exists
+                    if (fs.existsSync(newAbsoluteFilePath)) {
+                        res.status(409).json({ error: 'A file with the new name already exists' });
+                        return;
+                    }
+                    
+                    // Rename the file
+                    fs.renameSync(absoluteFilePath, newAbsoluteFilePath);
+                    console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
+                }
+                
+                finalFilePath = newAbsoluteFilePath;
+            }
+
+            // Write the content to the file (renamed or original)
+            fs.writeFileSync(finalFilePath, content, 'utf8');
             
-            console.log(`File saved successfully: ${absoluteFilePath}`);
+            console.log(`File saved successfully: ${finalFilePath}`);
             res.json({ success: true, message: 'File saved successfully' });
         } catch (error) {
             this.handleError(error, res, 'Failed to save file');

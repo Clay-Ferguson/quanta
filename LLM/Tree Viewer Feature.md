@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #9"
+Current Status of this feature: The LLM is about to do "Step #10"
 
 ## Overview
 
@@ -70,10 +70,20 @@ Building on Step 7, we can now implement the code to save the edited file conten
 
 * On the client, to call this server save method, create another new method in our component called `saveToServer` which does the call to the server to post up the new file content, and then call that from our existing save handler, but put it into a timer to delay the call to the server for half a second, so that nothign blocks the GUI from updating instantly. This delay is probably not needed becasue our state updater probably already takes care of it, but let's use a delay timer for the server call regardless.
 
-### Step 9: (doing this now)
+### Step 9: (completed)
 
 Now that we've already done the "Edit" capability for files, we can do a similar thing for folders, which will be just a folder 'rename' operation. In Step 7, above we had added `editingNode` which we can reuse for when we're "editing" a folder (i.e. renaming it), but let's create a new Global State variable called `newFolderName` to use almost identically to how we used `editingContent`. So let's go ahead and implement basically what we already did in Step 7 and Step 8 above, but for folder names. We already have the 'edit' icon on folders, so when the user clicks that we'll put an HTML text field right where the folder name was on the `TreeViewerPage` to again do a kind of inline edit of the folder name. So when the user starts editing we'll put into the `newFolderName` the value of the folder name with the numeric prefix (like: "0234_My-Folder-Name") removed. Then when we do the save to the server we'll send the full folder name with the correct numeric prefix added. 
 
 This renaming is a bit tricky, unless you see what we're doing, so let me clarify a bit more: We use the `formatFileName` function in `TreeViewerPage` to strip off the numeric prefix before presenting the folder name to the user, and this clean version of the folder name is also what we want them to see during editing. So just before they do a save we can look in the `editingNode` to get the original prefix from the file name, and then prefix that to what the user enters for their new folder name. So in other words they're editing everything but the prefix, which stays the same always.
 
 Let's use a server HTTP POST endpoint again, just like 'save-file' but let's call this one `/api/docs/rename-folder/`. Of course it will consist of a posted object which contains the `oldFolderName` and `newFolderName`, so we can do the rename of old to new. Once again, put the actual implementation on the `Controller.ts`. On the GUI, let's call the buttons "Rename" and "Cancel", and you will know how to implement them both based on the prior steps we've already done.
+
+### Step 10: (completed)
+
+In Step 7 above we added the ability to edit a file, and then in Step 9, we added the ability edit a folder. What you can do next in Step 10 (this step) is to update our "Edit File" capability so that it does everything it's doing now, but with a tiny new addition. Let's display an edit field for the "File Name" directly above the textarea that we currently use to edit content. This means users will be shown both text inputs at the same time, and they can enter both values to change the filename and/or change the file content. 
+
+So on the client we need one new Global State variable named `newFileName` (just like we had done `newFolderName` for holding a new folder name). So the `newFileName` will of course default to the current file name (again with numbering prefix removed, just like we did for the folder renaming).
+
+Then on the server side we'll be including the `newFileName` in the object we post to the `save-file` endpoint. So of course you need to add a new request variable named `newFileName` into the existing `saveFile` method in `Controller.ts`. Then the save file will first compare to see if `newFileName` is different from `filename`, indicating the file was renamed, and if so execute the rename operation on the existing file first. Then after the rename has been done, the `saveFile` will just continue to run of course to write the content into the file as well. So our `safe-file` endpoint will also be our way of renaming files.
+
+Final point: Make the filename edit field full width just like the other inputs already are.

@@ -83,10 +83,13 @@ export default function TreeViewerPage() {
                 newFolderName: folderNameWithoutPrefix
             }});
         } else {
-            // Only allow editing of files, not folders
-            gd({ type: 'setEditingState', payload: { 
+            // For files, we're doing edit functionality including filename and content
+            // Strip the numeric prefix from the file name for editing
+            const fileNameWithoutPrefix = formatFileName(node.name);
+            gd({ type: 'setFileEditingState', payload: { 
                 editingNode: node,
-                editingContent: node.content || ''
+                editingContent: node.content || '',
+                newFileName: fileNameWithoutPrefix
             }});
         }
     };
@@ -107,13 +110,14 @@ export default function TreeViewerPage() {
     };
 
     // Editing handlers
-    const saveToServer = async (filename: string, content: string) => {
+    const saveToServer = async (filename: string, content: string, newFileName?: string) => {
         try {
             const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
             const requestBody = {
                 filename: filename,
                 content: content,
-                treeFolder: treeFolder
+                treeFolder: treeFolder,
+                newFileName: newFileName || filename
             };
             
             const response = await httpClientUtil.httpPost('/api/docs/save-file/', requestBody);
@@ -143,23 +147,35 @@ export default function TreeViewerPage() {
 
     const handleSaveClick = () => {
         if (gs.editingNode && gs.editingContent !== null) {
-            // Find the node in treeNodes and update its content
+            // Get the original filename and new filename
+            const originalName = gs.editingNode.name;
+            const newFileName = gs.newFileName || formatFileName(originalName);
+            
+            // Extract the numeric prefix from the original file name
+            const underscoreIndex = originalName.indexOf('_');
+            const numericPrefix = underscoreIndex !== -1 ? originalName.substring(0, underscoreIndex + 1) : '';
+            
+            // Create the new full file name with the numeric prefix
+            const newFullFileName = numericPrefix + newFileName;
+            
+            // Find the node in treeNodes and update its content and name
             const updatedNodes = treeNodes.map(node => 
                 node === gs.editingNode 
-                    ? { ...node, content: gs.editingContent || '' }
+                    ? { ...node, content: gs.editingContent || '', name: newFullFileName }
                     : node
             );
             setTreeNodes(updatedNodes);
             
             // Clear editing state
-            gd({ type: 'clearEditingState', payload: { 
+            gd({ type: 'clearFileEditingState', payload: { 
                 editingNode: null,
-                editingContent: null
+                editingContent: null,
+                newFileName: null
             }});
 
             // Save to server with a delay to ensure UI updates first
             setTimeout(() => {
-                saveToServer(gs.editingNode!.name, gs.editingContent || '');
+                saveToServer(gs.editingNode!.name, gs.editingContent || '', newFullFileName);
             }, 500);
         }
     };
@@ -203,9 +219,10 @@ export default function TreeViewerPage() {
                 newFolderName: null
             }});
         } else {
-            gd({ type: 'clearEditingState', payload: { 
+            gd({ type: 'clearFileEditingState', payload: { 
                 editingNode: null,
-                editingContent: null
+                editingContent: null,
+                newFileName: null
             }});
         }
     };
@@ -219,6 +236,12 @@ export default function TreeViewerPage() {
     const handleFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         gd({ type: 'setNewFolderName', payload: { 
             newFolderName: event.target.value
+        }});
+    };
+
+    const handleFileNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        gd({ type: 'setNewFileName', payload: { 
+            newFileName: event.target.value
         }});
     };
 
@@ -404,6 +427,14 @@ export default function TreeViewerPage() {
                                         // Check if this file is currently being edited
                                         gs.editingNode === node ? (
                                             <div>
+                                                <input
+                                                    type="text"
+                                                    value={gs.newFileName || ''}
+                                                    onChange={handleFileNameChange}
+                                                    className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="Enter filename..."
+                                                    autoFocus
+                                                />
                                                 <textarea
                                                     value={gs.editingContent || ''}
                                                     onChange={handleContentChange}
