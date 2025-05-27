@@ -53,6 +53,7 @@ app.get('/api/attachments/:attachmentId', controller.serveAttachment);
 app.get('/api/messages', controller.getMessageHistory);
 app.get('/api/users/:pubKey/info', controller.getUserProfile);
 app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
+app.get('/api/docs/render/*', controller.treeRender);
 
 app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, controller.getRoomInfo);
 app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, controller.deleteRoom);

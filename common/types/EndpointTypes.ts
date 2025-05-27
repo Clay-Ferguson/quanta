@@ -1,4 +1,4 @@
-import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo } from "./CommonTypes.js";
+import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, TreeNode } from "./CommonTypes.js";
 
 export type DeleteRoom_Request = {
     roomName: string;
@@ -45,5 +45,9 @@ export type GetRecentAttachments_Response = {
 
 export type GetMessagesByIds_Response = {
     messages: ChatMessageIntf[];
+}
+
+export type TreeRender_Response = {
+    treeNodes: TreeNode[];
 }
 

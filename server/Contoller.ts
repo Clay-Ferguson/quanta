@@ -1,11 +1,13 @@
-import { FileBlob, UserProfile } from "../common/types/CommonTypes.js";
+import { FileBlob, UserProfile, TreeNode } from "../common/types/CommonTypes.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
 import { dbUsers } from "./db/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
-import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/types/EndpointTypes.js";
+import fs from 'fs';
+import path from 'path';
+import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request, TreeRender_Response } from "../common/types/EndpointTypes.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
@@ -415,6 +417,104 @@ class Controller {
         }
         catch (error) {
             this.handleError(error, res, 'Failed to save messages');
+        }
+    }
+
+    /**
+     * Tree render method that returns an array of TreeNode objects representing files and folders
+     * @param req - Express request object containing treeFolder in the URL path
+     * @param res - Express response object
+     */
+    treeRender = async (req: Request, res: Response): Promise<void> => {
+        console.log("Tree Render Request:", req.path);
+        try {
+            // Extract the path after /api/docs/render/
+            const treeFolder = req.path.replace('/api/docs/render/', '');
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!treeFolder) {
+                res.status(400).json({ error: 'Tree folder parameter is required' });
+                return;
+            }
+
+            // Construct the absolute path
+            const absolutePath = path.join(quantaTreeRoot, treeFolder);
+
+            // Check if the directory exists
+            if (!fs.existsSync(absolutePath)) {
+                res.status(404).json({ error: 'Directory not found' });
+                return;
+            }
+
+            // Check if it's actually a directory
+            const stat = fs.statSync(absolutePath);
+            if (!stat.isDirectory()) {
+                res.status(400).json({ error: 'Path is not a directory' });
+                return;
+            }
+
+            // Read directory contents
+            const files = fs.readdirSync(absolutePath);
+            const treeNodes: TreeNode[] = [];
+
+            for (const file of files) {
+                // Skip _index.md files
+                if (file === '_index.md') {
+                    continue;
+                }
+                
+                const filePath = path.join(absolutePath, file);
+                const fileStat = fs.statSync(filePath);
+                
+                let content = '';
+                let mimeType = '';
+
+                if (fileStat.isDirectory()) {
+                    mimeType = 'folder';
+                } else {
+                    const ext = path.extname(file).toLowerCase();
+                    
+                    // Detect image files
+                    if (['.png', '.jpeg', '.jpg'].includes(ext)) {
+                        mimeType = 'image';
+                        // For images, we don't read content, just provide the path reference
+                        content = filePath;
+                    } else {
+                        // Assume it's a text file and read its content
+                        try {
+                            content = fs.readFileSync(filePath, 'utf8');
+                            mimeType = 'text';
+                        } catch (error) {
+                            console.warn(`Could not read file ${filePath} as text:`, error);
+                            content = '';
+                            mimeType = 'unknown';
+                        }
+                    }
+                }
+
+                const treeNode: TreeNode = {
+                    name: file,
+                    createTime: fileStat.birthtime.getTime(),
+                    modifyTime: fileStat.mtime.getTime(),
+                    content: content,
+                    mimeType: mimeType,
+                };
+
+                treeNodes.push(treeNode);
+            }
+
+            // Sort alphabetically by filename
+            treeNodes.sort((a, b) => a.name.localeCompare(b.name));
+
+            const response: TreeRender_Response = { treeNodes };
+            res.json(response);
+        } catch (error) {
+            this.handleError(error, res, 'Failed to render tree');
         }
     }
 

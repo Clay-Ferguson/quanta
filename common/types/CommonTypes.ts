@@ -90,3 +90,11 @@ export type AttachmentInfo = {
     roomName: string;
 }
 
+export type TreeNode = {
+    name: string; // filename
+    createTime: number;
+    modifyTime: number;
+    content: string;
+    mimeType: string;
+}
+

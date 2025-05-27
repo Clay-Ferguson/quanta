@@ -4,31 +4,64 @@ import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
 import { scrollEffects } from '../ScrollEffects';
 import { util } from '../Util';
+import { httpClientUtil } from '../HttpClientUtil';
+import { useGlobalState, gd } from '../GlobalState';
+import { TreeRender_Response } from '../../common/types/EndpointTypes';
+import { TreeNode } from '../../common/types/CommonTypes';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFolder } from '@fortawesome/free-solid-svg-icons'; 
 
 /**
- * Page for displaying a document viewer. So far only used for displaying static markdown files, and specifically the user guide.
+ * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
+ * Fetches file content from the server and displays each file as a separate component based on its MIME type.
  */
 export default function TreeViewerPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const docContent = "# Tree Viewer";
+    const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const gs = useGlobalState();
+    
     useEffect(() => util.resizeEffect(), []);
+
+    // Handle folder click navigation
+    const handleFolderClick = (folderName: string) => {
+        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
+        const newFolder = `${currentFolder}/${folderName}`;
+        
+        gd({ type: 'setTreeFolder', payload: { 
+            treeFolder: newFolder
+        }});
+    };
 
     useEffect(() => {
         const fetchTree = async () => {
             setIsLoading(true);
+            setError(null);
             try {
                 console.log("Loading tree document...");
+                
+                // Get the treeFolder from global state
+                const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+                
+                // Make API call to get tree nodes
+                const url = `/api/docs/render${treeFolder}`;
+                const response: TreeRender_Response = await httpClientUtil.httpGet(url);
+                
+                if (response && response.treeNodes) {
+                    setTreeNodes(response.treeNodes);
+                } else {
+                    setError("No tree data received from server");
+                }
             } catch (error) {
-                console.error('Error loading doc:', error);
-                // Set a fallback message in case of error
-                // (`## Error\n\nSorry, we encountered an error loading the tree for "${filename}".`);
+                console.error('Error loading tree:', error);
+                setError(`Sorry, we encountered an error loading the tree for "${gs.treeFolder || '/Quanta-User-Guide'}".`);
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchTree();
-    }, []);
+    }, [gs.treeFolder]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
@@ -37,7 +70,7 @@ export default function TreeViewerPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Document Viewer"/>
+                <LogoBlockComp subText="Tree Viewer"/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>
@@ -49,8 +82,59 @@ export default function TreeViewerPage() {
                             <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
                             <p className="mt-4 text-blue-300">Loading document...</p>
                         </div>
+                    ) : error ? (
+                        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                            <h2 className="text-red-400 text-lg font-semibold mb-2">Error</h2>
+                            <p className="text-red-300">{error}</p>
+                        </div>
                     ) : (
-                        <Markdown markdownContent={docContent || ''} />
+                        <div>
+                            {treeNodes.map((node, index) => (
+                                <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
+                                    {/* Display content based on mimeType */}
+                                    {node.mimeType === 'folder' ? (
+                                        <div 
+                                            className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors"
+                                            onClick={() => handleFolderClick(node.name)}
+                                        >
+                                            <FontAwesomeIcon 
+                                                icon={faFolder} 
+                                                className="text-blue-400 text-lg mr-3" 
+                                            />
+                                            <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
+                                                {node.name}
+                                            </span>
+                                        </div>
+                                    ) : node.mimeType.startsWith('image/') ? (
+                                        <div className="flex justify-center">
+                                            <img 
+                                                src={`/api/docs/images${gs.treeFolder || '/Quanta-User-Guide'}/${node.name}`}
+                                                alt={node.name}
+                                                className="max-w-full h-auto rounded-lg shadow-lg"
+                                                onError={(e) => {
+                                                    // Fallback if image fails to load
+                                                    const target = e.currentTarget;
+                                                    target.style.display = 'none';
+                                                    const fallback = document.createElement('div');
+                                                    fallback.className = 'bg-gray-700 border border-gray-600 rounded-lg p-8 text-center text-gray-400';
+                                                    fallback.innerHTML = `<p>Image not available: ${node.name}</p>`;
+                                                    target.parentNode?.appendChild(fallback);
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Markdown markdownContent={node.content || ''} />
+                                    )}
+                                    
+                                    {/* Display file metadata - only for non-folders */}
+                                    {node.mimeType !== 'folder' && (
+                                        <div className="mt-3 text-xs text-gray-500">
+                                            <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
                 </div>

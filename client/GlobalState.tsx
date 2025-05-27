@@ -69,7 +69,7 @@ const initialState: GlobalState = {
     promptDefaultValue: null,
     headerExpanded: false,
     devMode: false,
-    treeFolder: '',
+    treeFolder: '/Quanta-User-Guide', //todo-0: make this not hardcoded
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
