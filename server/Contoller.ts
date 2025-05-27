@@ -463,9 +463,9 @@ class Controller {
             const treeNodes: TreeNode[] = [];
 
             for (const file of files) {
-                // Skip _index.md files
-                if (file === '_index.md') {
-                    continue;
+                // We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore.
+                if (!/^\d+_/.test(file)) {
+                    continue; // Skip files that do not match the naming convention
                 }
                 
                 const filePath = path.join(absolutePath, file);

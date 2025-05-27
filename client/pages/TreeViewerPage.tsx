@@ -51,6 +51,12 @@ export default function TreeViewerPage() {
         }
     };
 
+    // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
+    const formatFileName = (name: string) => {
+        const underscoreIndex = name.indexOf('_');
+        return underscoreIndex !== -1 ? name.substring(underscoreIndex + 1) : name;
+    }   
+
     // Check if parent button should be shown
     const shouldShowParentButton = () => {
         const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
@@ -136,7 +142,7 @@ export default function TreeViewerPage() {
                                                 className="text-blue-400 text-lg mr-3" 
                                             />
                                             <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
-                                                {node.name}
+                                                {formatFileName(node.name)}
                                             </span>
                                         </div>
                                     ) : node.mimeType.startsWith('image/') ? (
