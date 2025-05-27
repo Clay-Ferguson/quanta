@@ -63,6 +63,13 @@ export default function TreeViewerPage() {
         return currentFolder !== '/' && currentFolder !== '' && currentFolder !== '/Quanta-User-Guide';
     };
 
+    // Handle edit mode toggle
+    const handleEditModeToggle = () => {
+        gd({ type: 'setEditMode', payload: { 
+            editMode: !gs.editMode
+        }});
+    };
+
     useEffect(() => {
         const fetchTree = async () => {
             setIsLoading(true);
@@ -102,6 +109,15 @@ export default function TreeViewerPage() {
             <header className="app-header">
                 <LogoBlockComp subText="Tree Viewer"/>
                 <div className="flex items-center space-x-4">
+                    <label className="flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox"
+                            checked={gs.editMode || false}
+                            onChange={handleEditModeToggle}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
+                    </label>
                     {shouldShowParentButton() && (
                         <button 
                             onClick={handleParentClick}

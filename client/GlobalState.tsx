@@ -41,7 +41,8 @@ export interface GlobalState {
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
     devMode?: boolean;
-    treeFolder?: string; 
+    treeFolder?: string;
+    editMode?: boolean; 
 }
 
 const initialState: GlobalState = {
@@ -70,6 +71,7 @@ const initialState: GlobalState = {
     headerExpanded: false,
     devMode: false,
     treeFolder: '/Quanta-User-Guide', //todo-0: make this not hardcoded
+    editMode: false,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
