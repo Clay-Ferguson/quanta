@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { PageNames, PanelKeys, RoomHistoryItem } from './AppServiceTypes';
-import { ChatMessage, Contact, FileBase64Intf, KeyPairHex, User, UserProfile } from '../common/types/CommonTypes';
+import { ChatMessage, Contact, FileBase64Intf, KeyPairHex, User, UserProfile, TreeNode } from '../common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -43,6 +43,8 @@ export interface GlobalState {
     devMode?: boolean;
     treeFolder?: string;
     editMode?: boolean; 
+    editingNode?: TreeNode | null;
+    editingContent?: string | null;
 }
 
 const initialState: GlobalState = {
@@ -72,6 +74,8 @@ const initialState: GlobalState = {
     devMode: false,
     treeFolder: '/Quanta-User-Guide', //todo-0: make this not hardcoded
     editMode: false,
+    editingNode: null,
+    editingContent: null,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

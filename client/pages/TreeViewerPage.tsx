@@ -73,7 +73,13 @@ export default function TreeViewerPage() {
     // Edit mode button handlers
     const handleEditClick = (node: TreeNode, index: number) => {
         console.log('Edit clicked for:', node.name, 'at index:', index);
-        // TODO: Implement edit functionality
+        // Only allow editing of files, not folders
+        if (node.mimeType !== 'folder') {
+            gd({ type: 'setEditingState', payload: { 
+                editingNode: node,
+                editingContent: node.content || ''
+            }});
+        }
     };
 
     const handleDeleteClick = (node: TreeNode, index: number) => {
@@ -89,6 +95,39 @@ export default function TreeViewerPage() {
     const handleMoveDownClick = (node: TreeNode, index: number) => {
         console.log('Move down clicked for:', node.name, 'at index:', index);
         // TODO: Implement move down functionality
+    };
+
+    // Editing handlers
+    const handleSaveClick = () => {
+        if (gs.editingNode && gs.editingContent !== null) {
+            // Find the node in treeNodes and update its content
+            const updatedNodes = treeNodes.map(node => 
+                node === gs.editingNode 
+                    ? { ...node, content: gs.editingContent || '' }
+                    : node
+            );
+            setTreeNodes(updatedNodes);
+            
+            // Clear editing state
+            gd({ type: 'clearEditingState', payload: { 
+                editingNode: null,
+                editingContent: null
+            }});
+        }
+    };
+
+    const handleCancelClick = () => {
+        // Clear editing state without saving
+        gd({ type: 'clearEditingState', payload: { 
+            editingNode: null,
+            editingContent: null
+        }});
+    };
+
+    const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        gd({ type: 'setEditingContent', payload: { 
+            editingContent: event.target.value
+        }});
     };
 
     useEffect(() => {
@@ -234,7 +273,34 @@ export default function TreeViewerPage() {
                                             />
                                         </div>
                                     ) : (
-                                        <Markdown markdownContent={node.content || ''} />
+                                        // Check if this file is currently being edited
+                                        gs.editingNode === node ? (
+                                            <div>
+                                                <textarea
+                                                    value={gs.editingContent || ''}
+                                                    onChange={handleContentChange}
+                                                    rows={10}
+                                                    className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="Enter content here..."
+                                                />
+                                                <div className="flex gap-2 mt-3">
+                                                    <button
+                                                        onClick={handleSaveClick}
+                                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={handleCancelClick}
+                                                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <Markdown markdownContent={node.content || ''} />
+                                        )
                                     )}
                                     
                                     {/* Display file metadata - only for non-folders */}
