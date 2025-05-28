@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #16"
+Current Status of this feature: The LLM is about to do "Step #18"
 
 ## Overview
 
@@ -116,6 +116,14 @@ In the `insertFile` and `insertFolder` function we created in the last step we p
 
 Let's implement just the `createFile` in `Controller.ts`. We will not try to implement `createFolder` yet, because we will do this a little at a time. If you consider how we've already done all the previous steps, which explained to you how our ordinals work as prefixes in our files and folders, I think you will know how to create the new file. The fileName we're passing to the controller will not yet have any number prefix on it, but it will be the ordinal that's one above the `insertAfterNode` ordinal. So to keep all our ordinals unique we'll need to renumber all the files/folders at or below the ordinal we're inserting at. You can probably create a function called `shiftOrdinalsDown` which queries a listing of all files/folders at the level where we're inserting the file and shifts them all down (incrementing the ordinal prefix by one), that way when we get around to implementing `createFolder` we can make use of the `shiftOrdinalsDown` in that method also.
 
-### Step 16: (doing this now)
+### Step 16: (completed)
 
 Your implementation of `createFile` works perfectly. So you can now implement `createFolder` in almost the exact same way, making use of `shiftOrdinalsDown` as we had planned.
+
+### Step 17: (completed)
+
+Next we're going to make all the files/folders on our `TreeViewerPage` have a checkbox associated with them, for multi-selecting. These checkboxes will only show up when Edit Mode is on, of course. Each checkbox will be to the left of the `TreeNode`'s display. Use a larger than normal checkbox too for better accessibility. Create a `GlobalState` variable named `selectedTreeItems` which is a `Set<TreeNode>` type, which holds the selections. Make make it so that it clears the selections whenever we open a new folder, or use the "Parent" button. As you know, our folders are clickable so users can drill down into them, by clicking, so that's the place I'm talking about. When users drill down into folders, we need to reset (remove) the selections. For now these selected items aren't used for anything, we just want to make sure we have the checkboxes and their state working.
+
+### Step 18: (doing this now)
+
+next up: Cut, Copy, Paste, buttons in header bar.

@@ -47,6 +47,7 @@ export interface GlobalState {
     editingContent?: string | null;
     newFolderName?: string | null;
     newFileName?: string | null;
+    selectedTreeItems?: Set<TreeNode>;
 }
 
 const initialState: GlobalState = {
@@ -80,6 +81,7 @@ const initialState: GlobalState = {
     editingContent: null,
     newFolderName: null,
     newFileName: null,
+    selectedTreeItems: new Set<TreeNode>(),
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
