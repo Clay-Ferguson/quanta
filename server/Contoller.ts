@@ -481,7 +481,18 @@ class Controller {
                     
                     // Detect image files
                     if (['.png', '.jpeg', '.jpg'].includes(ext)) {
-                        mimeType = 'image';
+                        // Set proper MIME type based on extension
+                        switch (ext) {
+                        case '.png':
+                            mimeType = 'image/png';
+                            break;
+                        case '.jpg':
+                        case '.jpeg':
+                            mimeType = 'image/jpeg';
+                            break;
+                        default:
+                            mimeType = 'image/jpeg';
+                        }
                         // For images, we don't read content, just provide the path reference
                         content = filePath;
                     } else {

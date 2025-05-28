@@ -202,7 +202,7 @@ export default function TreeViewerPage() {
                     if (treeNode.name === response.oldName1) {
                         // Update the name and also update content if it's an image (content contains file path)
                         const updatedNode = { ...treeNode, name: response.newName1 };
-                        if (treeNode.mimeType === 'image' && treeNode.content) {
+                        if (treeNode.mimeType.startsWith('image/') && treeNode.content) {
                             // Update the file path in content to reflect the new filename
                             updatedNode.content = treeNode.content.replace(response.oldName1, response.newName1);
                         }
@@ -210,7 +210,7 @@ export default function TreeViewerPage() {
                     } else if (treeNode.name === response.oldName2) {
                         // Update the name and also update content if it's an image (content contains file path)
                         const updatedNode = { ...treeNode, name: response.newName2 };
-                        if (treeNode.mimeType === 'image' && treeNode.content) {
+                        if (treeNode.mimeType.startsWith('image/') && treeNode.content) {
                             // Update the file path in content to reflect the new filename
                             updatedNode.content = treeNode.content.replace(response.oldName2, response.newName2);
                         }
