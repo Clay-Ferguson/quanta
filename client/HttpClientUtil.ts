@@ -5,6 +5,9 @@ import { gs } from "./GlobalState";
 
 class HttpClientUtil {
     httpPost = async (url: string, obj: any) => {
+        // encode the url
+        url = encodeURI(url);
+
         const res = await fetch(url, {
             method: 'POST',
             headers: {
@@ -21,6 +24,7 @@ class HttpClientUtil {
     }
 
     httpGet = async (url: string) => {
+        url = encodeURI(url);
         const res = await fetch(url);
         if (!res.ok) {
             console.error(`Error fetching ${url}: ${res.status} ${res.statusText}`);
@@ -57,6 +61,7 @@ class HttpClientUtil {
                 opts.body = JSON.stringify(body);
             }
             
+            url = encodeURI(url);
             const res = await fetch(url, opts); 
             if (res.ok) {
                 response = await res.json();

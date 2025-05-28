@@ -446,11 +446,14 @@ export default function TreeViewerPage() {
                 // Make API call to get tree nodes
                 const url = `/api/docs/render${treeFolder}`;
                 const response: TreeRender_Response = await httpClientUtil.httpGet(url);
+
+                // show a pretty-print of the JSON of the response
+                // console.log("Tree response:", JSON.stringify(response, null, 2));
                 
                 if (response && response.treeNodes) {
                     setTreeNodes(response.treeNodes);
                 } else {
-                    setError("No tree data received from server");
+                    setTreeNodes([]);
                 }
             } catch (error) {
                 console.error('Error loading tree:', error);
@@ -467,7 +470,7 @@ export default function TreeViewerPage() {
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
-    // Header button handlers for Cut, Copy, Paste, Delete
+    // Header button handlers for Cut, Paste, Delete
     const onCut = () => {
         console.log('Cut button clicked');
         
@@ -486,10 +489,6 @@ export default function TreeViewerPage() {
         }});
         
         console.log('Items cut:', selectedFileNames);
-    };
-
-    const onCopy = () => {
-        console.log('Copy button clicked');
     };
 
     const onPaste = async () => {
@@ -616,13 +615,6 @@ export default function TreeViewerPage() {
                                 title="Cut selected items"
                             >
                                 Cut
-                            </button>
-                            <button 
-                                onClick={onCopy}
-                                className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                                title="Copy selected items"
-                            >
-                                Copy
                             </button>
                             <button 
                                 onClick={onPaste}

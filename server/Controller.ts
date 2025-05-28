@@ -428,8 +428,9 @@ class Controller {
     treeRender = async (req: Request, res: Response): Promise<void> => {
         console.log("Tree Render Request:", req.path);
         try {
-            // Extract the path after /api/docs/render/
-            const treeFolder = req.path.replace('/api/docs/render/', '');
+            // Extract the path after /api/docs/render/ and decode URL encoding
+            const rawTreeFolder = req.path.replace('/api/docs/render/', '');
+            const treeFolder = decodeURIComponent(rawTreeFolder);
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
@@ -867,8 +868,9 @@ class Controller {
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
         console.log("Serve Doc Image Request:", req.path);
         try {
-            // Extract the path after /api/docs/images/
-            const imagePath = req.path.replace('/api/docs/images/', '');
+            // Extract the path after /api/docs/images/ and decode URL encoding
+            const rawImagePath = req.path.replace('/api/docs/images/', '');
+            const imagePath = decodeURIComponent(rawImagePath);
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
