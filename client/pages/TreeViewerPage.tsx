@@ -28,7 +28,7 @@ export default function TreeViewerPage() {
 
     // Handle folder click navigation
     const handleFolderClick = (folderName: string) => {
-        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
+        const currentFolder = gs.treeFolder || '/';
         const newFolder = `${currentFolder}/${folderName}`;
         
         // Clear selections when navigating to a new folder
@@ -40,7 +40,7 @@ export default function TreeViewerPage() {
 
     // Handle parent navigation (go up one level in folder tree)
     const handleParentClick = () => {
-        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
+        const currentFolder = gs.treeFolder || '/';
         // Remove the last path segment to go up one level
         const lastSlashIndex = currentFolder.lastIndexOf('/');
         if (lastSlashIndex > 0) {
@@ -68,8 +68,8 @@ export default function TreeViewerPage() {
 
     // Check if parent button should be shown
     const shouldShowParentButton = () => {
-        const currentFolder = gs.treeFolder || '/Quanta-User-Guide';
-        return currentFolder !== '/' && currentFolder !== '' && currentFolder !== '/Quanta-User-Guide';
+        const currentFolder = gs.treeFolder || '/';
+        return currentFolder !== '/' && currentFolder !== '' && currentFolder !== '/';
     };
 
     // Handle edit mode toggle
@@ -168,7 +168,7 @@ export default function TreeViewerPage() {
         }
         
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide'; // todo-0: remove this hardcoded value
+            const treeFolder = gs.treeFolder || '/'; 
             const requestBody = {
                 fileName: fileName,
                 treeFolder: treeFolder,
@@ -205,7 +205,7 @@ export default function TreeViewerPage() {
         }
         
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 folderName: folderName,
                 treeFolder: treeFolder,
@@ -239,7 +239,7 @@ export default function TreeViewerPage() {
     // Editing handlers
     const saveToServer = async (filename: string, content: string, newFileName?: string) => {
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 filename: filename,
                 content: content,
@@ -257,7 +257,7 @@ export default function TreeViewerPage() {
 
     const renameFolderOnServer = async (oldFolderName: string, newFolderName: string) => {
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 oldFolderName: oldFolderName,
                 newFolderName: newFolderName,
@@ -274,7 +274,7 @@ export default function TreeViewerPage() {
 
     const deleteFileOrFolderOnServer = async (fileOrFolderName: string) => {
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 fileOrFolderName: fileOrFolderName,
                 treeFolder: treeFolder
@@ -290,7 +290,7 @@ export default function TreeViewerPage() {
 
     const moveFileOrFolder = async (node: TreeNode, direction: 'up' | 'down') => {
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 direction: direction,
                 filename: node.name,
@@ -441,7 +441,7 @@ export default function TreeViewerPage() {
                 console.log("Loading tree document...");
                 
                 // Get the treeFolder from global state
-                const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+                const treeFolder = gs.treeFolder || '/';
                 
                 // Make API call to get tree nodes
                 const url = `/api/docs/render${treeFolder}`;
@@ -457,7 +457,7 @@ export default function TreeViewerPage() {
                 }
             } catch (error) {
                 console.error('Error loading tree:', error);
-                setError(`Sorry, we encountered an error loading the tree for "${gs.treeFolder || '/Quanta-User-Guide'}".`);
+                setError(`Sorry, we encountered an error loading the tree for "${gs.treeFolder || '/'}".`);
             } finally {
                 setIsLoading(false);
             }
@@ -500,7 +500,7 @@ export default function TreeViewerPage() {
         }
 
         const cutItemsArray = Array.from(gs.cutItems);
-        const targetFolder = gs.treeFolder || '/Quanta-User-Guide';
+        const targetFolder = gs.treeFolder || '/';
 
         try {
             const requestBody = {
@@ -559,7 +559,7 @@ export default function TreeViewerPage() {
         try {
             // Prepare the file names for the server
             const fileNames = selectedItems.map(item => item.name);
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/';
             
             // Call server endpoint to delete the items
             const response = await httpClientUtil.httpPost('/api/docs/delete', {
@@ -663,9 +663,10 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
-                            <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4 text-blue-300 font-medium relative flex items-center justify-between">
-                                <span>{formatFullPath(gs.treeFolder || "")}</span>
-                                {shouldShowParentButton() && (
+                            {shouldShowParentButton() && (
+                                <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4 text-blue-300 font-medium relative flex items-center justify-between">
+                                    <span>{formatFullPath(gs.treeFolder || "")}</span>
+                                
                                     <button 
                                         onClick={handleParentClick}
                                         className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent absolute right-3"
@@ -673,8 +674,8 @@ export default function TreeViewerPage() {
                                     >
                                         <FontAwesomeIcon icon={faLevelUpAlt} className="h-4 w-4" />
                                     </button>
-                                )}
-                            </div>
+                                </div>
+                            )}
                             {/* Insert icons at top when in edit mode */}
                             {gs.editMode && (
                                 <div className="flex items-start gap-3 mb-4">
@@ -807,7 +808,7 @@ export default function TreeViewerPage() {
                                                     ) : isImage ? (
                                                         <div className="flex justify-center">
                                                             <img 
-                                                                src={`/api/docs/images${gs.treeFolder || '/Quanta-User-Guide'}/${node.name}`}
+                                                                src={`/api/docs/images${gs.treeFolder || '/'}/${node.name}`}
                                                                 alt={node.name}
                                                                 className="max-w-full h-auto rounded-lg shadow-lg"
                                                                 onError={(e) => {

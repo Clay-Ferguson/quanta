@@ -76,7 +76,7 @@ const initialState: GlobalState = {
     promptDefaultValue: null,
     headerExpanded: false,
     devMode: false,
-    treeFolder: '/Quanta-User-Guide', //todo-0: make this not hardcoded
+    treeFolder: '/', 
     editMode: false,
     editingNode: null,
     editingContent: null,

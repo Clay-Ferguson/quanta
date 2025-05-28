@@ -429,7 +429,7 @@ class Controller {
         console.log("Tree Render Request:", req.path);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
-            const rawTreeFolder = req.path.replace('/api/docs/render/', '');
+            const rawTreeFolder = req.path.replace('/api/docs/render/', '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
@@ -516,7 +516,6 @@ class Controller {
                     content: content,
                     mimeType: mimeType,
                 };
-
                 treeNodes.push(treeNode);
             }
 
