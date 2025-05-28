@@ -124,12 +124,12 @@ export default function TreeViewerPage() {
 
     const handleMoveUpClick = (node: TreeNode, index: number) => {
         console.log('Move up clicked for:', node.name, 'at index:', index);
-        // TODO: Implement move up functionality
+        moveFileOrFolder(node, 'up');
     };
 
     const handleMoveDownClick = (node: TreeNode, index: number) => {
         console.log('Move down clicked for:', node.name, 'at index:', index);
-        // TODO: Implement move down functionality
+        moveFileOrFolder(node, 'down');
     };
 
     // Editing handlers
@@ -181,6 +181,51 @@ export default function TreeViewerPage() {
         } catch (error) {
             console.error('Error deleting file or folder on server:', error);
             throw error; // Re-throw to be handled by the caller
+        }
+    };
+
+    const moveFileOrFolder = async (node: TreeNode, direction: 'up' | 'down') => {
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                direction: direction,
+                filename: node.name,
+                treeFolder: treeFolder
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/move-up-down', requestBody);
+            console.log('File or folder moved successfully:', response);
+            
+            // Update the local tree nodes based on the server response
+            if (response && response.oldName1 && response.newName1 && response.oldName2 && response.newName2) {
+                const updatedNodes = treeNodes.map(treeNode => {
+                    if (treeNode.name === response.oldName1) {
+                        // Update the name and also update content if it's an image (content contains file path)
+                        const updatedNode = { ...treeNode, name: response.newName1 };
+                        if (treeNode.mimeType === 'image' && treeNode.content) {
+                            // Update the file path in content to reflect the new filename
+                            updatedNode.content = treeNode.content.replace(response.oldName1, response.newName1);
+                        }
+                        return updatedNode;
+                    } else if (treeNode.name === response.oldName2) {
+                        // Update the name and also update content if it's an image (content contains file path)
+                        const updatedNode = { ...treeNode, name: response.newName2 };
+                        if (treeNode.mimeType === 'image' && treeNode.content) {
+                            // Update the file path in content to reflect the new filename
+                            updatedNode.content = treeNode.content.replace(response.oldName2, response.newName2);
+                        }
+                        return updatedNode;
+                    }
+                    return treeNode;
+                });
+                
+                // Sort the nodes by filename to maintain proper order
+                updatedNodes.sort((a, b) => a.name.localeCompare(b.name));
+                setTreeNodes(updatedNodes);
+            }
+        } catch (error) {
+            console.error('Error moving file or folder:', error);
+            // TODO: Show error message to user
         }
     };
 

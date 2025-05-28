@@ -706,6 +706,185 @@ class Controller {
     }
 
     /**
+     * Moves a file or folder up or down in the ordered list by swapping numeric prefixes
+     * @param req - Express request object containing direction and filename in body
+     * @param res - Express response object
+     */
+    moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string }>, res: Response): Promise<void> => {
+        console.log("Move Up/Down Request");
+        try {
+            const { direction, filename, treeFolder } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!direction || !filename || !treeFolder || (direction !== 'up' && direction !== 'down')) {
+                res.status(400).json({ error: 'Valid direction ("up" or "down"), filename, and treeFolder are required' });
+                return;
+            }
+
+            // Construct the absolute path to the directory
+            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+
+            // Check if the parent directory exists
+            if (!fs.existsSync(absoluteParentPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            // Read directory contents and filter for files/folders with numeric prefixes
+            const allFiles = fs.readdirSync(absoluteParentPath);
+            const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
+            
+            // Sort files by name (which will sort by numeric prefix)
+            numberedFiles.sort((a, b) => a.localeCompare(b));
+
+            // Find the index of the current file
+            const currentIndex = numberedFiles.findIndex(file => file === filename);
+            if (currentIndex === -1) {
+                res.status(404).json({ error: 'File not found in directory' });
+                return;
+            }
+
+            // Determine the target index for swapping
+            let targetIndex: number;
+            if (direction === 'up') {
+                if (currentIndex === 0) {
+                    res.status(400).json({ error: 'File is already at the top' });
+                    return;
+                }
+                targetIndex = currentIndex - 1;
+            } else { // direction === 'down'
+                if (currentIndex === numberedFiles.length - 1) {
+                    res.status(400).json({ error: 'File is already at the bottom' });
+                    return;
+                }
+                targetIndex = currentIndex + 1;
+            }
+
+            const currentFile = numberedFiles[currentIndex];
+            const targetFile = numberedFiles[targetIndex];
+
+            // Extract numeric prefixes
+            const currentPrefix = currentFile.substring(0, currentFile.indexOf('_') + 1);
+            const targetPrefix = targetFile.substring(0, targetFile.indexOf('_') + 1);
+
+            // Extract names without prefixes
+            const currentName = currentFile.substring(currentFile.indexOf('_') + 1);
+            const targetName = targetFile.substring(targetFile.indexOf('_') + 1);
+
+            // Create new names by swapping prefixes
+            const newCurrentName = targetPrefix + currentName;
+            const newTargetName = currentPrefix + targetName;
+
+            // Perform the renames
+            const currentPath = path.join(absoluteParentPath, currentFile);
+            const targetPath = path.join(absoluteParentPath, targetFile);
+            const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
+
+            // Use a temporary file to avoid conflicts during rename
+            fs.renameSync(currentPath, tempPath);
+            fs.renameSync(targetPath, path.join(absoluteParentPath, newTargetName));
+            fs.renameSync(tempPath, path.join(absoluteParentPath, newCurrentName));
+
+            console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
+            res.json({ 
+                success: true, 
+                message: 'Files moved successfully',
+                oldName1: currentFile,
+                newName1: newCurrentName,
+                oldName2: targetFile,
+                newName2: newTargetName
+            });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to move file or folder');
+        }
+    }
+
+    /**
+     * Serves image files from the document tree
+     * @param req - Express request object with image path
+     * @param res - Express response object
+     */
+    serveDocImage = async (req: Request, res: Response): Promise<void> => {
+        console.log("Serve Doc Image Request:", req.path);
+        try {
+            // Extract the path after /api/docs/images/
+            const imagePath = req.path.replace('/api/docs/images/', '');
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!imagePath) {
+                res.status(400).json({ error: 'Image path parameter is required' });
+                return;
+            }
+
+            // Construct the absolute path to the image file
+            const absoluteImagePath = path.join(quantaTreeRoot, imagePath);
+
+            // Check if the file exists
+            if (!fs.existsSync(absoluteImagePath)) {
+                res.status(404).json({ error: 'Image file not found' });
+                return;
+            }
+
+            // Check if it's actually a file (not a directory)
+            const stat = fs.statSync(absoluteImagePath);
+            if (!stat.isFile()) {
+                res.status(400).json({ error: 'Path is not a file' });
+                return;
+            }
+
+            // Validate that it's an image file by extension
+            const ext = path.extname(absoluteImagePath).toLowerCase();
+            if (!['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.webp'].includes(ext)) {
+                res.status(400).json({ error: 'File is not a supported image format' });
+                return;
+            }
+
+            // Set appropriate content type based on file extension
+            let contentType = 'image/jpeg'; // default
+            switch (ext) {
+            case '.png':
+                contentType = 'image/png';
+                break;
+            case '.gif':
+                contentType = 'image/gif';
+                break;
+            case '.bmp':
+                contentType = 'image/bmp';
+                break;
+            case '.webp':
+                contentType = 'image/webp';
+                break;
+            case '.jpg':
+            case '.jpeg':
+            default:
+                contentType = 'image/jpeg';
+                break;
+            }
+
+            // Set headers for image serving
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+            
+            // Read and send the image file
+            const imageBuffer = fs.readFileSync(absoluteImagePath);
+            res.send(imageBuffer);
+            
+        } catch (error) {
+            this.handleError(error, res, 'Failed to serve image');
+        }
+    }
+
+    /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
      * @param res - Express response object

@@ -54,6 +54,7 @@ app.get('/api/messages', controller.getMessageHistory);
 app.get('/api/users/:pubKey/info', controller.getUserProfile);
 app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
 app.get('/api/docs/render/*', controller.treeRender);
+app.get('/api/docs/images/*', controller.serveDocImage);
 
 app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, controller.getRoomInfo);
 app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, controller.deleteRoom);
@@ -69,6 +70,7 @@ app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controlle
 app.post('/api/docs/save-file/', controller.saveFile);
 app.post('/api/docs/rename-folder/', controller.renameFolder);
 app.post('/api/docs/delete', controller.deleteFileOrFolder);
+app.post('/api/docs/move-up-down', controller.moveUpOrDown);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
