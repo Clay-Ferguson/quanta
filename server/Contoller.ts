@@ -1123,7 +1123,120 @@ class Controller {
         }
     }
 
-    // ...existing code...
+    /**
+     * Pastes items from the cut list to the target folder by moving them
+     * @param req - Express request object containing targetFolder and pasteItems in body
+     * @param res - Express response object
+     */
+    pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[] }>, res: Response): Promise<void> => {
+        console.log("Paste Items Request");
+        try {
+            const { targetFolder, pasteItems } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!targetFolder || !pasteItems || !Array.isArray(pasteItems) || pasteItems.length === 0) {
+                res.status(400).json({ error: 'targetFolder and pasteItems array are required' });
+                return;
+            }
+
+            // Construct the absolute target path
+            const absoluteTargetPath = path.join(quantaTreeRoot, targetFolder);
+
+            // Check if the target directory exists
+            if (!fs.existsSync(absoluteTargetPath)) {
+                res.status(404).json({ error: 'Target directory not found' });
+                return;
+            }
+
+            let pastedCount = 0;
+            const errors: string[] = [];
+            const conflicts: string[] = [];
+
+            // Check for conflicts first
+            for (const itemName of pasteItems) {
+                const targetFilePath = path.join(absoluteTargetPath, itemName);
+                if (fs.existsSync(targetFilePath)) {
+                    conflicts.push(itemName);
+                }
+            }
+
+            // If there are conflicts, return an error
+            if (conflicts.length > 0) {
+                res.status(409).json({ 
+                    error: 'Some items already exist in the target folder', 
+                    conflicts: conflicts 
+                });
+                return;
+            }
+
+            // Move each file/folder
+            for (const itemName of pasteItems) {
+                try {
+                    // Find the source path by searching all directories
+                    let sourceFilePath: string | null = null;
+                    
+                    // Helper function to recursively search for the file
+                    const findFile = (searchPath: string): string | null => {
+                        try {
+                            const entries = fs.readdirSync(searchPath, { withFileTypes: true });
+                            
+                            // First check current directory
+                            for (const entry of entries) {
+                                if (entry.name === itemName) {
+                                    return path.join(searchPath, entry.name);
+                                }
+                            }
+                            
+                            // Then search subdirectories
+                            for (const entry of entries) {
+                                if (entry.isDirectory()) {
+                                    const found = findFile(path.join(searchPath, entry.name));
+                                    if (found) return found;
+                                }
+                            }
+                        } catch {
+                            // Continue searching if we hit permission issues
+                        }
+                        return null;
+                    };
+
+                    sourceFilePath = findFile(quantaTreeRoot);
+
+                    if (!sourceFilePath) {
+                        errors.push(`Source file not found: ${itemName}`);
+                        continue;
+                    }
+
+                    const targetFilePath = path.join(absoluteTargetPath, itemName);
+
+                    // Move the file/folder
+                    fs.renameSync(sourceFilePath, targetFilePath);
+                    console.log(`Item moved successfully: ${sourceFilePath} -> ${targetFilePath}`);
+                    
+                    pastedCount++;
+                } catch (error) {
+                    console.error(`Error moving ${itemName}:`, error);
+                    errors.push(`Failed to move ${itemName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+
+            // Return response
+            res.json({
+                success: pastedCount > 0,
+                pastedCount,
+                totalItems: pasteItems.length,
+                errors: errors.length > 0 ? errors : undefined,
+                message: `Successfully pasted ${pastedCount} of ${pasteItems.length} items`
+            });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to paste items');
+        }
+    }
 
     /**
      * Centralized error handling method for all controller endpoints

@@ -6,7 +6,7 @@ This document contains notes to explain to our Coding Agent (Github Copilot runn
 
 * Note 2: After you're done working on something, if the only thing left is to fix indentation, and there are no other errors that you know of other than indentation, then please just declare you're done, and stop working. You can mention you left indentation incomplete if you want. It's easier for me to take care of indentation than for you, the AI, to do it.
 
-* Note 3: Current Status of this feature: The LLM is about to do "Step #20"
+* Note 3: Current Status of this feature: The LLM is about to do "Step #21"
 
 ## Overview
 
@@ -140,6 +140,12 @@ Now, it will be obvious how to complete this on the client, to get the client up
 
 After all that is done, display a message using our `alertModal` from `AlertModelComp`, that says how many files/folders were successfully deleted.
 
-### Step 20: Cut Button (doing this now)
+### Step 20: Cut Button (completed)
 
 Next you should implement the "Cut" button to make the global state remember what was cut, by holding the cut items file/folder names in a Set. So you'll create a new `GlobalState` array named `cutItems` as type `Set<string>`, and whenever the user has selected items with the checkboxes, and they click the "Cut" button, you will load `cutItems` with names of whatever's selected, and then clear the selections (i.e. clear `selectedTreeItems`). In this step we will not try to implement the server part yet, but just manage the local client-side state for now. The reason we keep `cutItems` in a set is for rapid lookup. Because what we can now do is inside our main loop of rendering items (i.e. line `{treeNodes.map((node, index) => (`) we can now check the `cutItems` set and simply skip over those in our loop, so that the page rendering will never contain any of the `cutItems`. So when the user clicks "Cut" button those selected items will vanish from the display.
+
+### Step 21: Paste Button (doing this now)
+
+Next you can make the "Paste" button work. We already have `cutItems` in global state from our previous step, so this paste operation will be simple. For the server side you'll implement a new HTTP POST endpoint named `/api/docs/paste` and as usual it will simply call a `Controller.ts` method. Make the `Controller.ts` method be called `pasteItems`. The object sent to the endpoint will contain two properties: 1) `targetFolder` which will contain `treeFolder` from our Global State, and 2) `pasteItems` which will be an array of file/folder names that are to be pasted into the `targetFolder`. On the server you can first check to see if any of the items are already in the target folder, and if so just throw an error, because the user should've navigated to a different folder before pasting. So doing the actual 'paste' itself will be done via a file rename (or move?) function on the OS. Before you start doing any file operations however, first make one pass over the array to determine if we're going to overwrite any files that already exist, and in that case throw an error. Our paste should fail if any files in the target folder would get overwritten, and we want to fail fast rather than doing part of it before we throw the error.
+
+On the client side, after the paste, we can just refresh from the server in the normal way. We don't have any "Refresh" button yet on the client, but I think you will know how to refresh the entier folder view, because that code exists already. After the paste is complete you can show a message with `alertModal` that says how many were pasted.

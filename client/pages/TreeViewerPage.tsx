@@ -492,8 +492,51 @@ export default function TreeViewerPage() {
         console.log('Copy button clicked');
     };
 
-    const onPaste = () => {
+    const onPaste = async () => {
         console.log('Paste button clicked');
+        
+        if (!gs.cutItems || gs.cutItems.size === 0) {
+            await alertModal("No items to paste.");
+            return;
+        }
+
+        const cutItemsArray = Array.from(gs.cutItems);
+        const targetFolder = gs.treeFolder || '/Quanta-User-Guide';
+
+        try {
+            const requestBody = {
+                targetFolder: targetFolder,
+                pasteItems: cutItemsArray
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/paste', requestBody);
+            console.log('Paste operation completed successfully:', response);
+            
+            // Clear cutItems from global state
+            gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
+            
+            // Refresh the tree view to show the pasted items
+            try {
+                const url = `/api/docs/render${targetFolder}`;
+                const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
+                
+                if (treeResponse && treeResponse.treeNodes) {
+                    setTreeNodes(treeResponse.treeNodes);
+                }
+            } catch (fetchError) {
+                console.error('Error refreshing tree after paste:', fetchError);
+            }
+            
+            // Show success message
+            if (response && response.pastedCount !== undefined) {
+                await alertModal(`Successfully pasted ${response.pastedCount} items.`);
+            } else {
+                await alertModal("Items pasted successfully.");
+            }
+        } catch (error) {
+            console.error('Error pasting items:', error);
+            await alertModal("Error pasting items. Some items may already exist in this folder.");
+        }
     };
 
     const onDelete = async () => {

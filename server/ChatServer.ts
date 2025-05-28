@@ -73,6 +73,7 @@ app.post('/api/docs/delete', controller.deleteFileOrFolder);
 app.post('/api/docs/move-up-down', controller.moveUpOrDown);
 app.post('/api/docs/file/create', controller.createFile);
 app.post('/api/docs/folder/create', controller.createFolder);
+app.post('/api/docs/paste', controller.pasteItems);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
