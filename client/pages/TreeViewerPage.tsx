@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt } from '@fortawesome/free-solid-svg-icons';
 import { confirmModal } from '../components/ConfirmModalComp'; 
 import { promptModal } from '../components/PromptModalComp';
 import { alertModal } from '../components/AlertModalComp';
@@ -168,7 +168,7 @@ export default function TreeViewerPage() {
         }
         
         try {
-            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide'; // todo-0: remove this hardcoded value
             const requestBody = {
                 fileName: fileName,
                 treeFolder: treeFolder,
@@ -593,6 +593,18 @@ export default function TreeViewerPage() {
         }
     };
 
+    // This method should split apart path into its components and format it nicely
+    // using formatFileName for each component.
+    function formatFullPath(path: string): string {
+        if (!path || path === '/') {
+            return '';
+        }
+        
+        // Split the path by '/' and format each component
+        const components = path.split('/').filter(Boolean); // Filter out empty components
+        return components.map(formatFileName).join(' / ');
+    }
+
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     return (
@@ -634,16 +646,6 @@ export default function TreeViewerPage() {
                             </button>}
                         </div>
                     )}
-                    {shouldShowParentButton() && (
-                        <button 
-                            onClick={handleParentClick}
-                            className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
-                            title="Go to parent folder"
-                        >
-                            <FontAwesomeIcon icon={faFolder} className="h-5 w-5 mr-1" />
-                            Parent
-                        </button>
-                    )}
                     <BackButtonComp/>
                 </div>
             </header>
@@ -661,6 +663,18 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
+                            <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4 text-blue-300 font-medium relative flex items-center justify-between">
+                                <span>{formatFullPath(gs.treeFolder || "")}</span>
+                                {shouldShowParentButton() && (
+                                    <button 
+                                        onClick={handleParentClick}
+                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent absolute right-3"
+                                        title="Go to parent folder"
+                                    >
+                                        <FontAwesomeIcon icon={faLevelUpAlt} className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
                             {/* Insert icons at top when in edit mode */}
                             {gs.editMode && (
                                 <div className="flex items-start gap-3 mb-4">

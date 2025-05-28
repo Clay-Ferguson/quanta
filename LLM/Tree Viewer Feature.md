@@ -50,6 +50,8 @@ In this step you will make the folders in the `TreeViewerPage` be clickable to d
 
 You'll add the "Parent" button to the page, to navigate back up the folder tree. On the `TreeViewerPage` will now add a button to the left of the back button that has a folder icon, and says "Parent" for the button text. This will alter the `treeFolder` global state variable (using the `gd` function) to make the tree viewer jump up to the parent folder of the current folder. So this is just a matter or removing the ending path part from `treeFolder` of course. You can hide this button if the `treeFolder` reaches a value of an empty strin or just a backslash.
 
+UPDATE: This Parent button no longer exists, because we're now using an "up arrow" icon to the right of the path display at the top of the doc.
+
 ### Step 5: (completed)
 
 You'll add a new global state var named `editMode` which is a boolean, and defaults to `false`. This is for putting the TreeViewerPage into an "edit mode" which will mean that users can alter the files and folders. All the editing of files and folders will be in a future step, so don't implement an of that in 'Step 5' (this step). What we do want to do, however, is add a radio button, to the left of the "Parent" button, that's labeled "Edit", and of course will turn the boolean on and off. So all we need for now is this checkbox to be functional. It will need to of course use the `gd` function, as we've already seen, in prior steps, to update this boolean value in global state.
@@ -150,4 +152,6 @@ Next you can make the "Paste" button work. We already have `cutItems` in global 
 
 On the client side, after the paste, we can just refresh from the server in the normal way. We don't have any "Refresh" button yet on the client, but I think you will know how to refresh the entier folder view, because that code exists already. After the paste is complete you can show a message with `alertModal` that says how many were pasted.
 
-### Step 22: tbd
+### Step 22: 
+
+NOTE: There are no more steps. The `Tree View Feature` is complete. I will leave this AI prompt file as is because it has valuable information about how this feature works, and how it was created, and will be potentially helpful to both humans and AIs in the future.
