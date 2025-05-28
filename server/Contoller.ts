@@ -896,6 +896,62 @@ class Controller {
     }
 
     /**
+     * Creates a new file in the tree viewer
+     * @param req - Express request object containing fileName, treeFolder, and insertAfterNode in body
+     * @param res - Express response object
+     */
+    createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string }>, res: Response): Promise<void> => {
+        console.log("Create File Request");
+        try {
+            const { fileName, treeFolder, insertAfterNode } = req.body;
+            
+            if (!fileName || !treeFolder) {
+                res.status(400).json({ error: 'File name and treeFolder are required' });
+                return;
+            }
+
+            // Log the file creation request
+            if (insertAfterNode && insertAfterNode.trim() !== '') {
+                console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
+            } else {
+                console.log('Create new top file "${fileName}"');
+            }
+            
+            res.json({ success: true, message: 'File creation request received' });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to create file');
+        }
+    }
+
+    /**
+     * Creates a new folder in the tree viewer
+     * @param req - Express request object containing folderName, treeFolder, and insertAfterNode in body
+     * @param res - Express response object
+     */
+    createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string }>, res: Response): Promise<void> => {
+        console.log("Create Folder Request");
+        try {
+            const { folderName, treeFolder, insertAfterNode } = req.body;
+            
+            if (!folderName || !treeFolder) {
+                res.status(400).json({ error: 'Folder name and treeFolder are required' });
+                return;
+            }
+
+            // Log the folder creation request
+            if (insertAfterNode && insertAfterNode.trim() !== '') {
+                console.log(`Create folder "${folderName}" below node: ${insertAfterNode}`);
+            } else {
+                console.log('Create new top folder "${folderName}"');
+            }
+            
+            res.json({ success: true, message: 'Folder creation request received' });
+        } catch (error) {
+            this.handleError(error, res, 'Failed to create folder');
+        }
+    }
+
+    /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
      * @param res - Express response object

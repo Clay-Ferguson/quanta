@@ -11,6 +11,7 @@ import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { confirmModal } from '../components/ConfirmModalComp'; 
+import { promptModal } from '../components/PromptModalComp';
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -133,21 +134,47 @@ export default function TreeViewerPage() {
     };
 
     // Insert functions for creating new files and folders
-    const insertFile = (node: TreeNode | null) => {
-        if (node!=null) {
-            console.log('Insert file below node:', node.name);
+    const insertFile = async (node: TreeNode | null) => {
+        const fileName = await promptModal("Enter new file name");
+        if (!fileName || fileName.trim() === '') {
+            return;
         }
-        else {
-            console.log('Insert file as first');
+        
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                fileName: fileName,
+                treeFolder: treeFolder,
+                insertAfterNode: node ? node.name : ''
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/file/create', requestBody);
+            console.log('File creation request sent successfully:', response);
+        } catch (error) {
+            console.error('Error creating file:', error);
+            // TODO: Show error message to user
         }
     };
 
-    const insertFolder = (node: TreeNode | null) => {
-        if (node != null) {
-            console.log('Insert folder below node:', node.name);
+    const insertFolder = async (node: TreeNode | null) => {
+        const folderName = await promptModal("Enter new folder name");
+        if (!folderName || folderName.trim() === '') {
+            return;
         }
-        else {
-            console.log('Insert folder as first');
+        
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                folderName: folderName,
+                treeFolder: treeFolder,
+                insertAfterNode: node ? node.name : ''
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/folder/create', requestBody);
+            console.log('Folder creation request sent successfully:', response);
+        } catch (error) {
+            console.error('Error creating folder:', error);
+            // TODO: Show error message to user
         }
     };
 
