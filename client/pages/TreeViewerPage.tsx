@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { confirmModal } from '../components/ConfirmModalComp'; 
 
 /**
@@ -130,6 +130,25 @@ export default function TreeViewerPage() {
     const handleMoveDownClick = (node: TreeNode, index: number) => {
         console.log('Move down clicked for:', node.name, 'at index:', index);
         moveFileOrFolder(node, 'down');
+    };
+
+    // Insert functions for creating new files and folders
+    const insertFile = (node: TreeNode | null) => {
+        if (node!=null) {
+            console.log('Insert file below node:', node.name);
+        }
+        else {
+            console.log('Insert file as first');
+        }
+    };
+
+    const insertFolder = (node: TreeNode | null) => {
+        if (node != null) {
+            console.log('Insert folder below node:', node.name);
+        }
+        else {
+            console.log('Insert folder as first');
+        }
     };
 
     // Editing handlers
@@ -404,6 +423,25 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
+                            {/* Insert icons below each TreeNode when in edit mode */}
+                            {gs.editMode && (
+                                <div className="flex justify-center gap-2">
+                                    <button 
+                                        onClick={() => insertFile(null)}
+                                        className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                                        title="Insert File"
+                                    >
+                                        <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => insertFolder(null)}
+                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                                        title="Insert Folder"
+                                    >
+                                        <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            )}
                             {treeNodes.map((node, index) => (
                                 <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
                                     {/* Display content based on mimeType */}
@@ -582,6 +620,26 @@ export default function TreeViewerPage() {
                                                     </button>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Insert icons below each TreeNode when in edit mode */}
+                                    {gs.editMode && (
+                                        <div className="flex justify-center gap-2">
+                                            <button 
+                                                onClick={() => insertFile(node)}
+                                                className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                                                title="Insert File"
+                                            >
+                                                <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                                            </button>
+                                            <button 
+                                                onClick={() => insertFolder(node)}
+                                                className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                                                title="Insert Folder"
+                                            >
+                                                <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>

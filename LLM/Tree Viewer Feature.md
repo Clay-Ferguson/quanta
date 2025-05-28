@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #12"
+Current Status of this feature: The LLM is about to do "Step #13"
 
 ## Overview
 
@@ -94,7 +94,7 @@ Based on all the prior steps in this file, I think I could probably say "Now imp
 
 The client side will first call the server endpoint to delete the file or folder, and then only after the server returns, we will remove the `TreeNode` (that was just deleted) from the `treeNodes` variable in `TreeViewerPage` component, making the page rerender with the current content after the delete. 
 
-### Step 12: (doing this now)
+### Step 12: (completed)
 
 Next let's implement the "Move Up", and "Move Down". We already have the up arrow and down arrow icons on both files and folders which already should have methods hooked into their onClick. So now you should implement these buttons, which work on both files and folders. It's very important to understand what "move up" and "move down" mean of course. Our file system uses a technique where every file and folder has a numeric prefix of the format "NNNN_MyFileName.md" for example, where the 'N' can be any digit 0 thru 9. So we have a prefix with leading zeroes which represents the ordinal position of the file or folder. This is how we can display files and folders in our document view simply by sorting by file name. We have other tools that take care of numbering the files from scratch, and so it really doesn't matter if the numbering in any file or folder starts with "1" or "0". All that matters is the sort order. So numeric values might be skipped over and that's fine. We might have "0001_FirstFile.md", followed by "0005_AnotherFile", without having any 0002, 0003, etc in between.
 
@@ -103,3 +103,7 @@ Anyway that was all just context to let you understand our ordinal system. So to
 So on the server you can create aother HTTP POST method at endpoint `/api/docs/move-up-down` which accepts an object with two values: 1) direction ("up" or "down"), and 2) filename of thing to move. The filename might be either a folder or a file of course. This endpoint will call a new Controller method you'll need to write named `moveUpOrDown`, which will do this. I'll let you figure out the best algo to use to efficiently find which files/folders to rename, and do the, rename.
 
 Then so the client won't have to do any real work, you can send back to the client just the info needed to know what to renames were done as `oldName1`, `newName1`, `oldName2`,`newName2`, because there will be two things that were renamed, and all the client needs to know is what the 'renames' were. Then the client can just call a sort method to sort the local tree nodes to get them into the right alphabetical position based on the ordinals. Be careful not to sort on any full path. We need to sort just on the filenames/foldernames of course.
+
+## Step 13: (doing this now)
+
+Whenever edit mode is on, make the `TreeViewerPage` show two side by side icons below each `TreeNode` on the page. These two icons will be one that looks like a plus symbol icon (faPlus?) and one that looks like a folder icon (faFolder?). Make these icons the same size as the edit-related icons we have on the `TreeNode` renderings already. You can also center them horizontally in the document area. The faPlus icon should call a new function you'll create called `insertFile`, and the faFolder icon will call a new function called `insertFolder`. Both of these new functions will accept the `TreeNode` file/folder name (of the  `TreeNode` it's below) as an argument. We're going to eventually implement these to create files and folders but for this step (Step 13) all you should do is make these methods print the file/folder name.
