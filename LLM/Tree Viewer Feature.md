@@ -2,7 +2,9 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #18"
+NOTE: If you need to do any test builds at all use `yarn build` for that. Don't attemp to run the app however. I will do all the testing myself.
+
+Current Status of this feature: The LLM is about to do "Step #19"
 
 ## Overview
 
@@ -124,6 +126,14 @@ Your implementation of `createFile` works perfectly. So you can now implement `c
 
 Next we're going to make all the files/folders on our `TreeViewerPage` have a checkbox associated with them, for multi-selecting. These checkboxes will only show up when Edit Mode is on, of course. Each checkbox will be to the left of the `TreeNode`'s display. Use a larger than normal checkbox too for better accessibility. Create a `GlobalState` variable named `selectedTreeItems` which is a `Set<TreeNode>` type, which holds the selections. Make make it so that it clears the selections whenever we open a new folder, or use the "Parent" button. As you know, our folders are clickable so users can drill down into them, by clicking, so that's the place I'm talking about. When users drill down into folders, we need to reset (remove) the selections. For now these selected items aren't used for anything, we just want to make sure we have the checkboxes and their state working.
 
-### Step 18: (doing this now)
+### Step 18: (completed)
 
 In `TreeViewerPage`, when edit mode is on, display 'Cut', 'Copy', 'Paste', 'Delete', buttons in header bar. So this is 4 new buttons. Put them just to the right of the "Edit" checkbox. Add the onClick methods for these new buttons called `onCut`, `onCopy`, etc. and don't try to implement them yet, just make them do a `console.log` so I can test that they're working, and that they only appear when edit mode is on.
+
+### Step 19: (doing this now)
+
+Next you should implement the "Delete" button we did in Step 18, to make the button fully functional on client and server. This button will delete whatever is in `selectedTreeItems` by sending the list of those full filenames to the server in an HTTP POST to a new endpoint you'll create named `/api/docs/delete`. Like our other 'post' methods in the server we will make it simply call the `Controller.ts` where we will do the implementation. So you'll create a controller method named `deleteItems`, which simply deletes all the files/folders it was sent.
+
+Now, it will be obvious how to complete this on the client, to get the client up to date, by simply removing all the `TreeNodes` from the `treeNodes` array, and clearing out `selectedTreeItems` by using `gd` (global dispatch) to update the global state.
+
+After all that is done, display a message using our `alertModal` from `AlertModelComp`, that says how many files/folders were successfully deleted.

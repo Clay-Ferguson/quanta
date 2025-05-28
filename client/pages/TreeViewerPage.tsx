@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { confirmModal } from '../components/ConfirmModalComp'; 
 import { promptModal } from '../components/PromptModalComp';
+import { alertModal } from '../components/AlertModalComp';
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -479,8 +480,59 @@ export default function TreeViewerPage() {
         console.log('Paste button clicked');
     };
 
-    const onDelete = () => {
+    const onDelete = async () => {
         console.log('Delete button clicked');
+        
+        if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
+            await alertModal("No items selected for deletion.");
+            return;
+        }
+
+        const selectedItems = Array.from(gs.selectedTreeItems);
+        const itemCount = selectedItems.length;
+        const itemText = itemCount === 1 ? "item" : "items";
+        
+        // Show confirmation dialog
+        const confirmText = `Are you sure you want to delete ${itemCount} selected ${itemText}? This action cannot be undone.`;
+        if (!await confirmModal(confirmText)) {
+            return;
+        }
+
+        try {
+            // Prepare the file names for the server
+            const fileNames = selectedItems.map(item => item.name);
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            
+            // Call server endpoint to delete the items
+            const response = await httpClientUtil.httpPost('/api/docs/delete', {
+                fileNames: fileNames,
+                treeFolder: treeFolder
+            });
+            
+            if (response && response.success) {
+                // Remove the deleted nodes from the UI
+                const remainingNodes = treeNodes.filter(node => !gs.selectedTreeItems!.has(node));
+                setTreeNodes(remainingNodes);
+                
+                // Clear the selections
+                gd({ type: 'setSelectedTreeItems', payload: { 
+                    selectedTreeItems: new Set<TreeNode>()
+                }});
+                
+                // Show success message
+                const deletedCount = response.deletedCount || itemCount;
+                const successMessage = `Successfully deleted ${deletedCount} ${deletedCount === 1 ? 'item' : 'items'}.`;
+                await alertModal(successMessage);
+                
+                console.log('Items deleted successfully:', fileNames);
+            } else {
+                console.error('Error response from server:', response);
+                await alertModal("Failed to delete items. Please try again.");
+            }
+        } catch (error) {
+            console.error('Error deleting items:', error);
+            await alertModal("An error occurred while deleting items. Please try again.");
+        }
     };
 
     return (

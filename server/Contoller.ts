@@ -661,14 +661,14 @@ class Controller {
     }
 
     /**
-     * Deletes a file or folder from the server for the tree viewer feature
-     * @param req - Express request object containing fileOrFolderName and treeFolder in body
+     * Deletes a file or folder, or multiple files/folders from the server for the tree viewer feature
+     * @param req - Express request object containing fileOrFolderName (string) or fileNames (array) and treeFolder in body
      * @param res - Express response object
      */
-    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName: string; treeFolder: string }>, res: Response): Promise<void> => {
+    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string }>, res: Response): Promise<void> => {
         console.log("Delete File or Folder Request");
         try {
-            const { fileOrFolderName, treeFolder } = req.body;
+            const { fileOrFolderName, fileNames, treeFolder } = req.body;
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
@@ -676,14 +676,26 @@ class Controller {
                 return;
             }
 
-            if (!fileOrFolderName || !treeFolder) {
-                res.status(400).json({ error: 'File or folder name and treeFolder are required' });
+            // Determine if we're dealing with single or multiple items
+            let itemsToDelete: string[] = [];
+            if (fileNames && Array.isArray(fileNames)) {
+                // Multiple items mode
+                itemsToDelete = fileNames;
+            } else if (fileOrFolderName) {
+                // Single item mode
+                itemsToDelete = [fileOrFolderName];
+            } else {
+                res.status(400).json({ error: 'Either fileOrFolderName or fileNames array and treeFolder are required' });
                 return;
             }
 
-            // Construct the absolute paths
+            if (!treeFolder || itemsToDelete.length === 0) {
+                res.status(400).json({ error: 'treeFolder and at least one item to delete are required' });
+                return;
+            }
+
+            // Construct the absolute parent path
             const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
-            const absoluteTargetPath = path.join(absoluteParentPath, fileOrFolderName);
 
             // Check if the parent directory exists
             if (!fs.existsSync(absoluteParentPath)) {
@@ -691,25 +703,57 @@ class Controller {
                 return;
             }
 
-            // Check if the target exists
-            if (!fs.existsSync(absoluteTargetPath)) {
-                res.status(404).json({ error: 'File or folder not found' });
-                return;
+            let deletedCount = 0;
+            const errors: string[] = [];
+
+            // Delete each file/folder
+            for (const fileName of itemsToDelete) {
+                try {
+                    const absoluteTargetPath = path.join(absoluteParentPath, fileName);
+
+                    // Check if the target exists
+                    if (!fs.existsSync(absoluteTargetPath)) {
+                        errors.push(`File or folder not found: ${fileName}`);
+                        continue;
+                    }
+
+                    // Get stats to determine if it's a file or directory
+                    const stat = fs.statSync(absoluteTargetPath);
+                    
+                    if (stat.isDirectory()) {
+                        // Remove directory recursively
+                        fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
+                        console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
+                    } else {
+                        // Remove file
+                        fs.unlinkSync(absoluteTargetPath);
+                        console.log(`File deleted successfully: ${absoluteTargetPath}`);
+                    }
+                    
+                    deletedCount++;
+                } catch (error) {
+                    console.error(`Error deleting ${fileName}:`, error);
+                    errors.push(`Failed to delete ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
             }
 
-            // Get stats to determine if it's a file or directory
-            const stat = fs.statSync(absoluteTargetPath);
-            
-            if (stat.isDirectory()) {
-                // Remove directory recursively
-                fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
-                console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
-                res.json({ success: true, message: 'Folder deleted successfully' });
+            // Return appropriate response based on single vs multiple items
+            if (itemsToDelete.length === 1) {
+                // Single item mode - return simple response for backward compatibility
+                if (deletedCount === 1) {
+                    const message = itemsToDelete[0].includes('.') ? 'File deleted successfully' : 'Folder deleted successfully';
+                    res.json({ success: true, message });
+                } else {
+                    res.status(500).json({ error: errors[0] || 'Failed to delete item' });
+                }
             } else {
-                // Remove file
-                fs.unlinkSync(absoluteTargetPath);
-                console.log(`File deleted successfully: ${absoluteTargetPath}`);
-                res.json({ success: true, message: 'File deleted successfully' });
+                // Multiple items mode - return detailed response
+                res.json({ 
+                    success: true, 
+                    deletedCount, 
+                    errors: errors.length > 0 ? errors : undefined,
+                    message: `Successfully deleted ${deletedCount} of ${itemsToDelete.length} items` 
+                });
             }
         } catch (error) {
             this.handleError(error, res, 'Failed to delete file or folder');
@@ -1078,6 +1122,8 @@ class Controller {
             this.handleError(error, res, 'Failed to create folder');
         }
     }
+
+    // ...existing code...
 
     /**
      * Centralized error handling method for all controller endpoints
