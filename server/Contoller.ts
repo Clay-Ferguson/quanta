@@ -650,6 +650,62 @@ class Controller {
     }
 
     /**
+     * Deletes a file or folder from the server for the tree viewer feature
+     * @param req - Express request object containing fileOrFolderName and treeFolder in body
+     * @param res - Express response object
+     */
+    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName: string; treeFolder: string }>, res: Response): Promise<void> => {
+        console.log("Delete File or Folder Request");
+        try {
+            const { fileOrFolderName, treeFolder } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
+            if (!fileOrFolderName || !treeFolder) {
+                res.status(400).json({ error: 'File or folder name and treeFolder are required' });
+                return;
+            }
+
+            // Construct the absolute paths
+            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteTargetPath = path.join(absoluteParentPath, fileOrFolderName);
+
+            // Check if the parent directory exists
+            if (!fs.existsSync(absoluteParentPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            // Check if the target exists
+            if (!fs.existsSync(absoluteTargetPath)) {
+                res.status(404).json({ error: 'File or folder not found' });
+                return;
+            }
+
+            // Get stats to determine if it's a file or directory
+            const stat = fs.statSync(absoluteTargetPath);
+            
+            if (stat.isDirectory()) {
+                // Remove directory recursively
+                fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
+                console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
+                res.json({ success: true, message: 'Folder deleted successfully' });
+            } else {
+                // Remove file
+                fs.unlinkSync(absoluteTargetPath);
+                console.log(`File deleted successfully: ${absoluteTargetPath}`);
+                res.json({ success: true, message: 'File deleted successfully' });
+            }
+        } catch (error) {
+            this.handleError(error, res, 'Failed to delete file or folder');
+        }
+    }
+
+    /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
      * @param res - Express response object

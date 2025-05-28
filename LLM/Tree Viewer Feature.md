@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #10"
+Current Status of this feature: The LLM is about to do "Step #11"
 
 ## Overview
 
@@ -87,3 +87,9 @@ So on the client we need one new Global State variable named `newFileName` (just
 Then on the server side we'll be including the `newFileName` in the object we post to the `save-file` endpoint. So of course you need to add a new request variable named `newFileName` into the existing `saveFile` method in `Controller.ts`. Then the save file will first compare to see if `newFileName` is different from `filename`, indicating the file was renamed, and if so execute the rename operation on the existing file first. Then after the rename has been done, the `saveFile` will just continue to run of course to write the content into the file as well. So our `safe-file` endpoint will also be our way of renaming files.
 
 Final point: Make the filename edit field full width just like the other inputs already are.
+
+### Step 11: (doing this now)
+
+Based on all the prior steps in this file, I think I could probably say "Now implement deleting", and you'd understand how, but I'll be more specific instead: In this step (Step 11) let's make the "Delete" icon work for both files and folders. You should create a server endpoint named `/api/docs/delete` and then make that endpoint call an implementation method named `deleteFileOrFolder` (that you will create) in the `Controller.ts` file. Obviously you're just going to pass the file or folder name in the HTTP POST and the server will do the delete.
+
+The client side will first call the server endpoint to delete the file or folder, and then only after the server returns, we will remove the `TreeNode` (that was just deleted) from the `treeNodes` variable in `TreeViewerPage` component, making the page rerender with the current content after the delete. 

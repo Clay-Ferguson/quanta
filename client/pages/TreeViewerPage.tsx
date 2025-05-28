@@ -9,7 +9,8 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons'; 
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { confirmModal } from '../components/ConfirmModalComp'; 
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -94,9 +95,31 @@ export default function TreeViewerPage() {
         }
     };
 
-    const handleDeleteClick = (node: TreeNode, index: number) => {
+    const handleDeleteClick = async (node: TreeNode, index: number) => {
         console.log('Delete clicked for:', node.name, 'at index:', index);
-        // TODO: Implement delete functionality
+        
+        // Show confirmation dialog
+        const confirmText = node.mimeType === 'folder' 
+            ? `Are you sure you want to delete the folder "${formatFileName(node.name)}"? This action cannot be undone.`
+            : `Are you sure you want to delete the file "${formatFileName(node.name)}"? This action cannot be undone.`;
+            
+        if (!await confirmModal(confirmText)) {
+            return;
+        }
+
+        try {
+            // Call server endpoint to delete the file or folder
+            await deleteFileOrFolderOnServer(node.name);
+            
+            // Remove the node from the UI by updating treeNodes
+            const updatedNodes = treeNodes.filter((_, i) => i !== index);
+            setTreeNodes(updatedNodes);
+            
+            console.log(`${node.mimeType === 'folder' ? 'Folder' : 'File'} deleted successfully:`, node.name);
+        } catch (error) {
+            console.error('Error deleting:', error);
+            // TODO: Show error message to user
+        }
     };
 
     const handleMoveUpClick = (node: TreeNode, index: number) => {
@@ -142,6 +165,22 @@ export default function TreeViewerPage() {
         } catch (error) {
             console.error('Error renaming folder on server:', error);
             // TODO: Show error message to user
+        }
+    };
+
+    const deleteFileOrFolderOnServer = async (fileOrFolderName: string) => {
+        try {
+            const treeFolder = gs.treeFolder || '/Quanta-User-Guide';
+            const requestBody = {
+                fileOrFolderName: fileOrFolderName,
+                treeFolder: treeFolder
+            };
+            
+            const response = await httpClientUtil.httpPost('/api/docs/delete', requestBody);
+            console.log('File or folder deleted on server successfully:', response);
+        } catch (error) {
+            console.error('Error deleting file or folder on server:', error);
+            throw error; // Re-throw to be handled by the caller
         }
     };
 

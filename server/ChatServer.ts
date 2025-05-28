@@ -68,6 +68,7 @@ app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignat
 app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controller.deleteMessage); // check PublicKey
 app.post('/api/docs/save-file/', controller.saveFile);
 app.post('/api/docs/rename-folder/', controller.renameFolder);
+app.post('/api/docs/delete', controller.deleteFileOrFolder);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
