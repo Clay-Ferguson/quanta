@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { confirmModal } from '../components/ConfirmModalComp'; 
 import { promptModal } from '../components/PromptModalComp';
 import { alertModal } from '../components/AlertModalComp';
@@ -605,12 +605,39 @@ export default function TreeViewerPage() {
         return components.map(formatFileName).join(' / ');
     }
 
+    // Refresh handler to reload the tree data
+    const handleRefresh = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            console.log("Refreshing tree document...");
+            
+            // Get the treeFolder from global state
+            const treeFolder = gs.treeFolder || '/';
+            
+            // Make API call to get tree nodes
+            const url = `/api/docs/render${treeFolder}`;
+            const response: TreeRender_Response = await httpClientUtil.httpGet(url);
+            
+            if (response && response.treeNodes) {
+                setTreeNodes(response.treeNodes);
+            } else {
+                setTreeNodes([]);
+            }
+        } catch (error) {
+            console.error('Error refreshing tree:', error);
+            setError(`Sorry, we encountered an error refreshing the tree for "${gs.treeFolder || '/'}".`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Tree Viewer"/>
+                <LogoBlockComp subText="Doc Viewer"/>
                 <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                         <input 
@@ -646,6 +673,14 @@ export default function TreeViewerPage() {
                             </button>}
                         </div>
                     )}
+                    <button 
+                        onClick={handleRefresh}
+                        className="btn-icon"
+                        title="Refresh tree"
+                        disabled={isLoading}
+                    >
+                        <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
+                    </button>
                     <BackButtonComp/>
                 </div>
             </header>
