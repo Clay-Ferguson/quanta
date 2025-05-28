@@ -896,6 +896,48 @@ class Controller {
     }
 
     /**
+     * Shifts ordinals down for all files/folders at or below a given ordinal position
+     * @param absoluteParentPath - The absolute path to the directory
+     * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
+     */
+    private shiftOrdinalsDown = (absoluteParentPath: string, insertOrdinal: number): void => {
+        // Read directory contents and filter for files/folders with numeric prefixes
+        const allFiles = fs.readdirSync(absoluteParentPath);
+        const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
+        
+        // Sort files by name (which will sort by numeric prefix)
+        numberedFiles.sort((a, b) => a.localeCompare(b));
+
+        // Find files that need to be shifted (ordinal >= insertOrdinal)
+        const filesToShift = numberedFiles.filter(file => {
+            const prefix = file.substring(0, file.indexOf('_'));
+            const ordinal = parseInt(prefix);
+            return ordinal >= insertOrdinal;
+        });
+
+        // Sort in reverse order to avoid conflicts during renaming
+        filesToShift.sort((a, b) => b.localeCompare(a));
+
+        // Shift each file down by incrementing its ordinal prefix
+        for (const file of filesToShift) {
+            const prefix = file.substring(0, file.indexOf('_'));
+            const nameWithoutPrefix = file.substring(file.indexOf('_') + 1);
+            const currentOrdinal = parseInt(prefix);
+            const newOrdinal = currentOrdinal + 1;
+            
+            // Create new filename with incremented ordinal (padded with leading zeros)
+            const newPrefix = newOrdinal.toString().padStart(prefix.length, '0');
+            const newFileName = `${newPrefix}_${nameWithoutPrefix}`;
+            
+            const oldPath = path.join(absoluteParentPath, file);
+            const newPath = path.join(absoluteParentPath, newFileName);
+            
+            console.log(`Shifting file: ${file} -> ${newFileName}`);
+            fs.renameSync(oldPath, newPath);
+        }
+    };
+
+    /**
      * Creates a new file in the tree viewer
      * @param req - Express request object containing fileName, treeFolder, and insertAfterNode in body
      * @param res - Express response object
@@ -904,20 +946,67 @@ class Controller {
         console.log("Create File Request");
         try {
             const { fileName, treeFolder, insertAfterNode } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
             if (!fileName || !treeFolder) {
                 res.status(400).json({ error: 'File name and treeFolder are required' });
                 return;
             }
 
-            // Log the file creation request
+            // Construct the absolute path to the directory
+            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+
+            // Check if the parent directory exists
+            if (!fs.existsSync(absoluteParentPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            let insertOrdinal = 1; // Default to insert at top
+
             if (insertAfterNode && insertAfterNode.trim() !== '') {
                 console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
+                
+                // Extract the ordinal from the insertAfterNode
+                const underscoreIndex = insertAfterNode.indexOf('_');
+                if (underscoreIndex !== -1) {
+                    const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
+                    insertOrdinal = afterNodeOrdinal + 1;
+                }
             } else {
-                console.log('Create new top file "${fileName}"');
+                console.log(`Create new top file "${fileName}"`);
+            }
+
+            // Shift all files at or below the insertion ordinal down by one
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal);
+
+            // Create the new file with the calculated ordinal
+            const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
+            const newFileName = `${ordinalPrefix}_${fileName}`;
+            
+            // Add .md extension if the fileName doesn't already have an extension
+            let finalFileName = newFileName;
+            if (!path.extname(fileName)) {
+                finalFileName = `${newFileName}.md`;
             }
             
-            res.json({ success: true, message: 'File creation request received' });
+            const newFilePath = path.join(absoluteParentPath, finalFileName);
+
+            // Create the file with default content
+            const defaultContent = `# ${fileName}\n\nThis is a new file.\n`;
+            fs.writeFileSync(newFilePath, defaultContent, 'utf8');
+
+            console.log(`File created successfully: ${newFilePath}`);
+            res.json({ 
+                success: true, 
+                message: 'File created successfully',
+                fileName: finalFileName 
+            });
         } catch (error) {
             this.handleError(error, res, 'Failed to create file');
         }
