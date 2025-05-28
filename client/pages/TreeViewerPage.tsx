@@ -644,8 +644,8 @@ export default function TreeViewerPage() {
                                     
                                     {/* Display file metadata - only for non-folders */}
                                     {node.mimeType !== 'folder' && (
-                                        <div className="mt-3 text-xs text-gray-500 flex justify-between items-center">
-                                            <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span>
+                                        <div className="mt-3 text-xs text-gray-500 flex justify-end items-center">
+                                            {/* <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span> */}
                                             {gs.editMode && (
                                                 <div className="flex items-center gap-2">
                                                     <button 
