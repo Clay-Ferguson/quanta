@@ -126,4 +126,4 @@ Next we're going to make all the files/folders on our `TreeViewerPage` have a ch
 
 ### Step 18: (doing this now)
 
-next up: Cut, Copy, Paste, buttons in header bar.
+In `TreeViewerPage`, when edit mode is on, display 'Cut', 'Copy', 'Paste', 'Delete', buttons in header bar. So this is 4 new buttons. Put them just to the right of the "Edit" checkbox. Add the onClick methods for these new buttons called `onCut`, `onCopy`, etc. and don't try to implement them yet, just make them do a `console.log` so I can test that they're working, and that they only appear when edit mode is on.

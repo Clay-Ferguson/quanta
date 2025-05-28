@@ -466,6 +466,23 @@ export default function TreeViewerPage() {
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
+    // Header button handlers for Cut, Copy, Paste, Delete
+    const onCut = () => {
+        console.log('Cut button clicked');
+    };
+
+    const onCopy = () => {
+        console.log('Copy button clicked');
+    };
+
+    const onPaste = () => {
+        console.log('Paste button clicked');
+    };
+
+    const onDelete = () => {
+        console.log('Delete button clicked');
+    };
+
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
@@ -480,6 +497,38 @@ export default function TreeViewerPage() {
                         />
                         <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
                     </label>
+                    {gs.editMode && (
+                        <div className="flex items-center space-x-2">
+                            <button 
+                                onClick={onCut}
+                                className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                title="Cut selected items"
+                            >
+                                Cut
+                            </button>
+                            <button 
+                                onClick={onCopy}
+                                className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                title="Copy selected items"
+                            >
+                                Copy
+                            </button>
+                            <button 
+                                onClick={onPaste}
+                                className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                title="Paste items"
+                            >
+                                Paste
+                            </button>
+                            <button 
+                                onClick={onDelete}
+                                className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                                title="Delete selected items"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    )}
                     {shouldShowParentButton() && (
                         <button 
                             onClick={handleParentClick}
