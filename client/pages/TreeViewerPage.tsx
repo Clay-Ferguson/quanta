@@ -182,7 +182,7 @@ export default function TreeViewerPage() {
             if (response && response.success) {
                 // Refetch the tree data
                 try {
-                    const url = `/api/docs/render${treeFolder}`;
+                    const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
                     const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
                     
                     if (treeResponse && treeResponse.treeNodes) {
@@ -220,7 +220,7 @@ export default function TreeViewerPage() {
             if (response && response.success) {
                 // Refetch the tree data
                 try {
-                    const url = `/api/docs/render${treeFolder}`;
+                    const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
                     const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
                     
                     if (treeResponse && treeResponse.treeNodes) {
@@ -444,7 +444,7 @@ export default function TreeViewerPage() {
                 const treeFolder = gs.treeFolder || '/';
                 
                 // Make API call to get tree nodes
-                const url = `/api/docs/render${treeFolder}`;
+                const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
                 const response: TreeRender_Response = await httpClientUtil.httpGet(url);
 
                 // show a pretty-print of the JSON of the response
@@ -464,7 +464,7 @@ export default function TreeViewerPage() {
         };
 
         fetchTree();
-    }, [gs.treeFolder]);
+    }, [gs.treeFolder, gs.editMode]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
@@ -516,7 +516,7 @@ export default function TreeViewerPage() {
             
             // Refresh the tree view to show the pasted items
             try {
-                const url = `/api/docs/render${targetFolder}`;
+                const url = `/api/docs/render${targetFolder}${!gs.editMode ? '?pullup=true' : ''}`;
                 const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
                 
                 if (treeResponse && treeResponse.treeNodes) {
@@ -616,7 +616,7 @@ export default function TreeViewerPage() {
             const treeFolder = gs.treeFolder || '/';
             
             // Make API call to get tree nodes
-            const url = `/api/docs/render${treeFolder}`;
+            const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
             const response: TreeRender_Response = await httpClientUtil.httpGet(url);
             
             if (response && response.treeNodes) {

@@ -422,7 +422,7 @@ class Controller {
 
     /**
      * Tree render method that returns an array of TreeNode objects representing files and folders
-     * @param req - Express request object containing treeFolder in the URL path
+     * @param req - Express request object containing treeFolder in the URL path and optional pullup query parameter
      * @param res - Express response object
      */
     treeRender = async (req: Request, res: Response): Promise<void> => {
@@ -431,6 +431,10 @@ class Controller {
             // Extract the path after /api/docs/render/ and decode URL encoding
             const rawTreeFolder = req.path.replace('/api/docs/render/', '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
+            
+            // Extract the optional pullup parameter from query string
+            const pullup = req.query.pullup as string; 
+            
             const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
@@ -459,56 +463,84 @@ class Controller {
                 return;
             }
 
-            // Read directory contents
-            const files = fs.readdirSync(absolutePath);
-            const treeNodes: TreeNode[] = [];
+            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true");
+            const response: TreeRender_Response = { treeNodes };
+            res.json(response);
+        } catch (error) {
+            this.handleError(error, res, 'Failed to render tree');
+        }
+    }
 
-            for (const file of files) {
-                // We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore.
-                if (!/^\d+_/.test(file)) {
-                    continue; // Skip files that do not match the naming convention
-                }
-                
-                const filePath = path.join(absolutePath, file);
-                const fileStat = fs.statSync(filePath);
-                
-                let content = '';
-                let mimeType = '';
+    getTreeNodes = (absolutePath: string, pullup: boolean): TreeNode[] => {
+        // Read directory contents
+        const files = fs.readdirSync(absolutePath);
+        const treeNodes: TreeNode[] = [];
 
-                if (fileStat.isDirectory()) {
-                    mimeType = 'folder';
-                } else {
-                    const ext = path.extname(file).toLowerCase();
-                    
-                    // Detect image files
-                    if (['.png', '.jpeg', '.jpg'].includes(ext)) {
-                        // Set proper MIME type based on extension
-                        switch (ext) {
-                        case '.png':
-                            mimeType = 'image/png';
-                            break;
-                        case '.jpg':
-                        case '.jpeg':
-                            mimeType = 'image/jpeg';
-                            break;
-                        default:
-                            mimeType = 'image/jpeg';
-                        }
-                        // For images, we don't read content, just provide the path reference
-                        content = filePath;
-                    } else {
-                        // Assume it's a text file and read its content
-                        try {
-                            content = fs.readFileSync(filePath, 'utf8');
-                            mimeType = 'text';
-                        } catch (error) {
-                            console.warn(`Could not read file ${filePath} as text:`, error);
-                            content = '';
-                            mimeType = 'unknown';
-                        }
+        console.log("pullup:", pullup);
+
+        for (const file of files) {
+            // We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore.
+            if (!/^\d+_/.test(file)) {
+                continue; // Skip files that do not match the naming convention
+            }
+                
+            const filePath = path.join(absolutePath, file);
+            const fileStat = fs.statSync(filePath);
+                
+            let content = '';
+            let mimeType = '';
+
+            // if pullup is true, it means any folder that ends in an underscore should be considered a pullup folder,
+            // which means we recursively read its contents and return them as a flat list, that will be added
+            // to what we're generating at this level. So a pullup folder means we're inserting it's contents inline.
+            let ranPullup = false;
+
+            if (fileStat.isDirectory()) {
+                mimeType = 'folder';
+
+                // if folder name ends in underscore, treat it as a pullup folder
+                if (pullup && file.endsWith('_')) {
+                    // Recursively get tree nodes for this folder
+                    const subTreeNodes = this.getTreeNodes(filePath, true);
+                    if (subTreeNodes.length > 0) {
+                        // Add the sub-tree nodes to the current tree nodes
+                        treeNodes.push(...subTreeNodes);
+                        ranPullup = true; // Mark that we ran pullup
                     }
                 }
+            } else {
+                const ext = path.extname(file).toLowerCase();
+                    
+                // Detect image files
+                if (['.png', '.jpeg', '.jpg'].includes(ext)) {
+                    // Set proper MIME type based on extension
+                    switch (ext) {
+                    case '.png':
+                        mimeType = 'image/png';
+                        break;
+                    case '.jpg':
+                    case '.jpeg':
+                        mimeType = 'image/jpeg';
+                        break;
+                    default:
+                        mimeType = 'image/jpeg';
+                    }
+                    // For images, we don't read content, just provide the path reference
+                    content = filePath;
+                } else {
+                    // Assume it's a text file and read its content
+                    try {
+                        content = fs.readFileSync(filePath, 'utf8');
+                        mimeType = 'text';
+                    } catch (error) {
+                        console.warn(`Could not read file ${filePath} as text:`, error);
+                        content = '';
+                        mimeType = 'unknown';
+                    }
+                }
+            }
 
+            if (!ranPullup) {
                 const treeNode: TreeNode = {
                     name: file,
                     createTime: fileStat.birthtime.getTime(),
@@ -518,16 +550,13 @@ class Controller {
                 };
                 treeNodes.push(treeNode);
             }
-
-            // Sort alphabetically by filename
-            treeNodes.sort((a, b) => a.name.localeCompare(b.name));
-
-            const response: TreeRender_Response = { treeNodes };
-            res.json(response);
-        } catch (error) {
-            this.handleError(error, res, 'Failed to render tree');
         }
+
+        // Sort alphabetically by filename
+        treeNodes.sort((a, b) => a.name.localeCompare(b.name));
+        return treeNodes;
     }
+
 
     /**
      * Saves file content to the server for the tree viewer feature
