@@ -1021,20 +1021,59 @@ class Controller {
         console.log("Create Folder Request");
         try {
             const { folderName, treeFolder, insertAfterNode } = req.body;
+            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
             
+            if (!quantaTreeRoot) {
+                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                return;
+            }
+
             if (!folderName || !treeFolder) {
                 res.status(400).json({ error: 'Folder name and treeFolder are required' });
                 return;
             }
 
-            // Log the folder creation request
+            // Construct the absolute path to the directory
+            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+
+            // Check if the parent directory exists
+            if (!fs.existsSync(absoluteParentPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            let insertOrdinal = 1; // Default to insert at top
+
             if (insertAfterNode && insertAfterNode.trim() !== '') {
                 console.log(`Create folder "${folderName}" below node: ${insertAfterNode}`);
+                // Extract the ordinal from the insertAfterNode
+                const underscoreIndex = insertAfterNode.indexOf('_');
+                if (underscoreIndex !== -1) {
+                    const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
+                    insertOrdinal = afterNodeOrdinal + 1;
+                }
             } else {
-                console.log('Create new top folder "${folderName}"');
+                console.log(`Create new top folder "${folderName}"`);
             }
+
+            // Shift all files at or below the insertion ordinal down by one
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal);
+
+            // Create the new folder with the calculated ordinal
+            const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
+            const newFolderName = `${ordinalPrefix}_${folderName}`;
             
-            res.json({ success: true, message: 'Folder creation request received' });
+            const newFolderPath = path.join(absoluteParentPath, newFolderName);
+
+            // Create the directory
+            fs.mkdirSync(newFolderPath, { recursive: true });
+
+            console.log(`Folder created successfully: ${newFolderPath}`);
+            res.json({ 
+                success: true, 
+                message: 'Folder created successfully',
+                folderName: newFolderName 
+            });
         } catch (error) {
             this.handleError(error, res, 'Failed to create folder');
         }

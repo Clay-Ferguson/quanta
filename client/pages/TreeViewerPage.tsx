@@ -187,6 +187,22 @@ export default function TreeViewerPage() {
             
             const response = await httpClientUtil.httpPost('/api/docs/folder/create', requestBody);
             console.log('Folder creation request sent successfully:', response);
+
+            // Refresh the tree view to show the new file
+            // todo-0: this block of code is in two places, so we should refactor it into a function
+            if (response && response.success) {
+                // Refetch the tree data
+                try {
+                    const url = `/api/docs/render${treeFolder}`;
+                    const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
+                    
+                    if (treeResponse && treeResponse.treeNodes) {
+                        setTreeNodes(treeResponse.treeNodes);
+                    }
+                } catch (fetchError) {
+                    console.error('Error refreshing tree after file creation:', fetchError);
+                }
+            }
         } catch (error) {
             console.error('Error creating folder:', error);
             // TODO: Show error message to user

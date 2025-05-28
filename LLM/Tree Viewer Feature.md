@@ -2,7 +2,7 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-Current Status of this feature: The LLM is about to do "Step #15"
+Current Status of this feature: The LLM is about to do "Step #16"
 
 ## Overview
 
@@ -112,6 +112,10 @@ Whenever edit mode is on, make the `TreeViewerPage` show two side by side icons 
 
 In the `insertFile` and `insertFolder` function we created in the last step we prompt the user for the new file/folder name, so in each one of those files add an HTTP POST call to a new endpoint you'll create named `/api/docs/file/create` and `/api/docs/folder/create` respectivey. You'll post the new `fileName` or `folderName` to this endpoint. Note that passing an empty string is valid, and for the case of 'inserting at top' we will indeed pass empty strings to indicate to create at top. Then make those endpoints call two methods in the `Controller.ts` named `createFile` and `createFolder`. For now don't try to implement anything in these two methods, just make them 'console.log' the name of the file, and if it's one of the top of page icons that was clicked it will end up printing "Create new top file" or "Create new top Folder".
 
-### Step 15: (doing this now)
+### Step 15: (completed)
 
 Let's implement just the `createFile` in `Controller.ts`. We will not try to implement `createFolder` yet, because we will do this a little at a time. If you consider how we've already done all the previous steps, which explained to you how our ordinals work as prefixes in our files and folders, I think you will know how to create the new file. The fileName we're passing to the controller will not yet have any number prefix on it, but it will be the ordinal that's one above the `insertAfterNode` ordinal. So to keep all our ordinals unique we'll need to renumber all the files/folders at or below the ordinal we're inserting at. You can probably create a function called `shiftOrdinalsDown` which queries a listing of all files/folders at the level where we're inserting the file and shifts them all down (incrementing the ordinal prefix by one), that way when we get around to implementing `createFolder` we can make use of the `shiftOrdinalsDown` in that method also.
+
+### Step 16: (doing this now)
+
+Your implementation of `createFile` works perfectly. So you can now implement `createFolder` in almost the exact same way, making use of `shiftOrdinalsDown` as we had planned.
