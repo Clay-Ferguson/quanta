@@ -593,6 +593,8 @@ export default function TreeViewerPage() {
         }
     };
 
+    const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
+    const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
@@ -609,27 +611,27 @@ export default function TreeViewerPage() {
                     </label>
                     {gs.editMode && (
                         <div className="flex items-center space-x-2">
-                            <button 
+                            {itemsAreSelected && <button 
                                 onClick={onCut}
                                 className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                                 title="Cut selected items"
                             >
                                 Cut
-                            </button>
-                            <button 
+                            </button>}
+                            {itemsAreCut && <button 
                                 onClick={onPaste}
                                 className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                                 title="Paste items"
                             >
                                 Paste
-                            </button>
-                            <button 
+                            </button>}
+                            {itemsAreSelected && <button 
                                 onClick={onDelete}
                                 className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                                 title="Delete selected items"
                             >
                                 Delete
-                            </button>
+                            </button>}
                         </div>
                     )}
                     {shouldShowParentButton() && (
