@@ -470,6 +470,22 @@ export default function TreeViewerPage() {
     // Header button handlers for Cut, Copy, Paste, Delete
     const onCut = () => {
         console.log('Cut button clicked');
+        
+        if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
+            console.log('No items selected for cut operation');
+            return;
+        }
+
+        // Get the file names of selected items
+        const selectedFileNames = Array.from(gs.selectedTreeItems).map(node => node.name);
+        
+        // Update global state to set cutItems and clear selectedTreeItems
+        gd({ type: 'setCutAndClearSelections', payload: { 
+            cutItems: new Set<string>(selectedFileNames),
+            selectedTreeItems: new Set<TreeNode>()
+        }});
+        
+        console.log('Items cut:', selectedFileNames);
     };
 
     const onCopy = () => {
@@ -627,224 +643,226 @@ export default function TreeViewerPage() {
                                     </button>
                                 </div>
                             )}
-                            {treeNodes.map((node, index) => (
-                                <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
-                                    <div className="flex items-start gap-3">
-                                        {/* Checkbox for multi-selection when edit mode is on */}
-                                        {gs.editMode && (
-                                            <div className="flex-shrink-0 pt-1">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isNodeSelected(node)}
-                                                    onChange={(e) => handleCheckboxChange(node, e.target.checked)}
-                                                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
-                                                    title="Select this item"
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="flex-grow">
-                                            {/* Display content based on mimeType */}
-                                            {node.mimeType === 'folder' ? (
-                                                <div className="flex items-center justify-between">
-                                                    {/* Check if this folder is currently being edited */}
-                                                    {gs.editingNode === node ? (
-                                                        <div className="flex items-center flex-grow">
-                                                            <FontAwesomeIcon 
-                                                                icon={faFolder} 
-                                                                className="text-blue-400 text-lg mr-3" 
-                                                            />
-                                                            <div className="flex-grow">
-                                                                <input
-                                                                    type="text"
-                                                                    value={gs.newFolderName || ''}
-                                                                    onChange={handleFolderNameChange}
-                                                                    className="w-full bg-gray-800 border border-gray-600 rounded-lg text-gray-200 text-lg font-medium px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                                    placeholder="Enter folder name..."
-                                                                    autoFocus
-                                                                />
-                                                                <div className="flex gap-2 mt-2">
-                                                                    <button
-                                                                        onClick={handleRenameClick}
-                                                                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-                                                                    >
-                                                                        Rename
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={handleCancelClick}
-                                                                        className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div 
-                                                                className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
-                                                                onClick={() => handleFolderClick(node.name)}
-                                                            >
+                            {treeNodes
+                                .filter(node => !gs.cutItems?.has(node.name))
+                                .map((node, index) => (
+                                    <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
+                                        <div className="flex items-start gap-3">
+                                            {/* Checkbox for multi-selection when edit mode is on */}
+                                            {gs.editMode && (
+                                                <div className="flex-shrink-0 pt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isNodeSelected(node)}
+                                                        onChange={(e) => handleCheckboxChange(node, e.target.checked)}
+                                                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                                                        title="Select this item"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="flex-grow">
+                                                {/* Display content based on mimeType */}
+                                                {node.mimeType === 'folder' ? (
+                                                    <div className="flex items-center justify-between">
+                                                        {/* Check if this folder is currently being edited */}
+                                                        {gs.editingNode === node ? (
+                                                            <div className="flex items-center flex-grow">
                                                                 <FontAwesomeIcon 
                                                                     icon={faFolder} 
                                                                     className="text-blue-400 text-lg mr-3" 
                                                                 />
-                                                                <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
-                                                                    {formatFileName(node.name)}
-                                                                </span>
-                                                            </div>
-                                                            {gs.editMode && (
-                                                                <div className="flex items-center gap-2 ml-4">
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
-                                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
-                                                                        title="Edit"
-                                                                    >
-                                                                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(node, index); }}
-                                                                        className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
-                                                                        title="Delete"
-                                                                    >
-                                                                        <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
-                                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                                        title="Move Up"
-                                                                    >
-                                                                        <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
-                                                                        className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                                        title="Move Down"
-                                                                    >
-                                                                        <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
-                                                                    </button>
+                                                                <div className="flex-grow">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={gs.newFolderName || ''}
+                                                                        onChange={handleFolderNameChange}
+                                                                        className="w-full bg-gray-800 border border-gray-600 rounded-lg text-gray-200 text-lg font-medium px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                                        placeholder="Enter folder name..."
+                                                                        autoFocus
+                                                                    />
+                                                                    <div className="flex gap-2 mt-2">
+                                                                        <button
+                                                                            onClick={handleRenameClick}
+                                                                            className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                                                                        >
+                                                                            Rename
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={handleCancelClick}
+                                                                            className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            ) : node.mimeType.startsWith('image/') ? (
-                                                <div className="flex justify-center">
-                                                    <img 
-                                                        src={`/api/docs/images${gs.treeFolder || '/Quanta-User-Guide'}/${node.name}`}
-                                                        alt={node.name}
-                                                        className="max-w-full h-auto rounded-lg shadow-lg"
-                                                        onError={(e) => {
-                                                            // Fallback if image fails to load
-                                                            const target = e.currentTarget;
-                                                            target.style.display = 'none';
-                                                            const fallback = document.createElement('div');
-                                                            fallback.className = 'bg-gray-700 border border-gray-600 rounded-lg p-8 text-center text-gray-400';
-                                                            fallback.innerHTML = `<p>Image not available: ${node.name}</p>`;
-                                                            target.parentNode?.appendChild(fallback);
-                                                        }}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                // Check if this file is currently being edited
-                                                gs.editingNode === node ? (
-                                                    <div>
-                                                        <input
-                                                            type="text"
-                                                            value={gs.newFileName || ''}
-                                                            onChange={handleFileNameChange}
-                                                            className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                            placeholder="Enter filename..."
-                                                            autoFocus
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div 
+                                                                    className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
+                                                                    onClick={() => handleFolderClick(node.name)}
+                                                                >
+                                                                    <FontAwesomeIcon 
+                                                                        icon={faFolder} 
+                                                                        className="text-blue-400 text-lg mr-3" 
+                                                                    />
+                                                                    <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
+                                                                        {formatFileName(node.name)}
+                                                                    </span>
+                                                                </div>
+                                                                {gs.editMode && (
+                                                                    <div className="flex items-center gap-2 ml-4">
+                                                                        <button 
+                                                                            onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
+                                                                            className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                                                                            title="Edit"
+                                                                        >
+                                                                            <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(node, index); }}
+                                                                            className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
+                                                                            title="Delete"
+                                                                        >
+                                                                            <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
+                                                                            className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                            title="Move Up"
+                                                                        >
+                                                                            <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
+                                                                            className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                            title="Move Down"
+                                                                        >
+                                                                            <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                ) : node.mimeType.startsWith('image/') ? (
+                                                    <div className="flex justify-center">
+                                                        <img 
+                                                            src={`/api/docs/images${gs.treeFolder || '/Quanta-User-Guide'}/${node.name}`}
+                                                            alt={node.name}
+                                                            className="max-w-full h-auto rounded-lg shadow-lg"
+                                                            onError={(e) => {
+                                                                // Fallback if image fails to load
+                                                                const target = e.currentTarget;
+                                                                target.style.display = 'none';
+                                                                const fallback = document.createElement('div');
+                                                                fallback.className = 'bg-gray-700 border border-gray-600 rounded-lg p-8 text-center text-gray-400';
+                                                                fallback.innerHTML = `<p>Image not available: ${node.name}</p>`;
+                                                                target.parentNode?.appendChild(fallback);
+                                                            }}
                                                         />
-                                                        <textarea
-                                                            value={gs.editingContent || ''}
-                                                            onChange={handleContentChange}
-                                                            rows={10}
-                                                            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                            placeholder="Enter content here..."
-                                                        />
-                                                        <div className="flex gap-2 mt-3">
-                                                            <button
-                                                                onClick={handleSaveClick}
-                                                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                                                            >
-                                                                Save
-                                                            </button>
-                                                            <button
-                                                                onClick={handleCancelClick}
-                                                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <Markdown markdownContent={node.content || ''} />
-                                                )
-                                            )}
-                                            
-                                            {/* Display file metadata - only for non-folders */}
-                                            {node.mimeType !== 'folder' && (
-                                                <div className="mt-3 text-xs text-gray-500 flex justify-end items-center">
-                                                    {/* <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span> */}
-                                                    {gs.editMode && (
-                                                        <div className="flex items-center gap-2">
-                                                            <button 
-                                                                onClick={() => handleEditClick(node, index)}
-                                                                className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
-                                                                title="Edit"
-                                                            >
-                                                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => handleDeleteClick(node, index)}
-                                                                className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
-                                                                title="Delete"
-                                                            >
-                                                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => handleMoveUpClick(node, index)}
-                                                                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                                title="Move Up"
-                                                            >
-                                                                <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => handleMoveDownClick(node, index)}
-                                                                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                                                                title="Move Down"
-                                                            >
-                                                                <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
-                                                            </button>
+                                                    // Check if this file is currently being edited
+                                                    gs.editingNode === node ? (
+                                                        <div>
+                                                            <input
+                                                                type="text"
+                                                                value={gs.newFileName || ''}
+                                                                onChange={handleFileNameChange}
+                                                                className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                                placeholder="Enter filename..."
+                                                                autoFocus
+                                                            />
+                                                            <textarea
+                                                                value={gs.editingContent || ''}
+                                                                onChange={handleContentChange}
+                                                                rows={10}
+                                                                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                                placeholder="Enter content here..."
+                                                            />
+                                                            <div className="flex gap-2 mt-3">
+                                                                <button
+                                                                    onClick={handleSaveClick}
+                                                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleCancelClick}
+                                                                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                            
-                                            {/* Insert icons below each TreeNode when in edit mode */}
-                                            {gs.editMode && (
-                                                <div className="flex justify-center gap-2">
-                                                    <button 
-                                                        onClick={() => insertFile(node)}
-                                                        className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
-                                                        title="Insert File"
-                                                    >
-                                                        <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => insertFolder(node)}
-                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
-                                                        title="Insert Folder"
-                                                    >
-                                                        <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            )}
+                                                    ) : (
+                                                        <Markdown markdownContent={node.content || ''} />
+                                                    )
+                                                )}
+                                                
+                                                {/* Display file metadata - only for non-folders */}
+                                                {node.mimeType !== 'folder' && (
+                                                    <div className="mt-3 text-xs text-gray-500 flex justify-end items-center">
+                                                        {/* <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span> */}
+                                                        {gs.editMode && (
+                                                            <div className="flex items-center gap-2">
+                                                                <button 
+                                                                    onClick={() => handleEditClick(node, index)}
+                                                                    className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                                                                    title="Edit"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleDeleteClick(node, index)}
+                                                                    className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
+                                                                    title="Delete"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleMoveUpClick(node, index)}
+                                                                    className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                    title="Move Up"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleMoveDownClick(node, index)}
+                                                                    className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                                                                    title="Move Down"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Insert icons below each TreeNode when in edit mode */}
+                                                {gs.editMode && (
+                                                    <div className="flex justify-center gap-2">
+                                                        <button 
+                                                            onClick={() => insertFile(node)}
+                                                            className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                                                            title="Insert File"
+                                                        >
+                                                            <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => insertFolder(node)}
+                                                            className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                                                            title="Insert Folder"
+                                                        >
+                                                            <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}

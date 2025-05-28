@@ -2,9 +2,11 @@
 
 This document contains notes to explain to our Coding Agent (Github Copilot running inside this VSCode), how to implement the new `Tree Viewer` Feature. We will let the agent complete this feature one step at a time, as shown below, in the steps after the overview.
 
-NOTE: If you need to do any test builds at all use `yarn build` for that. Don't attemp to run the app however. I will do all the testing myself.
+* Note 1: If you need to do any test builds at all use `yarn build` for that. Don't attemp to run the app however. I will do all the testing myself.
 
-Current Status of this feature: The LLM is about to do "Step #19"
+* Note 2: After you're done working on something, if the only thing left is to fix indentation, and there are no other errors that you know of other than indentation, then please just declare you're done, and stop working. You can mention you left indentation incomplete if you want. It's easier for me to take care of indentation than for you, the AI, to do it.
+
+* Note 3: Current Status of this feature: The LLM is about to do "Step #20"
 
 ## Overview
 
@@ -130,10 +132,14 @@ Next we're going to make all the files/folders on our `TreeViewerPage` have a ch
 
 In `TreeViewerPage`, when edit mode is on, display 'Cut', 'Copy', 'Paste', 'Delete', buttons in header bar. So this is 4 new buttons. Put them just to the right of the "Edit" checkbox. Add the onClick methods for these new buttons called `onCut`, `onCopy`, etc. and don't try to implement them yet, just make them do a `console.log` so I can test that they're working, and that they only appear when edit mode is on.
 
-### Step 19: (doing this now)
+### Step 19: (completed)
 
 Next you should implement the "Delete" button we did in Step 18, to make the button fully functional on client and server. This button will delete whatever is in `selectedTreeItems` by sending the list of those full filenames to the server in an HTTP POST to a new endpoint you'll create named `/api/docs/delete`. Like our other 'post' methods in the server we will make it simply call the `Controller.ts` where we will do the implementation. So you'll create a controller method named `deleteItems`, which simply deletes all the files/folders it was sent.
 
 Now, it will be obvious how to complete this on the client, to get the client up to date, by simply removing all the `TreeNodes` from the `treeNodes` array, and clearing out `selectedTreeItems` by using `gd` (global dispatch) to update the global state.
 
 After all that is done, display a message using our `alertModal` from `AlertModelComp`, that says how many files/folders were successfully deleted.
+
+### Step 20: Cut Button (doing this now)
+
+Next you should implement the "Cut" button to make the global state remember what was cut, by holding the cut items file/folder names in a Set. So you'll create a new `GlobalState` array named `cutItems` as type `Set<string>`, and whenever the user has selected items with the checkboxes, and they click the "Cut" button, you will load `cutItems` with names of whatever's selected, and then clear the selections (i.e. clear `selectedTreeItems`). In this step we will not try to implement the server part yet, but just manage the local client-side state for now. The reason we keep `cutItems` in a set is for rapid lookup. Because what we can now do is inside our main loop of rendering items (i.e. line `{treeNodes.map((node, index) => (`) we can now check the `cutItems` set and simply skip over those in our loop, so that the page rendering will never contain any of the `cutItems`. So when the user clicks "Cut" button those selected items will vanish from the display.
