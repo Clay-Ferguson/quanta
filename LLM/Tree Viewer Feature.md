@@ -8,7 +8,7 @@ This document contains notes to explain to our Coding Agent (Github Copilot runn
 
 * Note 3: Current Status of this feature: The LLM is about to do "Step #22"
 
-* Note 4: After all these steps were completed we split out the Controller.ts into service classes so there's no longer any Controller.ts file.
+* Note 4: After all these steps were completed we split out the `Controller.ts` into service classes so there's no longer a `Controller.ts` file. So all mentions of `Controller.ts` really means `DocService.ts`, because that's where the code is now.
 
 ## Overview
 

@@ -885,6 +885,36 @@ class DocService {
             svrUtil.handleError(error, res, 'Failed to paste items');
         }
     }
+
+    /**
+     * Gets the maximum ordinal value from all numbered files/folders in a directory
+     * @param absolutePath - The absolute path to the directory
+     * @returns The maximum ordinal value found, or 0 if no numbered files exist
+     */
+    // todo-1: this method is not used any longer, so we can remove it some day.
+    private getMaxOrdinal = (absolutePath: string): number => {
+        this.checkFileAccess(absolutePath);
+            
+        // Read directory contents and filter for files/folders with numeric prefixes
+        const allFiles = fs.readdirSync(absolutePath);
+        const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
+            
+        if (numberedFiles.length === 0) {
+            return 0;
+        }
+            
+        // Extract ordinals and find the maximum
+        let maxOrdinal = 0;
+        for (const file of numberedFiles) {
+            const prefix = file.substring(0, file.indexOf('_'));
+            const ordinal = parseInt(prefix);
+            if (ordinal > maxOrdinal) {
+                maxOrdinal = ordinal;
+            }
+        }
+            
+        return maxOrdinal;
+    };
 }
 
 export const docSvc = new DocService();
