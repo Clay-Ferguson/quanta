@@ -154,6 +154,6 @@ Next you can make the "Paste" button work. We already have `cutItems` in global 
 
 On the client side, after the paste, we can just refresh from the server in the normal way. We don't have any "Refresh" button yet on the client, but I think you will know how to refresh the entier folder view, because that code exists already. After the paste is complete you can show a message with `alertModal` that says how many were pasted.
 
-### Step 22: 
+### Step 22:  
 
 NOTE: There are no more steps. The `Tree View Feature` is complete. I will leave this AI prompt file as is because it has valuable information about how this feature works, and how it was created, and will be potentially helpful to both humans and AIs in the future.

@@ -26,8 +26,19 @@ export default function TreeViewerPage() {
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
+    const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
     
     useEffect(() => util.resizeEffect(), []);
+
+    // Focus the content textarea when starting to edit a file
+    useEffect(() => {
+        if (gs.editingNode && gs.editingNode.mimeType !== 'folder' && contentTextareaRef.current) {
+            // Use setTimeout to ensure the textarea is rendered before focusing
+            setTimeout(() => {
+                contentTextareaRef.current?.focus();
+            }, 100);
+        }
+    }, [gs.editingNode]);
 
     // Handle folder click navigation
     const handleFolderClick = (folderName: string) => {
@@ -831,9 +842,9 @@ export default function TreeViewerPage() {
                                                                     onChange={handleFileNameChange}
                                                                     className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                                     placeholder="Enter filename..."
-                                                                    autoFocus
                                                                 />
                                                                 <textarea
+                                                                    ref={contentTextareaRef}
                                                                     value={gs.editingContent || ''}
                                                                     onChange={handleContentChange}
                                                                     rows={10}
