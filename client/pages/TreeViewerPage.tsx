@@ -192,12 +192,13 @@ export default function TreeViewerPage() {
                 
                 // Automatically start editing the newly created file
                 setTimeout(() => {
-                    const newFileNode = updatedTreeNodes.find(n => n.name.endsWith(`_${fileName}.md`));
+                    const findStr = `_${fileName}.md`;
+                    const newFileNode = updatedTreeNodes.find(n => n.name.endsWith(findStr));
                     if (newFileNode) {
                         // Now let's check to make sure the count of matching files is not more than 1
-                        const matchingFiles = updatedTreeNodes.filter(n => n.name === newFileNode.name);
+                        const matchingFiles = updatedTreeNodes.filter(n => n.name.endsWith(findStr));
                         if (matchingFiles.length > 1) {
-                            alertModal(`Multiple files found with name "${newFileNode.name}". Please ensure unique file names.`);
+                            alertModal(`Multiple files found ending with "${findStr}". This is not recommended.`);
                         }
 
                         const fileNameWithoutPrefix = formatFileName(newFileNode.name);
