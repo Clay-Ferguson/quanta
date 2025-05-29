@@ -770,7 +770,7 @@ export default function TreeViewerPage() {
                                                             ) : (
                                                                 <>
                                                                     <div 
-                                                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg py-1 px-2 transition-colors flex-grow"
+                                                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg transition-colors flex-grow"
                                                                         onClick={() => handleFolderClick(node.name)}
                                                                     >
                                                                         <FontAwesomeIcon 
