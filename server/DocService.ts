@@ -72,7 +72,7 @@ class DocService {
             svrUtil.handleError(error, res, 'Failed to render tree');
         }
     }
-
+ 
     getTreeNodes = (absolutePath: string, pullup: boolean): TreeNode[] => {
         this.checkFileAccess(absolutePath);
         // Read directory contents
@@ -84,8 +84,11 @@ class DocService {
             if (!/^\d+_/.test(file)) {
                 continue; // Skip files that do not match the naming convention
             }
+
+            // Ensure file has 4-digit ordinal prefix
+            const currentFileName = this.ensureFourDigitOrdinal(absolutePath, file);
                 
-            const filePath = path.join(absolutePath, file);
+            const filePath = path.join(absolutePath, currentFileName);
             this.checkFileAccess(filePath);
             const fileStat = fs.statSync(filePath);
                 
@@ -101,7 +104,7 @@ class DocService {
                 mimeType = 'folder';
 
                 // if folder name ends in underscore, treat it as a pullup folder
-                if (pullup && file.endsWith('_')) {
+                if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this folder
                     const subTreeNodes = this.getTreeNodes(filePath, true);
                     if (subTreeNodes.length > 0) {
@@ -111,7 +114,7 @@ class DocService {
                     }
                 }
             } else {
-                const ext = path.extname(file).toLowerCase();
+                const ext = path.extname(currentFileName).toLowerCase();
                     
                 // Detect image files
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
@@ -144,7 +147,7 @@ class DocService {
 
             if (!ranPullup) {
                 const treeNode: TreeNode = {
-                    name: file,
+                    name: currentFileName,
                     createTime: fileStat.birthtime.getTime(),
                     modifyTime: fileStat.mtime.getTime(),
                     content: content,
@@ -623,6 +626,45 @@ class DocService {
             console.log(`Shifting file: ${file} -> ${newFileName}`);
             fs.renameSync(oldPath, newPath);
         }
+    };
+
+    /**
+     * Ensures a file/folder has a 4-digit ordinal prefix, renaming it if necessary
+     * @param absolutePath - The absolute path to the directory containing the file
+     * @param fileName - The original filename
+     * @returns The filename (either original or renamed) to use for further processing
+     */
+    private ensureFourDigitOrdinal = (absolutePath: string, fileName: string): string => {
+        // Find the first underscore to extract the ordinal prefix
+        const underscoreIndex = fileName.indexOf('_');
+        const ordinalPrefix = fileName.substring(0, underscoreIndex);
+        const restOfName = fileName.substring(underscoreIndex);
+        
+        // Check if we need to pad with leading zeroes (ensure 4-digit ordinal)
+        if (ordinalPrefix.length < 4) {
+            const paddedOrdinal = ordinalPrefix.padStart(4, '0');
+            const newFileName = paddedOrdinal + restOfName;
+            const oldFilePath = path.join(absolutePath, fileName);
+            const newFilePath = path.join(absolutePath, newFileName);
+            
+            try {
+                // Rename the file/folder to have 4-digit ordinal prefix
+                this.checkFileAccess(oldFilePath);
+                this.checkFileAccess(newFilePath);
+                fs.renameSync(oldFilePath, newFilePath);
+                console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
+                
+                // Return the new filename for further processing
+                return newFileName;
+            } catch (error) {
+                console.warn(`Failed to rename ${fileName} to ${newFileName}:`, error);
+                // Return original name if rename fails
+                return fileName;
+            }
+        }
+        
+        // No rename needed, return original filename
+        return fileName;
     };
 
     /**
