@@ -3,9 +3,10 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
-import {controller} from './Controller.js';
+import {chatSvc} from './ChatService.js';
 import { rtc } from './WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
+import { docSvc } from './DocService.js';
 
 logInit();
 
@@ -48,34 +49,34 @@ if (SECURE === 'y') {
     });
 }
 
-app.get('/api/rooms/:roomId/message-ids', controller.getMessageIdsForRoom);
-app.get('/api/attachments/:attachmentId', controller.serveAttachment);
-app.get('/api/messages', controller.getMessageHistory);
-app.get('/api/users/:pubKey/info', controller.getUserProfile);
-app.get('/api/users/:pubKey/avatar', controller.serveAvatar);
-app.get('/api/docs/render/*', controller.treeRender);
-app.get('/api/docs/images/*', controller.serveDocImage);
+app.get('/api/rooms/:roomId/message-ids', chatSvc.getMessageIdsForRoom);
+app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
+app.get('/api/messages', chatSvc.getMessageHistory);
+app.get('/api/users/:pubKey/info', chatSvc.getUserProfile);
+app.get('/api/users/:pubKey/avatar', chatSvc.serveAvatar);
+app.get('/api/docs/render/*', docSvc.treeRender);
+app.get('/api/docs/images/*', docSvc.serveDocImage);
 
-app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, controller.getRoomInfo);
-app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, controller.deleteRoom);
-app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, controller.getRecentAttachments);
-app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, controller.createTestData);
-app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, controller.blockUser);
+app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRoomInfo);
+app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteRoom);
+app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRecentAttachments);
+app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, chatSvc.createTestData);
+app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, chatSvc.blockUser);
 
-app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteAttachment);
-app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
-app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, controller.saveUserProfile);
-app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, controller.sendMessages);
-app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controller.deleteMessage); // check PublicKey
+app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteAttachment);
+app.post('/api/rooms/:roomId/get-messages-by-id', chatSvc.getMessagesByIds);
+app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, chatSvc.saveUserProfile);
+app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages);
+app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); // check PublicKey
 
 // For now we only allow admin to access the docs API
-app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, controller.saveFile);
-app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, controller.renameFolder);
-app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteFileOrFolder);
-app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, controller.moveUpOrDown);
-app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, controller.createFile);
-app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, controller.createFolder);
-app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, controller.pasteItems);
+app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile);
+app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder);
+app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder);
+app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown);
+app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile);
+app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder);
+app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
