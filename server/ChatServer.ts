@@ -67,13 +67,15 @@ app.post('/api/rooms/:roomId/get-messages-by-id', controller.getMessagesByIds);
 app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, controller.saveUserProfile);
 app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, controller.sendMessages);
 app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, controller.deleteMessage); // check PublicKey
-app.post('/api/docs/save-file/', controller.saveFile);
-app.post('/api/docs/rename-folder/', controller.renameFolder);
-app.post('/api/docs/delete', controller.deleteFileOrFolder);
-app.post('/api/docs/move-up-down', controller.moveUpOrDown);
-app.post('/api/docs/file/create', controller.createFile);
-app.post('/api/docs/folder/create', controller.createFolder);
-app.post('/api/docs/paste', controller.pasteItems);
+
+// For now we only allow admin to access the docs API
+app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, controller.saveFile);
+app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, controller.renameFolder);
+app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, controller.deleteFileOrFolder);
+app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, controller.moveUpOrDown);
+app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, controller.createFile);
+app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, controller.createFolder);
+app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, controller.pasteItems);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);

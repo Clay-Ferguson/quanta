@@ -420,6 +420,23 @@ class Controller {
         }
     }
 
+    checkFileAccess = (filename: string) => {
+        console.log("CHK Access:", filename);
+        
+        if (!filename || !process.env.QUANTA_TREE_ROOT) {
+            throw new Error('Invalid file access: '+filename);
+        }
+        
+        // Get the canonical (resolved) paths to prevent directory traversal attacks
+        const canonicalFilename = path.resolve(filename);
+        const canonicalRoot = path.resolve(process.env.QUANTA_TREE_ROOT);
+        
+        // Check if the canonical path is within the allowed root directory
+        if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
+            throw new Error('Invalid file access: '+filename);
+        }
+    }
+
     /**
      * Tree render method that returns an array of TreeNode objects representing files and folders
      * @param req - Express request object containing treeFolder in the URL path and optional pullup query parameter
@@ -456,6 +473,7 @@ class Controller {
                 return;
             }
 
+            this.checkFileAccess(absolutePath);
             // Check if it's actually a directory
             const stat = fs.statSync(absolutePath);
             if (!stat.isDirectory()) {
@@ -472,11 +490,10 @@ class Controller {
     }
 
     getTreeNodes = (absolutePath: string, pullup: boolean): TreeNode[] => {
+        this.checkFileAccess(absolutePath);
         // Read directory contents
         const files = fs.readdirSync(absolutePath);
         const treeNodes: TreeNode[] = [];
-
-        console.log("pullup:", pullup);
 
         for (const file of files) {
             // We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore.
@@ -485,6 +502,7 @@ class Controller {
             }
                 
             const filePath = path.join(absolutePath, file);
+            this.checkFileAccess(filePath);
             const fileStat = fs.statSync(filePath);
                 
             let content = '';
@@ -557,7 +575,6 @@ class Controller {
         return treeNodes;
     }
 
-
     /**
      * Saves file content to the server for the tree viewer feature
      * @param req - Express request object containing filename, content, and optional newFileName in body
@@ -584,6 +601,7 @@ class Controller {
             const absoluteFilePath = path.join(absoluteFolderPath, filename);
 
             // Check if the directory exists
+            this.checkFileAccess(absoluteFolderPath);
             if (!fs.existsSync(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
@@ -611,6 +629,7 @@ class Controller {
                     }
                     
                     // Rename the file
+                    this.checkFileAccess(absoluteFilePath); 
                     fs.renameSync(absoluteFilePath, newAbsoluteFilePath);
                     console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                 }
@@ -619,6 +638,7 @@ class Controller {
             }
 
             // Write the content to the file (renamed or original)
+            this.checkFileAccess(finalFilePath);
             fs.writeFileSync(finalFilePath, content, 'utf8');
             
             console.log(`File saved successfully: ${finalFilePath}`);
@@ -680,6 +700,8 @@ class Controller {
             }
 
             // Rename the folder
+            this.checkFileAccess(oldAbsolutePath);
+            this.checkFileAccess(newAbsolutePath);
             fs.renameSync(oldAbsolutePath, newAbsolutePath);
             
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
@@ -749,6 +771,7 @@ class Controller {
                     // Get stats to determine if it's a file or directory
                     const stat = fs.statSync(absoluteTargetPath);
                     
+                    this.checkFileAccess(absoluteTargetPath);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
                         fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
@@ -820,6 +843,7 @@ class Controller {
             }
 
             // Read directory contents and filter for files/folders with numeric prefixes
+            this.checkFileAccess(absoluteParentPath);
             const allFiles = fs.readdirSync(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
@@ -869,6 +893,10 @@ class Controller {
             const targetPath = path.join(absoluteParentPath, targetFile);
             const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
 
+            this.checkFileAccess(currentPath);
+            this.checkFileAccess(targetPath);
+            this.checkFileAccess(tempPath);
+
             // Use a temporary file to avoid conflicts during rename
             fs.renameSync(currentPath, tempPath);
             fs.renameSync(targetPath, path.join(absoluteParentPath, newTargetName));
@@ -915,6 +943,7 @@ class Controller {
             const absoluteImagePath = path.join(quantaTreeRoot, imagePath);
 
             // Check if the file exists
+            this.checkFileAccess(absoluteImagePath);
             if (!fs.existsSync(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
@@ -975,6 +1004,7 @@ class Controller {
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
      */
     private shiftOrdinalsDown = (absoluteParentPath: string, insertOrdinal: number): void => {
+        this.checkFileAccess(absoluteParentPath);
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
@@ -1036,6 +1066,7 @@ class Controller {
             const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
 
             // Check if the parent directory exists
+            this.checkFileAccess(absoluteParentPath);
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -1111,6 +1142,7 @@ class Controller {
             const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
 
             // Check if the parent directory exists
+            this.checkFileAccess(absoluteParentPath);
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -1178,6 +1210,7 @@ class Controller {
             const absoluteTargetPath = path.join(quantaTreeRoot, targetFolder);
 
             // Check if the target directory exists
+            this.checkFileAccess(absoluteTargetPath);
             if (!fs.existsSync(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
@@ -1190,6 +1223,7 @@ class Controller {
             // Check for conflicts first
             for (const itemName of pasteItems) {
                 const targetFilePath = path.join(absoluteTargetPath, itemName);
+                this.checkFileAccess(targetFilePath); 
                 if (fs.existsSync(targetFilePath)) {
                     conflicts.push(itemName);
                 }

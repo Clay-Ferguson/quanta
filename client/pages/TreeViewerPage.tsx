@@ -175,7 +175,7 @@ export default function TreeViewerPage() {
                 insertAfterNode: node ? node.name : ''
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/file/create', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
             console.log('File creation request sent successfully:', response);
             
             // Refresh the tree view to show the new file
@@ -183,7 +183,7 @@ export default function TreeViewerPage() {
                 // Refetch the tree data
                 try {
                     const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                    const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
+                    const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                     
                     if (treeResponse && treeResponse.treeNodes) {
                         setTreeNodes(treeResponse.treeNodes);
@@ -212,7 +212,7 @@ export default function TreeViewerPage() {
                 insertAfterNode: node ? node.name : ''
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/folder/create', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
             console.log('Folder creation request sent successfully:', response);
 
             // Refresh the tree view to show the new file
@@ -221,7 +221,7 @@ export default function TreeViewerPage() {
                 // Refetch the tree data
                 try {
                     const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                    const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
+                    const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                     
                     if (treeResponse && treeResponse.treeNodes) {
                         setTreeNodes(treeResponse.treeNodes);
@@ -247,7 +247,7 @@ export default function TreeViewerPage() {
                 newFileName: newFileName || filename
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/save-file/', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
             console.log('File saved to server successfully:', response);
         } catch (error) {
             console.error('Error saving file to server:', error);
@@ -264,7 +264,7 @@ export default function TreeViewerPage() {
                 treeFolder: treeFolder
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/rename-folder/', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
             console.log('Folder renamed on server successfully:', response);
         } catch (error) {
             console.error('Error renaming folder on server:', error);
@@ -280,7 +280,7 @@ export default function TreeViewerPage() {
                 treeFolder: treeFolder
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/delete', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
             console.log('File or folder deleted on server successfully:', response);
         } catch (error) {
             console.error('Error deleting file or folder on server:', error);
@@ -297,7 +297,7 @@ export default function TreeViewerPage() {
                 treeFolder: treeFolder
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/move-up-down', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/move-up-down', requestBody);
             console.log('File or folder moved successfully:', response);
             
             // Update the local tree nodes based on the server response
@@ -445,7 +445,7 @@ export default function TreeViewerPage() {
                 
                 // Make API call to get tree nodes
                 const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                const response: TreeRender_Response = await httpClientUtil.httpGet(url);
+                const response: TreeRender_Response | null = await httpClientUtil.httpGet(url);
 
                 // show a pretty-print of the JSON of the response
                 // console.log("Tree response:", JSON.stringify(response, null, 2));
@@ -508,7 +508,7 @@ export default function TreeViewerPage() {
                 pasteItems: cutItemsArray
             };
             
-            const response = await httpClientUtil.httpPost('/api/docs/paste', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
             console.log('Paste operation completed successfully:', response);
             
             // Clear cutItems from global state
@@ -517,7 +517,7 @@ export default function TreeViewerPage() {
             // Refresh the tree view to show the pasted items
             try {
                 const url = `/api/docs/render${targetFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                const treeResponse: TreeRender_Response = await httpClientUtil.httpGet(url);
+                const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                 
                 if (treeResponse && treeResponse.treeNodes) {
                     setTreeNodes(treeResponse.treeNodes);
@@ -562,7 +562,7 @@ export default function TreeViewerPage() {
             const treeFolder = gs.treeFolder || '/';
             
             // Call server endpoint to delete the items
-            const response = await httpClientUtil.httpPost('/api/docs/delete', {
+            const response = await httpClientUtil.secureHttpPost('/api/docs/delete', {
                 fileNames: fileNames,
                 treeFolder: treeFolder
             });
@@ -617,7 +617,7 @@ export default function TreeViewerPage() {
             
             // Make API call to get tree nodes
             const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-            const response: TreeRender_Response = await httpClientUtil.httpGet(url);
+            const response: TreeRender_Response | null = await httpClientUtil.httpGet(url);
             
             if (response && response.treeNodes) {
                 setTreeNodes(response.treeNodes);
