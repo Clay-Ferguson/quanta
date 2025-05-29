@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Markdown from "../components/MarkdownComp";
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
@@ -183,17 +183,7 @@ export default function TreeViewerPage() {
             
             // Refresh the tree view to show the new file
             if (response && response.success) {
-                // Refetch the tree data
-                try {
-                    const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                    const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
-                    
-                    if (treeResponse && treeResponse.treeNodes) {
-                        setTreeNodes(treeResponse.treeNodes);
-                    }
-                } catch (fetchError) {
-                    console.error('Error refreshing tree after file creation:', fetchError);
-                }
+                await reRenderTree();
             }
         } catch (error) {
             console.error('Error creating file:', error);
@@ -219,19 +209,8 @@ export default function TreeViewerPage() {
             console.log('Folder creation request sent successfully:', response);
 
             // Refresh the tree view to show the new file
-            // todo-0: this block of code is in two places, so we should refactor it into a function
             if (response && response.success) {
-                // Refetch the tree data
-                try {
-                    const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                    const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
-                    
-                    if (treeResponse && treeResponse.treeNodes) {
-                        setTreeNodes(treeResponse.treeNodes);
-                    }
-                } catch (fetchError) {
-                    console.error('Error refreshing tree after file creation:', fetchError);
-                }
+                await reRenderTree();
             }
         } catch (error) {
             console.error('Error creating folder:', error);
@@ -436,28 +415,38 @@ export default function TreeViewerPage() {
         }});
     };
 
+    // We have to wrap this in a useCallback in order to be able to use it in
+    // the useEffect below
+    const reRenderTree = useCallback(async () => {
+        const folder = gs.treeFolder || '/';
+        try {
+            setIsLoading(true);
+            setError(null);
+            const url = `/api/docs/render${folder}${!gs.editMode ? '?pullup=true' : ''}`;
+            const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
+                
+            if (treeResponse && treeResponse.treeNodes) {
+                setTreeNodes(treeResponse.treeNodes);
+            }
+            else {
+                setTreeNodes([]);
+            }
+        } catch (fetchError) {
+            setError(`Sorry, we encountered an error refreshing the tree for "${folder}".`);
+            console.error('Error refreshing tree after file creation:', fetchError);
+        }
+        finally {
+            setIsLoading(false);
+        }
+    }, [gs.editMode, gs.treeFolder]);
+
     useEffect(() => {
         const fetchTree = async () => {
             setIsLoading(true);
             setError(null);
             try {
                 console.log("Loading tree document...");
-                
-                // Get the treeFolder from global state
-                const treeFolder = gs.treeFolder || '/';
-                
-                // Make API call to get tree nodes
-                const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                const response: TreeRender_Response | null = await httpClientUtil.httpGet(url);
-
-                // show a pretty-print of the JSON of the response
-                // console.log("Tree response:", JSON.stringify(response, null, 2));
-                
-                if (response && response.treeNodes) {
-                    setTreeNodes(response.treeNodes);
-                } else {
-                    setTreeNodes([]);
-                }
+                await reRenderTree();
             } catch (error) {
                 console.error('Error loading tree:', error);
                 setError(`Sorry, we encountered an error loading the tree for "${gs.treeFolder || '/'}".`);
@@ -465,9 +454,8 @@ export default function TreeViewerPage() {
                 setIsLoading(false);
             }
         };
-
         fetchTree();
-    }, [gs.treeFolder, gs.editMode]);
+    }, [gs.treeFolder, gs.editMode, reRenderTree]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
@@ -517,17 +505,7 @@ export default function TreeViewerPage() {
             // Clear cutItems from global state
             gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
             
-            // Refresh the tree view to show the pasted items
-            try {
-                const url = `/api/docs/render${targetFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-                const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
-                
-                if (treeResponse && treeResponse.treeNodes) {
-                    setTreeNodes(treeResponse.treeNodes);
-                }
-            } catch (fetchError) {
-                console.error('Error refreshing tree after paste:', fetchError);
-            }
+            await reRenderTree();
             
             // Show success message
             if (response && response.pastedCount !== undefined) {
@@ -609,31 +587,21 @@ export default function TreeViewerPage() {
     }
 
     // Refresh handler to reload the tree data
-    const handleRefresh = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            console.log("Refreshing tree document...");
-            
-            // Get the treeFolder from global state
-            const treeFolder = gs.treeFolder || '/';
-            
-            // Make API call to get tree nodes
-            const url = `/api/docs/render${treeFolder}${!gs.editMode ? '?pullup=true' : ''}`;
-            const response: TreeRender_Response | null = await httpClientUtil.httpGet(url);
-            
-            if (response && response.treeNodes) {
-                setTreeNodes(response.treeNodes);
-            } else {
-                setTreeNodes([]);
-            }
-        } catch (error) {
-            console.error('Error refreshing tree:', error);
-            setError(`Sorry, we encountered an error refreshing the tree for "${gs.treeFolder || '/'}".`);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // todo-0: this function with it's isLoading and error handling is proabably
+    // what we need to use for 'reRenderTree' itself.
+    // const handleRefresh = async () => {
+    //     setIsLoading(true);
+    //     setError(null);
+    //     try {
+    //         console.log("Refreshing tree document...");
+    //         await reRenderTree(gs.treeFolder || '/');
+    //     } catch (error) {
+    //         console.error('Error refreshing tree:', error);
+    //         setError(`Sorry, we encountered an error refreshing the tree for "${gs.treeFolder || '/'}".`);
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
 
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
@@ -677,7 +645,7 @@ export default function TreeViewerPage() {
                         </div>
                     )}
                     <button 
-                        onClick={handleRefresh}
+                        onClick={reRenderTree}
                         className="btn-icon"
                         title="Refresh tree"
                         disabled={isLoading}
