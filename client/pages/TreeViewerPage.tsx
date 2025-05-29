@@ -87,6 +87,13 @@ export default function TreeViewerPage() {
         }});
     };
 
+    // Handle edit mode toggle
+    const handleMetaModeToggle = () => {
+        gd({ type: 'setMetaMode', payload: { 
+            metaMode: !gs.metaMode
+        }});
+    };
+
     // Handle checkbox selection for TreeNodes
     const handleCheckboxChange = (node: TreeNode, checked: boolean) => {
         const currentSelections = new Set(gs.selectedTreeItems);
@@ -635,6 +642,15 @@ export default function TreeViewerPage() {
                         />
                         <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
                     </label>
+                    <label className="flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox"
+                            checked={gs.metaMode || false}
+                            onChange={handleMetaModeToggle}
+                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span className="ml-2 text-sm font-medium text-gray-300">Meta</span>
+                    </label>
                     {gs.editMode && (
                         <div className="flex items-center space-x-2">
                             {itemsAreSelected && <button 
@@ -770,7 +786,7 @@ export default function TreeViewerPage() {
                                                             ) : (
                                                                 <>
                                                                     <div 
-                                                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg transition-colors flex-grow"
+                                                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
                                                                         onClick={() => handleFolderClick(node.name)}
                                                                     >
                                                                         <FontAwesomeIcon 
@@ -874,8 +890,12 @@ export default function TreeViewerPage() {
                                                 
                                                     {/* Display file metadata - only for non-folders */}
                                                     {node.mimeType !== 'folder' && (
-                                                        <div className="mt-3 text-xs text-gray-500 flex justify-end items-center">
-                                                            {/* <span>Modified: {new Date(node.modifyTime).toLocaleDateString()}</span> */}
+                                                        <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
+                                                            {gs.metaMode && (<>
+                                                                <span className="mr-4">{node.name}</span>
+                                                                <span className="mr-4">{new Date(node.modifyTime).toLocaleDateString()}</span>
+                                                            </>
+                                                            )}
                                                             {gs.editMode && (
                                                                 <div className="flex items-center gap-2">
                                                                     {!isImage && <button 
