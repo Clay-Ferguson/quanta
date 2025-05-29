@@ -420,9 +420,7 @@ class Controller {
         }
     }
 
-    checkFileAccess = (filename: string) => {
-        console.log("CHK Access:", filename);
-        
+    checkFileAccess = (filename: string) => {        
         if (!filename || !process.env.QUANTA_TREE_ROOT) {
             throw new Error('Invalid file access: '+filename);
         }

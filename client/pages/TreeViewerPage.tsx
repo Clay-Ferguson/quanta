@@ -713,27 +713,22 @@ export default function TreeViewerPage() {
                             )}
                             {/* Insert icons at top when in edit mode */}
                             {gs.editMode && (
-                                <div className="flex items-start gap-3 mb-4">
-                                    {/* Empty space to align with checkbox */}
-                                    <div className="flex-shrink-0 pt-1 w-5"></div>
-                                    <div className="flex-grow">
-                                        <div className="flex justify-center gap-2">
-                                            <button 
-                                                onClick={() => insertFile(null)}
-                                                className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
-                                                title="Insert File"
-                                            >
-                                                <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-                                            </button>
-                                            <button 
-                                                onClick={() => insertFolder(null)}
-                                                className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
-                                                title="Insert Folder"
-                                            >
-                                                <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
+                                
+                                <div className="flex justify-center gap-2">
+                                    <button 
+                                        onClick={() => insertFile(null)}
+                                        className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                                        title="Insert File"
+                                    >
+                                        <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => insertFolder(null)}
+                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                                        title="Insert Folder"
+                                    >
+                                        <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                                    </button>
                                 </div>
                             )}
                             {treeNodes
@@ -741,8 +736,8 @@ export default function TreeViewerPage() {
                                 .map((node, index) => {
                                     const isImage = node.mimeType.startsWith('image/');
                                     return (
-                                        <div key={index} className={node.mimeType === 'folder' ? "" : (index < treeNodes.length - 1 ? "border-b border-gray-700 pb-6 mb-6" : "pb-6")}>
-                                            <div className="flex items-start gap-3">
+                                        <div key={index}>
+                                            <div className={gs.editMode ? "flex items-start gap-3 border-b" : "flex items-start gap-3"}>
                                                 {/* Checkbox for multi-selection when edit mode is on */}
                                                 {gs.editMode && (
                                                     <div className="flex-shrink-0 pt-1">
@@ -934,28 +929,27 @@ export default function TreeViewerPage() {
                                                             )}
                                                         </div>
                                                     )}
-                                                
-                                                    {/* Insert icons below each TreeNode when in edit mode */}
-                                                    {gs.editMode && (
-                                                        <div className="flex justify-center gap-2">
-                                                            <button 
-                                                                onClick={() => insertFile(node)}
-                                                                className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
-                                                                title="Insert File"
-                                                            >
-                                                                <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-                                                            </button>
-                                                            <button 
-                                                                onClick={() => insertFolder(node)}
-                                                                className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
-                                                                title="Insert Folder"
-                                                            >
-                                                                <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
+                                            {/* Insert icons below each TreeNode when in edit mode */}
+                                            {gs.editMode && (
+                                                <div className="flex justify-center gap-2">
+                                                    <button 
+                                                        onClick={() => insertFile(node)}
+                                                        className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                                                        title="Insert File"
+                                                    >
+                                                        <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => insertFolder(node)}
+                                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                                                        title="Insert Folder"
+                                                    >
+                                                        <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )})}
                         </div>
