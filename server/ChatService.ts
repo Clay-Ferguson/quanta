@@ -6,6 +6,7 @@ import { dbUsers } from "./db/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
 import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/types/EndpointTypes.js";
+import { svrUtil } from "./ServerUtil.js";
 
 const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
 
@@ -43,7 +44,7 @@ class ChatService {
             const ret: GetMessageIdsForRoom_Response = {messageIds}
             res.json(ret);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve message IDs');
+            svrUtil.handleError(error, res, 'Failed to retrieve message IDs');
         }
     }
 
@@ -79,7 +80,7 @@ class ChatService {
             // Send the binary data
             res.send(attachment.data);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve attachment'); 
+            svrUtil.handleError(error, res, 'Failed to retrieve attachment'); 
         }
     }
     
@@ -106,7 +107,7 @@ class ChatService {
             const response: GetMessageHistory_Response = {messages};
             res.json(response);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve message history');
+            svrUtil.handleError(error, res, 'Failed to retrieve message history');
         }
     } 
 
@@ -129,7 +130,7 @@ class ChatService {
                 res.status(404).json({ error: 'User information not found' });
             }
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve user profile');
+            svrUtil.handleError(error, res, 'Failed to retrieve user profile');
         }
     }
 
@@ -173,7 +174,7 @@ class ChatService {
             // Send the binary image data
             res.send(binaryData);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve avatar');
+            svrUtil.handleError(error, res, 'Failed to retrieve avatar');
         }
     }    
 
@@ -189,7 +190,7 @@ class ChatService {
             const response: GetRoomInfo_Response = { rooms };
             res.json(response);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve room information');
+            svrUtil.handleError(error, res, 'Failed to retrieve room information');
         }
     }
 
@@ -219,7 +220,7 @@ class ChatService {
                 res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
             }
         } catch (error) {
-            this.handleError(error, res, 'Server error while attempting to delete room');
+            svrUtil.handleError(error, res, 'Server error while attempting to delete room');
         }
     }
 
@@ -235,7 +236,7 @@ class ChatService {
             const response: GetRecentAttachments_Response = { attachments };
             res.json(response);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve recent attachments');
+            svrUtil.handleError(error, res, 'Failed to retrieve recent attachments');
         }
     }
 
@@ -250,7 +251,7 @@ class ChatService {
             await dbRoom.createTestData();
             res.json({ success: true, message: 'Test data created successfully' });
         } catch (error) {
-            this.handleError(error, res, 'Failed to create test data');
+            svrUtil.handleError(error, res, 'Failed to create test data');
         }
     }
 
@@ -284,7 +285,7 @@ class ChatService {
                 res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
             }
         } catch (error) {
-            this.handleError(error, res, 'Server error while attempting to delete message');
+            svrUtil.handleError(error, res, 'Server error while attempting to delete message');
         }
     }
 
@@ -315,7 +316,7 @@ class ChatService {
             });
     
         } catch (error) {
-            this.handleError(error, res, 'Server error while attempting to block user');
+            svrUtil.handleError(error, res, 'Server error while attempting to block user');
         }
     }
 
@@ -339,7 +340,7 @@ class ChatService {
                 res.status(404).json({ error: 'Attachment not found or could not be deleted' });
             }
         } catch (error) {
-            this.handleError(error, res, 'Failed to delete attachment');
+            svrUtil.handleError(error, res, 'Failed to delete attachment');
         }
     }
 
@@ -367,7 +368,7 @@ class ChatService {
             const response: GetMessagesByIds_Response = { messages };
             res.json(response);
         } catch (error) {
-            this.handleError(error, res, 'Failed to retrieve messages by IDs');
+            svrUtil.handleError(error, res, 'Failed to retrieve messages by IDs');
         }
     }
 
@@ -390,7 +391,7 @@ class ChatService {
                 res.status(500).json({ error: 'Failed to save user information' });
             }
         } catch (error) {
-            this.handleError(error, res, 'Failed to save user profile');
+            svrUtil.handleError(error, res, 'Failed to save user profile');
         }
     }
 
@@ -414,20 +415,8 @@ class ChatService {
             res.json({ allOk: req.body.messages.length === numSaved});
         }
         catch (error) {
-            this.handleError(error, res, 'Failed to save messages');
+            svrUtil.handleError(error, res, 'Failed to save messages');
         }
-    }
-
-    // todo-0: this method is dupliated. put in a utility file.
-    /**
-     * Centralized error handling method for all controller endpoints
-     * @param error - The error object or message
-     * @param res - Express response object
-     * @param message - Custom error message to include in the response
-     */
-    handleError = (error: unknown, res: Response, message: string): void => {
-        console.error(`ERROR: ${message}`, error);
-        res.status(500).json({ error: message });
     }
 }
 

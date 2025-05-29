@@ -129,7 +129,7 @@ export default function HeaderComp() {
                         <FontAwesomeIcon icon={faScrewdriverWrench} className="h-5 w-5" />
                     </button>}
                     {gs.headerExpanded && <button 
-                        onClick={() => app.goToPage(PageNames.treeViewerPage)}
+                        onClick={() => app.goToPage(PageNames.treeViewer)}
                         className="btn-icon"
                         title="Help"
                     >

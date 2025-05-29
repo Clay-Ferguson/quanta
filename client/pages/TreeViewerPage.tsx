@@ -13,6 +13,9 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { confirmModal } from '../components/ConfirmModalComp'; 
 import { promptModal } from '../components/PromptModalComp';
 import { alertModal } from '../components/AlertModalComp';
+import { PageNames } from '../AppServiceTypes';
+
+declare const PAGE: string;
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -644,7 +647,7 @@ export default function TreeViewerPage() {
                             type="checkbox"
                             checked={gs.editMode || false}
                             onChange={handleEditModeToggle}
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         />
                         <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
                     </label>
@@ -681,7 +684,14 @@ export default function TreeViewerPage() {
                     >
                         <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
                     </button>
-                    <BackButtonComp/>
+                    {gs.treeFolder && gs.treeFolder.length > 1 && <button 
+                        onClick={handleParentClick}
+                        className="btn-icon"
+                        title="Go to parent folder"
+                    >
+                        <FontAwesomeIcon icon={faLevelUpAlt} className="h-5 w-5" />
+                    </button>}
+                    {PAGE!=PageNames.treeViewer && <BackButtonComp/>}
                 </div>
             </header>
             <div id="treeViewContent" ref={elmRef}  className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
@@ -701,14 +711,6 @@ export default function TreeViewerPage() {
                             {shouldShowParentButton() && (
                                 <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4 text-blue-300 font-medium relative flex items-center justify-between">
                                     <span>{formatFullPath(gs.treeFolder || "")}</span>
-                                
-                                    <button 
-                                        onClick={handleParentClick}
-                                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent absolute right-3"
-                                        title="Go to parent folder"
-                                    >
-                                        <FontAwesomeIcon icon={faLevelUpAlt} className="h-4 w-4" />
-                                    </button>
                                 </div>
                             )}
                             {/* Insert icons at top when in edit mode */}

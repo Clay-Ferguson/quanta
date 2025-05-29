@@ -8,6 +8,8 @@ This document contains notes to explain to our Coding Agent (Github Copilot runn
 
 * Note 3: Current Status of this feature: The LLM is about to do "Step #22"
 
+* Note 4: After all these steps were completed we split out the Controller.ts into service classes so there's no longer any Controller.ts file.
+
 ## Overview
 
 This feature will let the user view a server-side folder as an array of Markdown elements on the `TreeViewerPage` of this app. For example if there are 10 files in the server-side folder, we will have 10 separate `Markdown` components on the tree viewer page, displayed vertically one after the other. The goal is to present a folder to the user, as if it was one big file. If we encounter any images in our directory listing then the image will be represented as an <IMG> tag of course, with the url to that file.

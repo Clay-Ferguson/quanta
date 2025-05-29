@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import {  TreeRender_Response } from "../common/types/EndpointTypes.js";
+import { svrUtil } from "./ServerUtil.js";
 
 class DocService {
     checkFileAccess = (filename: string) => {        
@@ -68,7 +69,7 @@ class DocService {
             const response: TreeRender_Response = { treeNodes };
             res.json(response);
         } catch (error) {
-            this.handleError(error, res, 'Failed to render tree');
+            svrUtil.handleError(error, res, 'Failed to render tree');
         }
     }
 
@@ -227,7 +228,7 @@ class DocService {
             console.log(`File saved successfully: ${finalFilePath}`);
             res.json({ success: true, message: 'File saved successfully' });
         } catch (error) {
-            this.handleError(error, res, 'Failed to save file');
+            svrUtil.handleError(error, res, 'Failed to save file');
         }
     }
 
@@ -290,7 +291,7 @@ class DocService {
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
             res.json({ success: true, message: 'Folder renamed successfully' });
         } catch (error) {
-            this.handleError(error, res, 'Failed to rename folder');
+            svrUtil.handleError(error, res, 'Failed to rename folder');
         }
     }
 
@@ -391,7 +392,7 @@ class DocService {
                 });
             }
         } catch (error) {
-            this.handleError(error, res, 'Failed to delete file or folder');
+            svrUtil.handleError(error, res, 'Failed to delete file or folder');
         }
     }
 
@@ -495,7 +496,7 @@ class DocService {
                 newName2: newTargetName
             });
         } catch (error) {
-            this.handleError(error, res, 'Failed to move file or folder');
+            svrUtil.handleError(error, res, 'Failed to move file or folder');
         }
     }
 
@@ -577,7 +578,7 @@ class DocService {
             res.send(imageBuffer);
             
         } catch (error) {
-            this.handleError(error, res, 'Failed to serve image');
+            svrUtil.handleError(error, res, 'Failed to serve image');
         }
     }
 
@@ -696,7 +697,7 @@ class DocService {
                 fileName: finalFileName 
             });
         } catch (error) {
-            this.handleError(error, res, 'Failed to create file');
+            svrUtil.handleError(error, res, 'Failed to create file');
         }
     }
 
@@ -764,7 +765,7 @@ class DocService {
                 folderName: newFolderName 
             });
         } catch (error) {
-            this.handleError(error, res, 'Failed to create folder');
+            svrUtil.handleError(error, res, 'Failed to create folder');
         }
     }
 
@@ -881,21 +882,9 @@ class DocService {
                 message: `Successfully pasted ${pastedCount} of ${pasteItems.length} items`
             });
         } catch (error) {
-            this.handleError(error, res, 'Failed to paste items');
+            svrUtil.handleError(error, res, 'Failed to paste items');
         }
     }
-
-    /**
-     * Centralized error handling method for all controller endpoints
-     * @param error - The error object or message
-     * @param res - Express response object
-     * @param message - Custom error message to include in the response
-     */
-    handleError = (error: unknown, res: Response, message: string): void => {
-        console.error(`ERROR: ${message}`, error);
-        res.status(500).json({ error: message });
-    }
-
 }
 
 export const docSvc = new DocService();

@@ -30,7 +30,7 @@ export enum PageNames{
     contacts = 'ContactsPage',
     settings = 'SettingsPage',
     userGuide = 'UserGuidePage',
-    treeViewerPage = 'TreeViewerPage',
+    treeViewer = 'TreeViewerPage', 
     quantaChat = 'QuantaChat',
     admin  = 'AdminPage',
     recentAttachments = 'RecentAttachmentsPage',

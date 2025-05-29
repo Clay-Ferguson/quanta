@@ -40,7 +40,7 @@ export default function PageRouter() {
         return <ContactsPage />;
     case PageNames.userGuide:
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
-    case PageNames.treeViewerPage:
+    case PageNames.treeViewer:
         return <TreeViewerPage />;
     case PageNames.recentAttachments:
         return <RecentAttachmentsPage />;
