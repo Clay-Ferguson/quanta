@@ -177,7 +177,31 @@ export default function TreeViewerPage() {
             
             // Refresh the tree view to show the new file
             if (response && response.success) {
-                await reRenderTree();
+                const updatedTreeNodes = await reRenderTree();
+                
+                // Automatically start editing the newly created file
+                setTimeout(() => {
+                    const newFileNode = updatedTreeNodes.find(n => n.name.endsWith(`_${fileName}.md`));
+                    if (newFileNode) {
+                        // Now let's check to make sure the count of matching files is not more than 1
+                        const matchingFiles = updatedTreeNodes.filter(n => n.name === newFileNode.name);
+                        if (matchingFiles.length > 1) {
+                            alertModal(`Multiple files found with name "${newFileNode.name}". Please ensure unique file names.`);
+                        }
+
+                        const fileNameWithoutPrefix = formatFileName(newFileNode.name);
+                        gd({ type: 'setFileEditingState', payload: { 
+                            editingNode: newFileNode,
+                            editingContent: newFileNode.content || '',
+                            newFileName: fileNameWithoutPrefix
+                        }});
+                    }
+                    else {
+                        console.error('Newly created file node not found in treeNodes:', fileName);
+                        // do a JSON pretty print of the treeNodes
+                        console.log('Current treeNodes:', JSON.stringify(updatedTreeNodes, null, 2));
+                    }
+                }, 100);
             }
         } catch (error) {
             console.error('Error creating file:', error);
@@ -421,13 +445,16 @@ export default function TreeViewerPage() {
                 
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
+                return treeResponse.treeNodes;
             }
             else {
                 setTreeNodes([]);
+                return [];
             }
         } catch (fetchError) {
             setError(`Sorry, we encountered an error refreshing the tree for "${folder}".`);
             console.error('Error refreshing tree after file creation:', fetchError);
+            return [];
         }
         finally {
             setIsLoading(false);

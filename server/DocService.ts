@@ -686,9 +686,8 @@ class DocService {
             
             const newFilePath = path.join(absoluteParentPath, finalFileName);
 
-            // Create the file with default content
-            const defaultContent = `# ${fileName}\n\nThis is a new file.\n`;
-            fs.writeFileSync(newFilePath, defaultContent, 'utf8');
+            // Create the new file as an empty file
+            fs.writeFileSync(newFilePath, '', 'utf8');
 
             console.log(`File created successfully: ${newFilePath}`);
             res.json({ 
