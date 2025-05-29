@@ -78,7 +78,7 @@ app.post('/api/docs/paste', controller.pasteItems);
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
-const serveIndexHtml = (req: Request, res: Response) => {
+const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: Response) => {
     fs.readFile("./dist/index.html", 'utf8', (err, data) => {
         if (err) {
             console.error('Error reading index.html:', err);
@@ -91,6 +91,7 @@ const serveIndexHtml = (req: Request, res: Response) => {
             .replace('{{PORT}}', PORT)
             .replace('{{SECURE}}', SECURE)
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
+            .replace(`{{PAGE}}`, page);
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');
@@ -100,13 +101,16 @@ const serveIndexHtml = (req: Request, res: Response) => {
 
 // Define HTML routes BEFORE static middleware
 // Explicitly serve index.html for root path
-app.get('/', serveIndexHtml);
+// NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when
+// normally we would just pass the function reference directly.
+app.get('/', serveIndexHtml(""));
+app.get('/doc', serveIndexHtml("TreeViewerPage"));
 
 // Serve static files from the dist directory, but disable index serving
 app.use(express.static("./dist", { index: false }));
 
 // Fallback for any other routes not handled above
-app.get('*', serveIndexHtml);
+app.get('*', serveIndexHtml(""));
 
 let server = null;
 

@@ -5,6 +5,8 @@ import { ChatMessage, Contact, FileBase64Intf, KeyPairHex, User, UserProfile, Tr
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 
+declare const PAGE: string;
+
 let applyStateRules: ((gs: GlobalState) => void) | null = null;
 
 // This function allows us to set a callback that will be called whenever the global state is updated.
@@ -53,7 +55,7 @@ export interface GlobalState {
 
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
-    pages: [PageNames.quantaChat],
+    pages: PAGE ? [PAGE] : [PageNames.quantaChat], 
     connecting: false,
     connected: false, 
     roomName: '',
@@ -98,6 +100,7 @@ export type GlobalAction = { type: string, payload: any};
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
     console.log('Dispatching action: '+ action.type);
+
     const ret = {
         ...state,
         ...action.payload

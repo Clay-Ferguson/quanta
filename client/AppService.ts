@@ -11,6 +11,7 @@ import appUsers from './AppUsers.ts';
 declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
+declare const PAGE: string;
 
 /**
  * Main application service that manages the lifecycle and state of the Quanta Chat application.
@@ -98,7 +99,8 @@ export class AppService {
         const roomName = await idb.getItem(DBKeys.roomName);
         const connected = await idb.getItem(DBKeys.connected);
 
-        if (userName && roomName && connected) {
+        // We don't auto connect if a page was specified, unless it's the Quanta Chat page.
+        if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && connected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
             await this.connect(userName, keyPair, roomName);
         }
@@ -130,7 +132,7 @@ export class AppService {
             roomHistory,
             userDescription,
             userAvatar,
-            headerExpanded
+            headerExpanded, 
         };
 
         // if no username we send to settings page.
