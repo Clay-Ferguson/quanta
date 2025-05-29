@@ -69,12 +69,6 @@ export default function TreeViewerPage() {
         return underscoreIndex !== -1 ? name.substring(underscoreIndex + 1) : name;
     }   
 
-    // Check if parent button should be shown
-    const shouldShowParentButton = () => {
-        const currentFolder = gs.treeFolder || '/';
-        return currentFolder !== '/' && currentFolder !== '' && currentFolder !== '/';
-    };
-
     // Handle edit mode toggle
     const handleEditModeToggle = () => {
         gd({ type: 'setEditMode', payload: { 
@@ -131,8 +125,8 @@ export default function TreeViewerPage() {
         
         // Show confirmation dialog
         const confirmText = node.mimeType === 'folder' 
-            ? `Are you sure you want to delete the folder "${formatFileName(node.name)}"? This action cannot be undone.`
-            : `Are you sure you want to delete the file "${formatFileName(node.name)}"? This action cannot be undone.`;
+            ? `Delete the folder "${formatFileName(node.name)}"? This action cannot be undone.`
+            : `Delete the file "${formatFileName(node.name)}"? This action cannot be undone.`;
             
         if (!await confirmModal(confirmText)) {
             return;
@@ -586,29 +580,12 @@ export default function TreeViewerPage() {
         return components.map(formatFileName).join(' / ');
     }
 
-    // Refresh handler to reload the tree data
-    // todo-0: this function with it's isLoading and error handling is proabably
-    // what we need to use for 'reRenderTree' itself.
-    // const handleRefresh = async () => {
-    //     setIsLoading(true);
-    //     setError(null);
-    //     try {
-    //         console.log("Refreshing tree document...");
-    //         await reRenderTree(gs.treeFolder || '/');
-    //     } catch (error) {
-    //         console.error('Error refreshing tree:', error);
-    //         setError(`Sorry, we encountered an error refreshing the tree for "${gs.treeFolder || '/'}".`);
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Doc Viewer"/>
+                <LogoBlockComp subText={formatFullPath(gs.treeFolder || "Doc Viewer")}/>
                 <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                         <input 
@@ -676,11 +653,6 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
-                            {shouldShowParentButton() && (
-                                <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4 text-blue-300 font-medium relative flex items-center justify-between">
-                                    <span>{formatFullPath(gs.treeFolder || "")}</span>
-                                </div>
-                            )}
                             {/* Insert icons at top when in edit mode */}
                             {gs.editMode && (
                                 
