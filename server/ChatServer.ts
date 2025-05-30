@@ -94,7 +94,8 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
             .replace('{{PORT}}', PORT)
             .replace('{{SECURE}}', SECURE)
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
-            .replace(`{{PAGE}}`, page);
+            .replace(`{{PAGE}}`, page)
+            .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');
@@ -107,7 +108,7 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
 // NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when
 // normally we would just pass the function reference directly.
 app.get('/', serveIndexHtml(""));
-app.get('/doc', serveIndexHtml("TreeViewerPage"));
+app.get('/doc/:docRootKey', serveIndexHtml("TreeViewerPage"));
 
 // Serve static files from the dist directory, but disable index serving
 app.use(express.static("./dist", { index: false }));

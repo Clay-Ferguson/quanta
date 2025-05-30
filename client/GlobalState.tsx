@@ -6,6 +6,7 @@ const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 
 declare const PAGE: string;
+declare const DOC_ROOT_KEY: string;
 
 let applyStateRules: ((gs: GlobalState) => void) | null = null;
 
@@ -89,7 +90,7 @@ const initialState: GlobalState = {
     newFileName: null,
     selectedTreeItems: new Set<TreeNode>(),
     cutItems: new Set<string>(),
-    docRootKey: 'user-guide',
+    docRootKey: PAGE===PageNames.treeViewer || DOC_ROOT_KEY ? DOC_ROOT_KEY : "user-guide",
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
