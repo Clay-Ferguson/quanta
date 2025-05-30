@@ -54,8 +54,8 @@ app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
 app.get('/api/messages', chatSvc.getMessageHistory);
 app.get('/api/users/:pubKey/info', chatSvc.getUserProfile);
 app.get('/api/users/:pubKey/avatar', chatSvc.serveAvatar);
-app.get('/api/docs/render/*', docSvc.treeRender);
-app.get('/api/docs/images/*', docSvc.serveDocImage);
+app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender);
+app.get('/api/docs/images/:docRootKey/*', docSvc.serveDocImage);
 
 app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRoomInfo);
 app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteRoom);
@@ -70,12 +70,12 @@ app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignat
 app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); // check PublicKey
 
 // For now we only allow admin to access the docs API
-app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile);
-app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder);
-app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder);
-app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown);
-app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile);
-app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder);
+app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile); 
+app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder); 
+app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder); 
+app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown); 
+app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
+app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
 app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint

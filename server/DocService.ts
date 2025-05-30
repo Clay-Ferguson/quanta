@@ -6,18 +6,16 @@ import {  TreeRender_Response } from "../common/types/EndpointTypes.js";
 import { svrUtil } from "./ServerUtil.js";
 import { config } from './Config.js';
 
-const QUANTA_TREE_ROOT = config.getPublicFolderByKey('user-guide').path;
-
 class DocService {
 
-    checkFileAccess = (filename: string) => {        
-        if (!filename || !QUANTA_TREE_ROOT) {
+    checkFileAccess = (filename: string, root: string) => {        
+        if (!filename) {
             throw new Error('Invalid file access: '+filename);
         }
         
         // Get the canonical (resolved) paths to prevent directory traversal attacks
         const canonicalFilename = path.resolve(filename);
-        const canonicalRoot = path.resolve(QUANTA_TREE_ROOT);
+        const canonicalRoot = path.resolve(root);
         
         // Check if the canonical path is within the allowed root directory
         if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
@@ -30,20 +28,19 @@ class DocService {
      * @param req - Express request object containing treeFolder in the URL path and optional pullup query parameter
      * @param res - Express response object
      */
-    treeRender = async (req: Request, res: Response): Promise<void> => {
+    treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
         // console.log("Tree Render Request:", req.path);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
-            const rawTreeFolder = req.path.replace('/api/docs/render/', '') || "/"
+            const rawTreeFolder = req.path.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
             
             // Extract the optional pullup parameter from query string
             const pullup = req.query.pullup as string; 
             
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const quantaTreeRoot = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -61,7 +58,7 @@ class DocService {
                 return;
             }
 
-            this.checkFileAccess(absolutePath);
+            this.checkFileAccess(absolutePath, quantaTreeRoot);
             // Check if it's actually a directory
             const stat = fs.statSync(absolutePath);
             if (!stat.isDirectory()) {
@@ -69,7 +66,7 @@ class DocService {
                 return;
             }
 
-            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true");
+            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", quantaTreeRoot);
             const response: TreeRender_Response = { treeNodes };
             res.json(response);
         } catch (error) {
@@ -77,12 +74,12 @@ class DocService {
         }
     }
  
-    getTreeNodes = (absolutePath: string, pullup: boolean): TreeNode[] => {
-        this.checkFileAccess(absolutePath);
+    getTreeNodes = (absolutePath: string, pullup: boolean, root: string): TreeNode[] => {
+        this.checkFileAccess(absolutePath, root); 
         // Read directory contents
         const files = fs.readdirSync(absolutePath);
         const treeNodes: TreeNode[] = [];
-        let nextOrdinal = this.getMaxOrdinal(absolutePath);
+        let nextOrdinal = this.getMaxOrdinal(absolutePath, root);
 
         for (let file of files) {
             // Skip files that start with a dot (hidden files), or underscores.
@@ -95,14 +92,14 @@ class DocService {
                 // We need to use nextOrdinal to ensure that files without a numeric prefix get a new ordinal
                 // We will ensure that the file has a 4-digit ordinal prefix
                 nextOrdinal++;
-                file = this.ensureOrdinalPrefix(absolutePath, file, nextOrdinal);
+                file = this.ensureOrdinalPrefix(absolutePath, file, nextOrdinal, root);
             }
 
             // Ensure file has 4-digit ordinal prefix
-            const currentFileName = this.ensureFourDigitOrdinal(absolutePath, file);
+            const currentFileName = this.ensureFourDigitOrdinal(absolutePath, file, root);
                 
             const filePath = path.join(absolutePath, currentFileName);
-            this.checkFileAccess(filePath);
+            this.checkFileAccess(filePath, root); 
             const fileStat = fs.statSync(filePath);
                 
             let content = '';
@@ -119,7 +116,7 @@ class DocService {
                 // if folder name ends in underscore, treat it as a pullup folder
                 if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this folder
-                    const subTreeNodes = this.getTreeNodes(filePath, true);
+                    const subTreeNodes = this.getTreeNodes(filePath, true, root);
                     if (subTreeNodes.length > 0) {
                         // Add the sub-tree nodes to the current tree nodes
                         treeNodes.push(...subTreeNodes);
@@ -180,14 +177,13 @@ class DocService {
      * @param req - Express request object containing filename, content, and optional newFileName in body
      * @param res - Express response object
      */
-    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string }>, res: Response): Promise<void> => {
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string }>, res: Response): Promise<void> => {
         console.log("Save File Request");
         try {
-            const { filename, content, treeFolder, newFileName } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { filename, content, treeFolder, newFileName, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey!).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -201,7 +197,7 @@ class DocService {
             const absoluteFilePath = path.join(absoluteFolderPath, filename);
 
             // Check if the directory exists
-            this.checkFileAccess(absoluteFolderPath);
+            this.checkFileAccess(absoluteFolderPath, quantaTreeRoot); 
             if (!fs.existsSync(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
@@ -229,7 +225,7 @@ class DocService {
                     }
                     
                     // Rename the file
-                    this.checkFileAccess(absoluteFilePath); 
+                    this.checkFileAccess(absoluteFilePath, quantaTreeRoot);
                     fs.renameSync(absoluteFilePath, newAbsoluteFilePath);
                     console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                 }
@@ -238,7 +234,7 @@ class DocService {
             }
 
             // Write the content to the file (renamed or original)
-            this.checkFileAccess(finalFilePath);
+            this.checkFileAccess(finalFilePath, quantaTreeRoot);
             fs.writeFileSync(finalFilePath, content, 'utf8');
             
             console.log(`File saved successfully: ${finalFilePath}`);
@@ -253,14 +249,13 @@ class DocService {
      * @param req - Express request object containing oldFolderName and newFolderName in body
      * @param res - Express response object
      */
-    renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string }>, res: Response): Promise<void> => {
+    renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Rename Folder Request");
         try {
-            const { oldFolderName, newFolderName, treeFolder } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -300,8 +295,8 @@ class DocService {
             }
 
             // Rename the folder
-            this.checkFileAccess(oldAbsolutePath);
-            this.checkFileAccess(newAbsolutePath);
+            this.checkFileAccess(oldAbsolutePath, quantaTreeRoot);
+            this.checkFileAccess(newAbsolutePath, quantaTreeRoot);
             fs.renameSync(oldAbsolutePath, newAbsolutePath);
             
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
@@ -316,14 +311,13 @@ class DocService {
      * @param req - Express request object containing fileOrFolderName (string) or fileNames (array) and treeFolder in body
      * @param res - Express response object
      */
-    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string }>, res: Response): Promise<void> => {
+    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Delete File or Folder Request");
         try {
-            const { fileOrFolderName, fileNames, treeFolder } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { fileOrFolderName, fileNames, treeFolder, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -371,7 +365,7 @@ class DocService {
                     // Get stats to determine if it's a file or directory
                     const stat = fs.statSync(absoluteTargetPath);
                     
-                    this.checkFileAccess(absoluteTargetPath);
+                    this.checkFileAccess(absoluteTargetPath, quantaTreeRoot);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
                         fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
@@ -417,14 +411,13 @@ class DocService {
      * @param req - Express request object containing direction and filename in body
      * @param res - Express response object
      */
-    moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string }>, res: Response): Promise<void> => {
+    moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Move Up/Down Request");
         try {
-            const { direction, filename, treeFolder } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { direction, filename, treeFolder, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -443,7 +436,7 @@ class DocService {
             }
 
             // Read directory contents and filter for files/folders with numeric prefixes
-            this.checkFileAccess(absoluteParentPath);
+            this.checkFileAccess(absoluteParentPath, quantaTreeRoot);
             const allFiles = fs.readdirSync(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
@@ -493,9 +486,9 @@ class DocService {
             const targetPath = path.join(absoluteParentPath, targetFile);
             const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
 
-            this.checkFileAccess(currentPath);
-            this.checkFileAccess(targetPath);
-            this.checkFileAccess(tempPath);
+            this.checkFileAccess(currentPath, quantaTreeRoot);
+            this.checkFileAccess(targetPath, quantaTreeRoot);
+            this.checkFileAccess(tempPath, quantaTreeRoot);
 
             // Use a temporary file to avoid conflicts during rename
             fs.renameSync(currentPath, tempPath);
@@ -525,12 +518,11 @@ class DocService {
         // console.log("Serve Doc Image Request:", req.path);
         try {
             // Extract the path after /api/docs/images/ and decode URL encoding
-            const rawImagePath = req.path.replace('/api/docs/images/', '');
+            const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
             const imagePath = decodeURIComponent(rawImagePath);
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const quantaTreeRoot = config.getPublicFolderByKey(req.params.docRootKey).path;;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -543,7 +535,7 @@ class DocService {
             const absoluteImagePath = path.join(quantaTreeRoot, imagePath);
 
             // Check if the file exists
-            this.checkFileAccess(absoluteImagePath);
+            this.checkFileAccess(absoluteImagePath, quantaTreeRoot);
             if (!fs.existsSync(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
@@ -603,8 +595,8 @@ class DocService {
      * @param absoluteParentPath - The absolute path to the directory
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
      */
-    private shiftOrdinalsDown = (absoluteParentPath: string, insertOrdinal: number): void => {
-        this.checkFileAccess(absoluteParentPath);
+    private shiftOrdinalsDown = (absoluteParentPath: string, insertOrdinal: number, root: string): void => {
+        this.checkFileAccess(absoluteParentPath, root);
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
@@ -647,7 +639,7 @@ class DocService {
      * @param fileName - The original filename
      * @returns The filename (either original or renamed) to use for further processing
      */
-    private ensureFourDigitOrdinal = (absolutePath: string, fileName: string): string => {
+    private ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string): string => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
         const ordinalPrefix = fileName.substring(0, underscoreIndex);
@@ -662,8 +654,8 @@ class DocService {
             
             try {
                 // Rename the file/folder to have 4-digit ordinal prefix
-                this.checkFileAccess(oldFilePath);
-                this.checkFileAccess(newFilePath);
+                this.checkFileAccess(oldFilePath, root);
+                this.checkFileAccess(newFilePath, root);
                 fs.renameSync(oldFilePath, newFilePath);
                 console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
                 
@@ -685,14 +677,13 @@ class DocService {
      * @param req - Express request object containing fileName, treeFolder, and insertAfterNode in body
      * @param res - Express response object
      */
-    createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string }>, res: Response): Promise<void> => {
+    createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Create File Request");
         try {
-            const { fileName, treeFolder, insertAfterNode } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad root' });
                 return;
             }
 
@@ -705,7 +696,7 @@ class DocService {
             const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
 
             // Check if the parent directory exists
-            this.checkFileAccess(absoluteParentPath);
+            this.checkFileAccess(absoluteParentPath, quantaTreeRoot); 
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -727,7 +718,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal);
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, quantaTreeRoot);
 
             // Create the new file with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -760,14 +751,13 @@ class DocService {
      * @param req - Express request object containing folderName, treeFolder, and insertAfterNode in body
      * @param res - Express response object
      */
-    createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string }>, res: Response): Promise<void> => {
+    createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Create Folder Request");
         try {
-            const { folderName, treeFolder, insertAfterNode } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad key' });
                 return;
             }
 
@@ -780,7 +770,7 @@ class DocService {
             const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
 
             // Check if the parent directory exists
-            this.checkFileAccess(absoluteParentPath);
+            this.checkFileAccess(absoluteParentPath, quantaTreeRoot);
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -801,7 +791,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal);
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, quantaTreeRoot);
 
             // Create the new folder with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -828,14 +818,13 @@ class DocService {
      * @param req - Express request object containing targetFolder and pasteItems in body
      * @param res - Express response object
      */
-    pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[] }>, res: Response): Promise<void> => {
+    pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Paste Items Request");
         try {
-            const { targetFolder, pasteItems } = req.body;
-            const quantaTreeRoot = QUANTA_TREE_ROOT;
-            
+            const { targetFolder, pasteItems, docRootKey } = req.body;
+            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
             if (!quantaTreeRoot) {
-                res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
+                res.status(500).json({ error: 'bad key' });
                 return;
             }
 
@@ -848,7 +837,7 @@ class DocService {
             const absoluteTargetPath = path.join(quantaTreeRoot, targetFolder);
 
             // Check if the target directory exists
-            this.checkFileAccess(absoluteTargetPath);
+            this.checkFileAccess(absoluteTargetPath, quantaTreeRoot);
             if (!fs.existsSync(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
@@ -861,7 +850,7 @@ class DocService {
             // Check for conflicts first
             for (const itemName of pasteItems) {
                 const targetFilePath = path.join(absoluteTargetPath, itemName);
-                this.checkFileAccess(targetFilePath); 
+                this.checkFileAccess(targetFilePath, quantaTreeRoot);
                 if (fs.existsSync(targetFilePath)) {
                     conflicts.push(itemName);
                 }
@@ -946,8 +935,8 @@ class DocService {
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
     // todo-1: this method is not used any longer, so we can remove it some day.
-    private getMaxOrdinal = (absolutePath: string): number => {
-        this.checkFileAccess(absolutePath);
+    private getMaxOrdinal = (absolutePath: string, root: string): number => {
+        this.checkFileAccess(absolutePath, root);
             
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absolutePath);
@@ -977,7 +966,7 @@ class DocService {
      * @param ordinal - The ordinal number to use as prefix
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
-    private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number): string => {
+    private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
         // Create new filename with 4-digit ordinal prefix
         const ordinalPrefix = ordinal.toString().padStart(4, '0');
         const newFileName = `${ordinalPrefix}_${fileName}`;
@@ -986,8 +975,8 @@ class DocService {
         
         try {
             // Rename the file/folder to have 4-digit ordinal prefix
-            this.checkFileAccess(oldFilePath);
-            this.checkFileAccess(newFilePath);
+            this.checkFileAccess(oldFilePath, root);
+            this.checkFileAccess(newFilePath, root);
             fs.renameSync(oldFilePath, newFilePath);
             console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
             

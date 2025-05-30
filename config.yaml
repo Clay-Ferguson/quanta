@@ -12,4 +12,5 @@ public-folders:
   - name: "User Guide"
     key: "user-guide"
     path: "public/user-guide"
+    pathxx: "/home/clay/ferguson/user-guide-final"
     readonly: true

@@ -52,6 +52,7 @@ export interface GlobalState {
     newFileName?: string | null;
     selectedTreeItems?: Set<TreeNode>;
     cutItems?: Set<string>;
+    docRootKey?: string | null;
 }
 
 const initialState: GlobalState = {
@@ -88,6 +89,7 @@ const initialState: GlobalState = {
     newFileName: null,
     selectedTreeItems: new Set<TreeNode>(),
     cutItems: new Set<string>(),
+    docRootKey: 'user-guide',
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

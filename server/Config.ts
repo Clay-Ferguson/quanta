@@ -66,6 +66,10 @@ class Config {
      * Get a public folder configuration by key (if you add a 'key' property later)
      */
     getPublicFolderByKey(key: string): any {
+        if (!key) {
+            return undefined;
+        }
+        // Ensure 'public-folders' exists and is an array
         const folders = this.configData['public-folders'];
         if (!folders || !Array.isArray(folders)) {
             return undefined;

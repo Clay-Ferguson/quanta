@@ -204,7 +204,8 @@ export default function TreeViewerPage() {
             const requestBody = {
                 fileName: fileName,
                 treeFolder: treeFolder,
-                insertAfterNode: node ? node.name : ''
+                insertAfterNode: node ? node.name : '',
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
@@ -256,7 +257,8 @@ export default function TreeViewerPage() {
             const requestBody = {
                 folderName: folderName,
                 treeFolder: treeFolder,
-                insertAfterNode: node ? node.name : ''
+                insertAfterNode: node ? node.name : '',
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
@@ -280,7 +282,8 @@ export default function TreeViewerPage() {
                 filename: filename,
                 content: content,
                 treeFolder: treeFolder,
-                newFileName: newFileName || filename
+                newFileName: newFileName || filename,
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
@@ -297,7 +300,8 @@ export default function TreeViewerPage() {
             const requestBody = {
                 oldFolderName: oldFolderName,
                 newFolderName: newFolderName,
-                treeFolder: treeFolder
+                treeFolder: treeFolder,
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
@@ -313,7 +317,8 @@ export default function TreeViewerPage() {
             const treeFolder = gs.treeFolder || '/';
             const requestBody = {
                 fileOrFolderName: fileOrFolderName,
-                treeFolder: treeFolder
+                treeFolder: treeFolder,
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
@@ -330,7 +335,8 @@ export default function TreeViewerPage() {
             const requestBody = {
                 direction: direction,
                 filename: node.name,
-                treeFolder: treeFolder
+                treeFolder: treeFolder,
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/move-up-down', requestBody);
@@ -476,7 +482,7 @@ export default function TreeViewerPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const url = `/api/docs/render${folder}${!gs.editMode ? '?pullup=true' : ''}`;
+            const url = `/api/docs/render/${gs.docRootKey}/${folder}${!gs.editMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                 
             if (treeResponse && treeResponse.treeNodes) {
@@ -553,7 +559,8 @@ export default function TreeViewerPage() {
         try {
             const requestBody = {
                 targetFolder: targetFolder,
-                pasteItems: cutItemsArray
+                pasteItems: cutItemsArray,
+                docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
@@ -602,7 +609,8 @@ export default function TreeViewerPage() {
             // Call server endpoint to delete the items
             const response = await httpClientUtil.secureHttpPost('/api/docs/delete', {
                 fileNames: fileNames,
-                treeFolder: treeFolder
+                treeFolder: treeFolder,
+                docRootKey: gs.docRootKey
             });
             
             if (response && response.success) {
@@ -852,7 +860,7 @@ export default function TreeViewerPage() {
                                                     ) : isImage ? (
                                                         <div className="flex justify-center">
                                                             <img 
-                                                                src={`/api/docs/images${gs.treeFolder || '/'}/${node.name}`}
+                                                                src={`/api/docs/images/${gs.docRootKey}/${gs.treeFolder || '/'}/${node.name}`}
                                                                 alt={node.name}
                                                                 className="max-w-full h-auto rounded-lg shadow-lg"
                                                                 onError={(e) => {
