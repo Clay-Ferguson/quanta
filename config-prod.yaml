@@ -1,10 +1,6 @@
 
 # Public folders configuration - array of folder objects with name and path
-public-folders:
-  - name: "Test"
-    key: "test"
-    path: "/home/clay/ferguson/user-guide-final"
-    
+public-folders:    
   - name: "User Guide"
     key: "user-guide"
     path: "/home/clay/ferguson/quanta-chat/public/user-guide"

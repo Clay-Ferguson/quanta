@@ -1,7 +1,8 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
+import { svrUtil } from './ServerUtil.js';
 
-/**
+/** 
  * Configuration manager class that loads and provides access to YAML configuration
  */
 class Config {
@@ -15,13 +16,14 @@ class Config {
      * Load configuration from YAML file
      */
     private loadConfig(): void {
+        const CONFIG_FILE = svrUtil.getEnvVar("CONFIG_FILE");
         try {
-            const configFile = fs.readFileSync('./config.yaml', 'utf8');
+            const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
             this.configData = yaml.load(configFile) as any;
-            console.log('Configuration loaded successfully from config.yaml');
+            console.log(`Configuration loaded successfully from ${CONFIG_FILE}`);
             console.log('Config:', JSON.stringify(this.configData, null, 2));
         } catch (error) {
-            console.warn('Could not load config.yaml file:', error instanceof Error ? error.message : error);
+            console.warn(`Could not load ${CONFIG_FILE} file:`, error instanceof Error ? error.message : error);
             console.log('Continuing with default configuration...');
         }
     }

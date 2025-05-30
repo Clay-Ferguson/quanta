@@ -13,6 +13,7 @@ export QUANTA_CHAT_ADMIN_PUBLIC_KEY="0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa
 
 # NOTE: This var is not acutally used because we're not doing the build here.
 export QUANTA_DEV="true"
+export CONFIG_FILE="./config-prod.yaml"
 
 # Just in case nginx is running, after certbot use of it. It will be sitting on port 443.
 sudo systemctl stop nginx
