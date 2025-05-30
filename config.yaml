@@ -1,0 +1,15 @@
+# Quanta Chat Configuration
+app:
+  name: "Quanta Chat"
+  version: "1.0.0"
+  debugMode: false
+
+# Public folders configuration - array of folder objects with name and path
+public-folders:
+  - name: "Documents"
+    path: "/home/nope"
+    readonly: true
+  - name: "User Guide"
+    key: "user-guide"
+    path: "public/user-guide"
+    readonly: true

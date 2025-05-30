@@ -4,16 +4,20 @@ import fs from 'fs';
 import path from 'path';
 import {  TreeRender_Response } from "../common/types/EndpointTypes.js";
 import { svrUtil } from "./ServerUtil.js";
+import { config } from './Config.js';
+
+const QUANTA_TREE_ROOT = config.getPublicFolderByKey('user-guide').path;
 
 class DocService {
+
     checkFileAccess = (filename: string) => {        
-        if (!filename || !process.env.QUANTA_TREE_ROOT) {
+        if (!filename || !QUANTA_TREE_ROOT) {
             throw new Error('Invalid file access: '+filename);
         }
         
         // Get the canonical (resolved) paths to prevent directory traversal attacks
         const canonicalFilename = path.resolve(filename);
-        const canonicalRoot = path.resolve(process.env.QUANTA_TREE_ROOT);
+        const canonicalRoot = path.resolve(QUANTA_TREE_ROOT);
         
         // Check if the canonical path is within the allowed root directory
         if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
@@ -36,7 +40,7 @@ class DocService {
             // Extract the optional pullup parameter from query string
             const pullup = req.query.pullup as string; 
             
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -180,7 +184,7 @@ class DocService {
         console.log("Save File Request");
         try {
             const { filename, content, treeFolder, newFileName } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -253,7 +257,7 @@ class DocService {
         console.log("Rename Folder Request");
         try {
             const { oldFolderName, newFolderName, treeFolder } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -316,7 +320,7 @@ class DocService {
         console.log("Delete File or Folder Request");
         try {
             const { fileOrFolderName, fileNames, treeFolder } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -417,7 +421,7 @@ class DocService {
         console.log("Move Up/Down Request");
         try {
             const { direction, filename, treeFolder } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -523,7 +527,7 @@ class DocService {
             // Extract the path after /api/docs/images/ and decode URL encoding
             const rawImagePath = req.path.replace('/api/docs/images/', '');
             const imagePath = decodeURIComponent(rawImagePath);
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -685,7 +689,7 @@ class DocService {
         console.log("Create File Request");
         try {
             const { fileName, treeFolder, insertAfterNode } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -760,7 +764,7 @@ class DocService {
         console.log("Create Folder Request");
         try {
             const { folderName, treeFolder, insertAfterNode } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
@@ -828,7 +832,7 @@ class DocService {
         console.log("Paste Items Request");
         try {
             const { targetFolder, pasteItems } = req.body;
-            const quantaTreeRoot = process.env.QUANTA_TREE_ROOT;
+            const quantaTreeRoot = QUANTA_TREE_ROOT;
             
             if (!quantaTreeRoot) {
                 res.status(500).json({ error: 'QUANTA_TREE_ROOT environment variable not set' });
