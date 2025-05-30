@@ -16,6 +16,7 @@ import { alertModal } from '../components/AlertModalComp';
 import { PageNames } from '../AppServiceTypes';
 
 declare const PAGE: string;
+declare const ADMIN_PUBLIC_KEY: string;
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -653,62 +654,66 @@ export default function TreeViewerPage() {
 
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
+    const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText={formatFullPath(gs.treeFolder || "Doc Viewer")}/>
                 <div className="flex items-center space-x-4">
-                    <label className="flex items-center cursor-pointer">
-                        <input 
-                            type="checkbox"
-                            checked={gs.editMode || false}
-                            onChange={handleEditModeToggle}
-                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                        <input 
-                            type="checkbox"
-                            checked={gs.metaMode || false}
-                            onChange={handleMetaModeToggle}
-                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <span className="ml-2 text-sm font-medium text-gray-300">Meta</span>
-                    </label>
-                    {gs.editMode && (
-                        <div className="flex items-center space-x-2">
-                            {itemsAreSelected && <button 
-                                onClick={onCut}
-                                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                                title="Cut selected items"
-                            >
+                    {isAdmin && 
+                    <>
+                        <label className="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox"
+                                checked={gs.editMode || false}
+                                onChange={handleEditModeToggle}
+                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox"
+                                checked={gs.metaMode || false}
+                                onChange={handleMetaModeToggle}
+                                className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <span className="ml-2 text-sm font-medium text-gray-300">Meta</span>
+                        </label>
+                        {gs.editMode && (
+                            <div className="flex items-center space-x-2">
+                                {itemsAreSelected && <button 
+                                    onClick={onCut}
+                                    className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                    title="Cut selected items"
+                                >
                                 Cut
-                            </button>}
-                            {itemsAreCut && <button 
-                                onClick={onPaste}
-                                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                                title="Paste items"
-                            >
+                                </button>}
+                                {itemsAreCut && <button 
+                                    onClick={onPaste}
+                                    className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                                    title="Paste items"
+                                >
                                 Paste
-                            </button>}
-                            {itemsAreSelected && <button 
-                                onClick={onDelete}
-                                className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
-                                title="Delete selected items"
-                            >
+                                </button>}
+                                {itemsAreSelected && <button 
+                                    onClick={onDelete}
+                                    className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                                    title="Delete selected items"
+                                >
                                 Delete
-                            </button>}
-                        </div>
-                    )}
-                    <button 
-                        onClick={reRenderTree}
-                        className="btn-icon"
-                        title="Refresh tree"
-                        disabled={isLoading}
-                    >
-                        <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
-                    </button>
+                                </button>}
+                            </div>
+                        )}
+                        <button 
+                            onClick={reRenderTree}
+                            className="btn-icon"
+                            title="Refresh tree"
+                            disabled={isLoading}
+                        >
+                            <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
+                        </button>
+                    </>}
                     {gs.treeFolder && gs.treeFolder.length > 1 && <button 
                         onClick={handleParentClick}
                         className="btn-icon"
