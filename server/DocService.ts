@@ -27,7 +27,7 @@ class DocService {
      * @param res - Express response object
      */
     treeRender = async (req: Request, res: Response): Promise<void> => {
-        console.log("Tree Render Request:", req.path);
+        // console.log("Tree Render Request:", req.path);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
             const rawTreeFolder = req.path.replace('/api/docs/render/', '') || "/"
@@ -78,11 +78,20 @@ class DocService {
         // Read directory contents
         const files = fs.readdirSync(absolutePath);
         const treeNodes: TreeNode[] = [];
+        let nextOrdinal = this.getMaxOrdinal(absolutePath);
 
-        for (const file of files) {
+        for (let file of files) {
+            // Skip files that start with a dot (hidden files), or underscores.
+            if (file.startsWith('.') || file.startsWith('_')) {
+                continue;
+            }
+
             // We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore.
             if (!/^\d+_/.test(file)) {
-                continue; // Skip files that do not match the naming convention
+                // We need to use nextOrdinal to ensure that files without a numeric prefix get a new ordinal
+                // We will ensure that the file has a 4-digit ordinal prefix
+                nextOrdinal++;
+                file = this.ensureOrdinalPrefix(absolutePath, file, nextOrdinal);
             }
 
             // Ensure file has 4-digit ordinal prefix
@@ -509,7 +518,7 @@ class DocService {
      * @param res - Express response object
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
-        console.log("Serve Doc Image Request:", req.path);
+        // console.log("Serve Doc Image Request:", req.path);
         try {
             // Extract the path after /api/docs/images/ and decode URL encoding
             const rawImagePath = req.path.replace('/api/docs/images/', '');
@@ -955,6 +964,36 @@ class DocService {
         }
             
         return maxOrdinal;
+    };
+
+    /**
+     * Ensures a file/folder has a 4-digit ordinal prefix by renaming it
+     * @param absolutePath - The absolute path to the directory containing the file
+     * @param fileName - The original filename without ordinal prefix
+     * @param ordinal - The ordinal number to use as prefix
+     * @returns The filename (either original if rename failed, or the new renamed filename)
+     */
+    private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number): string => {
+        // Create new filename with 4-digit ordinal prefix
+        const ordinalPrefix = ordinal.toString().padStart(4, '0');
+        const newFileName = `${ordinalPrefix}_${fileName}`;
+        const oldFilePath = path.join(absolutePath, fileName);
+        const newFilePath = path.join(absolutePath, newFileName);
+        
+        try {
+            // Rename the file/folder to have 4-digit ordinal prefix
+            this.checkFileAccess(oldFilePath);
+            this.checkFileAccess(newFilePath);
+            fs.renameSync(oldFilePath, newFilePath);
+            console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
+            
+            // Return the new filename
+            return newFileName;
+        } catch (error) {
+            console.warn(`Failed to rename ${fileName} to ${newFileName}:`, error);
+            // Return original filename if rename fails
+            return fileName;
+        }
     };
 }
 
