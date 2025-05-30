@@ -75,9 +75,26 @@ export default function TreeViewerPage() {
     };
 
     // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
-    const formatFileName = (name: string) => {
+    const stripOrdinal = (name: string) => {
         const underscoreIndex = name.indexOf('_');
         return underscoreIndex !== -1 ? name.substring(underscoreIndex + 1) : name;
+    }   
+
+    const formatDisplayName = (name: string) => {
+        name = stripOrdinal(name);
+
+        const endsWithUnderscore = name.endsWith('_');
+
+        // Replace underscores and dashes with spaces
+        name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
+
+        // we preserve the display of the final underscore if it exists, because that's important for the user to see
+        // becasue it represents a 'pullup'
+        if (endsWithUnderscore) {
+            // If the name ends with an underscore, we add a space at the end
+            name += '_';
+        }
+        return name;
     }   
 
     // Handle edit mode toggle
@@ -121,7 +138,7 @@ export default function TreeViewerPage() {
         if (node.mimeType === 'folder') {
             // For folders, we're doing rename functionality
             // Strip the numeric prefix from the folder name for editing
-            const folderNameWithoutPrefix = formatFileName(node.name);
+            const folderNameWithoutPrefix = stripOrdinal(node.name);
             gd({ type: 'setFolderEditingState', payload: { 
                 editingNode: node,
                 newFolderName: folderNameWithoutPrefix
@@ -129,7 +146,7 @@ export default function TreeViewerPage() {
         } else {
             // For files, we're doing edit functionality including filename and content
             // Strip the numeric prefix from the file name for editing
-            const fileNameWithoutPrefix = formatFileName(node.name);
+            const fileNameWithoutPrefix = stripOrdinal(node.name);
             gd({ type: 'setFileEditingState', payload: { 
                 editingNode: node,
                 editingContent: node.content || '',
@@ -143,8 +160,8 @@ export default function TreeViewerPage() {
         
         // Show confirmation dialog
         const confirmText = node.mimeType === 'folder' 
-            ? `Delete the folder "${formatFileName(node.name)}"? This action cannot be undone.`
-            : `Delete the file "${formatFileName(node.name)}"? This action cannot be undone.`;
+            ? `Delete the folder "${stripOrdinal(node.name)}"? This action cannot be undone.`
+            : `Delete the file "${stripOrdinal(node.name)}"? This action cannot be undone.`;
             
         if (!await confirmModal(confirmText)) {
             return;
@@ -208,7 +225,7 @@ export default function TreeViewerPage() {
                             alertModal(`Multiple files found ending with "${findStr}". This is not recommended.`);
                         }
 
-                        const fileNameWithoutPrefix = formatFileName(newFileNode.name);
+                        const fileNameWithoutPrefix = stripOrdinal(newFileNode.name);
                         gd({ type: 'setFileEditingState', payload: { 
                             editingNode: newFileNode,
                             editingContent: newFileNode.content || '',
@@ -356,7 +373,7 @@ export default function TreeViewerPage() {
         if (gs.editingNode && gs.editingContent !== null) {
             // Get the original filename and new filename
             const originalName = gs.editingNode.name;
-            const newFileName = gs.newFileName || formatFileName(originalName);
+            const newFileName = gs.newFileName || stripOrdinal(originalName);
             
             // Extract the numeric prefix from the original file name
             const underscoreIndex = originalName.indexOf('_');
@@ -623,7 +640,7 @@ export default function TreeViewerPage() {
         
         // Split the path by '/' and format each component
         const components = path.split('/').filter(Boolean); // Filter out empty components
-        return components.map(formatFileName).join(' / ');
+        return components.map(formatDisplayName).join(' / ');
     }
 
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
@@ -794,7 +811,7 @@ export default function TreeViewerPage() {
                                                                             className="text-blue-400 text-lg mr-3" 
                                                                         />
                                                                         <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
-                                                                            {formatFileName(node.name)}
+                                                                            {formatDisplayName(node.name)}
                                                                         </span>
                                                                     </div>
                                                                     {gs.editMode && (
