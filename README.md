@@ -56,4 +56,4 @@ If you refresh the browser you'll need to click "Join" again to resume, but the 
 
 ## How to Build+Run
 
-We use Yarn builder. See files `run-local.sh` and `run-prod.sh` which are self explanatory.
+We use Yarn builder. See files `run-dev.sh` and `run-prod.sh` which are self explanatory.
