@@ -27,7 +27,7 @@ export interface GlobalState {
     contacts?: Array<Contact>; 
     messages?: Array<ChatMessage>; 
     participants?: Map<string, User> | null;
-    fullSizeImage?: {src: string, name: string} | null;
+    fullSizeImage?: {src: string | null, name: string} | null;
     appInitialized?: boolean;
     saveToServer?: boolean;
     daysOfHistory?: number;

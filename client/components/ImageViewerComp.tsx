@@ -1,11 +1,9 @@
-import { FileBase64Intf } from '../../common/types/CommonTypes';
 import { gd, gs, useGlobalState } from '../GlobalState';
 
-
 // eslint-disable-next-line react-refresh/only-export-components
-export function setFullSizeImage(att: FileBase64Intf | null) {
+export function setFullSizeImage(img: {src: string | null, name: string} | null) {
     const _gs = gs();
-    _gs.fullSizeImage = att ? {src: att.data, name: att.name} : null;
+    _gs.fullSizeImage = img;
     gd({ type: 'setFullSizeImage', payload: _gs});
 }
 
@@ -34,7 +32,7 @@ export default function ImageViewerComp() {
                         </button>
                         <div className="bg-gray-800 p-3 rounded shadow-lg border border-gray-700">
                             <img 
-                                src={gs.fullSizeImage.src} 
+                                src={gs.fullSizeImage.src!} 
                                 alt={gs.fullSizeImage.name}
                                 className="max-w-full max-h-[80vh] object-contain"
                             />

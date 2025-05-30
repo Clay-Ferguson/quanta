@@ -14,6 +14,8 @@ import { confirmModal } from '../components/ConfirmModalComp';
 import { promptModal } from '../components/PromptModalComp';
 import { alertModal } from '../components/AlertModalComp';
 import { PageNames } from '../AppServiceTypes';
+import { setFullSizeImage } from '../components/ImageViewerComp';
+import ImageViewerComp from '../components/ImageViewerComp';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -43,7 +45,11 @@ export default function TreeViewerPage() {
 
     // Handle folder click navigation
     const handleFolderClick = (folderName: string) => {
-        const currentFolder = gs.treeFolder || '/';
+        let currentFolder = gs.treeFolder || '';
+        if (currentFolder == '/') {
+            currentFolder = ''; // If we're at root, we want to start with an empty string
+        }
+        
         const newFolder = `${currentFolder}/${folderName}`;
         
         // Clear selections when navigating to a new folder
@@ -762,6 +768,8 @@ export default function TreeViewerPage() {
                                 .filter(node => !gs.cutItems?.has(node.name))
                                 .map((node, index) => {
                                     const isImage = node.mimeType.startsWith('image/');
+                                    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}${gs.treeFolder ? gs.treeFolder+'/' : ''}${node.name}` : null;
+
                                     return (
                                         <div key={index}>
                                             <div className={gs.editMode ? "flex items-start gap-3 border-b" : "flex items-start gap-3"}>
@@ -865,9 +873,10 @@ export default function TreeViewerPage() {
                                                     ) : isImage ? (
                                                         <div className="flex justify-center">
                                                             <img 
-                                                                src={`/api/docs/images/${gs.docRootKey}/${gs.treeFolder || '/'}/${node.name}`}
+                                                                src={imgSrc!}
                                                                 alt={node.name}
                                                                 className="max-w-full h-auto rounded-lg shadow-lg"
+                                                                onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                                                 onError={(e) => {
                                                                 // Fallback if image fails to load
                                                                     const target = e.currentTarget;
@@ -988,6 +997,7 @@ export default function TreeViewerPage() {
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
                 </div>
             </div>
+            <ImageViewerComp />
         </div>
     );
 }

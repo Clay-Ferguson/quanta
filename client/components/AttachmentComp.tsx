@@ -23,7 +23,7 @@ export default function AttachmentComp({ attachment: att, index = 0 }: Attachmen
                             src={att.data}
                             alt={att.name}
                             className="max-w-full rounded cursor-pointer max-h-40 object-contain"
-                            onClick={() => setFullSizeImage(att)}
+                            onClick={() => setFullSizeImage({src: att.data, name: att.name})}
                             title="Click to view full size"
                         />
                         <button 

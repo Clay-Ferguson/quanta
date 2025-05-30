@@ -87,6 +87,10 @@ export class AppService {
         if (!gs.connected) {
             gs.headerExpanded = true;
         }
+
+        if (gs.treeFolder?.indexOf("//") !== -1) {
+            console.error("invalid treeFolder: " + gs.treeFolder);
+        }
     }
 
     /**
