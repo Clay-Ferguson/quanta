@@ -38,8 +38,8 @@ class DocService {
             // Extract the optional pullup parameter from query string
             const pullup = req.query.pullup as string; 
             
-            const quantaTreeRoot = config.getPublicFolderByKey(req.params.docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(req.params.docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -50,7 +50,7 @@ class DocService {
             }
 
             // Construct the absolute path
-            const absolutePath = path.join(quantaTreeRoot, treeFolder);
+            const absolutePath = path.join(root, treeFolder);
 
             // Check if the directory exists
             if (!fs.existsSync(absolutePath)) {
@@ -58,7 +58,7 @@ class DocService {
                 return;
             }
 
-            this.checkFileAccess(absolutePath, quantaTreeRoot);
+            this.checkFileAccess(absolutePath, root);
             // Check if it's actually a directory
             const stat = fs.statSync(absolutePath);
             if (!stat.isDirectory()) {
@@ -66,7 +66,7 @@ class DocService {
                 return;
             }
 
-            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", quantaTreeRoot);
+            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", root);
             const response: TreeRender_Response = { treeNodes };
             res.json(response);
         } catch (error) {
@@ -91,8 +91,7 @@ class DocService {
             if (!/^\d+_/.test(file)) {
                 // We need to use nextOrdinal to ensure that files without a numeric prefix get a new ordinal
                 // We will ensure that the file has a 4-digit ordinal prefix
-                nextOrdinal++;
-                file = this.ensureOrdinalPrefix(absolutePath, file, nextOrdinal, root);
+                file = this.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root);
             }
 
             // Ensure file has 4-digit ordinal prefix
@@ -181,8 +180,8 @@ class DocService {
         console.log("Save File Request");
         try {
             const { filename, content, treeFolder, newFileName, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey!).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey!).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -193,11 +192,11 @@ class DocService {
             }
 
             // Construct the absolute path
-            const absoluteFolderPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteFolderPath = path.join(root, treeFolder);
             const absoluteFilePath = path.join(absoluteFolderPath, filename);
 
             // Check if the directory exists
-            this.checkFileAccess(absoluteFolderPath, quantaTreeRoot); 
+            this.checkFileAccess(absoluteFolderPath, root); 
             if (!fs.existsSync(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
@@ -225,7 +224,7 @@ class DocService {
                     }
                     
                     // Rename the file
-                    this.checkFileAccess(absoluteFilePath, quantaTreeRoot);
+                    this.checkFileAccess(absoluteFilePath, root);
                     fs.renameSync(absoluteFilePath, newAbsoluteFilePath);
                     console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                 }
@@ -234,7 +233,7 @@ class DocService {
             }
 
             // Write the content to the file (renamed or original)
-            this.checkFileAccess(finalFilePath, quantaTreeRoot);
+            this.checkFileAccess(finalFilePath, root);
             fs.writeFileSync(finalFilePath, content, 'utf8');
             
             console.log(`File saved successfully: ${finalFilePath}`);
@@ -253,8 +252,8 @@ class DocService {
         console.log("Rename Folder Request");
         try {
             const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -265,7 +264,7 @@ class DocService {
             }
 
             // Construct the absolute paths
-            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteParentPath = path.join(root, treeFolder);
             const oldAbsolutePath = path.join(absoluteParentPath, oldFolderName);
             const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
 
@@ -295,8 +294,8 @@ class DocService {
             }
 
             // Rename the folder
-            this.checkFileAccess(oldAbsolutePath, quantaTreeRoot);
-            this.checkFileAccess(newAbsolutePath, quantaTreeRoot);
+            this.checkFileAccess(oldAbsolutePath, root);
+            this.checkFileAccess(newAbsolutePath, root);
             fs.renameSync(oldAbsolutePath, newAbsolutePath);
             
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
@@ -315,8 +314,8 @@ class DocService {
         console.log("Delete File or Folder Request");
         try {
             const { fileOrFolderName, fileNames, treeFolder, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -340,7 +339,7 @@ class DocService {
             }
 
             // Construct the absolute parent path
-            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
             if (!fs.existsSync(absoluteParentPath)) {
@@ -365,7 +364,7 @@ class DocService {
                     // Get stats to determine if it's a file or directory
                     const stat = fs.statSync(absoluteTargetPath);
                     
-                    this.checkFileAccess(absoluteTargetPath, quantaTreeRoot);
+                    this.checkFileAccess(absoluteTargetPath, root);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
                         fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
@@ -415,8 +414,8 @@ class DocService {
         console.log("Move Up/Down Request");
         try {
             const { direction, filename, treeFolder, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -427,7 +426,7 @@ class DocService {
             }
 
             // Construct the absolute path to the directory
-            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
             if (!fs.existsSync(absoluteParentPath)) {
@@ -436,7 +435,7 @@ class DocService {
             }
 
             // Read directory contents and filter for files/folders with numeric prefixes
-            this.checkFileAccess(absoluteParentPath, quantaTreeRoot);
+            this.checkFileAccess(absoluteParentPath, root);
             const allFiles = fs.readdirSync(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
@@ -486,9 +485,9 @@ class DocService {
             const targetPath = path.join(absoluteParentPath, targetFile);
             const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
 
-            this.checkFileAccess(currentPath, quantaTreeRoot);
-            this.checkFileAccess(targetPath, quantaTreeRoot);
-            this.checkFileAccess(tempPath, quantaTreeRoot);
+            this.checkFileAccess(currentPath, root);
+            this.checkFileAccess(targetPath, root);
+            this.checkFileAccess(tempPath, root);
 
             // Use a temporary file to avoid conflicts during rename
             fs.renameSync(currentPath, tempPath);
@@ -520,8 +519,8 @@ class DocService {
             // Extract the path after /api/docs/images/ and decode URL encoding
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
             const imagePath = decodeURIComponent(rawImagePath);
-            const quantaTreeRoot = config.getPublicFolderByKey(req.params.docRootKey).path;;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(req.params.docRootKey).path;;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -532,10 +531,10 @@ class DocService {
             }
 
             // Construct the absolute path to the image file
-            const absoluteImagePath = path.join(quantaTreeRoot, imagePath);
+            const absoluteImagePath = path.join(root, imagePath);
 
             // Check if the file exists
-            this.checkFileAccess(absoluteImagePath, quantaTreeRoot);
+            this.checkFileAccess(absoluteImagePath, root);
             if (!fs.existsSync(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
@@ -681,8 +680,8 @@ class DocService {
         console.log("Create File Request");
         try {
             const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -693,10 +692,10 @@ class DocService {
             }
 
             // Construct the absolute path to the directory
-            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
-            this.checkFileAccess(absoluteParentPath, quantaTreeRoot); 
+            this.checkFileAccess(absoluteParentPath, root); 
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -718,7 +717,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, quantaTreeRoot);
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, root);
 
             // Create the new file with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -755,8 +754,8 @@ class DocService {
         console.log("Create Folder Request");
         try {
             const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad key' });
                 return;
             }
@@ -767,10 +766,10 @@ class DocService {
             }
 
             // Construct the absolute path to the directory
-            const absoluteParentPath = path.join(quantaTreeRoot, treeFolder);
+            const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
-            this.checkFileAccess(absoluteParentPath, quantaTreeRoot);
+            this.checkFileAccess(absoluteParentPath, root);
             if (!fs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -791,7 +790,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, quantaTreeRoot);
+            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, root);
 
             // Create the new folder with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -822,8 +821,8 @@ class DocService {
         console.log("Paste Items Request");
         try {
             const { targetFolder, pasteItems, docRootKey } = req.body;
-            const quantaTreeRoot = config.getPublicFolderByKey(docRootKey).path;
-            if (!quantaTreeRoot) {
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
                 res.status(500).json({ error: 'bad key' });
                 return;
             }
@@ -834,10 +833,10 @@ class DocService {
             }
 
             // Construct the absolute target path
-            const absoluteTargetPath = path.join(quantaTreeRoot, targetFolder);
+            const absoluteTargetPath = path.join(root, targetFolder);
 
             // Check if the target directory exists
-            this.checkFileAccess(absoluteTargetPath, quantaTreeRoot);
+            this.checkFileAccess(absoluteTargetPath, root);
             if (!fs.existsSync(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
@@ -850,7 +849,7 @@ class DocService {
             // Check for conflicts first
             for (const itemName of pasteItems) {
                 const targetFilePath = path.join(absoluteTargetPath, itemName);
-                this.checkFileAccess(targetFilePath, quantaTreeRoot);
+                this.checkFileAccess(targetFilePath, root);
                 if (fs.existsSync(targetFilePath)) {
                     conflicts.push(itemName);
                 }
@@ -896,7 +895,7 @@ class DocService {
                         return null;
                     };
 
-                    sourceFilePath = findFile(quantaTreeRoot);
+                    sourceFilePath = findFile(root);
 
                     if (!sourceFilePath) {
                         errors.push(`Source file not found: ${itemName}`);
