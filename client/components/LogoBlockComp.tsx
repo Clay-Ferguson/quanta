@@ -22,7 +22,7 @@ export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCom
                 />
             </div>
             <div className="overflow-hidden cursor-pointer min-w-[200px]" onClick={handleLogoClick}>
-                <h3 className="font-semibold text-blue-400 text-base">Quanta Chat</h3>
+                <h3 className="font-semibold text-blue-400 text-base">Quanta</h3>
                 <h5 className="font-semibold text-gray-300 text-sm">{subText}</h5>
             </div>
         </div>

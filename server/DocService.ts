@@ -519,9 +519,9 @@ class DocService {
             // Extract the path after /api/docs/images/ and decode URL encoding
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
             const imagePath = decodeURIComponent(rawImagePath);
-            const root = config.getPublicFolderByKey(req.params.docRootKey).path;;
+            const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
-                res.status(500).json({ error: 'bad root' });
+                res.status(500).json({ error: `bad root key: ` });
                 return;
             }
 

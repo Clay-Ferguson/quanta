@@ -914,7 +914,7 @@ export default function TreeViewerPage() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <Markdown markdownContent={node.content || ''} />
+                                                            <Markdown markdownContent={node.content || ''} docMode={true}/>
                                                         )
                                                     )}
                                                 
