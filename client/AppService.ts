@@ -13,6 +13,9 @@ declare const PORT: string;
 declare const SECURE: string;
 declare const PAGE: string;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare let DOC_ROOT_KEY: string;
+
 /**
  * Main application service that manages the lifecycle and state of the Quanta Chat application.
  * Handles initialization, connection management, page navigation, and state persistence.
@@ -181,6 +184,14 @@ export class AppService {
     goToPage = (page: string) => {
         const _gs = gs();
         this.setTopPage(_gs, page);
+        gd({ type: 'setPage', payload: _gs });
+    }
+
+    showHelp = () => {
+        const _gs = gs();
+        this.setTopPage(_gs, PageNames.treeViewer);
+        _gs.treeFolder = "/";
+        DOC_ROOT_KEY = "user-guide"; // Ensure DOC_ROOT_KEY is set for user guide
         gd({ type: 'setPage', payload: _gs });
     }
 

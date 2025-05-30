@@ -15,6 +15,9 @@ interface DocViewerPageProps {
 
 /**
  * Page for displaying a document viewer. So far only used for displaying static markdown files, and specifically the user guide.
+ * 
+ * NOTE: This was our original way of showing the user guide, but it has been replaced by the new `TreeViewPage` component,
+ * which is a more advanced document viewer, but let's keep this component in case we ever need it for simpler documents.
  */
 export default function DocViewerPage({ 
     filename = '/user-guide.md',

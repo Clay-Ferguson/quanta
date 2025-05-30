@@ -2,8 +2,9 @@ import ReactMarkdown, { Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { setFullSizeImage } from './ImageViewerComp';
 
-declare const DOC_ROOT_KEY: string;
+declare const DOC_ROOT_KEY: string; 
 
 interface MarkdownDisplayProps {
   markdownContent: string;
@@ -23,20 +24,18 @@ export default function Markdown({ markdownContent, docMode }: MarkdownDisplayPr
 
     // When displayed in the TreeViewerPage we have very specific way of handling images due to the variable
     // DOC_ROOT_KEY which is used to transform relative paths to absolute paths.
-    if (docMode) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        comps.img = ({ node, src, ...props }) => {
-            let imgSrc = src;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    comps.img = ({ node, src, ...props }) => {
+        let imgSrc = src;
                         
-            // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
-            if (DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
-                // Transform relative paths to use the docs images API
-                imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}`;
-                console.log(`Transformed image path: ${src} -> ${imgSrc}`);
-            }    
-            return <img src={imgSrc} {...props} />;
-        };
-    }
+        // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
+        if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
+            // Transform relative paths to use the docs images API
+            imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}`;
+            console.log(`Transformed image path: ${src} -> ${imgSrc}`);
+        }    
+        return <img src={imgSrc} {...props} onClick={() => setFullSizeImage({src: imgSrc!, name: "Markdown image"})} />;
+    };
 
     return (
         <>            

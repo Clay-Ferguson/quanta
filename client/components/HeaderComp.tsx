@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {app} from '../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown, faSitemap  } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown  } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from './LogoBlockComp';
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { gd, gs, useGlobalState } from '../GlobalState';
@@ -128,15 +128,9 @@ export default function HeaderComp() {
                     >
                         <FontAwesomeIcon icon={faScrewdriverWrench} className="h-5 w-5" />
                     </button>}
+                    
                     {gs.headerExpanded && <button 
-                        onClick={() => app.goToPage(PageNames.treeViewer)}
-                        className="btn-icon"
-                        title="Help"
-                    >
-                        <FontAwesomeIcon icon={faSitemap} className="h-5 w-5" />
-                    </button>}
-                    {gs.headerExpanded && <button 
-                        onClick={() => app.goToPage(PageNames.userGuide)}
+                        onClick={app.showHelp}
                         className="btn-icon"
                         title="Help"
                     >
