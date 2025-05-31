@@ -772,7 +772,7 @@ export default function TreeViewerPage() {
 
                                     return (
                                         <div key={index}>
-                                            <div className={gs.editMode ? "flex items-start gap-3 border-b" : "flex items-start gap-3"}>
+                                            <div className={gs.editMode ? "flex items-start gap-3 border-b-2 border-green-400" : "flex items-start gap-3"}>
                                                 {/* Checkbox for multi-selection when edit mode is on */}
                                                 {gs.editMode && (
                                                     <div className="flex-shrink-0 pt-1">
