@@ -24,6 +24,21 @@ export default function Markdown({ markdownContent, docMode }: MarkdownDisplayPr
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         a: ({ node, ...props }) => (
             <a target="_blank" rel="noopener noreferrer" {...props} />
+        ),
+        // Add styling for code blocks, just to put a border around code blocks.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        pre: ({ node, ...props }) => (
+            <pre 
+                {...props} 
+                style={{
+                    border: '1px solid #374151',
+                    borderRadius: '6px',
+                    padding: '6px',
+                    margin: '8px 0',
+                    backgroundColor: '#1f2937',
+                    overflow: 'auto'
+                }}
+            />
         )
     };
 
