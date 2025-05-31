@@ -6,6 +6,50 @@ import { GlobalState } from "../GlobalState";
 import { gd } from '../GlobalState';
 import { httpClientUtil } from "../HttpClientUtil";
 
+export const formatDisplayName = (name: string) => {
+    name = stripOrdinal(name);
+    const endsWithUnderscore = name.endsWith('_');
+
+    // Replace underscores and dashes with spaces
+    name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
+
+    // we preserve the display of the final underscore if it exists, because that's important for the user to see
+    // becasue it represents a 'pullup'
+    if (endsWithUnderscore) {
+        // If the name ends with an underscore, we add a space at the end
+        name += '_';
+    }
+    return name;
+}   
+
+// This method should split apart path into its components and format it nicely
+// using formatFileName for each component.
+export function formatFullPath(path: string): string {
+    if (!path || path === '/') {
+        return '';
+    }
+        
+    // Split the path by '/' and format each component
+    const comps = path.split('/').filter(Boolean); // Filter out empty components
+    return comps.map(formatDisplayName).join(' / ');
+}
+
+export const handleCancelClick = (gs: GlobalState) => {
+    // Clear editing state without saving
+    if (gs.editingNode?.mimeType === 'folder') {
+        gd({ type: 'clearFolderEditingState', payload: { 
+            editingNode: null,
+            newFolderName: null
+        }});
+    } else {
+        gd({ type: 'clearFileEditingState', payload: { 
+            editingNode: null,
+            editingContent: null,
+            newFileName: null
+        }});
+    }
+};
+
 // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
 export const stripOrdinal = (name: string) => {
     const idx = name.indexOf('_');

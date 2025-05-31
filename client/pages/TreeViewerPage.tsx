@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, stripOrdinal } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste } from './TreeViewerPageOps';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -51,7 +51,7 @@ function EditFolder({
                     placeholder="Enter folder name..."
                     autoFocus
                 />
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 mb-3">
                     <button
                         onClick={() => handleRenameClick(gs, treeNodes, setTreeNodes)}
                         className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
@@ -461,41 +461,9 @@ export default function TreeViewerPage() {
         }
     }, [gs.editingNode]);
 
-    const formatDisplayName = (name: string) => {
-        name = stripOrdinal(name);
-        const endsWithUnderscore = name.endsWith('_');
-
-        // Replace underscores and dashes with spaces
-        name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
-
-        // we preserve the display of the final underscore if it exists, because that's important for the user to see
-        // becasue it represents a 'pullup'
-        if (endsWithUnderscore) {
-            // If the name ends with an underscore, we add a space at the end
-            name += '_';
-        }
-        return name;
-    }   
-
     // Check if a node is selected
     const isNodeSelected = (node: TreeNode): boolean => {
         return gs.selectedTreeItems?.has(node) || false;
-    };
-
-    const handleCancelClick = () => {
-        // Clear editing state without saving
-        if (gs.editingNode?.mimeType === 'folder') {
-            gd({ type: 'clearFolderEditingState', payload: { 
-                editingNode: null,
-                newFolderName: null
-            }});
-        } else {
-            gd({ type: 'clearFileEditingState', payload: { 
-                editingNode: null,
-                editingContent: null,
-                newFileName: null
-            }});
-        }
     };
 
     const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -564,18 +532,6 @@ export default function TreeViewerPage() {
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
-    // This method should split apart path into its components and format it nicely
-    // using formatFileName for each component.
-    function formatFullPath(path: string): string {
-        if (!path || path === '/') {
-            return '';
-        }
-        
-        // Split the path by '/' and format each component
-        const comps = path.split('/').filter(Boolean); // Filter out empty components
-        return comps.map(formatDisplayName).join(' / ');
-    }
-
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
@@ -637,7 +593,7 @@ export default function TreeViewerPage() {
                                         treeNodes={treeNodes}
                                         setTreeNodes={setTreeNodes}
                                         isNodeSelected={isNodeSelected}
-                                        handleCancelClick={handleCancelClick}
+                                        handleCancelClick={() => handleCancelClick(gs)}
                                         handleContentChange={handleContentChange}
                                         handleFolderNameChange={handleFolderNameChange}
                                         handleFileNameChange={handleFileNameChange}
