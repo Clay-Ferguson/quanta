@@ -7,20 +7,18 @@ import {chatSvc} from './ChatService.js';
 import { rtc } from './WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
 import { docSvc } from './DocService.js';
-import { svrUtil } from './ServerUtil.js';
+import { config } from '../common/Config.js';
 
 logInit();
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
-const HOST = svrUtil.getEnvVar("QUANTA_CHAT_HOST");
-
-// This is the port for the web app. It will be 443 for prod, or 80 for dev on localhost
-const PORT = svrUtil.getEnvVar("QUANTA_CHAT_PORT");
+const HOST = config.get("host"); 
+const PORT = config.get("port");
 
 // This is the port for the web app. It will be 'https' for prod, or 'http' for dev on localho
-const SECURE = svrUtil.getEnvVar("QUANTA_CHAT_SECURE");
+const SECURE = config.get("secure");
 
-const ADMIN_PUBLIC_KEY = svrUtil.getEnvVar("QUANTA_CHAT_ADMIN_PUBLIC_KEY");
+const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -111,7 +109,7 @@ let server = null;
 // PRODUCTION: run on 'https' with certificates
 if (SECURE === 'y') {
     try {
-        const CERT_PATH = svrUtil.getEnvVar("QUANTA_CHAT_CERT_PATH");
+        const CERT_PATH = config.get("certPath");
         const key = fs.readFileSync(`${CERT_PATH}/privkey.pem`, 'utf8');
         const cert = fs.readFileSync(`${CERT_PATH}/fullchain.pem`, 'utf8');
         server = https.createServer({key, cert}, app);

@@ -14,6 +14,8 @@ import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import LogViewerPage from './pages/LogViewerPage.tsx';
 
+declare const DOC_ROOT_KEY: string;
+
 /**
  * Component to handle conditional page rendering based on the current page. This is a SPA and so we don't have the url updating controlling
  * which page is shown, but rather we use a global state variable to track which page is currently being shown, which is actually a stack of pages
@@ -21,19 +23,22 @@ import LogViewerPage from './pages/LogViewerPage.tsx';
 */
 export default function PageRouter() {
     const gs = useGlobalState();
+    const topPage = gs.pages![gs.pages!.length - 1];
+    console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userName);
 
     // Show loading indicator while app is initializing
     if (!gs.appInitialized) {
         return <LoadingIndicator />;
     }
 
-    // Until user enters a username, show the settings page, which will tell them why they're seeing it.
-    if (!gs.userName) {
+    // Until user enters a username, show the settings page, which will tell them why they're seeing it, unless th
+    // DOC_ROOT_KEY is set, in which case we assume the user is using the app just to view documents and not necessarily to chat.
+    if (!gs.userName && !(DOC_ROOT_KEY && topPage === PageNames.treeViewer)) {
         console.log('No username set, in PageRouter, showing settings page');
         return <SettingsPage />;
     }
     
-    switch (gs.pages![gs.pages!.length - 1]) {
+    switch (topPage) {
     case PageNames.settings:
         return <SettingsPage />;
     case PageNames.contacts:

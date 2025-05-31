@@ -1,8 +1,9 @@
 import { crypt } from "../common/Crypto.js";
 import { Request, Response } from 'express';
 import { SignableObject } from "./types/CommonTypes.js";
+import { config } from "../common/Config.js";
 
-const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY
+const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
 /**
  * Utility class for HTTP signature verification and authentication middleware.

@@ -7,8 +7,9 @@ import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
 import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../common/types/EndpointTypes.js";
 import { svrUtil } from "./ServerUtil.js";
+import { config } from "../common/Config.js";
 
-const ADMIN_PUBLIC_KEY = process.env.QUANTA_CHAT_ADMIN_PUBLIC_KEY;
+const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
 /**
  * Main service class that handles all HTTP API endpoints for the QuantaChat application.

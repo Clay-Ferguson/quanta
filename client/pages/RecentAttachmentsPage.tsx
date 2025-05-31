@@ -48,7 +48,7 @@ export default function RecentAttachmentsPage() {
     }, []);
 
     if (!ADMIN_PUBLIC_KEY) {
-        console.error('Admin public key is not set. Please set the QUANTA_CHAT_ADMIN_PUBLIC_KEY environment variable.');
+        console.error('Admin public key is not set.');
         return null;
     }
 

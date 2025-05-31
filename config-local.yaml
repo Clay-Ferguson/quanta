@@ -1,12 +1,15 @@
-host: "chat.quanta.wiki"
-port: "443"
-secure: "y"
-dbFileName: "/home/clay/db/quanta-chat.db"
+host: "localhost"
+port: "8008"
+secure: "n"
+dbFileName: "/home/clay/ferguson/chat-db-local/quanta-chat.db"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
-certPath: "/etc/letsencrypt/live/chat.quanta.wiki"
 
 # Public folders configuration - array of folder objects with name and path
-public-folders:    
+public-folders:
+  - name: "Doc Root"
+    key: "root"
+    path: "/home/clay/ferguson/A-doc-root"
+    
   - name: "User Guide"
     key: "user-guide"
     path: "/home/clay/ferguson/quanta-chat/public/user-guide"

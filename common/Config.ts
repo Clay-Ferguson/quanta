@@ -1,6 +1,5 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
-import { svrUtil } from './ServerUtil.js';
 
 /** 
  * Configuration manager class that loads and provides access to YAML configuration
@@ -16,7 +15,7 @@ class Config {
      * Load configuration from YAML file
      */
     private loadConfig(): void {
-        const CONFIG_FILE = svrUtil.getEnvVar("CONFIG_FILE");
+        const CONFIG_FILE = process.env.CONFIG_FILE || 'config.yaml';
         try {
             const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
             this.configData = yaml.load(configFile) as any;
@@ -96,5 +95,4 @@ class Config {
 }
 
 // Create and export singleton instance
-const configInstance = new Config();
-export { configInstance as config };
+export const config = new Config();
