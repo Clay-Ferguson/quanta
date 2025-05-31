@@ -130,7 +130,6 @@ export const handleDeleteClick = async (gs: GlobalState, treeNodes: TreeNode[], 
         console.log(`${node.mimeType === 'folder' ? 'Folder' : 'File'} deleted successfully:`, node.name);
     } catch (error) {
         console.error('Error deleting:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -183,7 +182,6 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
         }
     } catch (error) {
         console.error('Error moving file or folder:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -228,14 +226,11 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
                 }
                 else {
                     console.error('Newly created file node not found in treeNodes:', fileName);
-                    // do a JSON pretty print of the treeNodes
-                    console.log('Current treeNodes:', JSON.stringify(updatedNodes, null, 2));
                 }
             }, 100);
         }
     } catch (error) {
         console.error('Error creating file:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -255,7 +250,6 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
         };
             
         const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
-        console.log('Folder creation request sent successfully:', response);
 
         // Refresh the tree view to show the new file
         if (response && response.success) {
@@ -263,7 +257,6 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
         }
     } catch (error) {
         console.error('Error creating folder:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -315,7 +308,6 @@ const saveToServer = async (gs: GlobalState, filename: string, content: string, 
         await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
     } catch (error) {
         console.error('Error saving file to server:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -331,7 +323,6 @@ const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newF
         await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
     } catch (error) {
         console.error('Error renaming folder on server:', error);
-        // TODO: Show error message to user
     }
 };
 
@@ -367,11 +358,8 @@ export const handleRenameClick = (gs: GlobalState, treeNodes: TreeNode[], setTre
 };
 
 // Header button handlers for Cut, Paste, Delete
-export const onCut = (gs: GlobalState) => {
-    console.log('Cut button clicked');
-        
+export const onCut = (gs: GlobalState) => {        
     if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
-        console.log('No items selected for cut operation');
         return;
     }
 
@@ -417,9 +405,7 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any) => {
     }
 };
 
-export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
-    console.log('Delete button clicked');
-        
+export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {        
     if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
         await alertModal("No items selected for deletion.");
         return;

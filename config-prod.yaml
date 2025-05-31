@@ -9,4 +9,4 @@ certPath: "/etc/letsencrypt/live/chat.quanta.wiki"
 public-folders:    
   - name: "User Guide"
     key: "user-guide"
-    path: "/home/clay/ferguson/quanta-chat/public/user-guide"
+    path: "/home/clay/quanta-chat/public/user-guide"
