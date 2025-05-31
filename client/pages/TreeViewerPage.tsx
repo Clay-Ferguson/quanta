@@ -130,6 +130,7 @@ function EditFile({
 interface EditIconsProps {
     node: TreeNode;
     index: number;
+    numNodes: number;
     gs: any;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
@@ -140,7 +141,7 @@ interface EditIconsProps {
 /**
  * Component for rendering edit icons (Edit, Delete, Move Up, Move Down)
  */
-function EditIcons({ node, index, gs, treeNodes, setTreeNodes, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
+function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
     const isImage = node.mimeType.startsWith('image/');
     
     return (
@@ -160,20 +161,23 @@ function EditIcons({ node, index, gs, treeNodes, setTreeNodes, showEditButton = 
             >
                 <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
             </button>
-            <button 
-                onClick={(e) => { e.stopPropagation(); handleMoveUpClick(gs, treeNodes, setTreeNodes, node); }}
-                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                title="Move Up"
-            >
-                <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
-            </button>
-            <button 
-                onClick={(e) => { e.stopPropagation(); handleMoveDownClick(gs, treeNodes, setTreeNodes, node); }}
-                className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
-                title="Move Down"
-            >
-                <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
-            </button>
+            {index > 0 && 
+                <button 
+                    onClick={(e) => { e.stopPropagation(); handleMoveUpClick(gs, treeNodes, setTreeNodes, node); }}
+                    className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                    title="Move Up"
+                >
+                    <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                </button>
+            }
+            {index < numNodes - 1 &&
+                <button 
+                    onClick={(e) => { e.stopPropagation(); handleMoveDownClick(gs, treeNodes, setTreeNodes, node); }}
+                    className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
+                    title="Move Down"
+                >
+                    <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                </button>}
         </div>
     );
 }
@@ -285,6 +289,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null }: InsertItemsRowProps) 
 interface TreeNodeComponentProps {
     node: TreeNode;
     index: number;
+    numNodes: number;
     gs: any;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
@@ -304,6 +309,7 @@ interface TreeNodeComponentProps {
 function TreeNodeComponent({ 
     node, 
     index, 
+    numNodes,
     gs, 
     treeNodes, 
     setTreeNodes, 
@@ -364,7 +370,7 @@ function TreeNodeComponent({
                                         </span>
                                     </div>
                                     {gs.editMode && 
-                                        <EditIcons node={node} index={index} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} />
+                                        <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} />
                                     }
                                 </>
                             }
@@ -415,6 +421,7 @@ function TreeNodeComponent({
                                 <EditIcons 
                                     node={node} 
                                     index={index} 
+                                    numNodes={numNodes}
                                     gs={gs} 
                                     treeNodes={treeNodes} 
                                     setTreeNodes={setTreeNodes} 
@@ -572,6 +579,9 @@ export default function TreeViewerPage() {
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
+    const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+    const numNodes = filteredTreeNodes.length;
+   
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
@@ -616,13 +626,13 @@ export default function TreeViewerPage() {
                             {gs.editMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} />
                             )}
-                            {treeNodes
-                                .filter(node => !gs.cutItems?.has(node.name))
+                            {filteredTreeNodes
                                 .map((node, index) => (
                                     <TreeNodeComponent
                                         key={index}
                                         node={node}
                                         index={index}
+                                        numNodes={numNodes}
                                         gs={gs}
                                         treeNodes={treeNodes}
                                         setTreeNodes={setTreeNodes}
