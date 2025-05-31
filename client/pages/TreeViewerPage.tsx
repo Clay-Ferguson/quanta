@@ -45,12 +45,11 @@ export default function TreeViewerPage() {
 
     // Handle folder click navigation
     const handleFolderClick = (folderName: string) => {
-        let currentFolder = gs.treeFolder || '';
-        if (currentFolder == '/') {
-            currentFolder = ''; // If we're at root, we want to start with an empty string
+        let curFolder = gs.treeFolder || '';
+        if (curFolder == '/') {
+            curFolder = ''; // If we're at root, we want to start with an empty string
         }
-        
-        const newFolder = `${currentFolder}/${folderName}`;
+        const newFolder = `${curFolder}/${folderName}`;
         
         // Clear selections when navigating to a new folder
         gd({ type: 'setTreeFolder', payload: { 
@@ -61,17 +60,17 @@ export default function TreeViewerPage() {
 
     // Handle parent navigation (go up one level in folder tree)
     const handleParentClick = () => {
-        const currentFolder = gs.treeFolder || '/';
+        const curFolder = gs.treeFolder || '/';
         // Remove the last path segment to go up one level
-        const lastSlashIndex = currentFolder.lastIndexOf('/');
-        if (lastSlashIndex > 0) {
-            const parentFolder = currentFolder.substring(0, lastSlashIndex);
+        const lastSlashIdx = curFolder.lastIndexOf('/');
+        if (lastSlashIdx > 0) {
+            const parentFolder = curFolder.substring(0, lastSlashIdx);
             // Clear selections when navigating to parent
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: parentFolder,
                 selectedTreeItems: new Set<TreeNode>()
             }});
-        } else if (lastSlashIndex === 0 && currentFolder.length > 1) {
+        } else if (lastSlashIdx === 0 && curFolder.length > 1) {
             // If we're in a direct subfolder of root, go to root
             // Clear selections when navigating to parent
             gd({ type: 'setTreeFolder', payload: { 
@@ -83,13 +82,12 @@ export default function TreeViewerPage() {
 
     // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
     const stripOrdinal = (name: string) => {
-        const underscoreIndex = name.indexOf('_');
-        return underscoreIndex !== -1 ? name.substring(underscoreIndex + 1) : name;
+        const idx = name.indexOf('_');
+        return idx !== -1 ? name.substring(idx + 1) : name;
     }   
 
     const formatDisplayName = (name: string) => {
         name = stripOrdinal(name);
-
         const endsWithUnderscore = name.endsWith('_');
 
         // Replace underscores and dashes with spaces
@@ -120,16 +118,15 @@ export default function TreeViewerPage() {
 
     // Handle checkbox selection for TreeNodes
     const handleCheckboxChange = (node: TreeNode, checked: boolean) => {
-        const currentSelections = new Set(gs.selectedTreeItems);
-        
+        const curSels = new Set(gs.selectedTreeItems);
         if (checked) {
-            currentSelections.add(node);
+            curSels.add(node);
         } else {
-            currentSelections.delete(node);
+            curSels.delete(node);
         }
         
         gd({ type: 'setSelectedTreeItems', payload: { 
-            selectedTreeItems: currentSelections
+            selectedTreeItems: curSels
         }});
     };
 
@@ -139,32 +136,25 @@ export default function TreeViewerPage() {
     };
 
     // Edit mode button handlers
-    const handleEditClick = (node: TreeNode, index: number) => {
-        console.log('Edit clicked for:', node.name, 'at index:', index);
-        
+    const handleEditClick = (node: TreeNode) => {     
+        // For folders, we're doing rename functionality
+        // Strip the numeric prefix from the folder name for editing
+        const nameWithoutPrefix = stripOrdinal(node.name);   
         if (node.mimeType === 'folder') {
-            // For folders, we're doing rename functionality
-            // Strip the numeric prefix from the folder name for editing
-            const folderNameWithoutPrefix = stripOrdinal(node.name);
             gd({ type: 'setFolderEditingState', payload: { 
                 editingNode: node,
-                newFolderName: folderNameWithoutPrefix
+                newFolderName: nameWithoutPrefix
             }});
         } else {
-            // For files, we're doing edit functionality including filename and content
-            // Strip the numeric prefix from the file name for editing
-            const fileNameWithoutPrefix = stripOrdinal(node.name);
             gd({ type: 'setFileEditingState', payload: { 
                 editingNode: node,
                 editingContent: node.content || '',
-                newFileName: fileNameWithoutPrefix
+                newFileName: nameWithoutPrefix
             }});
         }
     };
 
-    const handleDeleteClick = async (node: TreeNode, index: number) => {
-        console.log('Delete clicked for:', node.name, 'at index:', index);
-        
+    const handleDeleteClick = async (node: TreeNode, index: number) => {        
         // Show confirmation dialog
         const confirmText = node.mimeType === 'folder' 
             ? `Delete the folder "${stripOrdinal(node.name)}"? This action cannot be undone.`
@@ -189,13 +179,11 @@ export default function TreeViewerPage() {
         }
     };
 
-    const handleMoveUpClick = (node: TreeNode, index: number) => {
-        console.log('Move up clicked for:', node.name, 'at index:', index);
+    const handleMoveUpClick = (node: TreeNode) => {
         moveFileOrFolder(node, 'up');
     };
 
-    const handleMoveDownClick = (node: TreeNode, index: number) => {
-        console.log('Move down clicked for:', node.name, 'at index:', index);
+    const handleMoveDownClick = (node: TreeNode) => {
         moveFileOrFolder(node, 'down');
     };
 
@@ -214,21 +202,19 @@ export default function TreeViewerPage() {
                 insertAfterNode: node ? node.name : '',
                 docRootKey: gs.docRootKey
             };
-            
             const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
-            console.log('File creation request sent successfully:', response);
             
             // Refresh the tree view to show the new file
             if (response && response.success) {
-                const updatedTreeNodes = await reRenderTree();
+                const updatedNodes = await reRenderTree();
                 
                 // Automatically start editing the newly created file
                 setTimeout(() => {
                     const findStr = `_${fileName}.md`;
-                    const newFileNode = updatedTreeNodes.find(n => n.name.endsWith(findStr));
+                    const newFileNode = updatedNodes.find(n => n.name.endsWith(findStr));
                     if (newFileNode) {
                         // Now let's check to make sure the count of matching files is not more than 1
-                        const matchingFiles = updatedTreeNodes.filter(n => n.name.endsWith(findStr));
+                        const matchingFiles = updatedNodes.filter(n => n.name.endsWith(findStr));
                         if (matchingFiles.length > 1) {
                             alertModal(`Multiple files found ending with "${findStr}". This is not recommended.`);
                         }
@@ -243,7 +229,7 @@ export default function TreeViewerPage() {
                     else {
                         console.error('Newly created file node not found in treeNodes:', fileName);
                         // do a JSON pretty print of the treeNodes
-                        console.log('Current treeNodes:', JSON.stringify(updatedTreeNodes, null, 2));
+                        console.log('Current treeNodes:', JSON.stringify(updatedNodes, null, 2));
                     }
                 }, 100);
             }
@@ -254,15 +240,15 @@ export default function TreeViewerPage() {
     };
 
     const insertFolder = async (node: TreeNode | null) => {
-        const folderName = await promptModal("Enter new folder name");
-        if (!folderName || folderName.trim() === '') {
+        const name = await promptModal("Enter new folder name");
+        if (!name || name.trim() === '') {
             return;
         }
         
         try {
             const treeFolder = gs.treeFolder || '/';
             const requestBody = {
-                folderName: folderName,
+                folderName: name,
                 treeFolder: treeFolder,
                 insertAfterNode: node ? node.name : '',
                 docRootKey: gs.docRootKey
@@ -281,7 +267,6 @@ export default function TreeViewerPage() {
         }
     };
 
-    // Editing handlers
     const saveToServer = async (filename: string, content: string, newFileName?: string) => {
         try {
             const treeFolder = gs.treeFolder || '/';
@@ -292,9 +277,7 @@ export default function TreeViewerPage() {
                 newFileName: newFileName || filename,
                 docRootKey: gs.docRootKey
             };
-            
-            const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
-            console.log('File saved to server successfully:', response);
+            await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
         } catch (error) {
             console.error('Error saving file to server:', error);
             // TODO: Show error message to user
@@ -305,14 +288,12 @@ export default function TreeViewerPage() {
         try {
             const treeFolder = gs.treeFolder || '/';
             const requestBody = {
-                oldFolderName: oldFolderName,
-                newFolderName: newFolderName,
-                treeFolder: treeFolder,
+                oldFolderName,
+                newFolderName,
+                treeFolder,
                 docRootKey: gs.docRootKey
             };
-            
-            const response = await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
-            console.log('Folder renamed on server successfully:', response);
+            await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
         } catch (error) {
             console.error('Error renaming folder on server:', error);
             // TODO: Show error message to user
@@ -323,13 +304,11 @@ export default function TreeViewerPage() {
         try {
             const treeFolder = gs.treeFolder || '/';
             const requestBody = {
-                fileOrFolderName: fileOrFolderName,
-                treeFolder: treeFolder,
+                fileOrFolderName,
+                treeFolder,
                 docRootKey: gs.docRootKey
             };
-            
-            const response = await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
-            console.log('File or folder deleted on server successfully:', response);
+            await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
         } catch (error) {
             console.error('Error deleting file or folder on server:', error);
             throw error; // Re-throw to be handled by the caller
@@ -340,14 +319,13 @@ export default function TreeViewerPage() {
         try {
             const treeFolder = gs.treeFolder || '/';
             const requestBody = {
-                direction: direction,
+                direction,
                 filename: node.name,
-                treeFolder: treeFolder,
+                treeFolder,
                 docRootKey: gs.docRootKey
             };
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/move-up-down', requestBody);
-            console.log('File or folder moved successfully:', response);
             
             // Update the local tree nodes based on the server response
             if (response && response.oldName1 && response.newName1 && response.oldName2 && response.newName2) {
@@ -389,8 +367,8 @@ export default function TreeViewerPage() {
             const newFileName = gs.newFileName || stripOrdinal(originalName);
             
             // Extract the numeric prefix from the original file name
-            const underscoreIndex = originalName.indexOf('_');
-            const numericPrefix = underscoreIndex !== -1 ? originalName.substring(0, underscoreIndex + 1) : '';
+            const underscoreIdx = originalName.indexOf('_');
+            const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
             // Create the new full file name with the numeric prefix
             const newFullFileName = numericPrefix + newFileName;
@@ -421,8 +399,8 @@ export default function TreeViewerPage() {
         if (gs.editingNode && gs.newFolderName !== null) {
             // Extract the numeric prefix from the original folder name
             const originalName = gs.editingNode.name;
-            const underscoreIndex = originalName.indexOf('_');
-            const numericPrefix = underscoreIndex !== -1 ? originalName.substring(0, underscoreIndex + 1) : '';
+            const underscoreIdx = originalName.indexOf('_');
+            const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
             // Create the new full folder name with the numeric prefix
             const newFullFolderName = numericPrefix + gs.newFolderName;
@@ -508,14 +486,13 @@ export default function TreeViewerPage() {
         finally {
             setIsLoading(false);
         }
-    }, [gs.editMode, gs.treeFolder]);
+    }, [gs.editMode, gs.treeFolder, gs.docRootKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                console.log("Loading tree document...");
                 await reRenderTree();
             } catch (error) {
                 console.error('Error loading tree:', error);
@@ -547,19 +524,14 @@ export default function TreeViewerPage() {
         gd({ type: 'setCutAndClearSelections', payload: { 
             cutItems: new Set<string>(selectedFileNames),
             selectedTreeItems: new Set<TreeNode>()
-        }});
-        
-        console.log('Items cut:', selectedFileNames);
+        }});        
     };
 
-    const onPaste = async () => {
-        console.log('Paste button clicked');
-        
+    const onPaste = async () => {        
         if (!gs.cutItems || gs.cutItems.size === 0) {
             await alertModal("No items to paste.");
             return;
         }
-
         const cutItemsArray = Array.from(gs.cutItems);
         const targetFolder = gs.treeFolder || '/';
 
@@ -569,13 +541,10 @@ export default function TreeViewerPage() {
                 pasteItems: cutItemsArray,
                 docRootKey: gs.docRootKey
             };
-            
             const response = await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
-            console.log('Paste operation completed successfully:', response);
             
             // Clear cutItems from global state
             gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
-            
             await reRenderTree();
             
             // Show success message
@@ -598,8 +567,8 @@ export default function TreeViewerPage() {
             return;
         }
 
-        const selectedItems = Array.from(gs.selectedTreeItems);
-        const itemCount = selectedItems.length;
+        const selItems = Array.from(gs.selectedTreeItems);
+        const itemCount = selItems.length;
         const itemText = itemCount === 1 ? "item" : "items";
         
         // Show confirmation dialog
@@ -610,7 +579,7 @@ export default function TreeViewerPage() {
 
         try {
             // Prepare the file names for the server
-            const fileNames = selectedItems.map(item => item.name);
+            const fileNames = selItems.map(item => item.name);
             const treeFolder = gs.treeFolder || '/';
             
             // Call server endpoint to delete the items
@@ -633,9 +602,7 @@ export default function TreeViewerPage() {
                 // Show success message
                 const deletedCount = response.deletedCount || itemCount;
                 const successMessage = `Successfully deleted ${deletedCount} ${deletedCount === 1 ? 'item' : 'items'}.`;
-                await alertModal(successMessage);
-                
-                console.log('Items deleted successfully:', fileNames);
+                await alertModal(successMessage);                
             } else {
                 console.error('Error response from server:', response);
                 await alertModal("Failed to delete items. Please try again.");
@@ -654,8 +621,8 @@ export default function TreeViewerPage() {
         }
         
         // Split the path by '/' and format each component
-        const components = path.split('/').filter(Boolean); // Filter out empty components
-        return components.map(formatDisplayName).join(' / ');
+        const comps = path.split('/').filter(Boolean); // Filter out empty components
+        return comps.map(formatDisplayName).join(' / ');
     }
 
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
@@ -838,7 +805,7 @@ export default function TreeViewerPage() {
                                                                     {gs.editMode && (
                                                                         <div className="flex items-center gap-2 ml-4">
                                                                             <button 
-                                                                                onClick={(e) => { e.stopPropagation(); handleEditClick(node, index); }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleEditClick(node); }}
                                                                                 className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
                                                                                 title="Edit"
                                                                             >
@@ -852,14 +819,14 @@ export default function TreeViewerPage() {
                                                                                 <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
                                                                             </button>
                                                                             <button 
-                                                                                onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node, index); }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleMoveUpClick(node); }}
                                                                                 className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                                                                                 title="Move Up"
                                                                             >
                                                                                 <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
                                                                             </button>
                                                                             <button 
-                                                                                onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node, index); }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleMoveDownClick(node); }}
                                                                                 className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                                                                                 title="Move Down"
                                                                             >
@@ -878,7 +845,6 @@ export default function TreeViewerPage() {
                                                                 className="max-w-full h-auto rounded-lg shadow-lg"
                                                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                                                 onError={(e) => {
-                                                                // Fallback if image fails to load
                                                                     const target = e.currentTarget;
                                                                     target.style.display = 'none';
                                                                     const fallback = document.createElement('div');
@@ -938,7 +904,7 @@ export default function TreeViewerPage() {
                                                             {gs.editMode && (
                                                                 <div className="flex items-center gap-2">
                                                                     {!isImage && <button 
-                                                                        onClick={() => handleEditClick(node, index)}
+                                                                        onClick={() => handleEditClick(node)}
                                                                         className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
                                                                         title="Edit"
                                                                     >
@@ -952,14 +918,14 @@ export default function TreeViewerPage() {
                                                                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
                                                                     </button>
                                                                     <button 
-                                                                        onClick={() => handleMoveUpClick(node, index)}
+                                                                        onClick={() => handleMoveUpClick(node)}
                                                                         className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                                                                         title="Move Up"
                                                                     >
                                                                         <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
                                                                     </button>
                                                                     <button 
-                                                                        onClick={() => handleMoveDownClick(node, index)}
+                                                                        onClick={() => handleMoveDownClick(node)}
                                                                         className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                                                                         title="Move Down"
                                                                     >
