@@ -318,6 +318,10 @@ function TreeNodeComponent({
 }: TreeNodeComponentProps) {
     const isImage = node.mimeType.startsWith('image/');
     const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}${gs.treeFolder ? gs.treeFolder+'/' : ''}${node.name}` : null;
+    
+    // todo-0: we need to handle the case where a file is neither an image nor a text file (like PDF, etc)
+    const isTextFile = !isImage && node.mimeType !== 'folder';
+    const isFolder = node.mimeType === 'folder';
 
     return (
         <div key={index}>
@@ -334,9 +338,9 @@ function TreeNodeComponent({
                     </div>
                 }
                 <div className="flex-grow">
-                    {node.mimeType === 'folder' ? (
+                    {isFolder &&
                         <div className="flex items-center justify-between">
-                            {gs.editingNode === node ? (
+                            {gs.editingNode === node &&
                                 <EditFolder 
                                     gs={gs} 
                                     treeNodes={treeNodes} 
@@ -344,7 +348,8 @@ function TreeNodeComponent({
                                     handleFolderNameChange={handleFolderNameChange} 
                                     handleCancelClick={handleCancelClick} 
                                 />
-                            ) : (
+                            } 
+                            {gs.editingNode !== node &&
                                 <>
                                     <div 
                                         className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
@@ -362,9 +367,11 @@ function TreeNodeComponent({
                                         <EditIcons node={node} index={index} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} />
                                     }
                                 </>
-                            )}
+                            }
                         </div>
-                    ) : isImage ? (
+                    }
+                    
+                    {isImage &&
                         <div className="flex justify-center">
                             <img 
                                 src={imgSrc!}
@@ -381,22 +388,23 @@ function TreeNodeComponent({
                                 }}
                             />
                         </div>
-                    ) : (
-                        gs.editingNode === node ? 
-                            <EditFile 
-                                gs={gs} 
-                                treeNodes={treeNodes} 
-                                setTreeNodes={setTreeNodes} 
-                                handleFileNameChange={handleFileNameChange} 
-                                handleContentChange={handleContentChange} 
-                                handleCancelClick={handleCancelClick} 
-                                contentTextareaRef={contentTextareaRef} 
-                            />
-                            : 
-                            <Markdown markdownContent={node.content || ''} docMode={true}/>
+                    }
+                    
+                    {isTextFile && (gs.editingNode === node ? 
+                        <EditFile 
+                            gs={gs} 
+                            treeNodes={treeNodes} 
+                            setTreeNodes={setTreeNodes} 
+                            handleFileNameChange={handleFileNameChange} 
+                            handleContentChange={handleContentChange} 
+                            handleCancelClick={handleCancelClick} 
+                            contentTextareaRef={contentTextareaRef} 
+                        />
+                        : 
+                        <Markdown markdownContent={node.content || ''} docMode={true}/>
                     )}
                 
-                    {node.mimeType !== 'folder' && (
+                    {!isFolder && 
                         <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
                             {gs.metaMode && 
                                 <>
@@ -413,7 +421,7 @@ function TreeNodeComponent({
                                     containerClass="flex items-center gap-2"
                                 />}
                         </div>
-                    )}
+                    }
                 </div>
             </div>
             {gs.editMode && 
