@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste } from '@fortawesome/free-solid-svg-icons';
 import { PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
@@ -185,7 +185,6 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, showEdi
 interface TopRightAdminCompsProps {
     gs: any;
     itemsAreSelected: boolean | undefined;
-    itemsAreCut: boolean | undefined;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
@@ -195,7 +194,7 @@ interface TopRightAdminCompsProps {
 /**
  * Component for rendering the admin controls in the top right of the header
  */
-function TopRightAdminComps({ gs, itemsAreSelected, itemsAreCut, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
+function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
     return (
         <>
             <label className="flex items-center cursor-pointer">
@@ -225,14 +224,6 @@ function TopRightAdminComps({ gs, itemsAreSelected, itemsAreCut, reRenderTree, t
                             title="Cut selected items"
                         >
                         Cut
-                        </button>}
-                    {itemsAreCut && 
-                        <button 
-                            onClick={() => onPaste(gs, reRenderTree)}
-                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                            title="Paste items"
-                        >
-                        Paste
                         </button>}
                     {itemsAreSelected && 
                         <button 
@@ -282,6 +273,15 @@ function InsertItemsRow({ gs, reRenderTree, node = null }: InsertItemsRowProps) 
             >
                 <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
             </button>
+            {gs.cutItems && gs.cutItems.size > 0 && (
+                <button 
+                    onClick={() => onPaste(gs, reRenderTree, node)}
+                    className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
+                    title="Paste Here"
+                >
+                    <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
+                </button>
+            )}
         </div>
     );
 }
@@ -608,7 +608,6 @@ export default function TreeViewerPage() {
     useEffect(() => scrollEffects.effect(elmRef), []);
 
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
-    const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
    
@@ -621,7 +620,6 @@ export default function TreeViewerPage() {
                         <TopRightAdminComps 
                             gs={gs} 
                             itemsAreSelected={itemsAreSelected} 
-                            itemsAreCut={itemsAreCut} 
                             reRenderTree={reRenderTree} 
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 

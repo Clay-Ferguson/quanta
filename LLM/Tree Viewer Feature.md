@@ -6,11 +6,9 @@ This document contains notes to explain to our Coding Agent (Github Copilot runn
 
 * Note 2: After you're done working on something, if the only thing left is to fix indentation, and there are no other errors that you know of other than indentation, then please just declare you're done, and stop working. You can mention you left indentation incomplete if you want. It's easier for me to take care of indentation than for you, the AI, to do it.
 
-* Note 3: Current Status of this feature: The LLM is about to do "Step #22"
+* Note 3: After all these steps were completed we split out the `Controller.ts` into service classes so there's no longer a `Controller.ts` file. So all mentions of `Controller.ts` really means `DocService.ts`, because that's where the code is now.
 
-* Note 4: After all these steps were completed we split out the `Controller.ts` into service classes so there's no longer a `Controller.ts` file. So all mentions of `Controller.ts` really means `DocService.ts`, because that's where the code is now.
-
-* Note 5: QUANTA_TREE_ROOT is no longer a varible. We have that path configured in 'config.yaml' now.
+* Note 4: QUANTA_TREE_ROOT is no longer a varible. We have that path configured in 'config.yaml' now.
 
 ## Overview
 
@@ -158,4 +156,6 @@ On the client side, after the paste, we can just refresh from the server in the 
 
 ### Step 22:  
 
-NOTE: There are no more steps. The `Tree View Feature` is complete. I will leave this AI prompt file as is because it has valuable information about how this feature works, and how it was created, and will be potentially helpful to both humans and AIs in the future.
+A significant amount of work has been done by me after you completed Step 21, so just beware some filenames, variable names, and design aspects may have changed since then. However the above steps you completed, still give you a good idea of what our Tree Viewer is all about. As you have seen we have a 'multi-select' checkbox capability on our `TreeViewerPage`. Also recall we have a directory hierarchy we're allowing users to view and navigate using this page. And very importantly of course is the fact that each file has a 4 character numerica ordinal prefix (i.e. "1234_") controlling the ordering of the display. The server-side `DocService.ts` is where most of the tree-editing logic is (i.e. ability to create files/folders, move them around etc). 
+
+So, all that being said here's what I want you to do in this next in this Step (Step 22): We currently have a "Cut/Paste" feature that always simply pastes into the current tree level (folder), but let's add an additional positional paste. Whenever nodes have been "Cut" by the user (i.e. 'gs.cutItems' is not empty), we should whow a "paste" button as a third icon inside `InsertItemsRow` to the right of the other two icons. Essentially this will be able to insert at the top (first ordinal item), or underneath any item (TreeNode) on the page. This is kind of a 'positional insert'. You should just add a parameter to the existing 'paste' function called 'targetOrdinal' and use that to move the items into the new folder at that ordinal location, and then of course number the pasted items appropriately (i.e. make their ordinals correct), as well as of course shifting down all the items below that (if there are any) by 'N', so all their ordinals are increased by 'N', where 'N' is of course the number of items being pasted. So this is all very obvious. Nothing fancy, you're just pasting into a specific ordinal location in the target folder.

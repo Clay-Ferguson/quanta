@@ -417,7 +417,8 @@ export const onCut = (gs: GlobalState) => {
     }});        
 };
 
-export const onPaste = async (gs: GlobalState, reRenderTree: any) => {        
+
+export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: TreeNode | null) => {        
     if (!gs.cutItems || gs.cutItems.size === 0) {
         await alertModal("No items to paste.");
         return;
@@ -429,20 +430,14 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any) => {
         const requestBody = {
             targetFolder: targetFolder,
             pasteItems: cutItemsArray,
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docRootKey,
+            targetOrdinal: targetNode?.name // Include targetOrdinal for positional pasting
         };
-        const response = await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
+        await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
             
         // Clear cutItems from global state
         gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
         await reRenderTree();
-            
-        // Show success message
-        if (response && response.pastedCount !== undefined) {
-            await alertModal(`Successfully pasted ${response.pastedCount} items.`);
-        } else {
-            await alertModal("Items pasted successfully.");
-        }
     } catch (error) {
         console.error('Error pasting items:', error);
         await alertModal("Error pasting items. Some items may already exist in this folder.");

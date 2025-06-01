@@ -595,7 +595,8 @@ class DocService {
      * @param absoluteParentPath - The absolute path to the directory
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
      */
-    private shiftOrdinalsDown = (absoluteParentPath: string, insertOrdinal: number, root: string): void => {
+    private shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
+        itemsToIgnore: string[] | null): void => {
         this.checkFileAccess(absoluteParentPath, root);
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absoluteParentPath);
@@ -616,10 +617,15 @@ class DocService {
 
         // Shift each file down by incrementing its ordinal prefix
         for (const file of filesToShift) {
+            console.log(`Shifting file: ${file}`);
+            if (itemsToIgnore && itemsToIgnore.includes(file)) {
+                console.log(`    Skipping file: ${file} (in itemsToIgnore)`);
+                continue;
+            }
             const prefix = file.substring(0, file.indexOf('_'));
             const nameWithoutPrefix = file.substring(file.indexOf('_') + 1);
             const currentOrdinal = parseInt(prefix);
-            const newOrdinal = currentOrdinal + 1;
+            const newOrdinal = currentOrdinal + slotsToAdd; // Increment ordinal by slotsToAdd
             
             // Create new filename with incremented ordinal (padded with leading zeros)
             const newPrefix = newOrdinal.toString().padStart(prefix.length, '0');
@@ -749,7 +755,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, root);
+            this.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null);
 
             // Create the new file with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -822,7 +828,7 @@ class DocService {
             }
 
             // Shift all files at or below the insertion ordinal down by one
-            this.shiftOrdinalsDown(absoluteParentPath, insertOrdinal, root);
+            this.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null);
 
             // Create the new folder with the calculated ordinal
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // Use 4-digit padding
@@ -849,10 +855,9 @@ class DocService {
      * @param req - Express request object containing targetFolder and pasteItems in body
      * @param res - Express response object
      */
-    pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Paste Items Request");
+    pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
         try {
-            const { targetFolder, pasteItems, docRootKey } = req.body;
+            const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
                 res.status(500).json({ error: 'bad key' });
@@ -876,28 +881,27 @@ class DocService {
 
             let pastedCount = 0;
             const errors: string[] = [];
-            const conflicts: string[] = [];
 
-            // Check for conflicts first
-            for (const itemName of pasteItems) {
-                const targetFilePath = path.join(absoluteTargetPath, itemName);
-                this.checkFileAccess(targetFilePath, root);
-                if (fs.existsSync(targetFilePath)) {
-                    conflicts.push(itemName);
+            // Determine insert ordinal for positional pasting
+            let insertOrdinal: number | null = null;
+            if (targetOrdinal) {
+                const underscoreIndex = targetOrdinal.indexOf('_');
+                if (underscoreIndex > 0) {
+                    const targetOrdinalNum = parseInt(targetOrdinal.substring(0, underscoreIndex));
+                    insertOrdinal = targetOrdinalNum + 1; // Insert after the target
                 }
             }
 
-            // If there are conflicts, return an error
-            if (conflicts.length > 0) {
-                res.status(409).json({ 
-                    error: 'Some items already exist in the target folder', 
-                    conflicts: conflicts 
-                });
-                return;
+            if (!insertOrdinal) {
+                insertOrdinal = 0; // Default to inserting at the top if no ordinal is specified
             }
 
+            // Shift existing items down to make room for the number of items being pasted
+            this.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, pasteItems);
+            
             // Move each file/folder
-            for (const itemName of pasteItems) {
+            for (let i = 0; i < pasteItems.length; i++) {
+                const itemName = pasteItems[i];
                 try {
                     // Find the source path by searching all directories
                     let sourceFilePath: string | null = null;
@@ -930,11 +934,24 @@ class DocService {
                     sourceFilePath = findFile(root);
 
                     if (!sourceFilePath) {
+                        console.error(`Source file not found: ${itemName}`);
                         errors.push(`Source file not found: ${itemName}`);
                         continue;
                     }
 
-                    const targetFilePath = path.join(absoluteTargetPath, itemName);
+                    let targetFileName = itemName;
+                    const currentOrdinal = insertOrdinal + i;
+                        
+                    // Extract name without ordinal prefix if it exists
+                    const nameWithoutPrefix = itemName.includes('_') ? 
+                        itemName.substring(itemName.indexOf('_') + 1) : itemName;
+                        
+                    // Create new filename with correct ordinal
+                    const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
+                    targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                    
+
+                    const targetFilePath = path.join(absoluteTargetPath, targetFileName);
 
                     // Move the file/folder
                     fs.renameSync(sourceFilePath, targetFilePath);
