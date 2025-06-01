@@ -27,9 +27,13 @@ class DocService {
      * Tree render method that returns an array of TreeNode objects representing files and folders
      * @param req - Express request object containing treeFolder in the URL path and optional pullup query parameter
      * @param res - Express response object
+     * 
+     * NOTE: A 'pullup' means that when a folder ends with an underscore, it is treated as a pullup folder,
+     * meaning its contents are included inline in the tree structure. This allows for a flat view of nested folders, for
+     * folders that are meant to be used as pullups.
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
-        // console.log("Tree Render Request:", req.path);
+        console.log("Tree Render Request:", req.path);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
             const rawTreeFolder = req.path.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
@@ -105,21 +109,18 @@ class DocService {
             let mimeType = '';
 
             // if pullup is true, it means any folder that ends in an underscore should be considered a pullup folder,
-            // which means we recursively read its contents and return them as a flat list, that will be added
-            // to what we're generating at this level. So a pullup folder means we're inserting it's contents inline.
-            let ranPullup = false;
-
+            // which means we recursively read its contents and return them as children. So a pullup folder means 
+            // we're inserting it's contents inline.
+            let children: TreeNode[] | null = null;
             if (fileStat.isDirectory()) {
                 mimeType = 'folder';
 
                 // if folder name ends in underscore, treat it as a pullup folder
                 if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this folder
-                    const subTreeNodes = this.getTreeNodes(filePath, true, root);
-                    if (subTreeNodes.length > 0) {
-                        // Add the sub-tree nodes to the current tree nodes
-                        treeNodes.push(...subTreeNodes);
-                        ranPullup = true; // Mark that we ran pullup
+                    children = this.getTreeNodes(filePath, true, root);
+                    if (children.length === 0) {
+                        children = null;
                     }
                 }
             } else {
@@ -139,8 +140,9 @@ class DocService {
                     default:
                         mimeType = 'image/jpeg';
                     }
-                    // For images, we don't read content, just provide the path reference
-                    content = filePath;
+                    // For images, store the relative path from root for proper URL construction
+                    const relativePath = path.relative(root, filePath);
+                    content = relativePath;
                 } else {
                     // Assume it's a text file and read its content
                     try {
@@ -154,16 +156,15 @@ class DocService {
                 }
             }
 
-            if (!ranPullup) {
-                const treeNode: TreeNode = {
-                    name: currentFileName,
-                    createTime: fileStat.birthtime.getTime(),
-                    modifyTime: fileStat.mtime.getTime(),
-                    content: content,
-                    mimeType: mimeType,
-                };
-                treeNodes.push(treeNode);
-            }
+            const treeNode: TreeNode = {
+                name: currentFileName,
+                createTime: fileStat.birthtime.getTime(),
+                modifyTime: fileStat.mtime.getTime(),
+                content,
+                mimeType,
+                children
+            };
+            treeNodes.push(treeNode);
         }
 
         // Sort alphabetically by filename
@@ -638,6 +639,7 @@ class DocService {
      * @param fileName - The original filename
      * @returns The filename (either original or renamed) to use for further processing
      */
+    // todo-0: do we need this method AND ensureOrdinalPrefix? Can the be the same method?
     private ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string): string => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
@@ -656,7 +658,7 @@ class DocService {
                 this.checkFileAccess(oldFilePath, root);
                 this.checkFileAccess(newFilePath, root);
                 fs.renameSync(oldFilePath, newFilePath);
-                console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
+                console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(a)`);
                 
                 // Return the new filename for further processing
                 return newFileName;
@@ -966,6 +968,12 @@ class DocService {
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
     private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
+
+        // todo-0: Special case hack for injesting quanta exports better. This will be removed later.
+        if (fileName === "content.md") {
+            ordinal = 0;
+        }
+
         // Create new filename with 4-digit ordinal prefix
         const ordinalPrefix = ordinal.toString().padStart(4, '0');
         const newFileName = `${ordinalPrefix}_${fileName}`;
@@ -977,7 +985,7 @@ class DocService {
             this.checkFileAccess(oldFilePath, root);
             this.checkFileAccess(newFilePath, root);
             fs.renameSync(oldFilePath, newFilePath);
-            console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix`);
+            console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix (b)`);
             
             // Return the new filename
             return newFileName;

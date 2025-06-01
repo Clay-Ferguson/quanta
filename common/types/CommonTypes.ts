@@ -96,5 +96,6 @@ export type TreeNode = {
     modifyTime: number;
     content: string;
     mimeType: string;
+    children?: TreeNode[] | null; // subdirectories or files (pullups only)
 }
 

@@ -323,7 +323,9 @@ function TreeNodeComponent({
     reRenderTree
 }: TreeNodeComponentProps) {
     const isImage = node.mimeType.startsWith('image/');
-    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}${gs.treeFolder ? gs.treeFolder+'/' : ''}${node.name}` : null;
+    // For images, node.content now contains the relative path from root
+    // todo-0: It's a bit ugly that we have to use node.content here, but it works for now
+    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}/${node.content}` : null;
     
     // todo-0: we need to handle the case where a file is neither an image nor a text file (like PDF, etc)
     const isTextFile = !isImage && node.mimeType !== 'folder';
@@ -439,6 +441,79 @@ function TreeNodeComponent({
 }
 
 /**
+ * Recursive function to render tree nodes and their children.
+ * 
+ * Whenever we do have children here it means the folder was a 'pullup' (i.e. folder name ends in underscore) and so this designates
+ * to the renderer that it should not render the parent node, but only the children, and render them inline.
+ */
+function renderTreeNodes(
+    nodes: TreeNode[], 
+    gs: any, 
+    treeNodes: TreeNode[], 
+    setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>, 
+    isNodeSelected: (node: TreeNode) => boolean, 
+    handleCancelClick: () => void, 
+    handleContentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void, 
+    handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
+    handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
+    formatDisplayName: (name: string) => string, 
+    contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>, 
+    reRenderTree: () => Promise<TreeNode[]>,
+    baseIndex: number = 0
+): React.ReactElement[] {
+    const elements: React.ReactElement[] = [];
+    let currentIndex = baseIndex;
+
+    nodes.forEach((node) => {
+        // If this node has children, render only the children (pullup behavior)
+        if (node.children && node.children.length > 0) {
+            // Recursively render children inline without showing the container node
+            const childElements = renderTreeNodes(
+                node.children, 
+                gs, 
+                treeNodes, 
+                setTreeNodes, 
+                isNodeSelected, 
+                handleCancelClick, 
+                handleContentChange, 
+                handleFolderNameChange, 
+                handleFileNameChange, 
+                formatDisplayName, 
+                contentTextareaRef, 
+                reRenderTree,
+                currentIndex
+            );
+            elements.push(...childElements);
+            currentIndex += node.children.length;
+        } else {
+            // Render the node normally if it has no children
+            elements.push(
+                <TreeNodeComponent
+                    key={`${currentIndex}-${node.name}`}
+                    node={node}
+                    index={currentIndex}
+                    numNodes={nodes.length}
+                    gs={gs}
+                    treeNodes={treeNodes}
+                    setTreeNodes={setTreeNodes}
+                    isNodeSelected={isNodeSelected}
+                    handleCancelClick={handleCancelClick}
+                    handleContentChange={handleContentChange}
+                    handleFolderNameChange={handleFolderNameChange}
+                    handleFileNameChange={handleFileNameChange}
+                    formatDisplayName={formatDisplayName}
+                    contentTextareaRef={contentTextareaRef}
+                    reRenderTree={reRenderTree}
+                />
+            );
+            currentIndex++;
+        }
+    });
+
+    return elements;
+}
+
+/**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
  * Fetches file content from the server and displays each file as a separate component based on its MIME type.
  */
@@ -536,7 +611,6 @@ export default function TreeViewerPage() {
     const itemsAreCut = gs.cutItems && gs.cutItems.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
-    const numNodes = filteredTreeNodes.length;
    
     return (
         <div className="page-container pt-safe">
@@ -582,26 +656,9 @@ export default function TreeViewerPage() {
                             {gs.editMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} />
                             )}
-                            {filteredTreeNodes
-                                .map((node, index) => (
-                                    <TreeNodeComponent
-                                        key={index}
-                                        node={node}
-                                        index={index}
-                                        numNodes={numNodes}
-                                        gs={gs}
-                                        treeNodes={treeNodes}
-                                        setTreeNodes={setTreeNodes}
-                                        isNodeSelected={isNodeSelected}
-                                        handleCancelClick={() => handleCancelClick(gs)}
-                                        handleContentChange={handleContentChange}
-                                        handleFolderNameChange={handleFolderNameChange}
-                                        handleFileNameChange={handleFileNameChange}
-                                        formatDisplayName={formatDisplayName}
-                                        contentTextareaRef={contentTextareaRef}
-                                        reRenderTree={reRenderTree}
-                                    />
-                                ))}
+                            {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
+                                () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 
+                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree)}
                         </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
