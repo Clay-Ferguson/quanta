@@ -315,8 +315,13 @@ export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeN
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
         // Create the new full file name with the numeric prefix
-        const newFullFileName = numericPrefix + newFileName;
-            
+        let newFullFileName = numericPrefix + newFileName;
+
+        // if newFullName doesn't have a file any extension at all, add '.md' to it
+        if (!newFullFileName.includes('.')) {
+            newFullFileName += '.md';
+        }
+
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
             node === gs.editingNode 

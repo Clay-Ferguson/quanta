@@ -190,7 +190,14 @@ class DocService {
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string }>, res: Response): Promise<void> => {
         console.log("Save File Request");
         try {
-            const { filename, content, treeFolder, newFileName, docRootKey } = req.body;
+            const { filename, content, treeFolder, docRootKey } = req.body;
+            let { newFileName } = req.body;
+
+            // if filename has no extension, add .md extension
+            if (newFileName && !path.extname(newFileName)) {
+                newFileName += '.md';
+            }
+
             const root = config.getPublicFolderByKey(docRootKey!).path;
             if (!root) {
                 res.status(500).json({ error: 'bad root' });
