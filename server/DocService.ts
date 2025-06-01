@@ -7,6 +7,16 @@ import { svrUtil } from "./ServerUtil.js";
 import { config } from "../common/Config.js";
 
 class DocService {
+    
+    getOrdinalFromName = (file: string): number => {
+        // use regex go make sure the ordinal is a number followed by an underscore
+        if (!/^\d+_/.test(file)) {
+            throw new Error(`Invalid file name format: ${file}. Expected format is "NNNN_" where N is a digit.`);
+        }
+        const prefix = file.substring(0, file.indexOf('_'));
+        const ordinal = parseInt(prefix);
+        return ordinal;
+    }
 
     checkFileAccess = (filename: string, root: string) => {        
         if (!filename) {
@@ -607,8 +617,7 @@ class DocService {
 
         // Find files that need to be shifted (ordinal >= insertOrdinal)
         const filesToShift = numberedFiles.filter(file => {
-            const prefix = file.substring(0, file.indexOf('_'));
-            const ordinal = parseInt(prefix);
+            const ordinal = this.getOrdinalFromName(file);
             return ordinal >= insertOrdinal;
         });
 
@@ -953,9 +962,7 @@ class DocService {
                     const targetFilePath = path.join(absoluteTargetPath, targetFileName);
 
                     // Move the file/folder
-                    fs.renameSync(sourceFilePath, targetFilePath);
-                    console.log(`Item moved successfully: ${sourceFilePath} -> ${targetFilePath}`);
-                    
+                    fs.renameSync(sourceFilePath, targetFilePath);                    
                     pastedCount++;
                 } catch (error) {
                     console.error(`Error moving ${itemName}:`, error);
@@ -996,13 +1003,12 @@ class DocService {
         // Extract ordinals and find the maximum
         let maxOrdinal = 0;
         for (const file of numberedFiles) {
-            const prefix = file.substring(0, file.indexOf('_'));
-            const ordinal = parseInt(prefix);
+            const ordinal = this.getOrdinalFromName(file);
             if (ordinal > maxOrdinal) {
                 maxOrdinal = ordinal;
             }
         }
-            
+
         return maxOrdinal;
     };
 
