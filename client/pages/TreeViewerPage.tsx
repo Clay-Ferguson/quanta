@@ -324,10 +324,11 @@ function TreeNodeComponent({
 }: TreeNodeComponentProps) {
     const isImage = node.mimeType.startsWith('image/');
     // For images, node.content now contains the relative path from root
-    // todo-0: It's a bit ugly that we have to use node.content here, but it works for now
+    // todo-1: It's a bit ugly that we have to use node.content here, but it works for now
     const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}/${node.content}` : null;
     
-    // todo-0: we need to handle the case where a file is neither an image nor a text file (like PDF, etc)
+    // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
+    // this tool is used only to edit Markdown files and images, so we can ignore those cases.
     const isTextFile = !isImage && node.mimeType !== 'folder';
     const isFolder = node.mimeType === 'folder';
 

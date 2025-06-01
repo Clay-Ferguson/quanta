@@ -645,7 +645,6 @@ class DocService {
      * @param fileName - The original filename
      * @returns The filename (either original or renamed) to use for further processing
      */
-    // todo-0: do we need this method AND ensureOrdinalPrefix? Can the be the same method?
     private ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string): string => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
@@ -674,7 +673,7 @@ class DocService {
                 return fileName;
             }
         }
-        // note: This is just a hack to be able to import files that have more than 4 digits in the ordinal prefix.
+        // note: todo-1: This is just a hack to be able to import files that have more than 4 digits in the ordinal prefix.
         // but with a zero prefix, because this is a common thing encountered in legacy Quanta CMS export files, which
         // used 5-digit ordinals. We can remove this 'else if' block when we no longer need to support those files.
         else if (ordinalPrefix.length > 4) {
@@ -1016,7 +1015,7 @@ class DocService {
      */
     private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
 
-        // todo-0: Special case hack for injesting quanta exports better. This will be removed later.
+        // todo-1: Special case hack for injesting quanta exports better. This will be removed later.
         if (fileName === "content.md") {
             ordinal = 0;
         }
