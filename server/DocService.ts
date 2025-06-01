@@ -153,7 +153,15 @@ class DocService {
                     // For images, store the relative path from root for proper URL construction
                     const relativePath = path.relative(root, filePath);
                     content = relativePath;
-                } else {
+                } 
+                // Non-image files
+                else {
+                    // If file extension is not '.md' or '.txt', we skip it.
+                    if (!['.md', '.txt'].includes(ext)) {
+                        console.warn(`Skipping file ${filePath} with unsupported extension: ${ext}`);
+                        continue;
+                    }
+                    
                     // Assume it's a text file and read its content
                     try {
                         content = fs.readFileSync(filePath, 'utf8');
