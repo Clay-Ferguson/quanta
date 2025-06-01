@@ -1047,6 +1047,79 @@ class DocService {
             return fileName;
         }
     };
+
+    /**
+     * Opens a folder in the file system using the OS default file manager
+     * @param req - Express request object containing treeFolder and docRootKey in body
+     * @param res - Express response object
+     */
+    openFileSystemFolder = async (req: Request<any, any, { treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+        console.log("Open File System Folder Request");
+        try {
+            const { treeFolder, docRootKey } = req.body;
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            
+            if (!root) {
+                res.status(500).json({ error: 'Invalid root key' });
+                return;
+            }
+
+            if (!treeFolder) {
+                res.status(400).json({ error: 'Tree folder is required' });
+                return;
+            }
+
+            // Construct the absolute path to the folder
+            const absoluteFolderPath = path.join(root, treeFolder);
+
+            // Security check - ensure the path is within the allowed root
+            this.checkFileAccess(absoluteFolderPath, root);
+
+            // Check if the folder exists
+            if (!fs.existsSync(absoluteFolderPath)) {
+                res.status(404).json({ error: 'Folder not found' });
+                return;
+            }
+
+            // Check if it's actually a directory
+            const stat = fs.statSync(absoluteFolderPath);
+            if (!stat.isDirectory()) {
+                res.status(400).json({ error: 'Path is not a directory' });
+                return;
+            }
+
+            // Open the folder using the appropriate command for the OS
+            const { exec } = await import('child_process');
+            const platform = process.platform;
+            let command: string;
+
+            switch (platform) {
+            case 'win32':
+                command = `explorer "${absoluteFolderPath}"`;
+                break;
+            case 'darwin': // macOS
+                command = `open "${absoluteFolderPath}"`;
+                break;
+            case 'linux':
+            default:
+                command = `xdg-open "${absoluteFolderPath}"`;
+                break;
+            }
+
+            exec(command, (error) => {
+                if (error) {
+                    console.error('Error opening folder:', error);
+                    res.status(500).json({ error: 'Failed to open folder in file system' });
+                } else {
+                    console.log(`Successfully opened folder: ${absoluteFolderPath}`);
+                    res.json({ success: true, message: 'Folder opened in file system' });
+                }
+            });
+
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to open folder in file system');
+        }
+    }
 }
 
 export const docSvc = new DocService();

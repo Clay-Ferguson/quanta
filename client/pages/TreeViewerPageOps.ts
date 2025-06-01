@@ -490,3 +490,29 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
         await alertModal("An error occurred while deleting items. Please try again.");
     }
 };
+
+/**
+ * Opens the current folder in the operating system's file manager
+ * @param gs - Global state containing the current tree folder and doc root key
+ */
+export const openFolderInFileSystem = async (gs: GlobalState) => {
+    try {
+        const treeFolder = gs.treeFolder || '/';
+        const docRootKey = gs.docRootKey;
+
+        const requestBody = {
+            treeFolder,
+            docRootKey
+        };
+
+        const response = await httpClientUtil.secureHttpPost('/api/docs/file-system-open', requestBody);
+        
+        if (!response.success) {
+            console.error('Error response from server:', response);
+            await alertModal("Failed to open folder in file system. Please try again.");
+        }
+    } catch (error) {
+        console.error('Error opening folder in file system:', error);
+        await alertModal("An error occurred while opening the folder. Please try again.");
+    }
+};

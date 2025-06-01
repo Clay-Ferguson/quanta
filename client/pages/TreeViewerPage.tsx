@@ -9,11 +9,11 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openFolderInFileSystem } from './TreeViewerPageOps';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -235,6 +235,14 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         </button>}
                 </div>
             }
+            <button 
+                onClick={() => openFolderInFileSystem(gs)}
+                className="btn-icon"
+                title="Open folder in file system"
+                disabled={isLoading}
+            >
+                <FontAwesomeIcon icon={faFolderOpen} className="h-5 w-5" />
+            </button>
             <button 
                 onClick={reRenderTree}
                 className="btn-icon"

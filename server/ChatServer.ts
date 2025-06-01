@@ -7,7 +7,7 @@ import {chatSvc} from './ChatService.js';
 import { rtc } from './WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
 import { docSvc } from './DocService.js';
-import { config } from '../common/Config.js';
+import { config } from '../common/Config.js'; 
 
 logInit();
 
@@ -65,6 +65,7 @@ app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docS
 app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
 app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
 app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
+app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docSvc.openFileSystemFolder);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
