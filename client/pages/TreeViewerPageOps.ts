@@ -486,11 +486,6 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
             gd({ type: 'setSelectedTreeItems', payload: { 
                 selectedTreeItems: new Set<TreeNode>()
             }});
-                
-            // Show success message
-            const deletedCount = response.deletedCount || itemCount;
-            const successMessage = `Successfully deleted ${deletedCount} ${deletedCount === 1 ? 'item' : 'items'}.`;
-            await alertModal(successMessage);                
         } else {
             console.error('Error response from server:', response);
             await alertModal("Failed to delete items. Please try again.");

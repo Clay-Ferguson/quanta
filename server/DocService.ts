@@ -634,7 +634,7 @@ class DocService {
     };
 
     /**
-     * Ensures a file/folder has a 4-digit ordinal prefix, renaming it if necessary
+     * Ensures a file/folder has a 4-digit ordinal prefix (i.e. "NNNN_"), renaming it if necessary
      * @param absolutePath - The absolute path to the directory containing the file
      * @param fileName - The original filename
      * @returns The filename (either original or renamed) to use for further processing
@@ -666,6 +666,36 @@ class DocService {
                 console.warn(`Failed to rename ${fileName} to ${newFileName}:`, error);
                 // Return original name if rename fails
                 return fileName;
+            }
+        }
+        // note: This is just a hack to be able to import files that have more than 4 digits in the ordinal prefix.
+        // but with a zero prefix, because this is a common thing encountered in legacy Quanta CMS export files, which
+        // used 5-digit ordinals. We can remove this 'else if' block when we no longer need to support those files.
+        else if (ordinalPrefix.length > 4) {
+            // remove as many leading zeroes as needed to make it 4 digits, but if it doesn't start
+            // with a zero throw an error
+            if (ordinalPrefix.startsWith('0')) {
+                const newOrdinal = ordinalPrefix.substring(ordinalPrefix.length - 4);
+                const newFileName = newOrdinal + restOfName;
+                const oldFilePath = path.join(absolutePath, fileName);
+                const newFilePath = path.join(absolutePath, newFileName);
+                
+                try {
+                    // Rename the file/folder to have 4-digit ordinal prefix
+                    this.checkFileAccess(oldFilePath, root);
+                    this.checkFileAccess(newFilePath, root);
+                    fs.renameSync(oldFilePath, newFilePath);
+                    console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(b)`);
+                    
+                    // Return the new filename for further processing
+                    return newFileName;
+                } catch (error) {
+                    console.warn(`Failed to rename ${fileName} to ${newFileName}:`, error);
+                    // Return original name if rename fails
+                    return fileName;
+                }
+            } else {
+                throw new Error(`Invalid ordinal prefix in filename: ${fileName}`);
             }
         }
         
