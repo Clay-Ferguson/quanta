@@ -9,11 +9,11 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile } from '@fortawesome/free-solid-svg-icons';
 import { PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openFolderInFileSystem } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openFolderInFileSystem } from './TreeViewerPageOps';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -337,8 +337,9 @@ function TreeNodeComponent({
     
     // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
     // this tool is used only to edit Markdown files and images, so we can ignore those cases.
-    const isTextFile = !isImage && node.mimeType !== 'folder';
+    const isTextFile = node.mimeType === 'text';
     const isFolder = node.mimeType === 'folder';
+    const isBinary = node.mimeType === 'binary';
 
     return (
         <div key={index}>
@@ -420,6 +421,21 @@ function TreeNodeComponent({
                         : 
                         <Markdown markdownContent={node.content || ''} docMode={true}/>
                     )}
+
+                    {isBinary && 
+                       <div 
+                           className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
+                           onClick={() => handleFileClick(gs, node.name)}
+                       >
+                           <FontAwesomeIcon 
+                               icon={faFile} 
+                               className="text-blue-400 text-lg mr-3" 
+                           />
+                           <span className="text-green-300 text-lg font-medium hover:text-green-200">
+                               {formatDisplayName(node.name)}
+                           </span>
+                       </div>
+                    }
                 
                     {!isFolder && 
                         <div className="mt-3 text-s text-gray-500 flex justify-end items-center">

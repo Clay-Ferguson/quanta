@@ -71,6 +71,11 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
     }});
 };
 
+export const handleFileClick = (_gs: GlobalState, folderName: string) => {
+    // TODO: Note to AI: we want to sent this to the server thru endpoing 'open-file' and make it open the file for viewing.
+    alert(folderName);
+}
+
 // Handle parent navigation (go up one level in folder tree)
 export const handleParentClick = (gs: GlobalState) => {
     const curFolder = gs.treeFolder || '/';

@@ -156,20 +156,20 @@ class DocService {
                 } 
                 // Non-image files
                 else {
-                    // If file extension is not '.md' or '.txt', we skip it.
                     if (!['.md', '.txt'].includes(ext)) {
-                        console.warn(`Skipping file ${filePath} with unsupported extension: ${ext}`);
-                        continue;
-                    }
-                    
-                    // Assume it's a text file and read its content
-                    try {
-                        content = fs.readFileSync(filePath, 'utf8');
-                        mimeType = 'text';
-                    } catch (error) {
-                        console.warn(`Could not read file ${filePath} as text:`, error);
                         content = '';
-                        mimeType = 'unknown';
+                        mimeType = 'binary';
+                    }
+                    else {
+                        // Assume it's a text file and read its content
+                        try {
+                            content = fs.readFileSync(filePath, 'utf8');
+                            mimeType = 'text';
+                        } catch (error) {
+                            console.warn(`Could not read file ${filePath} as text:`, error);
+                            content = '';
+                            mimeType = 'unknown';
+                        }
                     }
                 }
             }
@@ -1064,12 +1064,12 @@ class DocService {
     };
 
     /**
-     * Opens a folder in the file system using the OS default file manager
+     * Opens an item in the file system using the OS default file manager
      * @param req - Express request object containing treeFolder and docRootKey in body
      * @param res - Express response object
      */
-    openFileSystemFolder = async (req: Request<any, any, { treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Open File System Folder Request");
+    openFileSystemItem = async (req: Request<any, any, { treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+        console.log("Open File System Item Request");
         try {
             const { treeFolder, docRootKey } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;
