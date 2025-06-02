@@ -9,12 +9,13 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
 import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
+import { app } from '../AppService';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -328,6 +329,14 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 disabled={isLoading}
             >
                 <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
+            </button>
+
+            <button 
+                onClick={() => app.goToPage(PageNames.searchView)}
+                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                title="Search documents"
+            >
+                <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
             </button>
         </>
     );

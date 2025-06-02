@@ -29,7 +29,7 @@ export default function LogViewerPage() {
             refreshLogs();
         }
     };
-    
+     
     const copyToClipboard = () => {
         navigator.clipboard.writeText(logs)
             .then(async () => {

@@ -1151,6 +1151,36 @@ class DocService {
             svrUtil.handleError(error, res, 'Failed to open item in file system');
         }
     }
+
+    /**
+     * Searches through documents for the given query string
+     * @param req - Express request object containing query in body
+     * @param res - Express response object
+     */
+    search = async (req: Request<any, any, { query: string }>, res: Response): Promise<void> => {
+        console.log("Document Search Request");
+        try {
+            const { query } = req.body;
+            
+            if (!query || typeof query !== 'string') {
+                res.status(400).json({ error: 'Query string is required' });
+                return;
+            }
+            
+            console.log(`Search query: "${query}"`);
+            
+            // For now, just print the search string as requested
+            console.log(`Search functionality called with query: ${query}`);
+            
+            res.json({ 
+                success: true, 
+                message: `Search completed for query: "${query}"`,
+                query: query
+            });
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to perform search');
+        }
+    }
 }
 
 export const docSvc = new DocService();

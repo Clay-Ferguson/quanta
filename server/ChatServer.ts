@@ -65,6 +65,7 @@ app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSv
 app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
 app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
 app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docSvc.openFileSystemItem);
+app.post('/api/docs/search', httpServerUtil.verifyAdminHTTPSignature, docSvc.search);
 
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);

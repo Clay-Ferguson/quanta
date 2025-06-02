@@ -13,6 +13,7 @@ import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import LogViewerPage from './pages/LogViewerPage.tsx';
+import SearchViewPage from './pages/SearchViewPage.tsx';
 
 declare const DOC_ROOT_KEY: string;
 
@@ -61,6 +62,8 @@ export default function PageRouter() {
         return <UserProfilePage />;
     case PageNames.logViewer:
         return <LogViewerPage />;
+    case PageNames.searchView:
+        return <SearchViewPage />;
     case PageNames.quantaChat: // fall thru. to default
     default:
         return <QuantaChatPage />;

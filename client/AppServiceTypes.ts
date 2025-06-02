@@ -43,5 +43,6 @@ export enum PageNames{
     roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
     logViewer = "LogViewer",
+    searchView = "SearchViewPage",
 }
 
