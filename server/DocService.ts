@@ -1123,7 +1123,7 @@ class DocService {
             case 'linux':
             default:
                 // On Linux, xdg-open can handle both files and folders
-                if (action == "edit") {
+                if (action == "edit" || absoluteItemPath.endsWith('.md') || absoluteItemPath.endsWith('.txt')) {
                     // todo-1: for now we run VSCode, but we'll make both these commands configurable later, via yaml file
                     command = `code "${absoluteItemPath}"`;
                 }

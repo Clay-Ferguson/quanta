@@ -25,6 +25,12 @@ export const formatDisplayName = (name: string) => {
         // If the name ends with an underscore, we add a space at the end
         name += '_';
     }
+
+    // If name ends with ".Md" remove it. Replace with ".md" if it exists
+    if (name.endsWith('.Md')) {
+        name = name.slice(0, -3) + '.md';
+    }
+        
     return name;
 }   
 

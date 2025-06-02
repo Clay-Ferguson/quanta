@@ -482,7 +482,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className="max-w-full h-auto rounded-lg shadow-lg"
+                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg" : "max-w-full h-auto rounded-lg shadow-lg"}
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -506,8 +506,21 @@ function TreeNodeComponent({
                             handleCancelClick={handleCancelClick} 
                             contentTextareaRef={contentTextareaRef} 
                         />
-                        : 
-                        <Markdown markdownContent={node.content || ''} docMode={true}/>
+                        : gs.namesMode ?
+                            <div 
+                                className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
+                                onClick={() => handleFileClick(gs, node.name)}
+                            >
+                                <FontAwesomeIcon 
+                                    icon={faFile} 
+                                    className="text-lg mr-3" 
+                                />
+                                <span className="text-lg font-medium">
+                                    {formatDisplayName(node.name)}
+                                </span>
+                            </div>
+                            : 
+                            <Markdown markdownContent={node.content || ''} docMode={true}/>
                     )}
 
                     {isBinary && 
