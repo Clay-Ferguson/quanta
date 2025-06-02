@@ -132,6 +132,7 @@ export class AppService {
         const viewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.viewWidth, 'medium');
         const editMode: boolean = await idb.getItem(DBKeys.editMode, false) === true;
         const metaMode: boolean = await idb.getItem(DBKeys.metaMode, false) === true;
+        const namesMode: boolean = await idb.getItem(DBKeys.namesMode, false) === true;
 
         const state: GlobalState = {
             userName,
@@ -146,6 +147,7 @@ export class AppService {
             viewWidth,
             editMode,
             metaMode,
+            namesMode,
         };
 
         // if no username we send to settings page.

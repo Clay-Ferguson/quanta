@@ -160,6 +160,17 @@ export const handleMetaModeToggle = async (gs: GlobalState) => {
     await idb.setItem(DBKeys.metaMode, newMetaMode);
 };
 
+export const handleNamesModeToggle = async (gs: GlobalState) => {
+    const newNamesMode = !gs.namesMode;
+    
+    gd({ type: 'setNamesMode', payload: { 
+        namesMode: newNamesMode
+    }});
+    
+    // Persist to IndexedDB
+    await idb.setItem(DBKeys.namesMode, newNamesMode);
+};
+
 // Handle checkbox selection for TreeNodes
 export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: boolean) => {
     const curSels = new Set(gs.selectedTreeItems);

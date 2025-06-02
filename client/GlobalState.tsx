@@ -47,6 +47,7 @@ export interface GlobalState {
     treeFolder?: string;
     editMode?: boolean; 
     metaMode?: boolean; 
+    namesMode?: boolean;
     editingNode?: TreeNode | null;
     editingContent?: string | null;
     newFolderName?: string | null;
@@ -85,6 +86,7 @@ const initialState: GlobalState = {
     treeFolder: '/', 
     editMode: false,
     metaMode: false,
+    namesMode: false,
     editingNode: null,
     editingContent: null,
     newFolderName: null,

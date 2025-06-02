@@ -18,6 +18,7 @@ export enum DBKeys {
     viewWidth = 'viewWidth',
     editMode = 'editMode',
     metaMode = 'metaMode',
+    namesMode = 'namesMode',
 }
 
 export enum PanelKeys {

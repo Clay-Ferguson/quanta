@@ -95,7 +95,7 @@ export type TreeNode = {
     createTime: number;
     modifyTime: number;
     content: string;
-    type: string; // todo-0: rename this to treeType, because it's NOT a mime, and that creates confusion
+    type: string; 
     children?: TreeNode[] | null; // subdirectories or files (pullups only)
     fsChildren?: boolean; // true if this node has children in the file system
 }
