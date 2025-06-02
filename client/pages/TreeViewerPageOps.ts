@@ -5,6 +5,8 @@ import { promptModal } from "../components/PromptModalComp";
 import { GlobalState } from "../GlobalState";
 import { gd } from '../GlobalState';
 import { httpClientUtil } from "../HttpClientUtil";
+import { DBKeys } from "../AppServiceTypes";
+import { idb } from "../IndexedDB";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
@@ -112,16 +114,26 @@ export const handleParentClick = (gs: GlobalState) => {
     }
 };
 
-export const handleEditModeToggle = (gs: GlobalState) => {
+export const handleEditModeToggle = async (gs: GlobalState) => {
+    const newEditMode = !gs.editMode;
+    
     gd({ type: 'setEditMode', payload: { 
-        editMode: !gs.editMode
+        editMode: newEditMode
     }});
+    
+    // Persist to IndexedDB
+    await idb.setItem(DBKeys.editMode, newEditMode);
 };
 
-export const handleMetaModeToggle = (gs: GlobalState) => {
+export const handleMetaModeToggle = async (gs: GlobalState) => {
+    const newMetaMode = !gs.metaMode;
+    
     gd({ type: 'setMetaMode', payload: { 
-        metaMode: !gs.metaMode
+        metaMode: newMetaMode
     }});
+    
+    // Persist to IndexedDB
+    await idb.setItem(DBKeys.metaMode, newMetaMode);
 };
 
 // Handle checkbox selection for TreeNodes

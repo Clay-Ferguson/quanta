@@ -108,7 +108,7 @@ function EditFile({
                 value={gs.editingContent || ''}
                 onChange={handleContentChange}
                 rows={10}
-                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter content here..."
             />
             <div className="flex gap-2 mt-3">
@@ -239,7 +239,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 <input 
                     type="checkbox"
                     checked={gs.editMode || false}
-                    onChange={() => handleEditModeToggle(gs)}
+                    onChange={async () => await handleEditModeToggle(gs)}
                     className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
@@ -248,7 +248,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 <input 
                     type="checkbox"
                     checked={gs.metaMode || false}
-                    onChange={() => handleMetaModeToggle(gs)}
+                    onChange={async () => await handleMetaModeToggle(gs)}
                     className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
                 <span className="ml-2 text-sm font-medium text-gray-300">Meta</span>

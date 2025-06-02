@@ -130,6 +130,8 @@ export class AppService {
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
         const viewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.viewWidth, 'medium');
+        const editMode: boolean = await idb.getItem(DBKeys.editMode, false) === true;
+        const metaMode: boolean = await idb.getItem(DBKeys.metaMode, false) === true;
 
         const state: GlobalState = {
             userName,
@@ -142,6 +144,8 @@ export class AppService {
             userAvatar,
             headerExpanded,
             viewWidth,
+            editMode,
+            metaMode,
         };
 
         // if no username we send to settings page.

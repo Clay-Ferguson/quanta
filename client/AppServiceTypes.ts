@@ -16,6 +16,8 @@ export enum DBKeys {
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',
     viewWidth = 'viewWidth',
+    editMode = 'editMode',
+    metaMode = 'metaMode',
 }
 
 export enum PanelKeys {
