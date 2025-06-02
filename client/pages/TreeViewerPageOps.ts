@@ -497,6 +497,37 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: T
     }
 };
 
+export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, folderNode: TreeNode) => {        
+    if (!gs.cutItems || gs.cutItems.size === 0) {
+        await alertModal("No items to paste.");
+        return;
+    }
+    const cutItemsArray = Array.from(gs.cutItems);
+    
+    // Construct the target folder path by combining current path with folder name
+    let currentFolder = gs.treeFolder || '';
+    if (currentFolder === '/') {
+        currentFolder = ''; // If we're at root, we want to start with an empty string
+    }
+    const targetFolder = `${currentFolder}/${folderNode.name}`;
+
+    try {
+        const requestBody = {
+            targetFolder: targetFolder,
+            pasteItems: cutItemsArray,
+            docRootKey: gs.docRootKey
+        };
+        await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
+            
+        // Clear cutItems from global state
+        gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
+        await reRenderTree();
+    } catch (error) {
+        console.error('Error pasting items into folder:', error);
+        await alertModal("Error pasting items into folder. Some items may already exist in this folder.");
+    }
+};
+
 export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {        
     if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
         await alertModal("No items selected for deletion.");

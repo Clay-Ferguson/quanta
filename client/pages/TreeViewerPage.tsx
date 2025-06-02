@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, openItemInFileSystem } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 
 declare const PAGE: string;
@@ -136,16 +136,19 @@ interface EditIconsProps {
     gs: any;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
+    reRenderTree: () => Promise<TreeNode[]>;
     showEditButton?: boolean;
     containerClass?: string;
 }
 
 /**
- * Component for rendering edit icons (Edit, Delete, Move Up, Move Down)
+ * Component for rendering edit icons (Edit, Delete, Move Up, Move Down, Paste Into Folder)
  */
-function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
+function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRenderTree, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
     const isImage = node.mimeType.startsWith('image/');
-    
+    const isFolder = node.mimeType === 'folder';
+    const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
+
     return (
         <div className={containerClass}>
             {showEditButton && !isImage && 
@@ -179,6 +182,14 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, showEdi
                     title="Move Down"
                 >
                     <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                </button>}
+            {isFolder && hasCutItems &&
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onPasteIntoFolder(gs, reRenderTree, node); }}
+                    className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                    title="Paste Into Folder"
+                >
+                    <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
                 </button>}
         </div>
     );
@@ -234,6 +245,7 @@ interface TopRightAdminCompsProps {
  * Component for rendering the admin controls in the top right of the header
  */
 function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, filteredTreeNodes, isLoading }: TopRightAdminCompsProps) {
+    const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
     return (
         <>
             <label className="flex items-center cursor-pointer">
@@ -264,7 +276,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Cut
                         </button>}
-                    {!itemsAreSelected && 
+                    {!hasCutItems &&
                      <button 
                          onClick={() => onCutAll(gs, filteredTreeNodes)}
                          className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
@@ -439,7 +451,7 @@ function TreeNodeComponent({
                                         }
                                     </div>
                                     {gs.editMode && 
-                                        <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} />
+                                        <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
                                     }
                                 </>
                             }
@@ -509,6 +521,7 @@ function TreeNodeComponent({
                                     gs={gs} 
                                     treeNodes={treeNodes} 
                                     setTreeNodes={setTreeNodes} 
+                                    reRenderTree={reRenderTree}
                                     containerClass="flex items-center gap-2"
                                 />}
                         </div>
