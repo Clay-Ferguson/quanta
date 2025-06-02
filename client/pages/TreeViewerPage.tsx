@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
@@ -420,6 +420,14 @@ function TreeNodeComponent({
                                         <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
                                             {formatDisplayName(node.name)}
                                         </span>
+
+                                        {!node.fsChildren && 
+                                            <FontAwesomeIcon 
+                                                icon={faExclamationTriangle} 
+                                                className="text-yellow-500 ml-2" 
+                                                title="This folder has no children in the file system"
+                                            />
+                                        }
                                     </div>
                                     {gs.editMode && 
                                         <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} />

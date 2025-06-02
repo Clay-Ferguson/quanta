@@ -97,5 +97,6 @@ export type TreeNode = {
     content: string;
     mimeType: string;
     children?: TreeNode[] | null; // subdirectories or files (pullups only)
+    fsChildren?: boolean; // true if this node has children in the file system
 }
 

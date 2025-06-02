@@ -117,6 +117,7 @@ class DocService {
                 
             let content = '';
             let mimeType = '';
+            let fsChildren = false; // Flag to indicate if this node has children in the file system
 
             // if pullup is true, it means any folder that ends in an underscore should be considered a pullup folder,
             // which means we recursively read its contents and return them as children. So a pullup folder means 
@@ -133,6 +134,8 @@ class DocService {
                         children = null;
                     }
                 }
+                // Check this folder for children in the file system
+                fsChildren = fs.readdirSync(filePath).length > 0;
             } else {
                 const ext = path.extname(currentFileName).toLowerCase();
                     
@@ -180,7 +183,8 @@ class DocService {
                 modifyTime: fileStat.mtime.getTime(),
                 content,
                 mimeType,
-                children
+                children,
+                fsChildren
             };
             treeNodes.push(treeNode);
         }
