@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openItemInFileSystem } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, openItemInFileSystem } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 
 declare const PAGE: string;
@@ -226,13 +226,14 @@ interface TopRightAdminCompsProps {
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
+    filteredTreeNodes: TreeNode[];
     isLoading: boolean;
 }
 
 /**
  * Component for rendering the admin controls in the top right of the header
  */
-function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
+function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, filteredTreeNodes, isLoading }: TopRightAdminCompsProps) {
     return (
         <>
             <label className="flex items-center cursor-pointer">
@@ -263,6 +264,14 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Cut
                         </button>}
+                    {!itemsAreSelected && 
+                     <button 
+                         onClick={() => onCutAll(gs, filteredTreeNodes)}
+                         className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                         title="Cut all items"
+                     >
+                    Cut All
+                     </button>}
                     {itemsAreSelected && 
                         <button 
                             onClick={() => onDelete(gs, treeNodes, setTreeNodes)}
@@ -707,6 +716,7 @@ export default function TreeViewerPage() {
                             reRenderTree={reRenderTree} 
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 
+                            filteredTreeNodes={filteredTreeNodes}
                             isLoading={isLoading} 
                         />
                     }

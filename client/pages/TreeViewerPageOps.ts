@@ -453,6 +453,23 @@ export const onCut = (gs: GlobalState) => {
     }});        
 };
 
+export const onCutAll = (gs: GlobalState, treeNodes: TreeNode[]) => {
+    // Filter out nodes that are already cut
+    const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+    
+    if (availableNodes.length === 0) {
+        return;
+    }
+
+    // Get the file names of all available nodes
+    const allFileNames = availableNodes.map(node => node.name);
+        
+    // Update global state to set cutItems (effectively selecting all and then cutting)
+    gd({ type: 'setCutAndClearSelections', payload: { 
+        cutItems: new Set<string>([...(gs.cutItems || []), ...allFileNames]),
+        selectedTreeItems: new Set<TreeNode>()
+    }});        
+};
 
 export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: TreeNode | null) => {        
     if (!gs.cutItems || gs.cutItems.size === 0) {
