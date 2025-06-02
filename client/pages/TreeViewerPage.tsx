@@ -183,6 +183,36 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, showEdi
     );
 }
 
+interface ViewWidthDropdownProps {
+    gs: any;
+}
+
+/**
+ * Component for selecting view width (narrow, medium, wide)
+ */
+function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
+    const handleWidthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        gd({ type: 'setViewWidth', payload: { 
+            viewWidth: event.target.value as 'narrow' | 'medium' | 'wide'
+        }});
+    };
+
+    return (
+        <div className="flex items-center">
+            <select
+                value={gs.viewWidth || 'medium'}
+                onChange={handleWidthChange}
+                className="bg-gray-700 border border-gray-600 rounded text-gray-200 text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                title="Content width"
+            >
+                <option value="narrow">Narrow</option>
+                <option value="medium">Medium</option>
+                <option value="wide">Wide</option>
+            </select>
+        </div>
+    );
+}
+
 interface TopRightAdminCompsProps {
     gs: any;
     itemsAreSelected: boolean | undefined;
@@ -638,12 +668,23 @@ export default function TreeViewerPage() {
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+
+    // Determine width class based on viewWidth setting
+    const getWidthClass = () => {
+        switch (gs.viewWidth) {
+        case 'narrow': return 'max-w-xl';
+        case 'wide': return 'max-w-5xl';
+        case 'medium':
+        default: return 'max-w-3xl';
+        }
+    };
    
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
                 <LogoBlockComp subText={formatFullPath(gs.treeFolder || "Doc Viewer")}/>
                 <div className="flex items-center space-x-4">
+                    <ViewWidthDropdown gs={gs} />
                     {isAdmin && 
                         <TopRightAdminComps 
                             gs={gs} 
@@ -666,7 +707,7 @@ export default function TreeViewerPage() {
                 </div>
             </header>
             <div id="treeViewContent" ref={elmRef}  className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
-                <div className="max-w-2xl w-full">
+                <div className={`${getWidthClass()} w-full`}>
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-64">
                             <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>

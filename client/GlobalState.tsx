@@ -54,6 +54,7 @@ export interface GlobalState {
     selectedTreeItems?: Set<TreeNode>;
     cutItems?: Set<string>;
     docRootKey?: string | null;
+    viewWidth?: 'narrow' | 'medium' | 'wide';
 }
 
 const initialState: GlobalState = {
@@ -91,6 +92,7 @@ const initialState: GlobalState = {
     selectedTreeItems: new Set<TreeNode>(),
     cutItems: new Set<string>(),
     docRootKey: PAGE===PageNames.treeViewer || DOC_ROOT_KEY ? DOC_ROOT_KEY : "user-guide",
+    viewWidth: 'medium',
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
