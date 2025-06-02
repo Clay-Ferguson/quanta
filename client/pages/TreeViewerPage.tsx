@@ -10,10 +10,11 @@ import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile } from '@fortawesome/free-solid-svg-icons';
-import { PageNames } from '../AppServiceTypes';
+import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
 import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openItemInFileSystem } from './TreeViewerPageOps';
+import { idb } from '../IndexedDB';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -191,10 +192,16 @@ interface ViewWidthDropdownProps {
  * Component for selecting view width (narrow, medium, wide)
  */
 function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
-    const handleWidthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleWidthChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newWidth = event.target.value as 'narrow' | 'medium' | 'wide';
+        
+        // Update global state
         gd({ type: 'setViewWidth', payload: { 
-            viewWidth: event.target.value as 'narrow' | 'medium' | 'wide'
+            viewWidth: newWidth
         }});
+        
+        // Persist to IndexedDB
+        await idb.setItem(DBKeys.viewWidth, newWidth);
     };
 
     return (

@@ -129,6 +129,7 @@ export class AppService {
         const userDescription: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
+        const viewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.viewWidth, 'medium');
 
         const state: GlobalState = {
             userName,
@@ -139,7 +140,8 @@ export class AppService {
             roomHistory,
             userDescription,
             userAvatar,
-            headerExpanded, 
+            headerExpanded,
+            viewWidth,
         };
 
         // if no username we send to settings page.

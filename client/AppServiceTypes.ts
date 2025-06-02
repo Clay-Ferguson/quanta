@@ -15,6 +15,7 @@ export enum DBKeys {
     daysOfHistory = 'daysOfHistory',
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',
+    viewWidth = 'viewWidth',
 }
 
 export enum PanelKeys {
