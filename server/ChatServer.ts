@@ -17,7 +17,6 @@ const PORT = config.get("port");
 
 // This is the port for the web app. It will be 'https' for prod, or 'http' for dev on localho
 const SECURE = config.get("secure");
-
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
 const app = express();
@@ -85,6 +84,7 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
             .replace(`{{PAGE}}`, page)
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
+            .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');

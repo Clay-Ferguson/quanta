@@ -1070,6 +1070,13 @@ class DocService {
      */
     openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Open File System Item Request");
+
+        if (config.get("desktopMode") !== 'y') {
+            console.warn("File system access is disabled in this mode");
+            res.status(403).json({ error: 'File system access is disabled in this mode' });
+            return;
+        }
+
         try {
             const { treeItem, docRootKey } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;

@@ -3,6 +3,7 @@ port: "8000"
 secure: "n"
 dbFileName: "/home/clay/ferguson/chat-db/quanta-chat.db"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
+desktopMode: "y"
 
 # Public folders configuration - array of folder objects with name and path
 public-folders:

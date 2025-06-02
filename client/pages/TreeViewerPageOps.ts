@@ -7,6 +7,7 @@ import { gd } from '../GlobalState';
 import { httpClientUtil } from "../HttpClientUtil";
 
 declare const ADMIN_PUBLIC_KEY: string;
+declare const DESKTOP_MODE: string;
 
 export const formatDisplayName = (name: string) => {
     name = stripOrdinal(name);
@@ -75,7 +76,7 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
 
 export const handleFileClick = async (gs: GlobalState, fileName: string) => {
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
-    if (!isAdmin) {
+    if (!isAdmin || DESKTOP_MODE!=="y") {
         return;
     }
     // Construct the full path to the file

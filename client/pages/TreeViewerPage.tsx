@@ -17,6 +17,7 @@ import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxCha
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
+declare const DESKTOP_MODE: string;
 
 interface EditFolderProps {
     gs: any;
@@ -235,14 +236,16 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         </button>}
                 </div>
             }
-            <button 
+            
+            {DESKTOP_MODE=="y" && <button 
                 onClick={() => openItemInFileSystem(gs)}
                 className="btn-icon"
                 title="Open folder in file system"
                 disabled={isLoading}
             >
                 <FontAwesomeIcon icon={faFolderOpen} className="h-5 w-5" />
-            </button>
+            </button>}
+
             <button 
                 onClick={reRenderTree}
                 className="btn-icon"
