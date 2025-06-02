@@ -1,6 +1,51 @@
 import { ChatMessage, FileBase64Intf } from "../common/types/CommonTypes";
 
 class Util {
+    // Scroll to a specific DOM element by its ID
+    scrollToElementById = (elementId: string) => {
+        setTimeout(() => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }
+        }, 250);
+    };
+    
+    // Find the tree node element that is closest to the top of the viewport
+    findClosestTreeNodeToTop = (): string | null => {
+        // Get all tree node elements (those with IDs starting with 'tree-')
+        const treeElements = Array.from(document.querySelectorAll('[id^="tree-"]'));
+        
+        if (treeElements.length === 0) {
+            return null;
+        }
+        
+        const viewportTop = window.scrollY;
+        const viewportHeight = window.innerHeight;
+        const viewportCenter = viewportTop + (viewportHeight / 3); // Use upper third as reference point
+        
+        let closestElement: Element | null = null;
+        let smallestDistance = Infinity;
+        
+        for (const element of treeElements) {
+            const rect = element.getBoundingClientRect();
+            const elementTop = rect.top + viewportTop;
+            const distance = Math.abs(elementTop - viewportCenter);
+            
+            // Only consider elements that are reasonably close to the viewport
+            if (distance < smallestDistance && elementTop >= viewportTop - 200) {
+                smallestDistance = distance;
+                closestElement = element;
+            }
+        }
+        
+        return closestElement ? closestElement.id : null;
+    };
+    
     resizeEffect = () => {
         // Handle viewport height for mobile browsers
         const updateHeight = () => {

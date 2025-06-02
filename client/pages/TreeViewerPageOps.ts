@@ -7,6 +7,7 @@ import { gd } from '../GlobalState';
 import { httpClientUtil } from "../HttpClientUtil";
 import { DBKeys } from "../AppServiceTypes";
 import { idb } from "../IndexedDB";
+import { util } from "../Util";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
@@ -95,10 +96,17 @@ export const handleFileClick = async (gs: GlobalState, fileName: string) => {
 // Handle parent navigation (go up one level in folder tree)
 export const handleParentClick = (gs: GlobalState) => {
     const curFolder = gs.treeFolder || '/';
+    
+    // Remember the current folder name to scroll back to it after navigating up
+    let folderToScrollTo: string | null = null;
+    
     // Remove the last path segment to go up one level
     const lastSlashIdx = curFolder.lastIndexOf('/');
     if (lastSlashIdx > 0) {
+        // Extract the folder name we're currently in (will scroll to this after going up)
+        folderToScrollTo = curFolder.substring(lastSlashIdx + 1);
         const parentFolder = curFolder.substring(0, lastSlashIdx);
+        
         // Clear selections when navigating to parent
         gd({ type: 'setTreeFolder', payload: { 
             treeFolder: parentFolder,
@@ -106,15 +114,26 @@ export const handleParentClick = (gs: GlobalState) => {
         }});
     } else if (lastSlashIdx === 0 && curFolder.length > 1) {
         // If we're in a direct subfolder of root, go to root
+        // Extract the folder name we're currently in
+        folderToScrollTo = curFolder.substring(1); // Remove leading slash
+        
         // Clear selections when navigating to parent
         gd({ type: 'setTreeFolder', payload: { 
             treeFolder: '/',
             selectedTreeItems: new Set<TreeNode>()
         }});
     }
+    
+    // If we have a folder to scroll to, scroll to it after navigation
+    if (folderToScrollTo) {
+        scrollToItem(folderToScrollTo);
+    }
 };
 
 export const handleEditModeToggle = async (gs: GlobalState) => {
+    // Remember the current scroll position before toggling edit mode
+    const closestElementId = util.findClosestTreeNodeToTop();
+    
     const newEditMode = !gs.editMode;
     
     gd({ type: 'setEditMode', payload: { 
@@ -123,6 +142,11 @@ export const handleEditModeToggle = async (gs: GlobalState) => {
     
     // Persist to IndexedDB
     await idb.setItem(DBKeys.editMode, newEditMode);
+    
+    // Restore scroll position after the page re-renders
+    if (closestElementId) {
+        util.scrollToElementById(closestElementId);
+    }
 };
 
 export const handleMetaModeToggle = async (gs: GlobalState) => {
@@ -320,7 +344,7 @@ export const createValidId = (itemName: string): string => {
     return 'tree-' + itemName.replace(/[^a-zA-Z0-9_-]/g, '-');
 };
 
-// Scroll to an item in the tree view by its name
+// Scroll to an item in the tree view by its name 
 export const scrollToItem = (itemName: string) => {
     setTimeout(() => {
         const validId = createValidId(itemName);
@@ -332,7 +356,7 @@ export const scrollToItem = (itemName: string) => {
                 inline: 'nearest'
             });
         }
-    }, 500);
+    }, 250);
 };
 
 export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: TreeNode | null) => {
