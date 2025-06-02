@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 
 declare const PAGE: string;
@@ -366,6 +366,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null }: InsertItemsRowProps) 
 interface TreeNodeComponentProps {
     node: TreeNode;
     index: number;
+    validId: string;
     numNodes: number;
     gs: any;
     treeNodes: TreeNode[];
@@ -386,6 +387,7 @@ interface TreeNodeComponentProps {
 function TreeNodeComponent({ 
     node, 
     index, 
+    validId,
     numNodes,
     gs, 
     treeNodes, 
@@ -411,7 +413,7 @@ function TreeNodeComponent({
     const isBinary = node.mimeType === 'binary';
 
     return (
-        <div key={index}>
+        <div id={validId} key={validId}>
             <div className={gs.editMode ? "flex items-start gap-3 border-b-2 border-green-400" : "flex items-start gap-3"}>
                 {gs.editMode && 
                     <div className="flex-shrink-0 pt-1">
@@ -568,6 +570,7 @@ function renderTreeNodes(
     let currentIndex = baseIndex;
 
     nodes.forEach((node) => {
+        // console.log("Rendering node:", node.name, "at index:", currentIndex);
         // If this node has children, render only the children (pullup behavior)
         if (node.children && node.children.length > 0) {
             // Recursively render children inline without showing the container node
@@ -590,9 +593,12 @@ function renderTreeNodes(
             currentIndex += node.children.length;
         } else {
             // Render the node normally if it has no children
+            const validId = createValidId(node.name);
+
             elements.push(
                 <TreeNodeComponent
-                    key={`${currentIndex}-${node.name}`}
+                    key={validId}
+                    validId={validId}
                     node={node}
                     index={currentIndex}
                     numNodes={nodes.length}

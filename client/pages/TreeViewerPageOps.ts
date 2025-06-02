@@ -309,6 +309,32 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
     }
 };
 
+// Helper function to create valid HTML IDs from item names
+export const createValidId = (itemName: string): string => {
+    if (!itemName) {
+        console.warn('createValidId called with empty itemName. Generating random ID.');
+        // generate random ID if itemName is empty
+        return 'tree-' + Math.random().toString(36).substring(2, 15);
+    }
+    // Replace invalid characters and ensure it starts with a letter
+    return 'tree-' + itemName.replace(/[^a-zA-Z0-9_-]/g, '-');
+};
+
+// Scroll to an item in the tree view by its name
+export const scrollToItem = (itemName: string) => {
+    setTimeout(() => {
+        const validId = createValidId(itemName);
+        const element = document.getElementById(validId);
+        if (element) {
+            element.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
+    }, 500);
+};
+
 export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: TreeNode | null) => {
     const name = await promptModal("Enter new folder name");
     if (!name || name.trim() === '') {
@@ -326,9 +352,13 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
             
         const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
 
-        // Refresh the tree view to show the new file
+        // Refresh the tree view to show the new folder
         if (response && response.success) {
             await reRenderTree();
+            // Scroll to the newly created folder
+            if (response.folderName) {
+                scrollToItem(response.folderName);
+            }
         }
     } catch (error) {
         console.error('Error creating folder:', error);
