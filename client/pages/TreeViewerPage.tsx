@@ -145,8 +145,8 @@ interface EditIconsProps {
  * Component for rendering edit icons (Edit, Delete, Move Up, Move Down, Paste Into Folder)
  */
 function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRenderTree, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
-    const isImage = node.mimeType.startsWith('image/');
-    const isFolder = node.mimeType === 'folder';
+    const isImage = node.type === 'image';
+    const isFolder = node.type === 'folder';
     const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
 
     return (
@@ -401,16 +401,16 @@ function TreeNodeComponent({
     contentTextareaRef,
     reRenderTree
 }: TreeNodeComponentProps) {
-    const isImage = node.mimeType.startsWith('image/');
+    const isImage = node.type === 'image';
     // For images, node.content now contains the relative path from root
     // todo-1: It's a bit ugly that we have to use node.content here, but it works for now
     const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}/${node.content}` : null;
     
     // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
     // this tool is used only to edit Markdown files and images, so we can ignore those cases.
-    const isTextFile = node.mimeType === 'text';
-    const isFolder = node.mimeType === 'folder';
-    const isBinary = node.mimeType === 'binary';
+    const isTextFile = node.type === 'text';
+    const isFolder = node.type === 'folder';
+    const isBinary = node.type === 'binary';
 
     return (
         <div id={validId} key={validId}>
@@ -637,7 +637,7 @@ export default function TreeViewerPage() {
 
     // Focus the content textarea when starting to edit a file
     useEffect(() => {
-        if (gs.editingNode && gs.editingNode.mimeType !== 'folder' && contentTextareaRef.current) {
+        if (gs.editingNode && gs.editingNode.type !== 'folder' && contentTextareaRef.current) {
             // Use setTimeout to ensure the textarea is rendered before focusing
             setTimeout(() => {
                 contentTextareaRef.current?.focus();

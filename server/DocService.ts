@@ -116,7 +116,7 @@ class DocService {
             const fileStat = fs.statSync(filePath);
                 
             let content = '';
-            let mimeType = '';
+            let type = '';
             let fsChildren = false; // Flag to indicate if this node has children in the file system
 
             // if pullup is true, it means any folder that ends in an underscore should be considered a pullup folder,
@@ -124,7 +124,7 @@ class DocService {
             // we're inserting it's contents inline.
             let children: TreeNode[] | null = null;
             if (fileStat.isDirectory()) {
-                mimeType = 'folder';
+                type = 'folder';
 
                 // if folder name ends in underscore, treat it as a pullup folder
                 if (pullup && currentFileName.endsWith('_')) {
@@ -141,18 +141,7 @@ class DocService {
                     
                 // Detect image files
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
-                    // Set proper MIME type based on extension
-                    switch (ext) {
-                    case '.png':
-                        mimeType = 'image/png';
-                        break;
-                    case '.jpg':
-                    case '.jpeg':
-                        mimeType = 'image/jpeg';
-                        break;
-                    default:
-                        mimeType = 'image/jpeg';
-                    }
+                    type = 'image';
                     // For images, store the relative path from root for proper URL construction
                     const relativePath = path.relative(root, filePath);
                     content = relativePath;
@@ -161,17 +150,17 @@ class DocService {
                 else {
                     if (!['.md', '.txt'].includes(ext)) {
                         content = '';
-                        mimeType = 'binary';
+                        type = 'binary';
                     }
                     else {
                         // Assume it's a text file and read its content
                         try {
                             content = fs.readFileSync(filePath, 'utf8');
-                            mimeType = 'text';
+                            type = 'text';
                         } catch (error) {
                             console.warn(`Could not read file ${filePath} as text:`, error);
                             content = '';
-                            mimeType = 'unknown';
+                            type = 'unknown';
                         }
                     }
                 }
@@ -182,7 +171,7 @@ class DocService {
                 createTime: fileStat.birthtime.getTime(),
                 modifyTime: fileStat.mtime.getTime(),
                 content,
-                mimeType,
+                type,
                 children,
                 fsChildren
             };
@@ -1135,7 +1124,7 @@ class DocService {
             default:
                 // On Linux, xdg-open can handle both files and folders
                 if (action == "edit") {
-                    // todo-0: for now we run VSCode, but we'll make both these commands configurable later, via yaml file
+                    // todo-1: for now we run VSCode, but we'll make both these commands configurable later, via yaml file
                     command = `code "${absoluteItemPath}"`;
                 }
                 else {

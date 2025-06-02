@@ -42,7 +42,7 @@ export function formatFullPath(path: string): string {
 
 export const handleCancelClick = (gs: GlobalState) => {
     // Clear editing state without saving
-    if (gs.editingNode?.mimeType === 'folder') {
+    if (gs.editingNode?.type === 'folder') {
         gd({ type: 'clearFolderEditingState', payload: { 
             editingNode: null,
             newFolderName: null
@@ -179,7 +179,7 @@ export const handleEditClick = (node: TreeNode) => {
     // For folders, we're doing rename functionality
     // Strip the numeric prefix from the folder name for editing
     const nameWithoutPrefix = stripOrdinal(node.name);   
-    if (node.mimeType === 'folder') {
+    if (node.type === 'folder') {
         gd({ type: 'setFolderEditingState', payload: { 
             editingNode: node,
             newFolderName: nameWithoutPrefix
@@ -210,7 +210,7 @@ const deleteFileOrFolderOnServer = async (gs: GlobalState, fileOrFolderName: str
 
 export const handleDeleteClick = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, index: number) => {        
     // Show confirmation dialog
-    const confirmText = node.mimeType === 'folder' 
+    const confirmText = node.type === 'folder' 
         ? `Delete the folder "${stripOrdinal(node.name)}"? This action cannot be undone.`
         : `Delete the file "${stripOrdinal(node.name)}"? This action cannot be undone.`;
             
@@ -226,7 +226,7 @@ export const handleDeleteClick = async (gs: GlobalState, treeNodes: TreeNode[], 
         const updatedNodes = treeNodes.filter((_: any, i: any) => i !== index);
         setTreeNodes(updatedNodes);
             
-        console.log(`${node.mimeType === 'folder' ? 'Folder' : 'File'} deleted successfully:`, node.name);
+        console.log(`${node.type === 'folder' ? 'Folder' : 'File'} deleted successfully:`, node.name);
     } catch (error) {
         console.error('Error deleting:', error);
     }
@@ -258,7 +258,7 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
                 if (treeNode.name === response.oldName1) {
                     // Update the name and also update content if it's an image (content contains file path)
                     const updatedNode = { ...treeNode, name: response.newName1 };
-                    if (treeNode.mimeType.startsWith('image/') && treeNode.content) {
+                    if (treeNode.type === 'image' && treeNode.content) {
                         // Update the file path in content to reflect the new filename
                         updatedNode.content = treeNode.content.replace(response.oldName1, response.newName1);
                     }
@@ -266,7 +266,7 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
                 } else if (treeNode.name === response.oldName2) {
                     // Update the name and also update content if it's an image (content contains file path)
                     const updatedNode = { ...treeNode, name: response.newName2 };
-                    if (treeNode.mimeType.startsWith('image/') && treeNode.content) {
+                    if (treeNode.type === 'image' && treeNode.content) {
                         // Update the file path in content to reflect the new filename
                         updatedNode.content = treeNode.content.replace(response.oldName2, response.newName2);
                     }
