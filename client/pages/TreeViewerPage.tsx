@@ -296,13 +296,21 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             }
             
             {DESKTOP_MODE=="y" && <button 
-                onClick={() => openItemInFileSystem(gs)}
+                onClick={() => openItemInFileSystem(gs, "explore")}
                 className="btn-icon"
                 title="Open folder in file system"
                 disabled={isLoading}
             >
                 <FontAwesomeIcon icon={faFolderOpen} className="h-5 w-5" />
             </button>}
+
+            <button 
+                onClick={() => openItemInFileSystem(gs, "edit")}
+                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                title="Open File system Editor"
+            >
+                <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
+            </button>
 
             <button 
                 onClick={reRenderTree}

@@ -89,7 +89,7 @@ export const handleFileClick = async (gs: GlobalState, fileName: string) => {
     const filePath = curFolder ? `${curFolder}/${fileName}` : fileName;
     
     // Open the file using the operating system's default application
-    await openItemInFileSystem(gs, filePath);
+    await openItemInFileSystem(gs, "explore", filePath);
 }
 
 // Handle parent navigation (go up one level in folder tree)
@@ -580,7 +580,7 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
  * @param gs - Global state containing the current tree folder and doc root key
  * @param itemPath - Optional specific item path. If not provided, opens the current folder
  */
-export const openItemInFileSystem = async (gs: GlobalState, itemPath?: string) => {
+export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "explore", itemPath?: string) => {
     try {
         // Use the provided item path or default to the current folder
         const treeItem = itemPath || gs.treeFolder || '/';
@@ -588,7 +588,8 @@ export const openItemInFileSystem = async (gs: GlobalState, itemPath?: string) =
 
         const requestBody = {
             treeItem,
-            docRootKey
+            docRootKey,
+            action
         };
 
         const response = await httpClientUtil.secureHttpPost('/api/docs/file-system-open', requestBody);

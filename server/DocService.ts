@@ -1072,7 +1072,7 @@ class DocService {
      * @param req - Express request object containing treeItem and docRootKey in body
      * @param res - Express response object
      */
-    openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string }>, res: Response): Promise<void> => {
+    openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string, action: string }>, res: Response): Promise<void> => {
         console.log("Open File System Item Request");
 
         if (config.get("desktopMode") !== 'y') {
@@ -1082,7 +1082,7 @@ class DocService {
         }
 
         try {
-            const { treeItem, docRootKey } = req.body;
+            const { treeItem, docRootKey, action } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;
             
             if (!root) {
@@ -1134,7 +1134,13 @@ class DocService {
             case 'linux':
             default:
                 // On Linux, xdg-open can handle both files and folders
-                command = `xdg-open "${absoluteItemPath}"`;
+                if (action == "edit") {
+                    // todo-0: for now we run VSCode, but we'll make both these commands configurable later, via yaml file
+                    command = `code "${absoluteItemPath}"`;
+                }
+                else {
+                    command = `xdg-open "${absoluteItemPath}"`;
+                }
                 break;
             }
 
