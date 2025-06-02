@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openFolderInFileSystem } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onDelete, onPaste, openItemInFileSystem } from './TreeViewerPageOps';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -236,7 +236,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 </div>
             }
             <button 
-                onClick={() => openFolderInFileSystem(gs)}
+                onClick={() => openItemInFileSystem(gs)}
                 className="btn-icon"
                 title="Open folder in file system"
                 disabled={isLoading}
@@ -429,7 +429,7 @@ function TreeNodeComponent({
                        >
                            <FontAwesomeIcon 
                                icon={faFile} 
-                               className="text-blue-400 text-lg mr-3" 
+                               className="text-green-400 text-lg mr-3" 
                            />
                            <span className="text-green-300 text-lg font-medium hover:text-green-200">
                                {formatDisplayName(node.name)}

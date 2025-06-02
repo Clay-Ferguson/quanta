@@ -1064,14 +1064,14 @@ class DocService {
     };
 
     /**
-     * Opens an item in the file system using the OS default file manager
-     * @param req - Express request object containing treeFolder and docRootKey in body
+     * Opens an item (file or folder) in the file system using the OS default application
+     * @param req - Express request object containing treeItem and docRootKey in body
      * @param res - Express response object
      */
-    openFileSystemItem = async (req: Request<any, any, { treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+    openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Open File System Item Request");
         try {
-            const { treeFolder, docRootKey } = req.body;
+            const { treeItem, docRootKey } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;
             
             if (!root) {
@@ -1079,60 +1079,70 @@ class DocService {
                 return;
             }
 
-            if (!treeFolder) {
-                res.status(400).json({ error: 'Tree folder is required' });
+            if (!treeItem) {
+                res.status(400).json({ error: 'Tree item is required' });
                 return;
             }
 
-            // Construct the absolute path to the folder
-            const absoluteFolderPath = path.join(root, treeFolder);
+            // Construct the absolute path to the item
+            const absoluteItemPath = path.join(root, treeItem);
 
             // Security check - ensure the path is within the allowed root
-            this.checkFileAccess(absoluteFolderPath, root);
+            this.checkFileAccess(absoluteItemPath, root);
 
-            // Check if the folder exists
-            if (!fs.existsSync(absoluteFolderPath)) {
-                res.status(404).json({ error: 'Folder not found' });
+            // Check if the item exists
+            if (!fs.existsSync(absoluteItemPath)) {
+                res.status(404).json({ error: 'Item not found' });
                 return;
             }
 
-            // Check if it's actually a directory
-            const stat = fs.statSync(absoluteFolderPath);
-            if (!stat.isDirectory()) {
-                res.status(400).json({ error: 'Path is not a directory' });
+            // Check if it's a file or directory
+            const stat = fs.statSync(absoluteItemPath);
+            const isDirectory = stat.isDirectory();
+            const isFile = stat.isFile();
+
+            if (!isDirectory && !isFile) {
+                res.status(400).json({ error: 'Path is neither a file nor a directory' });
                 return;
             }
 
-            // Open the folder using the appropriate command for the OS
+            // Open the item using the appropriate command for the OS
             const { exec } = await import('child_process');
             const platform = process.platform;
             let command: string;
 
             switch (platform) {
             case 'win32':
-                command = `explorer "${absoluteFolderPath}"`;
+                // On Windows, explorer can open both files and folders
+                command = `explorer "${absoluteItemPath}"`;
                 break;
             case 'darwin': // macOS
-                command = `open "${absoluteFolderPath}"`;
+                // On macOS, open can handle both files and folders
+                command = `open "${absoluteItemPath}"`;
                 break;
             case 'linux':
             default:
-                command = `xdg-open "${absoluteFolderPath}"`;
+                // On Linux, xdg-open can handle both files and folders
+                command = `xdg-open "${absoluteItemPath}"`;
                 break;
             }
 
             exec(command, (error) => {
                 if (error) {
-                    console.error('Error opening folder:', error);
-                    res.status(500).json({ error: 'Failed to open folder in file system' });
+                    console.error(`Error opening ${isDirectory ? 'folder' : 'file'}:`, error);
+                    res.status(500).json({ error: `Failed to open ${isDirectory ? 'folder' : 'file'} in file system` });
                 } else {
-                    console.log(`Successfully opened folder: ${absoluteFolderPath}`);
-                    res.json({ success: true, message: 'Folder opened in file system' });
+                    console.log(`Successfully opened ${isDirectory ? 'folder' : 'file'}: ${absoluteItemPath}`);
+                    res.json({ 
+                        success: true, 
+                        message: `${isDirectory ? 'Folder' : 'File'} opened in file system`,
+                        itemType: isDirectory ? 'folder' : 'file'
+                    });
                 }
             });
 
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to open folder in file system');
+            svrUtil.handleError(error, res, 'Failed to open item in file system');
         }
     }
 }

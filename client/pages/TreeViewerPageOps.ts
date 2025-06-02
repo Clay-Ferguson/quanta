@@ -6,6 +6,8 @@ import { GlobalState } from "../GlobalState";
 import { gd } from '../GlobalState';
 import { httpClientUtil } from "../HttpClientUtil";
 
+declare const ADMIN_PUBLIC_KEY: string;
+
 export const formatDisplayName = (name: string) => {
     name = stripOrdinal(name);
     const endsWithUnderscore = name.endsWith('_');
@@ -71,9 +73,20 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
     }});
 };
 
-export const handleFileClick = (_gs: GlobalState, folderName: string) => {
-    // TODO: Note to AI: we want to sent this to the server thru endpoing 'open-file' and make it open the file for viewing.
-    alert(folderName);
+export const handleFileClick = async (gs: GlobalState, fileName: string) => {
+    const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
+    if (!isAdmin) {
+        return;
+    }
+    // Construct the full path to the file
+    let curFolder = gs.treeFolder || '';
+    if (curFolder === '/') {
+        curFolder = ''; // If we're at root, we want to start with an empty string
+    }
+    const filePath = curFolder ? `${curFolder}/${fileName}` : fileName;
+    
+    // Open the file using the operating system's default application
+    await openItemInFileSystem(gs, filePath);
 }
 
 // Handle parent navigation (go up one level in folder tree)
@@ -502,16 +515,18 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
 };
 
 /**
- * Opens the current folder in the operating system's file manager
+ * Opens an item (file or folder) in the operating system's default application
  * @param gs - Global state containing the current tree folder and doc root key
+ * @param itemPath - Optional specific item path. If not provided, opens the current folder
  */
-export const openFolderInFileSystem = async (gs: GlobalState) => {
+export const openItemInFileSystem = async (gs: GlobalState, itemPath?: string) => {
     try {
-        const treeFolder = gs.treeFolder || '/';
+        // Use the provided item path or default to the current folder
+        const treeItem = itemPath || gs.treeFolder || '/';
         const docRootKey = gs.docRootKey;
 
         const requestBody = {
-            treeFolder,
+            treeItem,
             docRootKey
         };
 
@@ -519,10 +534,11 @@ export const openFolderInFileSystem = async (gs: GlobalState) => {
         
         if (!response.success) {
             console.error('Error response from server:', response);
-            await alertModal("Failed to open folder in file system. Please try again.");
+            await alertModal("Failed to open item in file system. Please try again.");
         }
     } catch (error) {
-        console.error('Error opening folder in file system:', error);
-        await alertModal("An error occurred while opening the folder. Please try again.");
+        console.error('Error opening item in file system:', error);
+        await alertModal("An error occurred while opening the item. Please try again.");
     }
 };
+
