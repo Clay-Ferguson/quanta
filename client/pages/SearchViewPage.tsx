@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { alertModal } from '../components/AlertModalComp';
-import { useGlobalState } from '../GlobalState';
+import { useGlobalState, gd } from '../GlobalState';
+import { app } from '../AppService';
+import { PageNames } from '../AppServiceTypes';
 
 interface SearchResult {
     file: string;
@@ -58,8 +60,72 @@ export default function SearchViewPage() {
     };
     
     const fileClicked = (filePath: string) => {
-        // TODO: Implement file navigation logic
-        console.log('File clicked:', filePath);
+        // Parse the file path to extract the folder path and filename
+        // Note: filePath is relative to the current treeFolder where the search was performed
+        const lastSlashIndex = filePath.lastIndexOf('/');
+        let searchRootFolder = gs.treeFolder || '/';
+        let fileName = filePath;
+        
+        if (lastSlashIndex > 0) {
+            // File is in a subfolder relative to the search root
+            const relativeFolderPath = filePath.substring(0, lastSlashIndex);
+            fileName = filePath.substring(lastSlashIndex + 1);
+            
+            // Construct the absolute folder path by combining search root with relative path
+            // Follow the same pattern as handleFolderClick in TreeViewerPageOps
+            if (searchRootFolder === '/') {
+                searchRootFolder = ''; // Convert root to empty string for proper joining
+            }
+            const targetFolderPath = `${searchRootFolder}/${relativeFolderPath}`;
+            
+            console.log('Navigating to file:', fileName, 'in folder:', targetFolderPath);
+            
+            // Set the tree folder in global state and clear selections
+            gd({ type: 'setTreeFolder', payload: { 
+                treeFolder: targetFolderPath,
+                selectedTreeItems: new Set()
+            }});
+        } else if (lastSlashIndex === 0) {
+            // File is in root folder (relative to search root)
+            fileName = filePath.substring(1);
+            
+            console.log('Navigating to file:', fileName, 'in folder:', searchRootFolder);
+            
+            // Set the tree folder in global state and clear selections
+            gd({ type: 'setTreeFolder', payload: { 
+                treeFolder: searchRootFolder,
+                selectedTreeItems: new Set()
+            }});
+        } else {
+            // No slash found - file is directly in the search root folder
+            fileName = filePath;
+            
+            console.log('Navigating to file:', fileName, 'in folder:', searchRootFolder);
+            
+            // Set the tree folder in global state and clear selections
+            gd({ type: 'setTreeFolder', payload: { 
+                treeFolder: searchRootFolder,
+                selectedTreeItems: new Set()
+            }});
+        }
+        
+        // Navigate to the TreeViewer page
+        app.goToPage(PageNames.treeViewer);
+        
+        // Optional: Scroll to the specific file after a short delay to ensure the page has loaded
+        // This uses the same scrolling mechanism as the TreeViewerPageOps
+        setTimeout(() => {
+            // Create a valid HTML ID from the filename (similar to createValidId in TreeViewerPageOps)
+            const validId = 'tree-' + fileName.replace(/[^a-zA-Z0-9_-]/g, '-');
+            const element = document.getElementById(validId);
+            if (element) {
+                element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }
+        }, 500);
     };
     
     // Group results by file to show only one instance per file
