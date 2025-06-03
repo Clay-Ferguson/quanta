@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { alertModal } from '../components/AlertModalComp';
+import { useGlobalState } from '../GlobalState';
 
 /**
  * SearchViewPage component for searching and displaying search results
@@ -11,6 +12,7 @@ import { alertModal } from '../components/AlertModalComp';
 export default function SearchViewPage() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
+    const gs = useGlobalState();
     
     useEffect(() => {
         util.resizeEffect();
@@ -25,7 +27,9 @@ export default function SearchViewPage() {
         setIsSearching(true);
         try {
             const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
-                query: searchQuery.trim()
+                query: searchQuery.trim(),
+                treeFolder: gs.treeFolder || '/',
+                docRootKey: gs.docRootKey
             });
             
             if (response) {

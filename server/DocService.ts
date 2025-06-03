@@ -1154,29 +1154,118 @@ class DocService {
 
     /**
      * Searches through documents for the given query string
-     * @param req - Express request object containing query in body
+     * @param req - Express request object containing query, treeFolder, and docRootKey in body
      * @param res - Express response object
      */
-    search = async (req: Request<any, any, { query: string }>, res: Response): Promise<void> => {
+    search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
-            const { query } = req.body;
+            const { query, treeFolder, docRootKey } = req.body;
             
             if (!query || typeof query !== 'string') {
                 res.status(400).json({ error: 'Query string is required' });
                 return;
             }
             
-            console.log(`Search query: "${query}"`);
+            if (!treeFolder || typeof treeFolder !== 'string') {
+                res.status(400).json({ error: 'Tree folder is required' });
+                return;
+            }
             
-            // For now, just print the search string as requested
-            console.log(`Search functionality called with query: ${query}`);
+            if (!docRootKey || typeof docRootKey !== 'string') {
+                res.status(400).json({ error: 'Document root key is required' });
+                return;
+            }
             
-            res.json({ 
-                success: true, 
-                message: `Search completed for query: "${query}"`,
-                query: query
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
+                res.status(500).json({ error: 'Invalid document root key' });
+                return;
+            }
+            
+            // Construct the absolute path to search within
+            const absoluteSearchPath = path.join(root, treeFolder);
+            
+            // Security check - ensure the path is within the allowed root
+            this.checkFileAccess(absoluteSearchPath, root);
+            
+            // Check if the search directory exists
+            if (!fs.existsSync(absoluteSearchPath)) {
+                res.status(404).json({ error: 'Search directory not found' });
+                return;
+            }
+            
+            console.log(`Search query: "${query}" in folder: "${absoluteSearchPath}"`);
+            
+            // Use grep to search for the query string recursively
+            const { exec } = await import('child_process');
+            
+            // Escape the query string for grep (literal string search, not regex)
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
+            // Build grep command for recursive search with line numbers and filenames
+            // -r: recursive, -n: line numbers, -H: always print filename, -i: case insensitive
+            // --include: only search in text files
+            const grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" "${escapedQuery}" "${absoluteSearchPath}"`;
+            
+            exec(grepCommand, (error, stdout, stderr) => {
+                if (error) {
+                    // grep returns exit code 1 when no matches found, which is not an error for us
+                    if (error.code === 1) {
+                        console.log('No matches found for search query');
+                        res.json({ 
+                            success: true, 
+                            message: `No matches found for query: "${query}"`,
+                            query: query,
+                            results: []
+                        });
+                        return;
+                    }
+                    
+                    console.error('Grep command error:', error);
+                    res.status(500).json({ error: 'Search command failed' });
+                    return;
+                }
+                
+                if (stderr) {
+                    console.warn('Grep stderr:', stderr);
+                }
+                
+                // Parse grep output
+                const results = [];
+                if (stdout.trim()) {
+                    const lines = stdout.trim().split('\n');
+                    
+                    for (const line of lines) {
+                        // Parse grep output format: filename:line_number:content
+                        const match = line.match(/^([^:]+):(\d+):(.*)$/);
+                        if (match) {
+                            const [, filePath, lineNumber, content] = match;
+                            // Make the file path relative to the search root
+                            const relativePath = path.relative(absoluteSearchPath, filePath);
+                            
+                            results.push({
+                                file: relativePath,
+                                line: parseInt(lineNumber),
+                                content: content.trim()
+                            });
+                            
+                            console.log(`Match found - File: ${relativePath}, Line: ${lineNumber}, Content: ${content.trim()}`);
+                        }
+                    }
+                }
+                
+                console.log(`Search completed. Found ${results.length} matches.`);
+                
+                res.json({ 
+                    success: true, 
+                    message: `Search completed for query: "${query}". Found ${results.length} matches.`,
+                    query: query,
+                    searchPath: treeFolder,
+                    results: results
+                });
             });
+            
         } catch (error) {
             svrUtil.handleError(error, res, 'Failed to perform search');
         }
