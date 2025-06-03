@@ -248,7 +248,7 @@ interface TopRightAdminCompsProps {
 function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, filteredTreeNodes, isLoading }: TopRightAdminCompsProps) {
     const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
     return (
-        <>
+        <div className="flex items-center gap-2">
             <label className="flex items-center cursor-pointer">
                 <input 
                     type="checkbox"
@@ -281,7 +281,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                     {itemsAreSelected && 
                         <button 
                             onClick={() => onCut(gs)}
-                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                             title="Cut selected items"
                         >
                         Cut
@@ -289,7 +289,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                     {!hasCutItems &&
                      <button 
                          onClick={() => onCutAll(gs, filteredTreeNodes)}
-                         className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                         className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                          title="Cut all items"
                      >
                     Cut All
@@ -338,7 +338,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             >
                 <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
             </button>
-        </>
+        </div>
     );
 }
 
