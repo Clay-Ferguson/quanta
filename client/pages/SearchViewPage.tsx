@@ -6,12 +6,20 @@ import { httpClientUtil } from '../HttpClientUtil';
 import { alertModal } from '../components/AlertModalComp';
 import { useGlobalState } from '../GlobalState';
 
+interface SearchResult {
+    file: string;
+    line: number;
+    content: string;
+}
+
 /**
  * SearchViewPage component for searching and displaying search results
  */
 export default function SearchViewPage() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
     const gs = useGlobalState();
     
     useEffect(() => {
@@ -30,19 +38,40 @@ export default function SearchViewPage() {
                 query: searchQuery.trim(),
                 treeFolder: gs.treeFolder || '/',
                 docRootKey: gs.docRootKey
-            });
+            }) as any;
             
-            if (response) {
+            if (response && response.success) {
                 console.log('Search response:', response);
-                await alertModal('Search completed successfully');
+                setSearchResults(response.results || []);
+                setLastSearchQuery(searchQuery.trim());
+            } else {
+                await alertModal('Search failed. No results found.');
+                setSearchResults([]);
             }
         } catch (error) {
             console.error('Search failed:', error);
             await alertModal('Search failed. Please try again.');
+            setSearchResults([]);
         } finally {
             setIsSearching(false);
         }
     };
+    
+    const fileClicked = (filePath: string) => {
+        // TODO: Implement file navigation logic
+        console.log('File clicked:', filePath);
+    };
+    
+    // Group results by file to show only one instance per file
+    const groupedResults = searchResults.reduce((acc, result) => {
+        if (!acc[result.file]) {
+            acc[result.file] = [];
+        }
+        acc[result.file].push(result);
+        return acc;
+    }, {} as Record<string, SearchResult[]>);
+    
+    const uniqueFiles = Object.keys(groupedResults);
     
     const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter' && !isSearching) {
@@ -87,10 +116,72 @@ export default function SearchViewPage() {
                 </div>
                 
                 <div className="flex-grow relative">
-                    <div className="absolute inset-0 w-full h-full bg-gray-800 text-gray-300 p-3 border border-gray-700 rounded">
-                        <div className="text-center text-gray-500">
-                            Search results will appear here
-                        </div>
+                    <div className="absolute inset-0 w-full h-full bg-gray-800 text-gray-300 p-3 border border-gray-700 rounded overflow-auto">
+                        {searchResults.length === 0 && !isSearching && !lastSearchQuery && (
+                            <div className="text-center text-gray-500">
+                                Search results will appear here
+                            </div>
+                        )}
+                        
+                        {searchResults.length === 0 && !isSearching && lastSearchQuery && (
+                            <div className="text-center text-gray-500">
+                                No results found for "{lastSearchQuery}"
+                            </div>
+                        )}
+                        
+                        {isSearching && (
+                            <div className="text-center text-gray-500">
+                                Searching...
+                            </div>
+                        )}
+                        
+                        {searchResults.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="text-sm text-gray-400 mb-4">
+                                    Found {searchResults.length} match{searchResults.length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for "{lastSearchQuery}"
+                                </div>
+                                
+                                {uniqueFiles.map((filePath) => {
+                                    const fileResults = groupedResults[filePath];
+                                    const fileName = filePath.split('/').pop() || filePath;
+                                    const isFolder = !fileName.includes('.');
+                                    
+                                    return (
+                                        <div 
+                                            key={filePath}
+                                            className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
+                                            onClick={() => fileClicked(filePath)}
+                                        >
+                                            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'} mb-2`}>
+                                                {fileName}
+                                            </div>
+                                            
+                                            <div className="text-xs text-gray-500 mb-2">
+                                                {filePath}
+                                            </div>
+                                            
+                                            {fileResults.length > 0 && (
+                                                <div className="mt-2 space-y-1">
+                                                    {fileResults.slice(0, 3).map((result, index) => (
+                                                        <div key={index} className="text-xs">
+                                                            <span className="text-gray-400">Line {result.line}:</span>
+                                                            <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
+                                                                {result.content.trim()}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {fileResults.length > 3 && (
+                                                        <div className="text-xs text-gray-500 italic">
+                                                            ... and {fileResults.length - 3} more match{fileResults.length - 3 !== 1 ? 'es' : ''}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
