@@ -1,6 +1,6 @@
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { util } from '../Util';
 import { httpClientUtil } from '../HttpClientUtil';
 import { alertModal } from '../components/AlertModalComp';
@@ -21,9 +21,14 @@ export default function SearchViewPage() {
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
     const gs = useGlobalState();
+    const searchInputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => {
         util.resizeEffect();
+        // Focus the search input when the component mounts
+        if (searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
     }, []);
     
     const handleSearch = async () => {
@@ -142,7 +147,7 @@ export default function SearchViewPage() {
     
     const uniqueFiles = Object.keys(groupedResults);
     
-    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter' && !isSearching) {
             handleSearch();
         }
@@ -165,10 +170,11 @@ export default function SearchViewPage() {
                     
                     <div className="flex gap-2">
                         <input
+                            ref={searchInputRef}
                             type="text"
                             value={gs.searchQuery || ''}
                             onChange={(e) => gd({ type: 'setSearchQuery', payload: { searchQuery: e.target.value }})}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={handleKeyDown}
                             placeholder="Enter your search query..."
                             className="flex-grow px-3 py-2 bg-gray-800 text-gray-300 border border-gray-700 rounded focus:outline-none focus:border-blue-500"
                             disabled={isSearching}
