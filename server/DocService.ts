@@ -1157,10 +1157,10 @@ class DocService {
      * @param req - Express request object containing query, treeFolder, and docRootKey in body
      * @param res - Express response object
      */
-    search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+    search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string; searchMode?: string }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
-            const { query, treeFolder, docRootKey } = req.body;
+            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY' } = req.body;
             
             if (!query || typeof query !== 'string') {
                 res.status(400).json({ error: 'Query string is required' });
@@ -1195,18 +1195,76 @@ class DocService {
                 return;
             }
             
-            console.log(`Search query: "${query}" in folder: "${absoluteSearchPath}"`);
+            console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Use grep to search for the query string recursively
             const { exec } = await import('child_process');
             
-            // Escape the query string for grep (literal string search, not regex)
-            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            let grepCommand: string;
             
-            // Build grep command for recursive search with line numbers and filenames
-            // -r: recursive, -n: line numbers, -H: always print filename, -i: case insensitive
-            // --include: only search in text files
-            const grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" "${escapedQuery}" "${absoluteSearchPath}"`;
+            if (searchMode === 'REGEX') {
+                // For REGEX mode, use the query as-is as a regex pattern
+                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -E "${query.replace(/"/g, '\\"')}" "${absoluteSearchPath}"`;
+            } else {
+                // For MATCH_ANY and MATCH_ALL, parse the query into search terms
+                let searchTerms: string[] = [];
+                
+                // Check if the query contains quotes
+                if (query.includes('"')) {
+                    // Extract quoted phrases and individual words
+                    const regex = /"([^"]+)"|(\S+)/g;
+                    let match;
+                    while ((match = regex.exec(query)) !== null) {
+                        if (match[1]) {
+                            // Quoted phrase
+                            searchTerms.push(match[1]);
+                        } else if (match[2] && !match[2].startsWith('"')) {
+                            // Unquoted word (not part of a quote)
+                            searchTerms.push(match[2]);
+                        }
+                    }
+                } else {
+                    // No quotes, split by spaces
+                    searchTerms = query.trim().split(/\s+/).filter(term => term.length > 0);
+                }
+                
+                if (searchTerms.length === 0) {
+                    res.status(400).json({ error: 'No valid search terms found' });
+                    return;
+                }
+                
+                if (searchMode === 'MATCH_ANY') {
+                    // For MATCH_ANY, find files that contain any of the terms anywhere in the file
+                    // Use -l flag to get just filenames, then get content with line numbers
+                    const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                    const regexPattern = escapedTerms.join('|');
+                    
+                    // First get the list of files that contain any of the terms
+                    const fileListCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -i -E "${regexPattern}" "${absoluteSearchPath}"`;
+                    
+                    // Then get the actual content with line numbers from those files
+                    grepCommand = `${fileListCommand} | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
+                } else { // MATCH_ALL
+                    // For MATCH_ALL, find files that contain all terms anywhere in the file
+                    // We'll do this by chaining grep commands to filter files step by step
+                    const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                    
+                    // Build a command that pipes through multiple greps to find files containing all terms
+                    // Use -Z option with grep to output null-terminated filenames, and -0 with xargs to handle them properly
+                    // This handles filenames with spaces correctly
+                    let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -i "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    
+                    // Chain additional greps for each remaining term
+                    // Use --no-run-if-empty to prevent xargs from running if there's no input
+                    for (let i = 1; i < escapedTerms.length; i++) {
+                        baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                    }
+                    
+                    // Now get the actual content with line numbers from the matching files
+                    // Use --no-run-if-empty to prevent xargs from running if there's no input
+                    grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
+                }
+            }
             
             exec(grepCommand, (error, stdout, stderr) => {
                 if (error) {

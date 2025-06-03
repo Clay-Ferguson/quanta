@@ -59,6 +59,7 @@ export interface GlobalState {
     searchQuery?: string;
     searchResults?: Array<{file: string, line: number, content: string}>;
     searchOriginFolder?: string;
+    searchMode?: 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL';
 }
 
 const initialState: GlobalState = {
@@ -101,6 +102,7 @@ const initialState: GlobalState = {
     searchQuery: '',
     searchResults: [],
     searchOriginFolder: '',
+    searchMode: 'MATCH_ANY',
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

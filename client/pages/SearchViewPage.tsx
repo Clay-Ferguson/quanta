@@ -43,7 +43,8 @@ export default function SearchViewPage() {
             const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
                 query: gs.searchQuery.trim(),
                 treeFolder: searchFolder,
-                docRootKey: gs.docRootKey
+                docRootKey: gs.docRootKey,
+                searchMode: gs.searchMode || 'MATCH_ANY'
             }) as any;
             
             if (response && response.success) {
@@ -168,7 +169,7 @@ export default function SearchViewPage() {
                         Search through documents and content
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         <input
                             ref={searchInputRef}
                             type="text"
@@ -179,6 +180,46 @@ export default function SearchViewPage() {
                             className="flex-grow px-3 py-2 bg-gray-800 text-gray-300 border border-gray-700 rounded focus:outline-none focus:border-blue-500"
                             disabled={isSearching}
                         />
+                        
+                        {/* Search Mode Radio Buttons */}
+                        <div className="flex gap-3 text-sm">
+                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="searchMode"
+                                    value="REGEX"
+                                    checked={gs.searchMode === 'REGEX'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                    disabled={isSearching}
+                                />
+                                <span>REGEX</span>
+                            </label>
+                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="searchMode"
+                                    value="MATCH_ANY"
+                                    checked={gs.searchMode === 'MATCH_ANY'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                    disabled={isSearching}
+                                />
+                                <span>Match Any</span>
+                            </label>
+                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="searchMode"
+                                    value="MATCH_ALL"
+                                    checked={gs.searchMode === 'MATCH_ALL'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                    disabled={isSearching}
+                                />
+                                <span>Match All</span>
+                            </label>
+                        </div>
                         
                         <button 
                             onClick={handleSearch}
@@ -213,7 +254,7 @@ export default function SearchViewPage() {
                         {(gs.searchResults || []).length > 0 && (
                             <div className="space-y-3">
                                 <div className="mb-4">
-                                    Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for "{lastSearchQuery}" in {gs.searchOriginFolder || '/'}
+                                    Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for [{lastSearchQuery}] in {gs.searchOriginFolder || '/'}
                                 </div>
                                 
                                 {uniqueFiles.map((filePath) => {
