@@ -678,3 +678,68 @@ export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "ex
     }
 };
 
+export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
+    if (gs.editingNode && gs.editingContent !== null) {
+        // Get the original filename and new filename
+        const originalName = gs.editingNode.name;
+        const newFileName = gs.newFileName || stripOrdinal(originalName);
+            
+        // Extract the numeric prefix from the original file name
+        const underscoreIdx = originalName.indexOf('_');
+        const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
+            
+        // Create the new full file name with the numeric prefix
+        let newFullFileName = numericPrefix + newFileName;
+
+        // if newFullName doesn't have a file any extension at all, add '.md' to it
+        if (!newFullFileName.includes('.')) {
+            newFullFileName += '.md';
+        }
+
+        // Find the node in treeNodes and update its content and name
+        const updatedNodes = treeNodes.map(node => 
+            node === gs.editingNode 
+                ? { ...node, content: gs.editingContent || '', name: newFullFileName }
+                : node
+        );
+        setTreeNodes(updatedNodes);
+            
+        // Clear editing state
+        gd({ type: 'clearFileEditingState', payload: { 
+            editingNode: null,
+            editingContent: null,
+            newFileName: null
+        }});
+
+        // Save to server with split=true parameter with a delay to ensure UI updates first
+        setTimeout(async () => {
+            await saveToServerWithSplit(gs, gs.editingNode!.name, gs.editingContent || '', newFullFileName);
+            await reRenderTree();
+        }, 500);
+    }
+};
+
+const saveToServerWithSplit = async (gs: GlobalState, filename: string, content: string, newFileName?: string) => {
+    try {
+        const treeFolder = gs.treeFolder || '/';
+        const requestBody = {
+            filename: filename,
+            content: content,
+            treeFolder: treeFolder,
+            newFileName: newFileName || filename,
+            docRootKey: gs.docRootKey,
+            split: true
+        };
+        const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
+        
+        if (response && response.success) {
+            await alertModal(response.message || 'File split successfully');
+        } else {
+            await alertModal('Error splitting file');
+        }
+    } catch (error) {
+        console.error('Error saving file to server with split:', error);
+        await alertModal('Error splitting file: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+};
+

@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 import { app } from '../AppService';
 
@@ -75,6 +75,7 @@ function EditFolder({
 
 interface EditFileProps {
     gs: any;
+    reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -88,6 +89,7 @@ interface EditFileProps {
  */
 function EditFile({ 
     gs, 
+    reRenderTree,
     treeNodes, 
     setTreeNodes, 
     handleFileNameChange, 
@@ -118,6 +120,12 @@ function EditFile({
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                 Save
+                </button>
+                <button
+                    onClick={() => handleSaveSplitClick(gs, treeNodes, setTreeNodes, reRenderTree)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                Split
                 </button>
                 <button
                     onClick={handleCancelClick}
@@ -297,7 +305,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                     {itemsAreSelected && 
                         <button 
                             onClick={() => onDelete(gs, treeNodes, setTreeNodes)}
-                            className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                            className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                             title="Delete selected items"
                         >
                         Delete
@@ -534,6 +542,7 @@ function TreeNodeComponent({
                     {isTextFile && (gs.editingNode === node ? 
                         <EditFile 
                             gs={gs} 
+                            reRenderTree={reRenderTree}
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 
                             handleFileNameChange={handleFileNameChange} 

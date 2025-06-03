@@ -188,10 +188,9 @@ class DocService {
      * @param req - Express request object containing filename, content, and optional newFileName in body
      * @param res - Express response object
      */
-    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string }>, res: Response): Promise<void> => {
-        console.log("Save File Request");
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
         try {
-            const { filename, content, treeFolder, docRootKey } = req.body;
+            const { filename, content, treeFolder, docRootKey, split } = req.body;
             let { newFileName } = req.body;
 
             // if filename has no extension, add .md extension
@@ -251,12 +250,61 @@ class DocService {
                 finalFilePath = newAbsoluteFilePath;
             }
 
-            // Write the content to the file (renamed or original)
+            // Write the content to the file (renamed or original) or split into multiple files
             this.checkFileAccess(finalFilePath, root);
-            fs.writeFileSync(finalFilePath, content, 'utf8');
             
-            console.log(`File saved successfully: ${finalFilePath}`);
-            res.json({ success: true, message: 'File saved successfully' });
+            if (split) {
+                // Split the content on '\n~\n' delimiter and create multiple files
+                const parts = content.split('\n~\n');
+                
+                if (parts.length > 1) {
+                    // Get the original file's ordinal and use it for the first part
+                    const originalOrdinal = this.getOrdinalFromName(path.basename(finalFilePath));
+                    
+                    // Shift down existing files to make room for the new split files
+                    const numberOfNewFiles = parts.length - 1; // -1 because original file stays in place
+                    this.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null);
+                    
+                    // Write each part as a separate file
+                    for (let i = 0; i < parts.length; i++) {
+                        const partContent = parts[i].trim(); // Remove any leading/trailing whitespace including tildes
+                        let partFilePath = finalFilePath;
+                        
+                        if (i > 0) {
+                            // For parts after the first, create new filenames with just the new ordinal
+                            const originalBaseName = path.basename(finalFilePath);
+                            
+                            // Calculate the new ordinal for this part
+                            const newOrdinal = originalOrdinal + i;
+                            const ordinalPrefix = newOrdinal.toString().padStart(4, '0');
+                            
+                            // Replace the old ordinal with the new one
+                            const underscoreIndex = originalBaseName.indexOf('_');
+                            const nameAfterUnderscore = originalBaseName.substring(underscoreIndex);
+                            const finalBaseName = ordinalPrefix + nameAfterUnderscore;
+                            
+                            partFilePath = path.join(path.dirname(finalFilePath), finalBaseName);
+                        }
+                        
+                        this.checkFileAccess(partFilePath, root);
+                        fs.writeFileSync(partFilePath, partContent, 'utf8');
+                        console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
+                    }
+                    
+                    console.log(`File split into ${parts.length} parts successfully`);
+                    res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
+                } else {
+                    // No split delimiter found, just save normally
+                    fs.writeFileSync(finalFilePath, content, 'utf8');
+                    console.log(`File saved successfully: ${finalFilePath}`);
+                    res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
+                }
+            } else {
+                // Normal save without splitting
+                fs.writeFileSync(finalFilePath, content, 'utf8');
+                console.log(`File saved successfully: ${finalFilePath}`);
+                res.json({ success: true, message: 'File saved successfully' });
+            }
         } catch (error) {
             svrUtil.handleError(error, res, 'Failed to save file');
         }
