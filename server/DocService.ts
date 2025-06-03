@@ -1244,7 +1244,8 @@ class DocService {
                     
                     // Then get the actual content with line numbers from those files
                     grepCommand = `${fileListCommand} | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
-                } else { // MATCH_ALL
+                } else { 
+                    // MATCH_ALL
                     // For MATCH_ALL, find files that contain all terms anywhere in the file
                     // We'll do this by chaining grep commands to filter files step by step
                     const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));

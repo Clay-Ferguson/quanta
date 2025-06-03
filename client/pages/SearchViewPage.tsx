@@ -14,6 +14,52 @@ interface SearchResult {
     content: string;
 }
 
+interface SearchResultItemProps {
+    filePath: string;
+    fileResults: SearchResult[];
+    onFileClick: (filePath: string) => void;
+}
+
+/**
+ * SearchResultItem component for displaying individual search result items
+ */
+function SearchResultItem({ filePath, fileResults, onFileClick }: SearchResultItemProps) {
+    const fileName = filePath.split('/').pop() || filePath;
+    const isFolder = !fileName.includes('.');
+    
+    return (
+        <div 
+            className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
+            onClick={() => onFileClick(filePath)}
+        >
+            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'} mb-2`}>
+                {filePath}
+            </div>
+            
+            {/* {fileName != filePath && <div className="text-xs text-gray-500 mb-2">
+                {filePath}
+            </div>} */}
+            
+            {fileResults.length > 0 && (
+                <div className="mt-2 space-y-1">
+                    {fileResults.slice(0, 3).map((result: SearchResult, index: number) => (
+                        <div key={index} className="text-xs">
+                            <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
+                                {result.content.trim()}
+                            </div>
+                        </div>
+                    ))}
+                    {fileResults.length > 3 && (
+                        <div className="text-xs text-gray-500 italic">
+                            ... and {fileResults.length - 3} more
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 /**
  * SearchViewPage component for searching and displaying search results
  */
@@ -257,44 +303,14 @@ export default function SearchViewPage() {
                                     Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for [{lastSearchQuery}] in {gs.searchOriginFolder || '/'}
                                 </div>
                                 
-                                {uniqueFiles.map((filePath) => {
-                                    const fileResults = groupedResults[filePath];
-                                    const fileName = filePath.split('/').pop() || filePath;
-                                    const isFolder = !fileName.includes('.');
-                                    
-                                    return (
-                                        <div 
-                                            key={filePath}
-                                            className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
-                                            onClick={() => fileClicked(filePath)}
-                                        >
-                                            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'} mb-2`}>
-                                                {filePath}
-                                            </div>
-                                            
-                                            {/* {fileName != filePath && <div className="text-xs text-gray-500 mb-2">
-                                                {filePath}
-                                            </div>} */}
-                                            
-                                            {fileResults.length > 0 && (
-                                                <div className="mt-2 space-y-1">
-                                                    {fileResults.slice(0, 3).map((result: SearchResult, index: number) => (
-                                                        <div key={index} className="text-xs">
-                                                            <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
-                                                                {result.content.trim()}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    {fileResults.length > 3 && (
-                                                        <div className="text-xs text-gray-500 italic">
-                                                            ... and {fileResults.length - 3} more
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                {uniqueFiles.map((filePath) => (
+                                    <SearchResultItem
+                                        key={filePath}
+                                        filePath={filePath}
+                                        fileResults={groupedResults[filePath]}
+                                        onFileClick={fileClicked}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
