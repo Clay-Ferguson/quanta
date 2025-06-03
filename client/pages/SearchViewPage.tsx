@@ -74,9 +74,7 @@ export default function SearchViewPage() {
         const lastSlashIndex = filePath.lastIndexOf('/');
         let searchRootFolder = gs.searchOriginFolder || '/';
         let fileName = filePath;
-        
-        // console.log('Search origin folder:', searchRootFolder, 'File path:', filePath);
-        
+                
         if (lastSlashIndex > 0) {
             // File is in a subfolder relative to the search root
             const relativeFolderPath = filePath.substring(0, lastSlashIndex);
@@ -88,9 +86,7 @@ export default function SearchViewPage() {
                 searchRootFolder = ''; // Convert root to empty string for proper joining
             }
             const targetFolderPath = `${searchRootFolder}/${relativeFolderPath}`;
-            
-            console.log('Navigating to file:', fileName, 'in folder:', targetFolderPath);
-            
+                        
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: targetFolderPath,
@@ -99,9 +95,7 @@ export default function SearchViewPage() {
         } else if (lastSlashIndex === 0) {
             // File is in root folder (relative to search root)
             fileName = filePath.substring(1);
-            
-            console.log('Navigating to file:', fileName, 'in folder:', searchRootFolder);
-            
+                        
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: searchRootFolder,
@@ -110,9 +104,7 @@ export default function SearchViewPage() {
         } else {
             // No slash found - file is directly in the search root folder
             fileName = filePath;
-            
-            console.log('Navigating to file:', fileName, 'in folder:', searchRootFolder);
-            
+                        
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: searchRootFolder,
@@ -159,7 +151,7 @@ export default function SearchViewPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Search"/>
+                <LogoBlockComp subText={`Search in ${gs.treeFolder}`}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>
@@ -214,8 +206,8 @@ export default function SearchViewPage() {
                         
                         {(gs.searchResults || []).length > 0 && (
                             <div className="space-y-3">
-                                <div className="text-sm text-gray-400 mb-4">
-                                    Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for "{lastSearchQuery}"
+                                <div className="mb-4">
+                                    Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for "{lastSearchQuery}" in {gs.searchOriginFolder || '/'}
                                 </div>
                                 
                                 {uniqueFiles.map((filePath) => {
@@ -230,18 +222,17 @@ export default function SearchViewPage() {
                                             onClick={() => fileClicked(filePath)}
                                         >
                                             <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'} mb-2`}>
-                                                {fileName}
-                                            </div>
-                                            
-                                            <div className="text-xs text-gray-500 mb-2">
                                                 {filePath}
                                             </div>
+                                            
+                                            {/* {fileName != filePath && <div className="text-xs text-gray-500 mb-2">
+                                                {filePath}
+                                            </div>} */}
                                             
                                             {fileResults.length > 0 && (
                                                 <div className="mt-2 space-y-1">
                                                     {fileResults.slice(0, 3).map((result: SearchResult, index: number) => (
                                                         <div key={index} className="text-xs">
-                                                            <span className="text-gray-400">Line {result.line}:</span>
                                                             <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
                                                                 {result.content.trim()}
                                                             </div>
@@ -249,7 +240,7 @@ export default function SearchViewPage() {
                                                     ))}
                                                     {fileResults.length > 3 && (
                                                         <div className="text-xs text-gray-500 italic">
-                                                            ... and {fileResults.length - 3} more match{fileResults.length - 3 !== 1 ? 'es' : ''}
+                                                            ... and {fileResults.length - 3} more
                                                         </div>
                                                     )}
                                                 </div>
