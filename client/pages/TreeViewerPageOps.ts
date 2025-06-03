@@ -527,7 +527,7 @@ export const onCut = (gs: GlobalState) => {
     }});        
 };
 
-export const onCutAll = (gs: GlobalState, treeNodes: TreeNode[]) => {
+export const onSelectAll = (gs: GlobalState, treeNodes: TreeNode[]) => {
     // Filter out nodes that are already cut
     const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
     
@@ -535,13 +535,9 @@ export const onCutAll = (gs: GlobalState, treeNodes: TreeNode[]) => {
         return;
     }
 
-    // Get the file names of all available nodes
-    const allFileNames = availableNodes.map(node => node.name);
-        
-    // Update global state to set cutItems (effectively selecting all and then cutting)
-    gd({ type: 'setCutAndClearSelections', payload: { 
-        cutItems: new Set<string>([...(gs.cutItems || []), ...allFileNames]),
-        selectedTreeItems: new Set<TreeNode>()
+    // Update global state to select all available nodes
+    gd({ type: 'setSelectedTreeItems', payload: { 
+        selectedTreeItems: new Set<TreeNode>(availableNodes)
     }});        
 };
 

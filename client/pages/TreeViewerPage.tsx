@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onSelectAll, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 import { app } from '../AppService';
 
@@ -296,11 +296,11 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         </button>}
                     {!hasCutItems &&
                      <button 
-                         onClick={() => onCutAll(gs, filteredTreeNodes)}
+                         onClick={() => onSelectAll(gs, filteredTreeNodes)}
                          className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                         title="Cut all items"
+                         title="Select all items"
                      >
-                    Cut All
+                    Sel. All
                      </button>}
                     {itemsAreSelected && 
                         <button 
@@ -311,6 +311,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         Delete
                         </button>}
                     {gs.selectedTreeItems && gs.selectedTreeItems.size >= 2 && 
+                     (Array.from(gs.selectedTreeItems) as TreeNode[]).every(node => node.type === 'text') && 
                         <button 
                             onClick={() => onJoin(gs, reRenderTree)}
                             className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
