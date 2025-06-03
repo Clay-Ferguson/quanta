@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 import { app } from '../AppService';
 
@@ -309,6 +309,14 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                             title="Delete selected items"
                         >
                         Delete
+                        </button>}
+                    {gs.selectedTreeItems && gs.selectedTreeItems.size >= 2 && 
+                        <button 
+                            onClick={() => onJoin(gs, reRenderTree)}
+                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                            title="Join selected files"
+                        >
+                        Join
                         </button>}
                 </div>
             }

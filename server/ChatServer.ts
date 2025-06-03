@@ -64,6 +64,7 @@ app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docS
 app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
 app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
 app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
+app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docSvc.joinFiles);
 app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docSvc.openFileSystemItem);
 app.post('/api/docs/search', httpServerUtil.verifyAdminHTTPSignature, docSvc.search);
 

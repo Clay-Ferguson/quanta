@@ -1377,6 +1377,101 @@ class DocService {
             svrUtil.handleError(error, res, 'Failed to perform search');
         }
     }
+
+    /**
+     * Joins multiple selected files by concatenating their content and saving to the first file
+     * @param req - Express request object containing filenames array, treeFolder and docRootKey in body
+     * @param res - Express response object
+     */
+    joinFiles = (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): void => {
+        try {
+            const { filenames, treeFolder, docRootKey } = req.body;
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
+                res.status(500).json({ error: 'bad root' });
+                return;
+            }
+
+            if (!filenames || !Array.isArray(filenames) || filenames.length < 2) {
+                res.status(400).json({ error: 'At least 2 filenames are required for joining' });
+                return;
+            }
+
+            if (!treeFolder) {
+                res.status(400).json({ error: 'Tree folder is required' });
+                return;
+            }
+
+            const absoluteFolderPath = path.join(root, treeFolder);
+            this.checkFileAccess(absoluteFolderPath, root);
+
+            // Check if all files exist and read their content
+            const fileData: { filename: string; ordinal: number; content: string }[] = [];
+            
+            for (const filename of filenames) {
+                const absoluteFilePath = path.join(absoluteFolderPath, filename);
+                this.checkFileAccess(absoluteFilePath, root);
+                
+                if (!fs.existsSync(absoluteFilePath)) {
+                    res.status(404).json({ error: `File not found: ${filename}` });
+                    return;
+                }
+
+                // Get ordinal for sorting
+                const ordinal = this.getOrdinalFromName(filename);
+                
+                // Read file content
+                let content = '';
+                try {
+                    content = fs.readFileSync(absoluteFilePath, 'utf8');
+                } catch (error) {
+                    console.warn(`Could not read file ${filename} as text:`, error);
+                }
+
+                fileData.push({ filename, ordinal, content });
+            }
+
+            // Sort files by ordinal
+            fileData.sort((a, b) => a.ordinal - b.ordinal);
+
+            // Concatenate content with "\n\n" separators
+            const joinedContent = fileData.map(file => file.content).join('\n\n');
+
+            // Save concatenated content to the first file (by ordinal)
+            const firstFile = fileData[0];
+            const firstFilePath = path.join(absoluteFolderPath, firstFile.filename);
+            
+            this.checkFileAccess(firstFilePath, root);
+            fs.writeFileSync(firstFilePath, joinedContent, 'utf8');
+            console.log(`Joined content saved to: ${firstFile.filename}`);
+
+            // Delete the remaining files
+            const deletedFiles: string[] = [];
+            for (let i = 1; i < fileData.length; i++) {
+                const fileToDelete = fileData[i];
+                const deleteFilePath = path.join(absoluteFolderPath, fileToDelete.filename);
+                
+                try {
+                    this.checkFileAccess(deleteFilePath, root);
+                    fs.unlinkSync(deleteFilePath);
+                    deletedFiles.push(fileToDelete.filename);
+                    console.log(`Deleted file: ${fileToDelete.filename}`);
+                } catch (error) {
+                    console.error(`Error deleting file ${fileToDelete.filename}:`, error);
+                }
+            }
+
+            res.json({ 
+                success: true, 
+                message: `Successfully joined ${fileData.length} files into ${firstFile.filename}`,
+                joinedFile: firstFile.filename,
+                deletedFiles: deletedFiles
+            });
+
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to join files');
+        }
+    }
 }
 
 export const docSvc = new DocService();

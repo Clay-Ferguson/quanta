@@ -743,3 +743,61 @@ const saveToServerWithSplit = async (gs: GlobalState, filename: string, content:
     }
 };
 
+export const onJoin = async (gs: GlobalState, reRenderTree: any) => {        
+    if (!gs.selectedTreeItems || gs.selectedTreeItems.size < 2) {
+        await alertModal("At least 2 files must be selected to join them.");
+        return;
+    }
+
+    // Filter selected items to only include files (not folders)
+    const selectedFiles = Array.from(gs.selectedTreeItems).filter(node => node.type === 'text');
+    
+    if (selectedFiles.length < 2) {
+        await alertModal("At least 2 text files must be selected to join them.");
+        return;
+    }
+
+    if (selectedFiles.length !== gs.selectedTreeItems.size) {
+        await alertModal("Only text files can be joined. Please ensure all selected items are text files.");
+        return;
+    }
+
+    const fileCount = selectedFiles.length;
+    const confirmText = `Are you sure you want to join ${fileCount} selected files? This will concatenate their content into the first file (by ordinal) and delete the remaining files. This action cannot be undone.`;
+    
+    if (!await confirmModal(confirmText)) {
+        return;
+    }
+
+    try {
+        // Prepare the file names for the server
+        const fileNames = selectedFiles.map(item => item.name);
+        const treeFolder = gs.treeFolder || '/';
+            
+        // Call server endpoint to join the files
+        const response = await httpClientUtil.secureHttpPost('/api/docs/join', {
+            filenames: fileNames,
+            treeFolder: treeFolder,
+            docRootKey: gs.docRootKey
+        });
+            
+        if (response && response.success) {
+            // Clear the selections
+            gd({ type: 'setSelectedTreeItems', payload: { 
+                selectedTreeItems: new Set<TreeNode>()
+            }});
+
+            // Refresh the tree view to show the updated state
+            await reRenderTree();
+
+            // Show success message
+            await alertModal(response.message || `Successfully joined ${fileCount} files into ${response.joinedFile || 'the first file'}.`);
+        } else {
+            await alertModal("Error joining files: " + (response?.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error joining files:', error);
+        await alertModal("Error joining files: " + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+};
+
