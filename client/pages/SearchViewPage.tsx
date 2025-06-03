@@ -34,29 +34,34 @@ export default function SearchViewPage() {
         
         setIsSearching(true);
         try {
+            const searchFolder = gs.treeFolder || '/';
             const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
                 query: gs.searchQuery.trim(),
-                treeFolder: gs.treeFolder || '/',
+                treeFolder: searchFolder,
                 docRootKey: gs.docRootKey
             }) as any;
             
             if (response && response.success) {
                 console.log('Search response:', response);
                 gd({ type: 'setSearchResults', payload: { 
-                    searchResults: response.results || []
+                    searchResults: response.results || [],
+                    searchOriginFolder: searchFolder
                 }});
                 setLastSearchQuery(gs.searchQuery.trim());
             } else {
                 await alertModal('Search failed. No results found.');
                 gd({ type: 'setSearchResults', payload: { 
-                    searchResults: []
+                    searchResults: [],
+                    searchOriginFolder: searchFolder
                 }});
             }
         } catch (error) {
             console.error('Search failed:', error);
             await alertModal('Search failed. Please try again.');
+            const searchFolder = gs.treeFolder || '/';
             gd({ type: 'setSearchResults', payload: { 
-                searchResults: []
+                searchResults: [],
+                searchOriginFolder: searchFolder
             }});
         } finally {
             setIsSearching(false);
@@ -65,10 +70,12 @@ export default function SearchViewPage() {
     
     const fileClicked = (filePath: string) => {
         // Parse the file path to extract the folder path and filename
-        // Note: filePath is relative to the current treeFolder where the search was performed
+        // Note: filePath is relative to the searchOriginFolder where the search was performed
         const lastSlashIndex = filePath.lastIndexOf('/');
-        let searchRootFolder = gs.treeFolder || '/';
+        let searchRootFolder = gs.searchOriginFolder || '/';
         let fileName = filePath;
+        
+        // console.log('Search origin folder:', searchRootFolder, 'File path:', filePath);
         
         if (lastSlashIndex > 0) {
             // File is in a subfolder relative to the search root

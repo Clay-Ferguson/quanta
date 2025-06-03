@@ -58,6 +58,7 @@ export interface GlobalState {
     viewWidth?: 'narrow' | 'medium' | 'wide';
     searchQuery?: string;
     searchResults?: Array<{file: string, line: number, content: string}>;
+    searchOriginFolder?: string;
 }
 
 const initialState: GlobalState = {
@@ -99,6 +100,7 @@ const initialState: GlobalState = {
     viewWidth: 'medium',
     searchQuery: '',
     searchResults: [],
+    searchOriginFolder: '',
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
