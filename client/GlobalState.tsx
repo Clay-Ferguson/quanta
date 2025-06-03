@@ -60,6 +60,7 @@ export interface GlobalState {
     searchResults?: Array<{file: string, line: number, content: string}>;
     searchOriginFolder?: string;
     searchMode?: 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL';
+    highlightedFolderName?: string | null;
 }
 
 const initialState: GlobalState = {
@@ -103,6 +104,7 @@ const initialState: GlobalState = {
     searchResults: [],
     searchOriginFolder: '',
     searchMode: 'MATCH_ANY',
+    highlightedFolderName: null,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

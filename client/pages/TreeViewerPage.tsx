@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, insertFile, insertFolder, onCut, onCutAll, onDelete, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 import { app } from '../AppService';
 
@@ -430,9 +430,33 @@ function TreeNodeComponent({
     const isFolder = node.type === 'folder';
     const isBinary = node.type === 'binary';
 
+    // Check if this is the highlighted folder that we came up from
+    // Compare the stripped names (without ordinal prefix) for exact match
+    const isHighlightedFolder = isFolder && gs.highlightedFolderName && 
+        stripOrdinal(node.name) === gs.highlightedFolderName;
+    
+    // Determine the border class based on whether this is highlighted
+    const getBorderClass = () => {
+        let classes = "flex items-start gap-3 pl-2"; // Always add left padding
+        
+        // Add left border highlighting for folders we came up from
+        if (isHighlightedFolder) {
+            classes += " border-l-4 border-l-green-400";
+        } else {
+            classes += " border-l-4 border-l-transparent";
+        }
+        
+        // Keep the green underline in edit mode for all items
+        if (gs.editMode) {
+            classes += " border-b-2 border-b-green-400";
+        }
+        
+        return classes;
+    };
+
     return (
         <div id={validId} key={validId}>
-            <div className={gs.editMode ? "flex items-start gap-3 border-b-2 border-green-400" : "flex items-start gap-3"}>
+            <div className={getBorderClass()}>
                 {gs.editMode && 
                     <div className="flex-shrink-0 pt-1">
                         <input

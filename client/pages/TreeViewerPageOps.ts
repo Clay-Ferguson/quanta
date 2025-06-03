@@ -76,10 +76,11 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
     }
     const newFolder = `${curFolder}/${folderName}`;
         
-    // Clear selections when navigating to a new folder
+    // Clear selections and highlighted folder when navigating to a new folder
     gd({ type: 'setTreeFolder', payload: { 
         treeFolder: newFolder,
-        selectedTreeItems: new Set<TreeNode>()
+        selectedTreeItems: new Set<TreeNode>(),
+        highlightedFolderName: null
     }});
 };
 
@@ -113,20 +114,22 @@ export const handleParentClick = (gs: GlobalState) => {
         folderToScrollTo = curFolder.substring(lastSlashIdx + 1);
         const parentFolder = curFolder.substring(0, lastSlashIdx);
         
-        // Clear selections when navigating to parent
+        // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
             treeFolder: parentFolder,
-            selectedTreeItems: new Set<TreeNode>()
+            selectedTreeItems: new Set<TreeNode>(),
+            highlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
     } else if (lastSlashIdx === 0 && curFolder.length > 1) {
         // If we're in a direct subfolder of root, go to root
         // Extract the folder name we're currently in
         folderToScrollTo = curFolder.substring(1); // Remove leading slash
         
-        // Clear selections when navigating to parent
+        // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
             treeFolder: '/',
-            selectedTreeItems: new Set<TreeNode>()
+            selectedTreeItems: new Set<TreeNode>(),
+            highlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
     }
     

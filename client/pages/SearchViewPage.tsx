@@ -142,7 +142,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: targetFolderPath,
-                selectedTreeItems: new Set()
+                selectedTreeItems: new Set(),
+                highlightedFolderName: null
             }});
         } else if (lastSlashIndex === 0) {
             // File is in root folder (relative to search root)
@@ -151,7 +152,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: searchRootFolder,
-                selectedTreeItems: new Set()
+                selectedTreeItems: new Set(),
+                highlightedFolderName: null
             }});
         } else {
             // No slash found - file is directly in the search root folder
@@ -160,7 +162,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 treeFolder: searchRootFolder,
-                selectedTreeItems: new Set()
+                selectedTreeItems: new Set(),
+                highlightedFolderName: null
             }});
         }
         
