@@ -483,7 +483,7 @@ function TreeNodeComponent({
                             {gs.editingNode !== node &&
                                 <>
                                     <div 
-                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
+                                        className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg transition-colors flex-grow"
                                         onClick={() => handleFolderClick(gs, node.name)}
                                     >
                                         <FontAwesomeIcon 
@@ -503,7 +503,9 @@ function TreeNodeComponent({
                                         }
                                     </div>
                                     {gs.editMode && 
-                                        <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
+                                        <div className="mt-3">
+                                            <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
+                                        </div>
                                     }
                                 </>
                             }
