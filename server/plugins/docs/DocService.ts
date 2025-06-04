@@ -1,10 +1,10 @@
-import { TreeNode } from "../common/types/CommonTypes.js";
+import { TreeNode } from "../../../common/types/CommonTypes.js";
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import {  TreeRender_Response } from "../common/types/EndpointTypes.js";
-import { svrUtil } from "./ServerUtil.js";
-import { config } from "../common/Config.js";
+import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
+import { svrUtil } from "../../ServerUtil.js";
+import { config } from "../../../common/Config.js";
 
 class DocService {
     

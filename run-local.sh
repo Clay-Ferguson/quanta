@@ -5,9 +5,9 @@ export CONFIG_FILE="./config-local.yaml"
 ./kill.sh
 
 # Start the Node.js app in a new session (completely detached)
-echo "Starting new ChatServer.js process..."
+echo "Starting new AppServer.js process..."
 # Note: The settid and nohup is to ensure the process runs independently of the terminal session
-setsid nohup /home/clay/.nvm/versions/node/v22.2.0/bin/node dist/server/ChatServer.js > quanta-chat.log 2>&1 &
+setsid nohup /home/clay/.nvm/versions/node/v22.2.0/bin/node dist/server/AppServer.js > quanta-chat.log 2>&1 &
 
 # Get the process ID of the last background process
 PID=$!

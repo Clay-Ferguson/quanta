@@ -1,4 +1,4 @@
-import { FileBase64Intf, UserProfile } from "../../common/types/CommonTypes.js";
+import { FileBase64Intf, UserProfile } from "../../../../common/types/CommonTypes.js";
 import { dbMgr } from "./DBManager.js";
 
 /**

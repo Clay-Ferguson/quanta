@@ -1,4 +1,4 @@
-import { RoomInfo } from "../../common/types/CommonTypes.js";
+import { RoomInfo } from "../../../../common/types/CommonTypes.js";
 import { Transactional } from "./Transactional.js";
 import { dbMgr } from "./DBManager.js";
 

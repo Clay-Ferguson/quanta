@@ -1,8 +1,8 @@
 import {WebSocketServer, WebSocket} from 'ws';
-import {crypt} from '../common/Crypto.js';
-import {canon} from '../common/Canonicalizer.js';
-import { User } from '../common/types/CommonTypes.js';
-import { WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../common/types/WebRTCTypes.js';
+import {crypt} from '../../../common/Crypto.js';
+import {canon} from '../../../common/Canonicalizer.js';
+import { User } from '../../../common/types/CommonTypes.js';
+import { WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../../../common/types/WebRTCTypes.js';
 import { dbMessages } from './db/DBMessages.js';
 import { dbUsers } from './db/DBUsers.js';
 
@@ -380,7 +380,7 @@ export default class WebRTCServer {
             console.error("UNHANDLED PROMISE REJECTION:", reason);
         });
 
-        console.log("ChatServer initialization complete");
+        console.log("AppServer initialization complete");
     }
 
     /**

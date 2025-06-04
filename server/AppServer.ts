@@ -3,11 +3,11 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import { httpServerUtil } from '../common/HttpServerUtil.js';
-import {chatSvc} from './ChatService.js';
-import { rtc } from './WebRTCServer.js';
+import {chatSvc} from './plugins/chat/ChatService.js';
+import { rtc } from './plugins/chat/WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
-import { docSvc } from './DocService.js';
-import { ssg } from './SSGService.js';
+import { docSvc } from './plugins/docs/DocService.js';
+import { ssg } from './plugins/docs/SSGService.js';
 import { config } from '../common/Config.js'; 
 
 logInit();

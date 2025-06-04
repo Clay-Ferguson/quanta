@@ -8,7 +8,7 @@ export CONFIG_FILE="./config-prod.yaml"
 sudo systemctl stop nginx
 
 # Note: the -E flag preserves the environment variables
-sudo -E node dist/server/ChatServer.js
+sudo -E node dist/server/AppServer.js
 
 read -p "Quanta Chat Ended. press ENTER to exit..."
 

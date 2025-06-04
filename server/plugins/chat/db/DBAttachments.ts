@@ -1,4 +1,4 @@
-import { AttachmentInfo, FileBlob } from "../../common/types/CommonTypes.js";
+import { AttachmentInfo, FileBlob } from "../../../../common/types/CommonTypes.js";
 import { dbMgr } from "./DBManager.js";
 
 /**

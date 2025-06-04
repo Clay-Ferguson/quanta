@@ -26,7 +26,7 @@ The `GlobalState.tsx` file is where our react global state is defined, and defau
 
 For this first step, here are the instructions to the AI Agent for what to do:
 
-* Create the 'get' method in 'ChatServer.ts' that calls a Controller method (that you'll create) named 'treeRender'.
+* Create the 'get' method in 'AppServer.ts' that calls a Controller method (that you'll create) named 'treeRender'.
 * The 'treeRender' should return an array of objects representing each 'file' that was found in the 'treeFolder'
 * The array should be properly typed with each element in the array being a 'TreeNode' type.
 * The TreeNode type (that you will define), will have, 'createTime (number), modifyTime (number), content (string), type (string)'.
@@ -34,7 +34,7 @@ For this first step, here are the instructions to the AI Agent for what to do:
 * The TreeNode items will also be sorted alphabetically by filename.
 * Additional Criteria for files: We only consider files that are named like "NNNNN_" where N is a digit. We allow any number of digits followed by the underscore, using this JavaScript `if (!/^\d+_/.test(file)) {...`. This is because the file browser we're creating expects all the files/folders to be numbered, for persistent positional ordering.
 
-Summary: So we're just creating a way to let the browser/client request a directory listing and we're sending back the array that represents the files and folders. Be sure to put the implementation itself in the 'Controller.ts' file, not in the 'ChatServer.ts' file. By the way, please don't try to run the app yourself, to test this stuff. Just write the code and I'll run and test it.
+Summary: So we're just creating a way to let the browser/client request a directory listing and we're sending back the array that represents the files and folders. Be sure to put the implementation itself in the 'Controller.ts' file, not in the 'AppServer.ts' file. By the way, please don't try to run the app yourself, to test this stuff. Just write the code and I'll run and test it.
 
 STATUS UPDATE: Step 1 has been completed. `TreeRender_Response` is the type of what this endpoint responds with.
 
@@ -74,7 +74,7 @@ That will complete this step. Don't try to implement the server call to actually
 
 Building on Step 7, we can now implement the code to save the edited file content to the server. Based on all of the above you probably can do this without my guidance, but I'll give some info about my preferences to how to implement:
 
-* Server side endpoint will be an HTTP POST call to endpoint `/api/docs/save-file/`. We'll be posting up an object with containing two properties: 1) filename, and 2) content. We're of course assuming this is a text file we're saving, so none of this needs to be binary content but just string content. You'll simply write the content to the file. Again do the actual logic in `Controller.ts` by creating a new controller method named `saveFile` and calling that controller function from the `ChatServer.ts` file.
+* Server side endpoint will be an HTTP POST call to endpoint `/api/docs/save-file/`. We'll be posting up an object with containing two properties: 1) filename, and 2) content. We're of course assuming this is a text file we're saving, so none of this needs to be binary content but just string content. You'll simply write the content to the file. Again do the actual logic in `Controller.ts` by creating a new controller method named `saveFile` and calling that controller function from the `AppServer.ts` file.
 
 * On the client, to call this server save method, create another new method in our component called `saveToServer` which does the call to the server to post up the new file content, and then call that from our existing save handler, but put it into a timer to delay the call to the server for half a second, so that nothign blocks the GUI from updating instantly. This delay is probably not needed becasue our state updater probably already takes care of it, but let's use a delay timer for the server call regardless.
 
