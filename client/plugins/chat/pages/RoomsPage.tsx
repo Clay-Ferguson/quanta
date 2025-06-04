@@ -57,7 +57,7 @@ export default function RoomsPage() {
                                                         {room.name}
                                                     </td>
                                                     <td className="px-4 py-2 whitespace-nowrap text-right">
-                                                        {gs.roomName===room.name && gs.connected ? (
+                                                        {gs.chatRoom===room.name && gs.chatConnected ? (
                                                             <button 
                                                                 onClick={appRooms.disconnect}
                                                                 className="btn-danger mr-2"

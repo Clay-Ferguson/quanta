@@ -81,11 +81,10 @@ class WebRTC {
      */
     rtcStateChange = () => {
         const participants = rtc.participants || new Map<string, User>();
-        const connected = rtc.connected || false;
         gd({type: 'updateRtcState', 
             payload: { 
                 participants,
-                connected
+                chatConnected: rtc.connected || false
             }
         });
     }

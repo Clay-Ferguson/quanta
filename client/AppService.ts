@@ -113,7 +113,7 @@ export class AppService {
     applyStateRules = (gs: GlobalState) => {
         this.dCount = 0;
         // If not connected show the header to user cannot get confused/lost
-        if (!gs.connected) {
+        if (!gs.chatConnected) {
             gs.headerExpanded = true;
         }
     }
@@ -126,8 +126,8 @@ export class AppService {
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
         const userName: string= await idb.getItem(DBKeys.userName);
-        const contacts: Contact[] = await idb.getItem(DBKeys.contacts);
-        const roomName: string = await idb.getItem(DBKeys.roomName);
+        const chatContacts: Contact[] = await idb.getItem(DBKeys.chatContacts);
+        const chatRoom: string = await idb.getItem(DBKeys.chatRoom);
         const saveToServer: boolean = await idb.getItem(DBKeys.saveToServer, true) === true;
         const daysOfHistory: number = await idb.getItem(DBKeys.daysOfHistory) || 30;
         const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
@@ -141,8 +141,8 @@ export class AppService {
 
         const state: GlobalState = {
             userName,
-            contacts,
-            roomName,
+            chatContacts,
+            chatRoom,
             saveToServer,
             daysOfHistory,
             roomHistory,

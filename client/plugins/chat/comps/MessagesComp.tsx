@@ -30,8 +30,8 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
 
     // For efficiency, we create a map of contacts by public key, so we can quickly look them up by public key.
     const contactsByPublicKey = new Map<string, Contact>();
-    if (gs.contacts) {
-        gs.contacts.forEach((contact) => {
+    if (gs.chatContacts) {
+        gs.chatContacts.forEach((contact) => {
             contactsByPublicKey.set(contact.publicKey, contact);
         });
     }

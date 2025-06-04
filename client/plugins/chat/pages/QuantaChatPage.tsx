@@ -18,8 +18,8 @@ export default function QuantaChatPage() {
     useEffect(() => util.resizeEffect(), []);
 
     // Show not connected message if user is not connected
-    if (!gs.connected) {
-        if (!gs.appInitialized || gs.connecting) {
+    if (!gs.chatConnected) {
+        if (!gs.appInitialized || gs.chatConnecting) {
             mainComp = null;
         }
         else {

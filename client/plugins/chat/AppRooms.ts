@@ -140,13 +140,13 @@ class AppRooms {
         if (!await confirmModal("Clear all chat history for room?")) return;
         
         let _gs = gs();
-        if (!_gs.connected) {
+        if (!_gs.chatConnected) {
             console.log("Not connected, cannot clear messages.");
             return;
         }
 
         // if deleting current room disconnect
-        if (roomName===_gs.roomName) {
+        if (roomName===_gs.chatRoom) {
             await this.disconnect();
             _gs = gs();
             _gs.messages = []; 
@@ -176,12 +176,12 @@ class AppRooms {
     restoreConnection = async () => {
         const userName = await idb.getItem(DBKeys.userName);
         const keyPair = await idb.getItem(DBKeys.keyPair);
-        const roomName = await idb.getItem(DBKeys.roomName);
-        const connected = await idb.getItem(DBKeys.connected);
+        const roomName = await idb.getItem(DBKeys.chatRoom);
+        const chatConnected = await idb.getItem(DBKeys.chatConnected);
     
         // We don't auto connect if a page was specified, unless it's the Quanta Chat page.
         // todo-0: this probably need to be reevaluated based on new plugin system
-        if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && connected) {
+        if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && chatConnected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
             await this.connect(userName, keyPair, roomName);
         }
@@ -200,7 +200,7 @@ class AppRooms {
         keyPair = keyPair || _gs.keyPair!;
     
         _gs = gd({ type: 'connect', payload: { 
-            connecting: true
+            chatConnecting: true
         }});
     
         let messages = await appMessages.loadRoomMessages(roomName);
@@ -208,8 +208,8 @@ class AppRooms {
         const success = await rtc._connect(userName!, keyPair, roomName);
         if (!success) {
             gd({ type: 'connectTooSoon', payload: { 
-                connected: false,
-                connecting: false
+                chatConnected: false,
+                chatConnecting: false
             }});
             return;
         }
@@ -218,14 +218,14 @@ class AppRooms {
         const roomHistory: RoomHistoryItem[] = await appRooms.updateRoomHistory(roomName);
         gd({ type: 'connect', payload: { 
             userName,
-            roomName,
+            chatRoom: roomName,
             messages,
-            connected: true,
-            connecting: false,
+            chatConnected: true,
+            chatConnecting: false,
             roomHistory,
             pages: app.setTopPage(gs(), PageNames.quantaChat)
         }});
-        await idb.setItem(DBKeys.connected, true);
+        await idb.setItem(DBKeys.chatConnected, true);
     
         // DO NOT DELETE
         // Not currently used. We send all directly to server now, in one single call, BUT we may need to do something similar to this for pure P2P in the future.
@@ -244,9 +244,9 @@ class AppRooms {
         gd({ type: 'disconnect', payload: { 
             messages: [], 
             participants: new Map<string, User>(), 
-            connected: false, 
+            chatConnected: false, 
         }});
-        await idb.setItem(DBKeys.connected, false);
+        await idb.setItem(DBKeys.chatConnected, false);
     }
 
     /**
@@ -257,10 +257,10 @@ class AppRooms {
      */
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
         gd({ type: `setRoomAndUser`, payload: { 
-            roomName, userName
+            chatRoom: roomName, userName
         }});
         // Save the keyPair to IndexedDB
-        await idb.setItem(DBKeys.roomName, roomName);
+        await idb.setItem(DBKeys.chatRoom, roomName);
         await idb.setItem(DBKeys.userName, userName);
     }        
 }

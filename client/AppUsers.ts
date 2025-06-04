@@ -191,25 +191,25 @@ class AppUsers {
      */
     addContact = async (user: User) => {
         const _gs = gs();
-        if (!_gs.contacts) {
+        if (!_gs.chatContacts) {
             console.warn('No contacts available to add a new contact');
             return;
         }
     
         // Check if the user is already in the contacts
-        const existingContact = _gs.contacts!.find((contact: Contact) => contact.publicKey === user.publicKey);
+        const existingContact = _gs.chatContacts!.find((contact: Contact) => contact.publicKey === user.publicKey);
         if (existingContact) {
             console.warn('User is already in contacts');
             return;
         }
     
         // Add the new contact
-        _gs.contacts!.push({
+        _gs.chatContacts!.push({
             publicKey: user.publicKey,
             alias: user.name,
         });
 
-        await idb.setItem(DBKeys.contacts, _gs.contacts);
+        await idb.setItem(DBKeys.chatContacts, _gs.chatContacts);
         gd({ type: 'addContact', payload: _gs});
     }    
 }

@@ -6,15 +6,19 @@ export enum DBKeys {
     userName = 'userName',
     userDescription = 'userDescription',
     userAvatar = 'userAvatar',
-    roomName = 'roomName',
-    contacts = 'contacts',
+    chatRoom = 'chatRoom',
+    chatContacts = 'chatContacts',
     keyPair = 'keyPair',
     roomPrefix = 'room_',
-    connected = 'connected',
     saveToServer = 'saveToServer',
     daysOfHistory = 'daysOfHistory',
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',
+
+    // chat plugin
+    chatConnected = 'chatConnected',
+
+    // docs plugin
     docsViewWidth = 'docsViewWidth',
     docsEditMode = 'docsEditMode',
     docsMetaMode = 'docsMetaMode',

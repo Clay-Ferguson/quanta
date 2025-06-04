@@ -132,7 +132,7 @@ export default function RoomsAdminComp() {
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.name}</td>
                                     <td className="px-4 py-2 text-sm text-gray-300">{room.messageCount}</td>
                                     <td className="px-4 py-2 text-sm text-gray-300">
-                                        {gs.roomName===room.name && gs.connected ? (
+                                        {gs.chatRoom===room.name && gs.chatConnected ? (
                                             <button 
                                                 onClick={appRooms.disconnect}
                                                 className="btn-danger mr-2"

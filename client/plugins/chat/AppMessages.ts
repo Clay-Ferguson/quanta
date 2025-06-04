@@ -43,7 +43,7 @@ export class AppMessages {
         let _gs = gs();
         
         // Handle deletion for the currently active room
-        if (roomName == _gs.roomName) {
+        if (roomName == _gs.chatRoom) {
             const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
             if (messageIndex !== undefined && messageIndex >= 0) {
                 _gs.messages!.splice(messageIndex, 1);
@@ -78,12 +78,12 @@ export class AppMessages {
         if (messageIndex !== undefined && messageIndex >= 0) {
             _gs.messages!.splice(messageIndex, 1);
             _gs = gd({ type: 'deleteMessage', payload: _gs});
-            this.saveMessages(_gs.roomName!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.messages!);
 
             // Make the secure POST request with body
             await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
                 messageId,
-                roomName: _gs.roomName!,
+                roomName: _gs.chatRoom!,
                 publicKey: _gs.keyPair!.publicKey
             });
         }
@@ -123,7 +123,7 @@ export class AppMessages {
                 _gs = gd({ type: 'persistMessage', payload: _gs});
     
                 // persist in IndexedDB
-                await this.saveMessages(_gs.roomName!, _gs.messages!);
+                await this.saveMessages(_gs.chatRoom!, _gs.messages!);
     
                 setTimeout(async () => {
                     const _gs = gs();
@@ -164,7 +164,7 @@ export class AppMessages {
         if (message) {
             message.state = MessageStates.SAVED;
             _gs = gd({ type: 'acknowledgeMessage', payload: _gs});
-            await this.saveMessages(_gs.roomName!, _gs.messages!);
+            await this.saveMessages(_gs.chatRoom!, _gs.messages!);
             console.log(`Message ID ${id} acknowledged`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
@@ -206,7 +206,7 @@ export class AppMessages {
             }
     
             _gs = gd({ type: 'persistMessage', payload: _gs});
-            this.saveMessages(_gs.roomName!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.messages!);
     }
     
     /**
@@ -282,7 +282,7 @@ export class AppMessages {
         gd({ type: 'setMessages', payload: { messages }});
     
         // Save to IndexedDB
-        this.saveMessages(gs().roomName!, messages);
+        this.saveMessages(gs().chatRoom!, messages);
     }
 
     /**
@@ -316,7 +316,7 @@ export class AppMessages {
                 
             // Update the global state and save messages after resending
             _gs = gd({ type: 'resendMessages', payload: _gs });
-            this.saveMessages(_gs.roomName!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.messages!);
         } else {
             console.log('No unsent messages to resend');
         }
@@ -545,7 +545,7 @@ export class AppMessages {
                         _gs.messages = _gs.messages!.slice(countToRemove);
     
                         // Save the pruned messages
-                        appMessages.saveMessages(_gs.roomName!, _gs.messages!);
+                        appMessages.saveMessages(_gs.chatRoom!, _gs.messages!);
                         console.log(`Removed ${countToRemove} old messages due to storage constraints`);
                 }
             }

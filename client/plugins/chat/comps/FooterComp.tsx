@@ -55,7 +55,7 @@ export default function FooterComp() {
     useEffect(() => {
         const handlePaste = (e: ClipboardEvent) => {
             // Skip if not connected
-            if (!gs.connected) return;
+            if (!gs.chatConnected) return;
             
             // Skip if nowhere to deliver
             const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
@@ -79,7 +79,7 @@ export default function FooterComp() {
         return () => {
             document.removeEventListener('paste', handlePaste);
         };
-    }, [gs.connected, gs.participants, gs.saveToServer]);
+    }, [gs.chatConnected, gs.participants, gs.saveToServer]);
     
     const messageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
@@ -112,7 +112,7 @@ export default function FooterComp() {
     };
     
     const send = async () => {
-        if ((!message.trim() && selectedFiles.length === 0) || !gs.connected) {
+        if ((!message.trim() && selectedFiles.length === 0) || !gs.chatConnected) {
             console.log("Not connected or empty message with no attachments, not sending.");
             return;
         }
@@ -145,7 +145,7 @@ export default function FooterComp() {
 
     const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
     let textareaPlaceholder = '';
-    if (gs.connected) {
+    if (gs.chatConnected) {
         if (nowhereToDeliver) {
             textareaPlaceholder = "No one is in this room, to send messages. Select 'Save Messages on Server' option in Settings to send now."
         }
@@ -174,12 +174,12 @@ export default function FooterComp() {
                     onChange={messageChange}
                     placeholder={textareaPlaceholder} 
                     className="flex-grow rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm p-2 min-h-[40px] max-h-[200px] resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-800"
-                    disabled={!gs.connected || nowhereToDeliver}
+                    disabled={!gs.chatConnected || nowhereToDeliver}
                 />
                 <button 
                     className="bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-md px-4 py-2 ml-2 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700"
                     onClick={fileSelect}
-                    disabled={!gs.connected}
+                    disabled={!gs.chatConnected}
                     title={selectedFiles.length === 0 ? 'Attach files' : `${selectedFiles.length} file(s) attached`}
                 >
                     {selectedFiles.length ? `📎(${selectedFiles.length})` : '📎'}
@@ -187,7 +187,7 @@ export default function FooterComp() {
                 <button 
                     className="bg-blue-600 hover:bg-blue-700 text-gray-100 rounded-md px-4 py-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={send}
-                    disabled={!gs.connected}
+                    disabled={!gs.chatConnected}
                 >
                     Send
                 </button>

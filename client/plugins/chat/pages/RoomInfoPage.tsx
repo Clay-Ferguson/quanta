@@ -14,7 +14,7 @@ export default function RoomInfoPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);
     
-    if (!gs.roomName) {
+    if (!gs.chatRoom) {
         return null;
     }
 
@@ -29,7 +29,7 @@ export default function RoomInfoPage() {
             <div id="roomInfo" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 <div id="roomInfoComp" className="space-y-3">
                     <h3 className="font-semibold">
-                        Room: {gs.roomName}
+                        Room: {gs.chatRoom}
                     </h3>   
                         
                     <TitledPanelComp title="In Room Now...">

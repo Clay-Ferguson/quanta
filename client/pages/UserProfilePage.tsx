@@ -25,7 +25,7 @@ export default function UserProfilePage() {
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    gs.contacts = gs.contacts || [];
+    gs.chatContacts = gs.chatContacts || [];
 
     useEffect(() => util.resizeEffect(), []);
     useEffect(() => {
@@ -115,7 +115,7 @@ export default function UserProfilePage() {
                             {profileData.publicKey != gs.keyPair!.publicKey && 
                             <div className="mt-6">
                                 <div className="bg-gray-700 p-4 rounded-lg">
-                                    {gs.contacts.some(contact => contact.publicKey === profileData.publicKey) ? (
+                                    {gs.chatContacts.some(contact => contact.publicKey === profileData.publicKey) ? (
                                         <div className="flex items-center">
                                             <span className="text-green-400 font-medium">
                                                 This user is in your contacts

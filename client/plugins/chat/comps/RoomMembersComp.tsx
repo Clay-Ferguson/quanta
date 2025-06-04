@@ -25,10 +25,10 @@ export default function RoomMembersComp() {
         });
     }
     
-    if (gs.contacts) {
+    if (gs.chatContacts) {
         // scan all sorted participants and for each one that's a known contact (looked up by public key) add a property 'alias' to it for display below.
         for (const member of sortedParticipants) {;
-            const contact = gs.contacts.find((contact: Contact) => contact.publicKey === member.publicKey);
+            const contact = gs.chatContacts.find((contact: Contact) => contact.publicKey === member.publicKey);
             if (contact) {
                 member.alias = contact.alias;
             }

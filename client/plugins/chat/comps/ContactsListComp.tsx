@@ -15,16 +15,16 @@ import { idb } from '../../../IndexedDB';
  */
 export default function ContactsListComp() {
     const gs = useGlobalState();
-    if (!gs.contacts) {
-        gs.contacts = [];
+    if (!gs.chatContacts) {
+        gs.chatContacts = [];
     }
 
     function setContacts(contacts: any) {
         // Save into global state
-        gd({ type: 'setContacts', payload: { contacts }});
+        gd({ type: 'setContacts', payload: { chatContacts: contacts }});
 
         // Save to IndexedDB
-        idb.setItem(DBKeys.contacts, contacts);
+        idb.setItem(DBKeys.chatContacts, contacts);
     }
 
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
@@ -32,7 +32,7 @@ export default function ContactsListComp() {
     const [newContact, setNewContact] = useState<Contact | null>(null);
 
     // Sort contacts alphabetically by name
-    const sortedContacts = [...gs.contacts!].sort((a, b) => a.alias.localeCompare(b.alias));
+    const sortedContacts = [...gs.chatContacts!].sort((a, b) => a.alias.localeCompare(b.alias));
 
     const toggleContactSelection = (publicKey: string) => {
         const newSelected = new Set(selectedContacts);
@@ -45,10 +45,10 @@ export default function ContactsListComp() {
     };
 
     const handleSelectAll = () => {
-        if (selectedContacts.size === gs.contacts!.length) {
+        if (selectedContacts.size === gs.chatContacts!.length) {
             setSelectedContacts(new Set());
         } else {
-            setSelectedContacts(new Set(gs.contacts!.map(contact => contact.publicKey)));
+            setSelectedContacts(new Set(gs.chatContacts!.map(contact => contact.publicKey)));
         }
     };
 
@@ -69,12 +69,12 @@ export default function ContactsListComp() {
 
     const handleDelete = async (contact: Contact) => {
         if (!await confirmModal(`Are you sure you want to delete contact '${contact.alias}' ?`)) return;
-        const updatedContacts = gs.contacts!.filter(c => c.publicKey !== contact.publicKey);
+        const updatedContacts = gs.chatContacts!.filter(c => c.publicKey !== contact.publicKey);
         setContacts(updatedContacts);
     };
 
     const handleDeleteSelected = () => {
-        const updatedContacts = gs.contacts!.filter(contact => !selectedContacts.has(contact.publicKey));
+        const updatedContacts = gs.chatContacts!.filter(contact => !selectedContacts.has(contact.publicKey));
         setContacts(updatedContacts);
         setSelectedContacts(new Set());
     };
@@ -88,18 +88,18 @@ export default function ContactsListComp() {
         contact.alias = contact.alias.trim();
 
         // If alias exists show error about that
-        if (gs.contacts!.some(c => c.alias === contact.alias)) {
+        if (gs.chatContacts!.some(c => c.alias === contact.alias)) {
             await alertModal('Alias already exists');
             return;
         }
 
         // If alias exists show error about that
-        if (gs.contacts!.some(c => c.publicKey === contact.publicKey)) {
+        if (gs.chatContacts!.some(c => c.publicKey === contact.publicKey)) {
             await alertModal('Alias already exists');
             return;
         }
         
-        setContacts([...gs.contacts!, contact]);
+        setContacts([...gs.chatContacts!, contact]);
         setNewContact(null);
     }
 
@@ -133,7 +133,7 @@ export default function ContactsListComp() {
                                 <input 
                                     type="checkbox" 
                                     className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
-                                    checked={gs.contacts!.length > 0 && selectedContacts.size === gs.contacts!.length}
+                                    checked={gs.chatContacts!.length > 0 && selectedContacts.size === gs.chatContacts!.length}
                                     onChange={handleSelectAll}
                                 />
                             </th>
@@ -168,7 +168,7 @@ export default function ContactsListComp() {
                                         key={contact.publicKey}
                                         contact={contact}
                                         onSave={(updatedContact) => {
-                                            const updatedContacts = gs.contacts!.map(c => 
+                                            const updatedContacts = gs.chatContacts!.map(c => 
                                                 c.publicKey === contact.publicKey ? updatedContact : c
                                             );
                                             setContacts(updatedContacts);

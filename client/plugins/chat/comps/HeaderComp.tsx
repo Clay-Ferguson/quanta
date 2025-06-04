@@ -26,17 +26,17 @@ export default function HeaderComp() {
     
     useEffect(() => {
         // Initialize the userName from global state when component mounts
-        if (gs.roomName) {
-            setRoomName(gs.roomName);
+        if (gs.chatRoom) {
+            setRoomName(gs.chatRoom);
         }
-    }, [gs.roomName]);
+    }, [gs.chatRoom]);
     
     return (
         <header className={`app-header flex flex-col md:flex-row md:items-center ${gs.headerExpanded ? 'p-3' : 'p-0'} gap-3`}>
             
             {gs.headerExpanded && 
              <LogoBlockComp clazz="flex-shrink-0 mb-2 md:mb-0" 
-                 subText={!gs.connected && gs.userName ? `Hi ${gs.userName}` : ''}
+                 subText={!gs.chatConnected && gs.userName ? `Hi ${gs.userName}` : ''}
              />}
             
             <div className="flex flex-col lg:flex-row w-full gap-3">
@@ -44,7 +44,7 @@ export default function HeaderComp() {
                 <div className="flex-grow">
                     {gs.headerExpanded && 
                         <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-fit">
-                            {!gs.connected ? (
+                            {!gs.chatConnected ? (
                                 <>
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                                         <label htmlFor="roomName" className="text-gray-300">Room:</label>
@@ -78,7 +78,7 @@ export default function HeaderComp() {
                                 <>
                                     <div className="flex flex-col w-full sm:w-auto">
                                         <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
-                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.roomName} (${gs.participants!.size} others)`}</span></span>
+                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.chatRoom} (${gs.participants!.size} others)`}</span></span>
                                     </div>
                                 
                                     <div className="flex gap-2 w-full sm:w-auto">
@@ -137,13 +137,13 @@ export default function HeaderComp() {
                     >
                         <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
                     </button>}
-                    {!gs.headerExpanded && gs.connected && gs.userName && 
-                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.roomName} (${gs.participants!.size} others)`}</span>}
+                    {!gs.headerExpanded && gs.chatConnected && gs.userName && 
+                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.chatRoom} (${gs.participants!.size} others)`}</span>}
 
-                    {!gs.headerExpanded && !gs.connected && gs.userName && 
+                    {!gs.headerExpanded && !gs.chatConnected && gs.userName && 
                 <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
 
-                    {gs.connected && <button 
+                    {gs.chatConnected && <button 
                         onClick={toggleHeaderExpand}
                         className="btn-icon"
                         aria-label={gs.headerExpanded ? "Collapse header" : "Expand header"}

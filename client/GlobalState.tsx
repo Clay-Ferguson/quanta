@@ -20,18 +20,10 @@ export interface GlobalState {
     keyPair?: KeyPairHex;
     // page history so we can go back (we generally don's support going forward tho)
     pages?: Array<string>; 
-    connecting?: boolean;
-    connected?: boolean;
-    roomName?: string; 
+    
     userName?: string;
-    contacts?: Array<Contact>; 
-    messages?: Array<ChatMessage>; 
-    participants?: Map<string, User> | null;
     fullSizeImage?: {src: string | null, name: string} | null;
     appInitialized?: boolean;
-    saveToServer?: boolean;
-    daysOfHistory?: number;
-    roomHistory?: Array<RoomHistoryItem>;
     userDescription?: string;
     userAvatar?: FileBase64Intf | null;
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
@@ -44,6 +36,17 @@ export interface GlobalState {
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
     devMode?: boolean;
+
+    chatConnecting?: boolean;
+    chatConnected?: boolean;
+    chatRoom?: string; 
+    chatContacts?: Array<Contact>; 
+    // todo-0: finish making these have 'chat' prefix
+    messages?: Array<ChatMessage>; 
+    participants?: Map<string, User> | null;
+    saveToServer?: boolean;
+    daysOfHistory?: number;
+    roomHistory?: Array<RoomHistoryItem>;
 
     // Plugin-specific state uses plugin key perfix, e.g. 'docs'
     docsFolder?: string;
@@ -68,13 +71,13 @@ export interface GlobalState {
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
     pages: PAGE ? [PAGE] : [PageNames.quantaChat], 
-    connecting: false,
-    connected: false, 
-    roomName: '',
+    chatConnecting: false,
+    chatConnected: false, 
+    chatRoom: '',
     userName: '', 
     messages: [], 
     participants: new Map<string, User>(),
-    contacts: [],
+    chatContacts: [],
     fullSizeImage: null,
     appInitialized: false,
     saveToServer: true,
