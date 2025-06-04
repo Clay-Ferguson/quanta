@@ -9,7 +9,7 @@ import { useGlobalState, gd } from '../GlobalState';
 import { TreeRender_Response } from '../../common/types/EndpointTypes';
 import { TreeNode } from '../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
@@ -344,6 +344,25 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 title="Search documents"
             >
                 <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+            </button>
+
+            <button 
+                onClick={async () => {
+                    try {
+                        const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
+                            treeFolder: gs.treeFolder,
+                            docRootKey: gs.docRootKey 
+                        });
+                        console.log('SSG completed:', response);
+                    } catch (error) {
+                        console.error('SSG failed:', error);
+                    }
+                }}
+                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                title="Generate Static Site"
+                disabled={isLoading}
+            >
+                <FontAwesomeIcon icon={faCubes} className="h-5 w-5" />
             </button>
         </div>
     );
