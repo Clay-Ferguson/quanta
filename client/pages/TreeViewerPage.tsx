@@ -13,7 +13,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../AppServiceTypes';
 import { setFullSizeImage } from '../components/ImageViewerComp';
 import ImageViewerComp from '../components/ImageViewerComp';
-import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onSelectAll, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal } from './TreeViewerPageOps';
+import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal, handleMasterCheckboxChange, getMasterCheckboxState } from './TreeViewerPageOps';
 import { idb } from '../IndexedDB';
 import { app } from '../AppService';
 
@@ -246,15 +246,13 @@ interface TopRightAdminCompsProps {
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
-    filteredTreeNodes: TreeNode[];
     isLoading: boolean;
 }
 
 /**
  * Component for rendering the admin controls in the top right of the header
  */
-function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, filteredTreeNodes, isLoading }: TopRightAdminCompsProps) {
-    const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
+function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
     return (
         <div className="flex items-center gap-2">
             <label className="flex items-center cursor-pointer">
@@ -294,14 +292,6 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Cut
                         </button>}
-                    {!hasCutItems &&
-                     <button 
-                         onClick={() => onSelectAll(gs, filteredTreeNodes)}
-                         className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                         title="Select all items"
-                     >
-                    Sel. All
-                     </button>}
                     {itemsAreSelected && 
                         <button 
                             onClick={() => onDelete(gs, treeNodes, setTreeNodes)}
@@ -697,6 +687,45 @@ function renderTreeNodes(
     return elements;
 }
 
+interface MasterCheckboxProps {
+    gs: any;
+    filteredTreeNodes: TreeNode[];
+}
+
+/**
+ * Component for the master checkbox that allows selecting/deselecting all items
+ */
+function MasterCheckbox({ gs, filteredTreeNodes }: MasterCheckboxProps) {
+    const { checked, indeterminate } = getMasterCheckboxState(gs, filteredTreeNodes);
+    
+    return (
+        <div className="flex items-center border-l-4 border-l-transparent gap-3 pb-4 border-b border-gray-700 mb-4 pl-2">
+            <div className="flex items-center">
+                <input
+                    type="checkbox"
+                    ref={(input) => {
+                        if (input) {
+                            input.indeterminate = indeterminate;
+                        }
+                    }}
+                    checked={checked}
+                    onChange={(e) => handleMasterCheckboxChange(gs, filteredTreeNodes, e.target.checked)}
+                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                    title={checked ? "Unselect all items" : "Select all items"}
+                />
+                <span className="ml-2 text-sm font-medium text-gray-300">
+                    {indeterminate ? "Some selected" : checked ? "All selected" : "Select all"}
+                </span>
+            </div>
+            {gs.selectedTreeItems && gs.selectedTreeItems.size > 0 && (
+                <span className="text-xs text-gray-400">
+                    ({gs.selectedTreeItems.size} of {filteredTreeNodes.length} selected)
+                </span>
+            )}
+        </div>
+    );
+}
+
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
  * Fetches file content from the server and displays each file as a separate component based on its MIME type.
@@ -818,7 +847,6 @@ export default function TreeViewerPage() {
                             reRenderTree={reRenderTree} 
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 
-                            filteredTreeNodes={filteredTreeNodes}
                             isLoading={isLoading} 
                         />
                     }
@@ -849,6 +877,9 @@ export default function TreeViewerPage() {
                         <div>
                             {gs.editMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} />
+                            )}
+                            {gs.editMode && filteredTreeNodes.length > 0 && (
+                                <MasterCheckbox gs={gs} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
                                 () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 

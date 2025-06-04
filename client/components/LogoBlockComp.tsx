@@ -16,7 +16,7 @@ export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCom
         <div className={`hidden md:flex items-center ${clazz}`}>
             <div className="mr-3 cursor-pointer" onClick={handleLogoClick}>
                 <img 
-                    src="/logo-100px-tr.jpg" 
+                    src="/logo-50px-tr.jpg" 
                     alt="Quanta Chat Logo" 
                     className="object-contain border-2 border-gray-200/30 rounded"
                 />

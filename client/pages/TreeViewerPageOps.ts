@@ -194,6 +194,37 @@ export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: b
     }});
 };
 
+// Master checkbox functionality for select all/unselect all
+export const handleMasterCheckboxChange = (gs: GlobalState, treeNodes: TreeNode[], checked: boolean) => {
+    if (checked) {
+        // Select all available nodes (excluding cut items)
+        const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+        gd({ type: 'setSelectedTreeItems', payload: { 
+            selectedTreeItems: new Set<TreeNode>(availableNodes)
+        }});
+    } else {
+        // Unselect all nodes
+        gd({ type: 'setSelectedTreeItems', payload: { 
+            selectedTreeItems: new Set<TreeNode>()
+        }});
+    }
+};
+
+// Helper function to determine master checkbox state
+export const getMasterCheckboxState = (gs: GlobalState, treeNodes: TreeNode[]): { checked: boolean, indeterminate: boolean } => {
+    const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+    const selectedCount = gs.selectedTreeItems?.size || 0;
+    const availableCount = availableNodes.length;
+    
+    if (selectedCount === 0) {
+        return { checked: false, indeterminate: false };
+    } else if (selectedCount === availableCount && availableCount > 0) {
+        return { checked: true, indeterminate: false };
+    } else {
+        return { checked: false, indeterminate: true };
+    }
+};
+
 // Edit mode button handlers
 export const handleEditClick = (node: TreeNode) => {     
     // For folders, we're doing rename functionality
@@ -524,20 +555,6 @@ export const onCut = (gs: GlobalState) => {
     gd({ type: 'setCutAndClearSelections', payload: { 
         cutItems: new Set<string>(selectedFileNames),
         selectedTreeItems: new Set<TreeNode>()
-    }});        
-};
-
-export const onSelectAll = (gs: GlobalState, treeNodes: TreeNode[]) => {
-    // Filter out nodes that are already cut
-    const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
-    
-    if (availableNodes.length === 0) {
-        return;
-    }
-
-    // Update global state to select all available nodes
-    gd({ type: 'setSelectedTreeItems', payload: { 
-        selectedTreeItems: new Set<TreeNode>(availableNodes)
     }});        
 };
 
