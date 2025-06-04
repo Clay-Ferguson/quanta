@@ -1,9 +1,13 @@
-import { ChatMessage } from "../../../common/types/CommonTypes.ts";
+import { ChatMessage, KeyPairHex, User } from "../../../common/types/CommonTypes.ts";
 import { app } from "../../AppService.ts";
-import { DBKeys, RoomHistoryItem } from "../../AppServiceTypes.ts";
+import { DBKeys, PageNames, RoomHistoryItem } from "../../AppServiceTypes.ts";
 import { confirmModal } from "../../components/ConfirmModalComp.tsx";
 import { gd, gs } from "../../GlobalState.tsx";
 import {idb} from '../../IndexedDB.ts';
+import appMessages from "./AppMessages.ts";
+import { rtc } from "./WebRTC.ts";
+
+declare const PAGE: string;
 
 /**
  * AppRooms class manages chat room operations and data persistence.
@@ -143,7 +147,7 @@ class AppRooms {
 
         // if deleting current room disconnect
         if (roomName===_gs.roomName) {
-            await app.disconnect();
+            await this.disconnect();
             _gs = gs();
             _gs.messages = []; 
         }
@@ -164,6 +168,101 @@ class AppRooms {
 
         gd({ type: 'forgetRoom', payload: _gs });
     }
+
+    /**
+         * Restores a previous connection if valid credentials and connection state are found in IndexedDB.
+         * Automatically reconnects the user to their previous room if they were previously connected.
+         */
+    restoreConnection = async () => {
+        const userName = await idb.getItem(DBKeys.userName);
+        const keyPair = await idb.getItem(DBKeys.keyPair);
+        const roomName = await idb.getItem(DBKeys.roomName);
+        const connected = await idb.getItem(DBKeys.connected);
+    
+        // We don't auto connect if a page was specified, unless it's the Quanta Chat page.
+        // todo-0: this probably need to be reevaluated based on new plugin system
+        if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && connected) {
+            // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
+            await this.connect(userName, keyPair, roomName);
+        }
+    }
+
+    /**
+         * Establishes a connection to a chat room with the specified credentials.
+         * Loads room messages, handles failed message resending, and updates the application state.
+         * @param userName - The user's display name (optional, defaults to global state)
+         * @param keyPair - The user's cryptographic key pair (optional, defaults to global state)
+         * @param roomName - The name of the room to connect to
+         */
+    connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
+        let _gs = gs();
+        userName = userName || _gs.userName!;
+        keyPair = keyPair || _gs.keyPair!;
+    
+        _gs = gd({ type: 'connect', payload: { 
+            connecting: true
+        }});
+    
+        let messages = await appMessages.loadRoomMessages(roomName);
+        messages = await appMessages.resendFailedMessages(roomName, messages);
+        const success = await rtc._connect(userName!, keyPair, roomName);
+        if (!success) {
+            gd({ type: 'connectTooSoon', payload: { 
+                connected: false,
+                connecting: false
+            }});
+            return;
+        }
+        await this.setRoomAndUserName(roomName, userName!);
+            
+        const roomHistory: RoomHistoryItem[] = await appRooms.updateRoomHistory(roomName);
+        gd({ type: 'connect', payload: { 
+            userName,
+            roomName,
+            messages,
+            connected: true,
+            connecting: false,
+            roomHistory,
+            pages: app.setTopPage(gs(), PageNames.quantaChat)
+        }});
+        await idb.setItem(DBKeys.connected, true);
+    
+        // DO NOT DELETE
+        // Not currently used. We send all directly to server now, in one single call, BUT we may need to do something similar to this for pure P2P in the future.
+        // setTimeout(() => {
+        //     this.reSendFailedMessages();
+        // }, 500);
+        console.log("Connected to room: " + roomName);
+    }
+    
+    /**
+     * Disconnects from the current chat room and clears connection-related state.
+     * Resets messages, participants, and connection status in both memory and IndexedDB.
+     */
+    disconnect = async () => {
+        rtc._disconnect();
+        gd({ type: 'disconnect', payload: { 
+            messages: [], 
+            participants: new Map<string, User>(), 
+            connected: false, 
+        }});
+        await idb.setItem(DBKeys.connected, false);
+    }
+
+    /**
+     * Sets both room name and user name in a single state update for efficiency.
+     * Also persists these values to IndexedDB.
+     * @param roomName - The name of the room to join
+     * @param userName - The user's display name
+     */
+    setRoomAndUserName = async (roomName: string, userName: string, ) => {
+        gd({ type: `setRoomAndUser`, payload: { 
+            roomName, userName
+        }});
+        // Save the keyPair to IndexedDB
+        await idb.setItem(DBKeys.roomName, roomName);
+        await idb.setItem(DBKeys.userName, userName);
+    }        
 }
 
 /**

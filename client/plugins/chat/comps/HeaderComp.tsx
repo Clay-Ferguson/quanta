@@ -6,6 +6,7 @@ import LogoBlockComp from '../../../components/LogoBlockComp';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { gd, gs, useGlobalState } from '../../../GlobalState';
 import { idb } from '../../../IndexedDB';
+import appRooms from '../AppRooms';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -59,7 +60,7 @@ export default function HeaderComp() {
                                     <div className="flex gap-2 w-full sm:w-auto">
                                         <button 
                                             disabled={!gs.userName || !roomName}
-                                            onClick={() => app.connect(null, null, roomName)}
+                                            onClick={() => appRooms.connect(null, null, roomName)}
                                             className="btn-green w-full sm:w-auto"
                                         >
                                         Join
@@ -82,7 +83,7 @@ export default function HeaderComp() {
                                 
                                     <div className="flex gap-2 w-full sm:w-auto">
                                         <button 
-                                            onClick={app.disconnect}
+                                            onClick={appRooms.disconnect}
                                             className="btn-danger w-full sm:w-auto"
                                         >
                                         Leave

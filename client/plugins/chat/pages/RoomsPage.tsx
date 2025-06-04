@@ -5,7 +5,6 @@ import TitledPanelComp from '../../../components/TitledPanelComp';
 import { useGlobalState } from '../../../GlobalState';
 import { RoomHistoryItem } from '../../../AppServiceTypes';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { app } from '../../../AppService';
 import { useEffect } from 'react';
 import { util } from '../../../Util';
 import appRooms from '../AppRooms';
@@ -60,14 +59,14 @@ export default function RoomsPage() {
                                                     <td className="px-4 py-2 whitespace-nowrap text-right">
                                                         {gs.roomName===room.name && gs.connected ? (
                                                             <button 
-                                                                onClick={app.disconnect}
+                                                                onClick={appRooms.disconnect}
                                                                 className="btn-danger mr-2"
                                                             >
                                                            Leave
                                                             </button>
                                                         ) : (
                                                             <button 
-                                                                onClick={() => app.connect(null, null, room.name)}
+                                                                onClick={() => appRooms.connect(null, null, room.name)}
                                                                 className="btn-green mr-2"
                                                                 aria-label={`Join ${room.name}`}
                                                             >

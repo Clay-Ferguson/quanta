@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useGlobalState } from '../../../GlobalState';
-import { app } from '../../../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { httpClientUtil } from '../../../HttpClientUtil';
 import { DeleteRoom_Request, GetRoomInfo_Response } from '../../../../common/types/EndpointTypes';
 import { alertModal } from '../../../components/AlertModalComp';
 import { confirmModal } from '../../../components/ConfirmModalComp';
+import appRooms from '../AppRooms';
 
 // Define interface for room info
 interface RoomInfo {
@@ -134,14 +134,14 @@ export default function RoomsAdminComp() {
                                     <td className="px-4 py-2 text-sm text-gray-300">
                                         {gs.roomName===room.name && gs.connected ? (
                                             <button 
-                                                onClick={app.disconnect}
+                                                onClick={appRooms.disconnect}
                                                 className="btn-danger mr-2"
                                             >
                                                            Leave
                                             </button>
                                         ) : (
                                             <button 
-                                                onClick={() => app.connect(null, null, room.name)}
+                                                onClick={() => appRooms.connect(null, null, room.name)}
                                                 className="btn-green mr-2"
                                                 aria-label={`Join ${room.name}`}
                                             >
