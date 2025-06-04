@@ -353,37 +353,72 @@ interface InsertItemsRowProps {
     gs: any;
     reRenderTree: () => Promise<TreeNode[]>;
     node?: TreeNode | null;
+    filteredTreeNodes?: TreeNode[];
 }
 
 /**
  * Component for rendering insert file/folder buttons
  */
-function InsertItemsRow({ gs, reRenderTree, node = null }: InsertItemsRowProps) {
+function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] }: InsertItemsRowProps) {
+    const showMasterCheckbox = node === null && filteredTreeNodes.length > 0;
+    const { checked, indeterminate } = showMasterCheckbox ? getMasterCheckboxState(gs, filteredTreeNodes) : { checked: false, indeterminate: false };
+    
     return (
-        <div className="flex justify-center gap-2">
-            <button 
-                onClick={() => insertFile(gs, reRenderTree, node)}
-                className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
-                title="Insert File"
-            >
-                <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-            </button>
-            <button 
-                onClick={() => insertFolder(gs, reRenderTree, node)}
-                className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
-                title="Insert Folder"
-            >
-                <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
-            </button>
-            {gs.cutItems && gs.cutItems.size > 0 && (
-                <button 
-                    onClick={() => onPaste(gs, reRenderTree, node)}
-                    className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
-                    title="Paste Here"
-                >
-                    <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
-                </button>
+        <div className={`relative flex justify-center`}>
+            {/* Master checkbox - positioned absolutely to the left */}
+            {showMasterCheckbox && (
+                <div className="absolute left-0 top-0 flex items-center gap-3 pl-2 border-l-4 border-l-transparent">
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            ref={(input) => {
+                                if (input) {
+                                    input.indeterminate = indeterminate;
+                                }
+                            }}
+                            checked={checked}
+                            onChange={(e) => handleMasterCheckboxChange(gs, filteredTreeNodes, e.target.checked)}
+                            className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+                            title={checked ? "Unselect all items" : "Select all items"}
+                        />
+                        <span className="ml-2 text-sm font-medium text-gray-300">
+                            {indeterminate ? "Some selected" : checked ? "All selected" : "Select all"}
+                        </span>
+                    </div>
+                    {gs.selectedTreeItems && gs.selectedTreeItems.size > 0 && (
+                        <span className="text-xs text-gray-400">
+                            ({gs.selectedTreeItems.size} of {filteredTreeNodes.length} selected)
+                        </span>
+                    )}
+                </div>
             )}
+            
+            {/* Insert buttons - always centered */}
+            <div className="flex gap-2">
+                <button 
+                    onClick={() => insertFile(gs, reRenderTree, node)}
+                    className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                    title="Insert File"
+                >
+                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                </button>
+                <button 
+                    onClick={() => insertFolder(gs, reRenderTree, node)}
+                    className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                    title="Insert Folder"
+                >
+                    <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                </button>
+                {gs.cutItems && gs.cutItems.size > 0 && (
+                    <button 
+                        onClick={() => onPaste(gs, reRenderTree, node)}
+                        className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Paste Here"
+                    >
+                        <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
@@ -687,44 +722,6 @@ function renderTreeNodes(
     return elements;
 }
 
-interface MasterCheckboxProps {
-    gs: any;
-    filteredTreeNodes: TreeNode[];
-}
-
-/**
- * Component for the master checkbox that allows selecting/deselecting all items
- */
-function MasterCheckbox({ gs, filteredTreeNodes }: MasterCheckboxProps) {
-    const { checked, indeterminate } = getMasterCheckboxState(gs, filteredTreeNodes);
-    
-    return (
-        <div className="flex items-center border-l-4 border-l-transparent gap-3 pb-4 border-b border-gray-700 mb-4 pl-2">
-            <div className="flex items-center">
-                <input
-                    type="checkbox"
-                    ref={(input) => {
-                        if (input) {
-                            input.indeterminate = indeterminate;
-                        }
-                    }}
-                    checked={checked}
-                    onChange={(e) => handleMasterCheckboxChange(gs, filteredTreeNodes, e.target.checked)}
-                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
-                    title={checked ? "Unselect all items" : "Select all items"}
-                />
-                <span className="ml-2 text-sm font-medium text-gray-300">
-                    {indeterminate ? "Some selected" : checked ? "All selected" : "Select all"}
-                </span>
-            </div>
-            {gs.selectedTreeItems && gs.selectedTreeItems.size > 0 && (
-                <span className="text-xs text-gray-400">
-                    ({gs.selectedTreeItems.size} of {filteredTreeNodes.length} selected)
-                </span>
-            )}
-        </div>
-    );
-}
 
 /**
  * Page for displaying a tree viewer that shows server-side folder contents as an array of Markdown elements and images.
@@ -876,10 +873,7 @@ export default function TreeViewerPage() {
                     ) : (
                         <div>
                             {gs.editMode && (
-                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} />
-                            )}
-                            {gs.editMode && filteredTreeNodes.length > 0 && (
-                                <MasterCheckbox gs={gs} filteredTreeNodes={filteredTreeNodes} />
+                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
                                 () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 
