@@ -585,7 +585,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4"}
+                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -624,7 +624,7 @@ function TreeNodeComponent({
                                 </span>
                             </div>
                             : 
-                            <div className="mt-4">
+                            <div className="mb-3">
                                 <Markdown markdownContent={node.content || ''} docMode={true}/>
                             </div>
                     )}

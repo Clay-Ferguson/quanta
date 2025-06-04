@@ -1208,6 +1208,8 @@ class DocService {
     search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string; searchMode?: string }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
+            // todo-0: make this optional.
+            const orderByModTime = true;
             const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY' } = req.body;
             
             if (!query || typeof query !== 'string') {
@@ -1340,6 +1342,8 @@ class DocService {
                 
                 // Parse grep output
                 const results = [];
+                const fileModTimes = orderByModTime ? new Map<string, number>() : null;
+                
                 if (stdout.trim()) {
                     const lines = stdout.trim().split('\n');
                     
@@ -1351,25 +1355,76 @@ class DocService {
                             // Make the file path relative to the search root
                             const relativePath = path.relative(absoluteSearchPath, filePath);
                             
-                            results.push({
+                            let modTime: number | undefined;
+                            
+                            // Get modification time for this file if ordering is enabled and we haven't already
+                            if (orderByModTime && fileModTimes && !fileModTimes.has(relativePath)) {
+                                try {
+                                    const stat = fs.statSync(filePath);
+                                    const fileModTime = stat.mtime.getTime();
+                                    fileModTimes.set(relativePath, fileModTime);
+                                    modTime = fileModTime;
+                                } catch (error) {
+                                    console.warn(`Failed to get modification time for ${relativePath}:`, error);
+                                    // Use current time as fallback
+                                    const fallbackTime = Date.now();
+                                    fileModTimes.set(relativePath, fallbackTime);
+                                    modTime = fallbackTime;
+                                }
+                            } else if (orderByModTime && fileModTimes) {
+                                modTime = fileModTimes.get(relativePath);
+                            }
+                            
+                            const result: any = {
                                 file: relativePath,
                                 line: parseInt(lineNumber),
                                 content: content.trim()
-                            });
+                            };
                             
-                            console.log(`Match found - File: ${relativePath}, Line: ${lineNumber}, Content: ${content.trim()}`);
+                            // Only add modTime if ordering is enabled
+                            if (orderByModTime && modTime !== undefined) {
+                                result.modTime = modTime;
+                            }
+                            
+                            results.push(result);
+                            // console.log(`Match found - File: ${relativePath}, Line: ${lineNumber}, Content: ${content.trim()}`);
                         }
                     }
                 }
                 
-                console.log(`Search completed. Found ${results.length} matches.`);
+                // Sort results by modification time (newest first), then by file name, then by line number
+                if (orderByModTime) {
+                    results.sort((a, b) => {
+                        // First sort by modification time (descending - newest first)
+                        if (a.modTime !== b.modTime) {
+                            return b.modTime - a.modTime;
+                        }
+                        // If modification times are equal, sort by file name (ascending)
+                        if (a.file !== b.file) {
+                            return a.file.localeCompare(b.file);
+                        }
+                        // If same file, sort by line number (ascending)
+                        return a.line - b.line;
+                    });
+                }
+                
+                // Remove the modTime property from results before sending to client (if it was added)
+                const cleanResults = orderByModTime ? 
+                    results.map(result => ({
+                        file: result.file,
+                        line: result.line,
+                        content: result.content
+                    })) : 
+                    results;
+                
+                // console.log(`Search completed. Found ${cleanResults.length} matches.`);
                 
                 res.json({ 
                     success: true, 
-                    message: `Search completed for query: "${query}". Found ${results.length} matches.`,
+                    message: `Search completed for query: "${query}". Found ${cleanResults.length} matches.`,
                     query: query,
                     searchPath: treeFolder,
-                    results: results
+                    results: cleanResults
                 });
             });
             
