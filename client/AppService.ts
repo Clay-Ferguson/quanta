@@ -2,7 +2,6 @@ import {DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import { Contact, FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
-import appRooms from './plugins/chat/AppRooms.ts';
 import appUsers from './AppUsers.ts';
 
 // Vars are injected directly into HTML by server
@@ -49,11 +48,7 @@ export class AppService {
             appInitialized: true
         }});
         window.addEventListener('keydown', this.handleKeyDown);
-
-        appRooms.restoreConnection();
-        setTimeout(() => {
-            appRooms.runRoomCleanup();
-        }, 10000);
+        this.notifyPlugins();
     }
 
     initPlugins = async () => {
@@ -68,6 +63,25 @@ export class AppService {
                     pluginModule.init({idb});
                 } else {
                     console.warn(`Plugin ${plugin} does not have an init function.`);
+                }
+            } catch (error) {
+                console.error(`Error initializing plugin ${plugin}:`, error);
+            }
+        }
+    }
+
+    notifyPlugins = async () => {
+        // parse PLUGINS into string array
+        const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
+        console.log('Notifying plugins...');
+        for (const plugin of plugins) {
+            try {
+                console.log(`notify plugin: ${plugin}`);
+                const pluginModule = await import(`./plugins/${plugin}/init.ts`);
+                if (pluginModule.notify) {
+                    pluginModule.notify();
+                } else {
+                    console.warn(`Plugin ${plugin} does not have a notify function.`);
                 }
             } catch (error) {
                 console.error(`Error initializing plugin ${plugin}:`, error);
