@@ -2,13 +2,9 @@ import express, { Request, Response } from 'express';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { httpServerUtil } from '../common/HttpServerUtil.js';
-import {chatSvc} from './plugins/chat/ChatService.js';
-import { rtc } from './plugins/chat/WebRTCServer.js';
 import { logInit } from './ServerLogger.js';
-import { docSvc } from './plugins/docs/DocService.js';
-import { ssg } from './plugins/docs/SSGService.js';
 import { config } from '../common/Config.js'; 
+import { initPlugins, notifyPlugins } from '../common/CommonUtil.js';
 
 logInit();
 
@@ -37,39 +33,6 @@ if (SECURE === 'y') {
     });
 }
 
-app.get('/api/rooms/:roomId/message-ids', chatSvc.getMessageIdsForRoom);
-app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
-app.get('/api/messages', chatSvc.getMessageHistory);
-app.get('/api/users/:pubKey/info', chatSvc.getUserProfile);
-app.get('/api/users/:pubKey/avatar', chatSvc.serveAvatar);
-app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender);
-app.get('/api/docs/images/:docRootKey/*', docSvc.serveDocImage);
-
-app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRoomInfo);
-app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteRoom);
-app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRecentAttachments);
-app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, chatSvc.createTestData);
-app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, chatSvc.blockUser);
-
-app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteAttachment);
-app.post('/api/rooms/:roomId/get-messages-by-id', chatSvc.getMessagesByIds);
-app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, chatSvc.saveUserProfile);
-app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages);
-app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); // check PublicKey
-
-// For now we only allow admin to access the docs API
-app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile); 
-app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder); 
-app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder); 
-app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown); 
-app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
-app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
-app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
-app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docSvc.joinFiles);
-app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docSvc.openFileSystemItem);
-app.post('/api/docs/search', httpServerUtil.verifyAdminHTTPSignature, docSvc.search);
-app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
-
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
@@ -96,17 +59,15 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
     });
 };
 
-// Define HTML routes BEFORE static middleware
-// Explicitly serve index.html for root path
-// NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when
-// normally we would just pass the function reference directly.
-app.get('/', serveIndexHtml(""));
-app.get('/doc/:docRootKey', serveIndexHtml("TreeViewerPage"));
+// NOTE: It's important to initialize plugins before defining the other routes below.
+const plugins = config.get("plugins");
+await initPlugins(plugins, {app, serveIndexHtml});
 
 // Serve static files from the dist directory, but disable index serving
 app.use(express.static("./dist", { index: false }));
 
 // Fallback for any other routes not handled above
+// todo-0: we should handle this better by letting config determine WHICH arg of serveIndexHtml to use
 app.get('*', serveIndexHtml(""));
 
 let server = null;
@@ -132,4 +93,5 @@ server.listen(PORT, () => {
     console.log(`Web Server running on ${HOST}:${PORT}`);
 });
 
-rtc.init(HOST, PORT, server);
+await notifyPlugins(plugins, server);
+console.log("App init complete.");

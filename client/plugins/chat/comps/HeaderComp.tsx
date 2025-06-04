@@ -34,7 +34,7 @@ export default function HeaderComp() {
         <header className={`app-header flex flex-col md:flex-row md:items-center ${gs.headerExpanded ? 'p-3' : 'p-0'} gap-3`}>
             
             {gs.headerExpanded && 
-             <LogoBlockComp clazz="w-full md:w-auto mb-2 md:mb-0" 
+             <LogoBlockComp clazz="flex-shrink-0 mb-2 md:mb-0" 
                  subText={!gs.connected && gs.userName ? `Hi ${gs.userName}` : ''}
              />}
             

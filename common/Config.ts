@@ -3,6 +3,8 @@ import yaml from 'js-yaml';
 
 /** 
  * Configuration manager class that loads and provides access to YAML configuration
+ * 
+ * todo-0: this doesn't belong on 'common' does it? This is not for use on client ever.
  */
 class Config {
     private configData: any = {};
