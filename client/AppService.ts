@@ -135,8 +135,8 @@ export class AppService {
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
         const viewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.viewWidth, 'medium');
-        const editMode: boolean = await idb.getItem(DBKeys.editMode, false) === true;
-        const metaMode: boolean = await idb.getItem(DBKeys.metaMode, false) === true;
+        const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
+        const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
         const namesMode: boolean = await idb.getItem(DBKeys.namesMode, false) === true;
 
         const state: GlobalState = {
@@ -150,8 +150,8 @@ export class AppService {
             userAvatar,
             headerExpanded,
             viewWidth,
-            editMode,
-            metaMode,
+            docsEditMode,
+            docsMetaMode: docsMetaMode,
             namesMode,
         };
 

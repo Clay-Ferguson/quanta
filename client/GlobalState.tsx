@@ -45,8 +45,8 @@ export interface GlobalState {
     collapsedPanels?: Set<string>;
     devMode?: boolean;
     docsFolder?: string;
-    editMode?: boolean; 
-    metaMode?: boolean; 
+    docsEditMode?: boolean; 
+    docsMetaMode?: boolean; 
     namesMode?: boolean;
     editingNode?: TreeNode | null;
     editingContent?: string | null;
@@ -89,8 +89,8 @@ const initialState: GlobalState = {
     headerExpanded: false,
     devMode: false,
     docsFolder: '/', 
-    editMode: false,
-    metaMode: false,
+    docsEditMode: false,
+    docsMetaMode: false,
     namesMode: false,
     editingNode: null,
     editingContent: null,
@@ -115,7 +115,8 @@ const initialState: GlobalState = {
     ]),
 };
 
-export type GlobalAction = { type: string, payload: any};
+// todo-0: AI recommends 'Partial<GlobalState>' instead of 'any' for global state 
+export type GlobalAction = { type: string, payload: GlobalState };
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
     console.log('Dispatching action: '+ action.type);

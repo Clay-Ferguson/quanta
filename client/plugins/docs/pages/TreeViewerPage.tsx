@@ -5,7 +5,7 @@ import BackButtonComp from '../../../components/BackButtonComp';
 import { scrollEffects } from '../../../ScrollEffects';
 import { util } from '../../../Util';
 import { httpClientUtil } from '../../../HttpClientUtil';
-import { useGlobalState, gd } from '../../../GlobalState';
+import { useGlobalState, gd, GlobalState } from '../../../GlobalState';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,7 +22,7 @@ declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
 
 interface EditFolderProps {
-    gs: any;
+    gs: GlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -74,7 +74,7 @@ function EditFolder({
 }
 
 interface EditFileProps {
-    gs: any;
+    gs: GlobalState;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
@@ -142,7 +142,7 @@ interface EditIconsProps {
     node: TreeNode;
     index: number;
     numNodes: number;
-    gs: any;
+    gs: GlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     reRenderTree: () => Promise<TreeNode[]>;
@@ -205,7 +205,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 }
 
 interface ViewWidthDropdownProps {
-    gs: any;
+    gs: GlobalState;
 }
 
 /**
@@ -241,7 +241,7 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
 }
 
 interface TopRightAdminCompsProps {
-    gs: any;
+    gs: GlobalState;
     itemsAreSelected: boolean | undefined;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
@@ -258,7 +258,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             <label className="flex items-center cursor-pointer">
                 <input 
                     type="checkbox"
-                    checked={gs.editMode || false}
+                    checked={gs.docsEditMode || false}
                     onChange={async () => await handleEditModeToggle(gs)}
                     className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
@@ -267,7 +267,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             <label className="flex items-center cursor-pointer">
                 <input 
                     type="checkbox"
-                    checked={gs.metaMode || false}
+                    checked={gs.docsMetaMode || false}
                     onChange={async () => await handleMetaModeToggle(gs)}
                     className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
@@ -282,7 +282,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 />
                 <span className="ml-2 text-sm font-medium text-gray-300">Names</span>
             </label>
-            {gs.editMode && 
+            {gs.docsEditMode && 
                 <div className="flex items-center space-x-2">
                     {itemsAreSelected && 
                         <button 
@@ -350,7 +350,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 onClick={async () => {
                     try {
                         const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
-                            treeFolder: gs.docFolder,
+                            treeFolder: gs.docsFolder,
                             docRootKey: gs.docRootKey 
                         });
                         console.log('SSG completed:', response);
@@ -369,7 +369,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
 }
 
 interface InsertItemsRowProps {
-    gs: any;
+    gs: GlobalState;
     reRenderTree: () => Promise<TreeNode[]>;
     node?: TreeNode | null;
     filteredTreeNodes?: TreeNode[];
@@ -447,7 +447,7 @@ interface TreeNodeComponentProps {
     index: number;
     validId: string;
     numNodes: number;
-    gs: any;
+    gs: GlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     isNodeSelected: (node: TreeNode) => boolean;
@@ -508,15 +508,15 @@ function TreeNodeComponent({
         }
         
         // Keep the green underline in edit mode for all items
-        if (gs.editMode) {
+        if (gs.docsEditMode) {
             classes += " border-b-2 border-b-green-400";
         }
-        else if (gs.metaMode) {
+        else if (gs.docsMetaMode) {
             classes += " border-b border-b-gray-600";
         }
 
         // if not in edit mode and this is a folder then add more padding at bottom
-        if (!gs.editMode && isFolder) {
+        if (!gs.docsEditMode && isFolder) {
             classes += " pb-2"; // Add padding at the bottom for folders
         }        
         return classes;
@@ -525,7 +525,7 @@ function TreeNodeComponent({
     return (
         <div id={validId} key={validId}>
             <div className={getBorderClass()}>
-                {gs.editMode && 
+                {gs.docsEditMode && 
                     <div className="flex-shrink-0 pt-1">
                         <input
                             type="checkbox"
@@ -570,7 +570,7 @@ function TreeNodeComponent({
                                             />
                                         }
                                     </div>
-                                    {gs.editMode && 
+                                    {gs.docsEditMode && 
                                         <div className="mt-3">
                                             <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
                                         </div>
@@ -646,12 +646,12 @@ function TreeNodeComponent({
                 
                     {!isFolder && 
                         <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
-                            {gs.metaMode && 
+                            {gs.docsMetaMode && 
                                 <>
                                     <span className="mr-4">{node.name}</span>
                                     <span className="mr-4">{new Date(node.modifyTime).toLocaleDateString()}</span>
                                 </>}
-                            {gs.editMode && 
+                            {gs.docsEditMode && 
                                 <EditIcons 
                                     node={node} 
                                     index={index} 
@@ -666,7 +666,7 @@ function TreeNodeComponent({
                     }
                 </div>
             </div>
-            {gs.editMode && 
+            {gs.docsEditMode && 
                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} />
             }
         </div>
@@ -681,7 +681,7 @@ function TreeNodeComponent({
  */
 function renderTreeNodes(
     nodes: TreeNode[], 
-    gs: any, 
+    gs: GlobalState, 
     treeNodes: TreeNode[], 
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>, 
     isNodeSelected: (node: TreeNode) => boolean, 
@@ -804,7 +804,7 @@ export default function TreeViewerPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const url = `/api/docs/render/${gs.docRootKey}/${folder}${!gs.editMode ? '?pullup=true' : ''}`;
+            const url = `/api/docs/render/${gs.docRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                 
             if (treeResponse && treeResponse.treeNodes) {
@@ -823,7 +823,7 @@ export default function TreeViewerPage() {
         finally {
             setIsLoading(false);
         }
-    }, [gs.editMode, gs.docsFolder, gs.docRootKey]);
+    }, [gs.docsEditMode, gs.docsFolder, gs.docRootKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
@@ -839,7 +839,7 @@ export default function TreeViewerPage() {
             }
         };
         fetchTree();
-    }, [gs.docsFolder, gs.editMode, reRenderTree]);
+    }, [gs.docsFolder, gs.docsEditMode, reRenderTree]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
@@ -905,7 +905,7 @@ export default function TreeViewerPage() {
                     ) : (
                         <div>
                             {lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div>}
-                            {gs.editMode && (
+                            {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 

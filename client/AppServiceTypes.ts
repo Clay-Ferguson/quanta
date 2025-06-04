@@ -16,8 +16,8 @@ export enum DBKeys {
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',
     viewWidth = 'viewWidth',
-    editMode = 'editMode',
-    metaMode = 'metaMode',
+    docsEditMode = 'docsEditMode',
+    docsMetaMode = 'docsMetaMode',
     namesMode = 'namesMode',
 }
 

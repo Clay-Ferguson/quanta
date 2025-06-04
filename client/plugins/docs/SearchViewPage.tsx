@@ -238,7 +238,7 @@ export default function SearchViewPage() {
                                     name="searchMode"
                                     value="REGEX"
                                     checked={gs.searchMode === 'REGEX'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />
@@ -250,7 +250,7 @@ export default function SearchViewPage() {
                                     name="searchMode"
                                     value="MATCH_ANY"
                                     checked={gs.searchMode === 'MATCH_ANY'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />
@@ -262,7 +262,7 @@ export default function SearchViewPage() {
                                     name="searchMode"
                                     value="MATCH_ALL"
                                     checked={gs.searchMode === 'MATCH_ALL'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: e.target.value }})}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />

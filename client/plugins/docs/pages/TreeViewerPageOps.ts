@@ -143,14 +143,14 @@ export const handleEditModeToggle = async (gs: GlobalState) => {
     // Remember the current scroll position before toggling edit mode
     const closestElementId = util.findClosestTreeNodeToTop();
     
-    const newEditMode = !gs.editMode;
+    const newEditMode = !gs.docsEditMode;
     
     gd({ type: 'setEditMode', payload: { 
-        editMode: newEditMode
+        docsEditMode: newEditMode
     }});
     
     // Persist to IndexedDB
-    await idb.setItem(DBKeys.editMode, newEditMode);
+    await idb.setItem(DBKeys.docsEditMode, newEditMode);
     
     // Restore scroll position after the page re-renders
     if (closestElementId) {
@@ -159,14 +159,14 @@ export const handleEditModeToggle = async (gs: GlobalState) => {
 };
 
 export const handleMetaModeToggle = async (gs: GlobalState) => {
-    const newMetaMode = !gs.metaMode;
+    const newMetaMode = !gs.docsMetaMode;
     
     gd({ type: 'setMetaMode', payload: { 
-        metaMode: newMetaMode
+        docsMetaMode: newMetaMode
     }});
     
     // Persist to IndexedDB
-    await idb.setItem(DBKeys.metaMode, newMetaMode);
+    await idb.setItem(DBKeys.docsMetaMode, newMetaMode);
 };
 
 export const handleNamesModeToggle = async (gs: GlobalState) => {
