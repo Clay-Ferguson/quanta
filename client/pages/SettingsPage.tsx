@@ -14,7 +14,7 @@ import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
-import { rtc } from '../WebRTC';
+import { rtc } from '../plugins/chat/WebRTC';
 import appRooms from '../plugins/chat/AppRooms';
 
 async function clear() {

@@ -1,12 +1,12 @@
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
+import LogoBlockComp from '../../components/LogoBlockComp';
+import BackButtonComp from '../../components/BackButtonComp';
 import { useEffect, useState, useRef } from 'react';
-import { util } from '../Util';
-import { httpClientUtil } from '../HttpClientUtil';
-import { alertModal } from '../components/AlertModalComp';
-import { useGlobalState, gd } from '../GlobalState';
-import { app } from '../AppService';
-import { PageNames } from '../AppServiceTypes';
+import { util } from '../../Util';
+import { httpClientUtil } from '../../HttpClientUtil';
+import { alertModal } from '../../components/AlertModalComp';
+import { useGlobalState, gd } from '../../GlobalState';
+import { app } from '../../AppService';
+import { PageNames } from '../../AppServiceTypes';
 
 interface SearchResult {
     file: string;

@@ -13,7 +13,7 @@ import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import LogViewerPage from './pages/LogViewerPage.tsx';
-import SearchViewPage from './pages/SearchViewPage.tsx';
+import SearchViewPage from './plugins/docs/SearchViewPage.tsx';
 
 declare const DOC_ROOT_KEY: string;
 

@@ -10,7 +10,7 @@ import { gd, gs } from "../../GlobalState.tsx";
 import { httpClientUtil } from "../../HttpClientUtil.ts";
 import {idb} from '../../IndexedDB.ts';
 import { util } from "../../Util.ts";
-import { rtc } from "../../WebRTC.ts";
+import { rtc } from "./WebRTC.ts";
 
 /**
  * AppMessages - Centralized message management service for the Quanta Chat application

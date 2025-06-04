@@ -30,7 +30,7 @@ export enum PanelKeys {
     settings_Diagnostics = 'settings_Diagnostics',
 }
 
-export enum PageNames{
+export enum PageNames {
     contacts = 'ContactsPage',
     settings = 'SettingsPage',
     userGuide = 'UserGuidePage',

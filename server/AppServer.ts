@@ -4,9 +4,43 @@ import https from 'https';
 import http from 'http';
 import { logInit } from './ServerLogger.js';
 import { config } from '../common/Config.js'; 
-import { initPlugins, notifyPlugins } from '../common/CommonUtil.js';
 
 logInit();
+
+async function initPlugins(plugins: any, context: any) {
+    console.log('Initializing plugins...');
+    for (const plugin of plugins) {
+        try {
+            console.log(`plugin: ${plugin.key}`);
+            const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
+            if (pluginModule.init) {
+                pluginModule.init(context); // Initialize the plugin
+            } else {
+                console.warn(`Plugin ${plugin} does not have an init function.`);
+            }
+        } catch (error) {
+            console.error(`Error initializing plugin ${plugin}:`, error);
+        }
+    }
+}
+
+// Currently this is only called by server and 'context' is the server instance.
+async function notifyPlugins(plugins: any, context: any) {
+    console.log('Notify plugins startup is complete...');
+    for (const plugin of plugins) {
+        try {
+            console.log(`notify plugin: ${plugin.key}`);
+            const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
+            if (pluginModule.init) {
+                pluginModule.notify(context); // Initialize the plugin
+            } else {
+                console.warn(`Plugin ${plugin} does not have an init function.`);
+            }
+        } catch (error) {
+            console.error(`Error initializing plugin ${plugin}:`, error);
+        }
+    }
+}
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = config.get("host"); 
@@ -36,6 +70,10 @@ if (SECURE === 'y') {
 // DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
 // app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
 
+const plugins = config.get("plugins");
+// get commma delimited list of plugin 'key' values into a string
+const pluginKeys = plugins.map((plugin: any) => plugin.key).join(','); 
+
 const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: Response) => {
     fs.readFile("./dist/index.html", 'utf8', (err, data) => {
         if (err) {
@@ -52,6 +90,7 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
             .replace(`{{PAGE}}`, page)
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
             .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
+            .replace('{{PLUGINS}}', pluginKeys)
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');
@@ -60,7 +99,6 @@ const serveIndexHtml = (page: string = "QuantaChatPage") => (req: Request, res: 
 };
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
-const plugins = config.get("plugins");
 await initPlugins(plugins, {app, serveIndexHtml});
 
 // Serve static files from the dist directory, but disable index serving

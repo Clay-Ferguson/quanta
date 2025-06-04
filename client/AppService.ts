@@ -2,7 +2,7 @@ import {DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import { Contact, FileBase64Intf, KeyPairHex, User } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
-import {rtc} from './WebRTC.ts';
+import {rtc} from './plugins/chat/WebRTC.ts';
 import appMessages from './plugins/chat/AppMessages.ts';
 import appRooms from './plugins/chat/AppRooms.ts';
 import appUsers from './AppUsers.ts';
@@ -12,6 +12,7 @@ declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 declare const PAGE: string;
+declare const PLUGINS: string;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare let DOC_ROOT_KEY: string;
@@ -34,6 +35,7 @@ export class AppService {
      */
     async init() {
         console.log("Quanta Chat AppService init");
+        await this.initPlugins();
         setApplyStateRules(this.applyStateRules);
         await idb.init("quantaChatDB", "quantaChatStore", 1);
         const saveToServer = await idb.getItem(DBKeys.saveToServer, true);
@@ -63,6 +65,25 @@ export class AppService {
         }, 10000);
     }
 
+    initPlugins = async () => {
+        // parse PLUGINS into string array
+        const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
+        console.log('Initializing plugins...');
+        for (const plugin of plugins) {
+            try {
+                console.log(`plugin: ${plugin}`);
+                const pluginModule = await import(`./plugins/${plugin}/init.ts`);
+                if (pluginModule.init) {
+                    pluginModule.init();
+                } else {
+                    console.warn(`Plugin ${plugin} does not have an init function.`);
+                }
+            } catch (error) {
+                console.error(`Error initializing plugin ${plugin}:`, error);
+            }
+        }
+    }
+
     /**
      * Handles keyboard events, specifically the 'd' key press on the settings page.
      * Three consecutive 'd' presses enable developer mode.
@@ -89,10 +110,6 @@ export class AppService {
         // If not connected show the header to user cannot get confused/lost
         if (!gs.connected) {
             gs.headerExpanded = true;
-        }
-
-        if (gs.treeFolder?.indexOf("//") !== -1) {
-            console.error("invalid treeFolder: " + gs.treeFolder);
         }
     }
 
