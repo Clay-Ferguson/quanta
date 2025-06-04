@@ -1,10 +1,10 @@
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
-import RoomMembersComp from '../components/RoomMembersComp';
-import TitledPanelComp from '../components/TitledPanelComp';
-import { useGlobalState } from '../GlobalState';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
+import RoomMembersComp from '../comps/RoomMembersComp';
+import TitledPanelComp from '../../../components/TitledPanelComp';
+import { useGlobalState } from '../../../GlobalState';
 import { useEffect } from 'react';
-import { util } from '../Util';
+import { util } from '../../../Util';
 
 /**
  * Page for displaying information about the current chat room.

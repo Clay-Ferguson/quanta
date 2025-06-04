@@ -1,8 +1,8 @@
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
-import RoomsAdminComp from '../components/RoomsAdminComp';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
+import RoomsAdminComp from '../comps/RoomsAdminComp';
 import { useEffect } from 'react';
-import { util } from '../Util';
+import { util } from '../../../Util';
 
 /**
  * Page for managing rooms, including creating, deleting, and modifying room settings. For the admin user only.

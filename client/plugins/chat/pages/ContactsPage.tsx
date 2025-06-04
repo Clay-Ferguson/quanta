@@ -1,8 +1,8 @@
-import ContactsListComp from '../components/ContactsListComp';
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
+import ContactsListComp from '../comps/ContactsListComp';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
 import { useEffect } from 'react';
-import { util } from '../Util';
+import { util } from '../../../Util';
 
 /**
  * Page for displaying the list of contacts.

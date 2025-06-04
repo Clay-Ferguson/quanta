@@ -1,6 +1,6 @@
 import { ChatMessage, KeyPairHex, User } from '../common/types/CommonTypes.ts';
 import {WebRTCAck, WebRTCAnswer, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCICECandidate, WebRTCJoin, WebRTCOffer, WebRTCRoomInfo, WebRTCUserJoined, WebRTCUserLeft} from '../common/types/WebRTCTypes.ts';
-import appMessages from './AppMessages.ts';
+import appMessages from './plugins/chat/AppMessages.ts';
 import {util} from './Util.ts';
 import {crypt} from '../common/Crypto.ts';  
 import { canon } from '../common/Canonicalizer.ts';

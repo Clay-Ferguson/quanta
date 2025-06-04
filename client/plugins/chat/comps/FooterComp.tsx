@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import {util} from '../Util';
-import { useGlobalState } from '../GlobalState';
+import {util} from '../../../Util';
+import { useGlobalState } from '../../../GlobalState';
 import appMessages from '../AppMessages';
 
 /**

@@ -1,13 +1,13 @@
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import TitledPanelComp from '../components/TitledPanelComp';
-import { useGlobalState } from '../GlobalState';
-import { RoomHistoryItem } from '../AppServiceTypes';
+import TitledPanelComp from '../../../components/TitledPanelComp';
+import { useGlobalState } from '../../../GlobalState';
+import { RoomHistoryItem } from '../../../AppServiceTypes';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { app } from '../AppService';
+import { app } from '../../../AppService';
 import { useEffect } from 'react';
-import { util } from '../Util';
+import { util } from '../../../Util';
 import appRooms from '../AppRooms';
 
 /**

@@ -1,11 +1,11 @@
-import { useGlobalState } from '../GlobalState';
+import { useGlobalState } from '../../../GlobalState';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import HexKeyComp from './HexKeyComp';
-import AvatarImageComp from './AvatarImageComp';
-import { Contact } from '../../common/types/CommonTypes';
-import { alertModal } from './AlertModalComp';
-import appUsers from '../AppUsers';
+import HexKeyComp from '../../../components/HexKeyComp';
+import AvatarImageComp from '../../../components/AvatarImageComp';
+import { Contact } from '../../../../common/types/CommonTypes';
+import { alertModal } from '../../../components/AlertModalComp';
+import appUsers from '../../../AppUsers';
 
 /**
  * Displays the list of members in the room. This includes the user themselves, and all other participants.

@@ -15,7 +15,7 @@ import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
 import { rtc } from '../WebRTC';
-import appRooms from '../AppRooms';
+import appRooms from '../plugins/chat/AppRooms';
 
 async function clear() {
     await idb.clear();

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useGlobalState } from '../GlobalState';
-import { app } from '../AppService';
+import { useGlobalState } from '../../../GlobalState';
+import { app } from '../../../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { httpClientUtil } from '../HttpClientUtil';
-import { DeleteRoom_Request, GetRoomInfo_Response } from '../../common/types/EndpointTypes';
-import { alertModal } from './AlertModalComp';
-import { confirmModal } from './ConfirmModalComp';
+import { httpClientUtil } from '../../../HttpClientUtil';
+import { DeleteRoom_Request, GetRoomInfo_Response } from '../../../../common/types/EndpointTypes';
+import { alertModal } from '../../../components/AlertModalComp';
+import { confirmModal } from '../../../components/ConfirmModalComp';
 
 // Define interface for room info
 interface RoomInfo {

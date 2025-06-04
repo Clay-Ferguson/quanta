@@ -1,16 +1,16 @@
-import LogoBlockComp from '../components/LogoBlockComp';
-import BackButtonComp from '../components/BackButtonComp';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
 import { useState, useEffect } from 'react';
-import { useGlobalState } from '../GlobalState';
-import HexKeyComp from '../components/HexKeyComp';
+import { useGlobalState } from '../../../GlobalState';
+import HexKeyComp from '../../../components/HexKeyComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash} from '@fortawesome/free-solid-svg-icons';
-import AvatarImageComp from '../components/AvatarImageComp';
-import { util } from '../Util';
-import { httpClientUtil } from '../HttpClientUtil';
-import { AttachmentInfo } from '../../common/types/CommonTypes';
-import { GetRecentAttachments_Response } from '../../common/types/EndpointTypes';
-import { confirmModal } from '../components/ConfirmModalComp';
+import AvatarImageComp from '../../../components/AvatarImageComp';
+import { util } from '../../../Util';
+import { httpClientUtil } from '../../../HttpClientUtil';
+import { AttachmentInfo } from '../../../../common/types/CommonTypes';
+import { GetRecentAttachments_Response } from '../../../../common/types/EndpointTypes';
+import { confirmModal } from '../../../components/ConfirmModalComp';
 import appMessages from '../AppMessages';
 
 declare const ADMIN_PUBLIC_KEY: string;

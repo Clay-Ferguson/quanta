@@ -3,8 +3,8 @@ import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import { Contact, FileBase64Intf, KeyPairHex, User } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import {rtc} from './WebRTC.ts';
-import appMessages from './AppMessages.ts';
-import appRooms from './AppRooms.ts';
+import appMessages from './plugins/chat/AppMessages.ts';
+import appRooms from './plugins/chat/AppRooms.ts';
 import appUsers from './AppUsers.ts';
 
 // Vars are injected directly into HTML by server

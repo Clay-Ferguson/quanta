@@ -1,15 +1,15 @@
 import { useLayoutEffect, useEffect, useRef } from 'react';
-import AttachmentComp from './AttachmentComp';
-import Markdown from './MarkdownComp';
+import AttachmentComp from '../../../components/AttachmentComp';
+import Markdown from '../../../components/MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useGlobalState } from '../GlobalState';
-import {util} from '../Util';
-import { scrollEffects } from '../ScrollEffects';
-import AvatarImageComp from './AvatarImageComp';
-import { ChatMessage, Contact, MessageStates } from '../../common/types/CommonTypes';
+import { useGlobalState } from '../../../GlobalState';
+import {util} from '../../../Util';
+import { scrollEffects } from '../../../ScrollEffects';
+import AvatarImageComp from '../../../components/AvatarImageComp';
+import { ChatMessage, Contact, MessageStates } from '../../../../common/types/CommonTypes';
 import appMessages from '../AppMessages';
-import appUsers from '../AppUsers';
+import appUsers from '../../../AppUsers';
 
 declare const ADMIN_PUBLIC_KEY: string; 
 

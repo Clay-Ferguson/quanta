@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import {app} from '../AppService';
+import {app} from '../../../AppService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown  } from '@fortawesome/free-solid-svg-icons';
-import LogoBlockComp from './LogoBlockComp';
-import { DBKeys, PageNames } from '../AppServiceTypes';
-import { gd, gs, useGlobalState } from '../GlobalState';
-import { idb } from '../IndexedDB';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import { DBKeys, PageNames } from '../../../AppServiceTypes';
+import { gd, gs, useGlobalState } from '../../../GlobalState';
+import { idb } from '../../../IndexedDB';
 
 declare const ADMIN_PUBLIC_KEY: string;
 

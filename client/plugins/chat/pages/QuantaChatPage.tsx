@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import FooterComp from '../components/FooterComp';
-import HeaderComp from '../components/HeaderComp';
-import ImageViewerComp from '../components/ImageViewerComp';
-import MessagesComp from '../components/MessagesComp';
-import { useGlobalState } from '../GlobalState';
-import { util } from '../Util';
+import FooterComp from '../comps/FooterComp';
+import HeaderComp from '../comps/HeaderComp';
+import ImageViewerComp from '../../../components/ImageViewerComp';
+import MessagesComp from '../comps/MessagesComp';
+import { useGlobalState } from '../../../GlobalState';
+import { util } from '../../../Util';
 
 /**
  * Main chat page for the Quanta Chat application. This page displays the chat messages and handles user interactions.

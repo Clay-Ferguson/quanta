@@ -1,13 +1,13 @@
-import { TreeNode } from "../../common/types/CommonTypes";
-import { alertModal } from "../components/AlertModalComp";
-import { confirmModal } from "../components/ConfirmModalComp";
-import { promptModal } from "../components/PromptModalComp";
-import { GlobalState } from "../GlobalState";
-import { gd } from '../GlobalState';
-import { httpClientUtil } from "../HttpClientUtil";
-import { DBKeys } from "../AppServiceTypes";
-import { idb } from "../IndexedDB";
-import { util } from "../Util";
+import { TreeNode } from "../../../../common/types/CommonTypes";
+import { alertModal } from "../../../components/AlertModalComp";
+import { confirmModal } from "../../../components/ConfirmModalComp";
+import { promptModal } from "../../../components/PromptModalComp";
+import { GlobalState } from "../../../GlobalState";
+import { gd } from '../../../GlobalState';
+import { httpClientUtil } from "../../../HttpClientUtil";
+import { DBKeys } from "../../../AppServiceTypes";
+import { idb } from "../../../IndexedDB";
+import { util } from "../../../Util";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;

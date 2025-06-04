@@ -1,9 +1,9 @@
-import { ChatMessage } from "../common/types/CommonTypes.ts";
-import { app } from "./AppService.ts";
-import { DBKeys, RoomHistoryItem } from "./AppServiceTypes.ts";
-import { confirmModal } from "./components/ConfirmModalComp";
-import { gd, gs } from "./GlobalState";
-import {idb} from './IndexedDB.ts';
+import { ChatMessage } from "../../../common/types/CommonTypes.ts";
+import { app } from "../../AppService.ts";
+import { DBKeys, RoomHistoryItem } from "../../AppServiceTypes.ts";
+import { confirmModal } from "../../components/ConfirmModalComp.tsx";
+import { gd, gs } from "../../GlobalState.tsx";
+import {idb} from '../../IndexedDB.ts';
 
 /**
  * AppRooms class manages chat room operations and data persistence.
