@@ -8,9 +8,6 @@ import appRooms from './plugins/chat/AppRooms.ts';
 import appUsers from './AppUsers.ts';
 
 // Vars are injected directly into HTML by server
-declare const HOST: string;
-declare const PORT: string;
-declare const SECURE: string;
 declare const PAGE: string;
 declare const PLUGINS: string;
 
@@ -35,11 +32,9 @@ export class AppService {
      */
     async init() {
         console.log("Quanta Chat AppService init");
-        await this.initPlugins();
         setApplyStateRules(this.applyStateRules);
         await idb.init("quantaChatDB", "quantaChatStore", 1);
-        const saveToServer = await idb.getItem(DBKeys.saveToServer, true);
-        rtc.init(HOST, PORT, SECURE==='y', saveToServer);
+        await this.initPlugins();
         await this.restoreSavedValues();
 
         // Load the keyPair from IndexedDB
@@ -56,10 +51,9 @@ export class AppService {
         gd({ type: 'setAppInitialized', payload: { 
             appInitialized: true
         }});
-
-        this.restoreConnection();
         window.addEventListener('keydown', this.handleKeyDown);
 
+        this.restoreConnection();
         setTimeout(() => {
             appRooms.runRoomCleanup();
         }, 10000);
@@ -74,7 +68,7 @@ export class AppService {
                 console.log(`plugin: ${plugin}`);
                 const pluginModule = await import(`./plugins/${plugin}/init.ts`);
                 if (pluginModule.init) {
-                    pluginModule.init();
+                    pluginModule.init({idb});
                 } else {
                     console.warn(`Plugin ${plugin} does not have an init function.`);
                 }
