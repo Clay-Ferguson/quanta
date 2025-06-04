@@ -239,7 +239,8 @@ export const handleEditClick = (node: TreeNode) => {
         gd({ type: 'setFileEditingState', payload: { 
             editingNode: node,
             editingContent: node.content || '',
-            newFileName: nameWithoutPrefix
+            // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
+            newFileName: '' 
         }});
     }
 };
@@ -337,10 +338,12 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
 
 // Insert functions for creating new files and folders
 export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeNode | null) => {
-    const fileName = await promptModal("Enter new file name");
-    if (!fileName || fileName.trim() === '') {
-        return;
-    }
+    // DO NOT DELETE. Leave this just in case.
+    // const fileName = await promptModal("Enter new file name");
+    // if (!fileName || fileName.trim() === '') {
+    //     return;
+    // }
+    const fileName = "file";
         
     try {
         const treeFolder = gs.treeFolder || '/'; 
@@ -361,17 +364,22 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
                 const findStr = `_${fileName}.md`;
                 const newFileNode = updatedNodes.find((n: any) => n.name.endsWith(findStr));
                 if (newFileNode) {
+                    // DO NOT DELETE. Leave this just in case.
                     // Now let's check to make sure the count of matching files is not more than 1
-                    const matchingFiles = updatedNodes.filter((n: any) => n.name.endsWith(findStr));
-                    if (matchingFiles.length > 1) {
-                        alertModal(`Multiple files found ending with "${findStr}". This is not recommended.`);
-                    }
 
-                    const fileNameWithoutPrefix = stripOrdinal(newFileNode.name);
+                    // We changed our logic to let users always sort of ignore that file names even exist and never enter any
+                    // filenames, and the system will just have "0001_file.md", "0002_file.md", etc., in this case which is fine.
+                    // const matchingFiles = updatedNodes.filter((n: any) => n.name.endsWith(findStr));
+                    // if (matchingFiles.length > 1) {
+                    //     alertModal(`Multiple files found ending with "${findStr}". This is not recommended.`);
+                    // }
+
+                    // const fileNameWithoutPrefix = stripOrdinal(newFileNode.name);
                     gd({ type: 'setFileEditingState', payload: { 
                         editingNode: newFileNode,
                         editingContent: newFileNode.content || '',
-                        newFileName: fileNameWithoutPrefix
+                        // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
+                        newFileName: '' // fileNameWithoutPrefix
                     }});
                 }
                 else {

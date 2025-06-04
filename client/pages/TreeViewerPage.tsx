@@ -104,7 +104,7 @@ function EditFile({
                 value={gs.newFileName || ''}
                 onChange={handleFileNameChange}
                 className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter filename..."
+                placeholder="Filename (optional)"
             />
             <textarea
                 ref={contentTextareaRef}
@@ -491,6 +491,11 @@ function TreeNodeComponent({
         // Keep the green underline in edit mode for all items
         if (gs.editMode) {
             classes += " border-b-2 border-b-green-400";
+        }
+
+        // if not in edit mode and this is a folder then add more padding at bottom
+        if (!gs.editMode && isFolder) {
+            classes += " pb-2"; // Add padding at the bottom for folders
         }
         
         return classes;
