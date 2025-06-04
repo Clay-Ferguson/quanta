@@ -350,7 +350,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 onClick={async () => {
                     try {
                         const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
-                            treeFolder: gs.treeFolder,
+                            treeFolder: gs.docFolder,
                             docRootKey: gs.docRootKey 
                         });
                         console.log('SSG completed:', response);
@@ -800,7 +800,7 @@ export default function TreeViewerPage() {
     // We have to wrap this in a useCallback in order to be able to use it in
     // the useEffect below
     const reRenderTree = useCallback(async () => {
-        const folder = gs.treeFolder || '';
+        const folder = gs.docsFolder || '';
         try {
             setIsLoading(true);
             setError(null);
@@ -823,7 +823,7 @@ export default function TreeViewerPage() {
         finally {
             setIsLoading(false);
         }
-    }, [gs.editMode, gs.treeFolder, gs.docRootKey]);
+    }, [gs.editMode, gs.docsFolder, gs.docRootKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
@@ -833,13 +833,13 @@ export default function TreeViewerPage() {
                 await reRenderTree();
             } catch (error) {
                 console.error('Error loading tree:', error);
-                setError(`Sorry, we encountered an error loading the tree for "${gs.treeFolder || '/'}".`);
+                setError(`Sorry, we encountered an error loading the tree for "${gs.docsFolder || '/'}".`);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchTree();
-    }, [gs.treeFolder, gs.editMode, reRenderTree]);
+    }, [gs.docsFolder, gs.editMode, reRenderTree]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
@@ -848,7 +848,7 @@ export default function TreeViewerPage() {
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
-    let lastPathPart = gs.treeFolder ? gs.treeFolder.split('/').filter(Boolean).pop() || null : null;
+    let lastPathPart = gs.docsFolder ? gs.docsFolder.split('/').filter(Boolean).pop() || null : null;
     if (lastPathPart) {
         lastPathPart = formatDisplayName(lastPathPart);
     }
@@ -866,7 +866,7 @@ export default function TreeViewerPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText={formatFullPath(gs.treeFolder || "Doc Viewer")}/>
+                <LogoBlockComp subText={formatFullPath(gs.docsFolder || "Doc Viewer")}/>
                 <div className="flex items-center space-x-4">
                     <ViewWidthDropdown gs={gs} />
                     {isAdmin && 
@@ -879,7 +879,7 @@ export default function TreeViewerPage() {
                             isLoading={isLoading} 
                         />
                     }
-                    {gs.treeFolder && gs.treeFolder.length > 1 && 
+                    {gs.docsFolder && gs.docsFolder.length > 1 && 
                         <button 
                             onClick={() => handleParentClick(gs)}
                             className="btn-icon"

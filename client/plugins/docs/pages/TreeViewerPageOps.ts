@@ -70,7 +70,7 @@ export const stripOrdinal = (name: string) => {
 
 // Handle folder click navigation
 export const handleFolderClick = (gs: GlobalState, folderName: string) => {
-    let curFolder = gs.treeFolder || '';
+    let curFolder = gs.docsFolder || '';
     if (curFolder == '/') {
         curFolder = ''; // If we're at root, we want to start with an empty string
     }
@@ -78,7 +78,7 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
         
     // Clear selections and highlighted folder when navigating to a new folder
     gd({ type: 'setTreeFolder', payload: { 
-        treeFolder: newFolder,
+        docsFolder: newFolder,
         selectedTreeItems: new Set<TreeNode>(),
         highlightedFolderName: null
     }});
@@ -90,7 +90,7 @@ export const handleFileClick = async (gs: GlobalState, fileName: string) => {
         return;
     }
     // Construct the full path to the file
-    let curFolder = gs.treeFolder || '';
+    let curFolder = gs.docsFolder || '';
     if (curFolder === '/') {
         curFolder = ''; // If we're at root, we want to start with an empty string
     }
@@ -102,7 +102,7 @@ export const handleFileClick = async (gs: GlobalState, fileName: string) => {
 
 // Handle parent navigation (go up one level in folder tree)
 export const handleParentClick = (gs: GlobalState) => {
-    const curFolder = gs.treeFolder || '/';
+    const curFolder = gs.docsFolder || '/';
     
     // Remember the current folder name to scroll back to it after navigating up
     let folderToScrollTo: string | null = null;
@@ -116,7 +116,7 @@ export const handleParentClick = (gs: GlobalState) => {
         
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
-            treeFolder: parentFolder,
+            docsFolder: parentFolder,
             selectedTreeItems: new Set<TreeNode>(),
             highlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
@@ -127,7 +127,7 @@ export const handleParentClick = (gs: GlobalState) => {
         
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
-            treeFolder: '/',
+            docsFolder: '/',
             selectedTreeItems: new Set<TreeNode>(),
             highlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
@@ -247,10 +247,9 @@ export const handleEditClick = (node: TreeNode) => {
 
 const deleteFileOrFolderOnServer = async (gs: GlobalState, fileOrFolderName: string) => {
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             fileOrFolderName,
-            treeFolder,
+            treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
@@ -294,11 +293,10 @@ export const handleMoveDownClick = (gs: GlobalState, treeNodes: TreeNode[], setT
 
 const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, direction: 'up' | 'down') => {
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             direction,
             filename: node.name,
-            treeFolder,
+            treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docRootKey
         };
             
@@ -346,10 +344,9 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
     const fileName = "file";
         
     try {
-        const treeFolder = gs.treeFolder || '/'; 
         const requestBody = {
             fileName: fileName,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             insertAfterNode: node ? node.name : '',
             docRootKey: gs.docRootKey
         };
@@ -425,10 +422,9 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
     }
         
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             folderName: name,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             insertAfterNode: node ? node.name : '',
             docRootKey: gs.docRootKey
         };
@@ -490,11 +486,10 @@ export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeN
 
 const saveToServer = async (gs: GlobalState, filename: string, content: string, newFileName?: string) => {
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             filename: filename,
             content: content,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
             docRootKey: gs.docRootKey
         };
@@ -506,11 +501,10 @@ const saveToServer = async (gs: GlobalState, filename: string, content: string, 
 
 const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newFolderName: string) => {
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             oldFolderName,
             newFolderName,
-            treeFolder,
+            treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
@@ -572,7 +566,7 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: T
         return;
     }
     const cutItemsArray = Array.from(gs.cutItems);
-    const targetFolder = gs.treeFolder || '/';
+    const targetFolder = gs.docsFolder || '/';
 
     try {
         const requestBody = {
@@ -600,7 +594,7 @@ export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, fold
     const cutItemsArray = Array.from(gs.cutItems);
     
     // Construct the target folder path by combining current path with folder name
-    let currentFolder = gs.treeFolder || '';
+    let currentFolder = gs.docsFolder || '';
     if (currentFolder === '/') {
         currentFolder = ''; // If we're at root, we want to start with an empty string
     }
@@ -642,12 +636,11 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
     try {
         // Prepare the file names for the server
         const fileNames = selItems.map(item => item.name);
-        const treeFolder = gs.treeFolder || '/';
             
         // Call server endpoint to delete the items
         const response = await httpClientUtil.secureHttpPost('/api/docs/delete', {
             fileNames: fileNames,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docRootKey
         });
             
@@ -678,7 +671,7 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
 export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "explore", itemPath?: string) => {
     try {
         // Use the provided item path or default to the current folder
-        const treeItem = itemPath || gs.treeFolder || '/';
+        const treeItem = itemPath || gs.docsFolder || '/';
         const docRootKey = gs.docRootKey;
 
         const requestBody = {
@@ -742,11 +735,10 @@ export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], set
 
 const saveToServerWithSplit = async (gs: GlobalState, filename: string, content: string, newFileName?: string) => {
     try {
-        const treeFolder = gs.treeFolder || '/';
         const requestBody = {
             filename: filename,
             content: content,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
             docRootKey: gs.docRootKey,
             split: true
@@ -793,12 +785,11 @@ export const onJoin = async (gs: GlobalState, reRenderTree: any) => {
     try {
         // Prepare the file names for the server
         const fileNames = selectedFiles.map(item => item.name);
-        const treeFolder = gs.treeFolder || '/';
             
         // Call server endpoint to join the files
         const response = await httpClientUtil.secureHttpPost('/api/docs/join', {
             filenames: fileNames,
-            treeFolder: treeFolder,
+            treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docRootKey
         });
             

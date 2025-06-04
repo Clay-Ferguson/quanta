@@ -85,7 +85,7 @@ export default function SearchViewPage() {
         
         setIsSearching(true);
         try {
-            const searchFolder = gs.treeFolder || '/';
+            const searchFolder = gs.docsFolder || '/';
             const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
                 query: gs.searchQuery.trim(),
                 treeFolder: searchFolder,
@@ -110,7 +110,7 @@ export default function SearchViewPage() {
         } catch (error) {
             console.error('Search failed:', error);
             await alertModal('Search failed. Please try again.');
-            const searchFolder = gs.treeFolder || '/';
+            const searchFolder = gs.docsFolder || '/';
             gd({ type: 'setSearchResults', payload: { 
                 searchResults: [],
                 searchOriginFolder: searchFolder
@@ -141,7 +141,7 @@ export default function SearchViewPage() {
                         
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
-                treeFolder: targetFolderPath,
+                docsFolder: targetFolderPath,
                 selectedTreeItems: new Set(),
                 highlightedFolderName: null
             }});
@@ -151,7 +151,7 @@ export default function SearchViewPage() {
                         
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
-                treeFolder: searchRootFolder,
+                docsFolder: searchRootFolder,
                 selectedTreeItems: new Set(),
                 highlightedFolderName: null
             }});
@@ -161,7 +161,7 @@ export default function SearchViewPage() {
                         
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
-                treeFolder: searchRootFolder,
+                docsFolder: searchRootFolder,
                 selectedTreeItems: new Set(),
                 highlightedFolderName: null
             }});
@@ -206,7 +206,7 @@ export default function SearchViewPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText={`Search in ${gs.treeFolder}`}/>
+                <LogoBlockComp subText={`Search in ${gs.docsFolder}`}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>

@@ -44,7 +44,7 @@ export interface GlobalState {
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
     devMode?: boolean;
-    treeFolder?: string;
+    docsFolder?: string;
     editMode?: boolean; 
     metaMode?: boolean; 
     namesMode?: boolean;
@@ -88,7 +88,7 @@ const initialState: GlobalState = {
     promptDefaultValue: null,
     headerExpanded: false,
     devMode: false,
-    treeFolder: '/', 
+    docsFolder: '/', 
     editMode: false,
     metaMode: false,
     namesMode: false,

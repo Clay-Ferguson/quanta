@@ -203,7 +203,7 @@ export class AppService {
     showHelp = () => {
         const _gs = gs();
         this.setTopPage(_gs, PageNames.treeViewer);
-        _gs.treeFolder = "/";
+        _gs.docsFolder = "/";
         DOC_ROOT_KEY = "user-guide"; // Ensure DOC_ROOT_KEY is set for user guide
         gd({ type: 'setPage', payload: _gs });
     }
