@@ -43,10 +43,11 @@ class DocService {
      * folders that are meant to be used as pullups.
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
-        console.log("Tree Render Request:", req.path);
+        const pathName = req.path.replace("//", "/"); // Remove trailing slash if present
+        console.log("Tree Render Request:", pathName);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
-            const rawTreeFolder = req.path.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
+            const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
             
             // Extract the optional pullup parameter from query string

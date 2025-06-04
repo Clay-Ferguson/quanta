@@ -800,7 +800,7 @@ export default function TreeViewerPage() {
     // We have to wrap this in a useCallback in order to be able to use it in
     // the useEffect below
     const reRenderTree = useCallback(async () => {
-        const folder = gs.treeFolder || '/';
+        const folder = gs.treeFolder || '';
         try {
             setIsLoading(true);
             setError(null);
