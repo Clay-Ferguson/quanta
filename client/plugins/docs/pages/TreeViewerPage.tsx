@@ -48,7 +48,7 @@ function EditFolder({
             <div className="flex-grow">
                 <input
                     type="text"
-                    value={gs.newFolderName || ''}
+                    value={gs.docsNewFolderName || ''}
                     onChange={handleFolderNameChange}
                     className="w-full bg-gray-800 border border-gray-600 rounded-lg text-gray-200 text-lg font-medium px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter folder name..."
@@ -101,14 +101,14 @@ function EditFile({
         <div>
             <input
                 type="text"
-                value={gs.newFileName || ''}
+                value={gs.docsNewFileName || ''}
                 onChange={handleFileNameChange}
                 className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Filename (optional)"
             />
             <textarea
                 ref={contentTextareaRef}
-                value={gs.editingContent || ''}
+                value={gs.docsEditContent || ''}
                 onChange={handleContentChange}
                 rows={10}
                 className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -156,7 +156,7 @@ interface EditIconsProps {
 function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRenderTree, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
     const isImage = node.type === 'image';
     const isFolder = node.type === 'folder';
-    const hasCutItems = gs.cutItems && gs.cutItems.size > 0;
+    const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
 
     return (
         <div className={containerClass}>
@@ -217,17 +217,17 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
         
         // Update global state
         gd({ type: 'setViewWidth', payload: { 
-            viewWidth: newWidth
+            docsViewWidth: newWidth
         }});
         
         // Persist to IndexedDB
-        await idb.setItem(DBKeys.viewWidth, newWidth);
+        await idb.setItem(DBKeys.docsViewWidth, newWidth);
     };
 
     return (
         <div className="flex items-center">
             <select
-                value={gs.viewWidth || 'medium'}
+                value={gs.docsViewWidth || 'medium'}
                 onChange={handleWidthChange}
                 className="bg-gray-700 border border-gray-600 rounded text-gray-200 text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 title="Content width"
@@ -276,7 +276,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             <label className="flex items-center cursor-pointer">
                 <input 
                     type="checkbox"
-                    checked={gs.namesMode || false}
+                    checked={gs.docsNamesMode || false}
                     onChange={async () => await handleNamesModeToggle(gs)}
                     className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
@@ -300,8 +300,8 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Delete
                         </button>}
-                    {gs.selectedTreeItems && gs.selectedTreeItems.size >= 2 && 
-                     (Array.from(gs.selectedTreeItems) as TreeNode[]).every(node => node.type === 'text') && 
+                    {gs.docsSelItems && gs.docsSelItems.size >= 2 && 
+                     (Array.from(gs.docsSelItems) as TreeNode[]).every(node => node.type === 'text') && 
                         <button 
                             onClick={() => onJoin(gs, reRenderTree)}
                             className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
@@ -351,7 +351,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                     try {
                         const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
                             treeFolder: gs.docsFolder,
-                            docRootKey: gs.docRootKey 
+                            docRootKey: gs.docsRootKey 
                         });
                         console.log('SSG completed:', response);
                     } catch (error) {
@@ -404,9 +404,9 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                             {indeterminate ? "Some selected" : checked ? "All selected" : "Select all"}
                         </span>
                     </div>
-                    {gs.selectedTreeItems && gs.selectedTreeItems.size > 0 && (
+                    {gs.docsSelItems && gs.docsSelItems.size > 0 && (
                         <span className="text-xs text-gray-400">
-                            ({gs.selectedTreeItems.size} of {filteredTreeNodes.length} selected)
+                            ({gs.docsSelItems.size} of {filteredTreeNodes.length} selected)
                         </span>
                     )}
                 </div>
@@ -428,7 +428,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                 >
                     <FontAwesomeIcon icon={faFolder} className="h-5 w-5" />
                 </button>
-                {gs.cutItems && gs.cutItems.size > 0 && (
+                {gs.docsCutItems && gs.docsCutItems.size > 0 && (
                     <button 
                         onClick={() => onPaste(gs, reRenderTree, node)}
                         className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
@@ -483,7 +483,7 @@ function TreeNodeComponent({
     const isImage = node.type === 'image';
     // For images, node.content now contains the relative path from root
     // todo-1: It's a bit ugly that we have to use node.content here, but it works for now
-    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docRootKey}/${node.content}` : null;
+    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docsRootKey}/${node.content}` : null;
     
     // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
     // this tool is used only to edit Markdown files and images, so we can ignore those cases.
@@ -493,8 +493,8 @@ function TreeNodeComponent({
 
     // Check if this is the highlighted folder that we came up from
     // Compare the stripped names (without ordinal prefix) for exact match
-    const isHighlightedFolder = isFolder && gs.highlightedFolderName && 
-        stripOrdinal(node.name) === gs.highlightedFolderName;
+    const isHighlightedFolder = isFolder && gs.docsHighlightedFolderName && 
+        stripOrdinal(node.name) === gs.docsHighlightedFolderName;
     
     // Determine the border class based on whether this is highlighted
     const getBorderClass = () => {
@@ -539,7 +539,7 @@ function TreeNodeComponent({
                 <div className="flex-grow">
                     {isFolder &&
                         <div className="flex items-center justify-between">
-                            {gs.editingNode === node &&
+                            {gs.docsEditNode === node &&
                                 <EditFolder 
                                     gs={gs} 
                                     treeNodes={treeNodes} 
@@ -548,7 +548,7 @@ function TreeNodeComponent({
                                     handleCancelClick={handleCancelClick} 
                                 />
                             } 
-                            {gs.editingNode !== node &&
+                            {gs.docsEditNode !== node &&
                                 <>
                                     <div 
                                         className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg transition-colors flex-grow"
@@ -585,7 +585,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
+                                className={gs.docsNamesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -599,7 +599,7 @@ function TreeNodeComponent({
                         </div>
                     }
                     
-                    {isTextFile && (gs.editingNode === node ? 
+                    {isTextFile && (gs.docsEditNode === node ? 
                         <EditFile 
                             gs={gs} 
                             reRenderTree={reRenderTree}
@@ -610,7 +610,7 @@ function TreeNodeComponent({
                             handleCancelClick={handleCancelClick} 
                             contentTextareaRef={contentTextareaRef} 
                         />
-                        : gs.namesMode ?
+                        : gs.docsNamesMode ?
                             <div 
                                 className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
                                 onClick={() => handleFileClick(gs, node.name)}
@@ -766,34 +766,34 @@ export default function TreeViewerPage() {
 
     // Focus the content textarea when starting to edit a file
     useEffect(() => {
-        if (gs.editingNode && gs.editingNode.type !== 'folder' && contentTextareaRef.current) {
+        if (gs.docsEditNode && gs.docsEditNode.type !== 'folder' && contentTextareaRef.current) {
             // Use setTimeout to ensure the textarea is rendered before focusing
             setTimeout(() => {
                 contentTextareaRef.current?.focus();
             }, 100);
         }
-    }, [gs.editingNode]);
+    }, [gs.docsEditNode]);
 
     // Check if a node is selected
     const isNodeSelected = (node: TreeNode): boolean => {
-        return gs.selectedTreeItems?.has(node) || false;
+        return gs.docsSelItems?.has(node) || false;
     };
 
     const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         gd({ type: 'setEditingContent', payload: { 
-            editingContent: event.target.value
+            docsEditContent: event.target.value
         }});
     };
 
     const handleFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         gd({ type: 'setNewFolderName', payload: { 
-            newFolderName: event.target.value
+            docsNewFolderName: event.target.value
         }});
     };
 
     const handleFileNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         gd({ type: 'setNewFileName', payload: { 
-            newFileName: event.target.value
+            docsNewFileName: event.target.value
         }});
     };
 
@@ -804,7 +804,7 @@ export default function TreeViewerPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const url = `/api/docs/render/${gs.docRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
+            const url = `/api/docs/render/${gs.docsRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
                 
             if (treeResponse && treeResponse.treeNodes) {
@@ -823,7 +823,7 @@ export default function TreeViewerPage() {
         finally {
             setIsLoading(false);
         }
-    }, [gs.docsEditMode, gs.docsFolder, gs.docRootKey]);
+    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
@@ -845,9 +845,9 @@ export default function TreeViewerPage() {
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
     useEffect(() => scrollEffects.effect(elmRef), []);
 
-    const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
+    const itemsAreSelected = gs.docsSelItems && gs.docsSelItems?.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
-    const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+    const filteredTreeNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
     let lastPathPart = gs.docsFolder ? gs.docsFolder.split('/').filter(Boolean).pop() || null : null;
     if (lastPathPart) {
         lastPathPart = formatDisplayName(lastPathPart);
@@ -855,7 +855,7 @@ export default function TreeViewerPage() {
 
     // Determine width class based on viewWidth setting
     const getWidthClass = () => {
-        switch (gs.viewWidth) {
+        switch (gs.docsViewWidth) {
         case 'narrow': return 'max-w-xl';
         case 'wide': return 'max-w-5xl';
         case 'medium':

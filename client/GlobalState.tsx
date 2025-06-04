@@ -44,23 +44,25 @@ export interface GlobalState {
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
     devMode?: boolean;
+
+    // Plugin-specific state uses plugin key perfix, e.g. 'docs'
     docsFolder?: string;
     docsEditMode?: boolean; 
     docsMetaMode?: boolean; 
-    namesMode?: boolean;
-    editingNode?: TreeNode | null;
-    editingContent?: string | null;
-    newFolderName?: string | null;
-    newFileName?: string | null;
-    selectedTreeItems?: Set<TreeNode>;
-    cutItems?: Set<string>;
-    docRootKey?: string | null;
-    viewWidth?: 'narrow' | 'medium' | 'wide';
-    searchQuery?: string;
-    searchResults?: Array<{file: string, line: number, content: string}>;
-    searchOriginFolder?: string;
-    searchMode?: 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL';
-    highlightedFolderName?: string | null;
+    docsNamesMode?: boolean;
+    docsEditNode?: TreeNode | null;
+    docsEditContent?: string | null;
+    docsNewFolderName?: string | null;
+    docsNewFileName?: string | null;
+    docsSelItems?: Set<TreeNode>;
+    docsCutItems?: Set<string>;
+    docsRootKey?: string | null;
+    docsViewWidth?: 'narrow' | 'medium' | 'wide';
+    docsSearch?: string;
+    docsSearchResults?: Array<{file: string, line: number, content: string}>;
+    docsSearchOriginFolder?: string;
+    docsSearchMode?: 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL';
+    docsHighlightedFolderName?: string | null;
 }
 
 const initialState: GlobalState = {
@@ -91,20 +93,20 @@ const initialState: GlobalState = {
     docsFolder: '/', 
     docsEditMode: false,
     docsMetaMode: false,
-    namesMode: false,
-    editingNode: null,
-    editingContent: null,
-    newFolderName: null,
-    newFileName: null,
-    selectedTreeItems: new Set<TreeNode>(),
-    cutItems: new Set<string>(),
-    docRootKey: PAGE===PageNames.treeViewer || DOC_ROOT_KEY ? DOC_ROOT_KEY : "user-guide",
-    viewWidth: 'medium',
-    searchQuery: '',
-    searchResults: [],
-    searchOriginFolder: '',
-    searchMode: 'MATCH_ANY',
-    highlightedFolderName: null,
+    docsNamesMode: false,
+    docsEditNode: null,
+    docsEditContent: null,
+    docsNewFolderName: null,
+    docsNewFileName: null,
+    docsSelItems: new Set<TreeNode>(),
+    docsCutItems: new Set<string>(),
+    docsRootKey: PAGE===PageNames.treeViewer || DOC_ROOT_KEY ? DOC_ROOT_KEY : "user-guide",
+    docsViewWidth: 'medium',
+    docsSearch: '',
+    docsSearchResults: [],
+    docsSearchOriginFolder: '',
+    docsSearchMode: 'MATCH_ANY',
+    docsHighlightedFolderName: null,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,

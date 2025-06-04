@@ -15,10 +15,10 @@ export enum DBKeys {
     daysOfHistory = 'daysOfHistory',
     roomHistory = 'roomHistory',
     headerExpanded = 'headerExpanded',
-    viewWidth = 'viewWidth',
+    docsViewWidth = 'docsViewWidth',
     docsEditMode = 'docsEditMode',
     docsMetaMode = 'docsMetaMode',
-    namesMode = 'namesMode',
+    docsNamesMode = 'docsNamesMode',
 }
 
 export enum PanelKeys {

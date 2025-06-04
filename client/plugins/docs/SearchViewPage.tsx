@@ -78,7 +78,7 @@ export default function SearchViewPage() {
     }, []);
     
     const handleSearch = async () => {
-        if (!gs.searchQuery?.trim()) {
+        if (!gs.docsSearch?.trim()) {
             await alertModal('Please enter a search query');
             return;
         }
@@ -87,24 +87,24 @@ export default function SearchViewPage() {
         try {
             const searchFolder = gs.docsFolder || '/';
             const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
-                query: gs.searchQuery.trim(),
+                query: gs.docsSearch.trim(),
                 treeFolder: searchFolder,
-                docRootKey: gs.docRootKey,
-                searchMode: gs.searchMode || 'MATCH_ANY'
+                docRootKey: gs.docsRootKey,
+                searchMode: gs.docsSearchMode || 'MATCH_ANY'
             }) as any;
             
             if (response && response.success) {
                 console.log('Search response:', response);
                 gd({ type: 'setSearchResults', payload: { 
-                    searchResults: response.results || [],
-                    searchOriginFolder: searchFolder
+                    docsSearchResults: response.results || [],
+                    docsSearchOriginFolder: searchFolder
                 }});
-                setLastSearchQuery(gs.searchQuery.trim());
+                setLastSearchQuery(gs.docsSearch.trim());
             } else {
                 await alertModal('Search failed. No results found.');
                 gd({ type: 'setSearchResults', payload: { 
-                    searchResults: [],
-                    searchOriginFolder: searchFolder
+                    docsSearchResults: [],
+                    docsSearchOriginFolder: searchFolder
                 }});
             }
         } catch (error) {
@@ -112,8 +112,8 @@ export default function SearchViewPage() {
             await alertModal('Search failed. Please try again.');
             const searchFolder = gs.docsFolder || '/';
             gd({ type: 'setSearchResults', payload: { 
-                searchResults: [],
-                searchOriginFolder: searchFolder
+                docsSearchResults: [],
+                docsSearchOriginFolder: searchFolder
             }});
         } finally {
             setIsSearching(false);
@@ -124,7 +124,7 @@ export default function SearchViewPage() {
         // Parse the file path to extract the folder path and filename
         // Note: filePath is relative to the searchOriginFolder where the search was performed
         const lastSlashIndex = filePath.lastIndexOf('/');
-        let searchRootFolder = gs.searchOriginFolder || '/';
+        let searchRootFolder = gs.docsSearchOriginFolder || '/';
         let fileName = filePath;
                 
         if (lastSlashIndex > 0) {
@@ -142,8 +142,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: targetFolderPath,
-                selectedTreeItems: new Set(),
-                highlightedFolderName: null
+                docsSelItems: new Set(),
+                docsHighlightedFolderName: null
             }});
         } else if (lastSlashIndex === 0) {
             // File is in root folder (relative to search root)
@@ -152,8 +152,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: searchRootFolder,
-                selectedTreeItems: new Set(),
-                highlightedFolderName: null
+                docsSelItems: new Set(),
+                docsHighlightedFolderName: null
             }});
         } else {
             // No slash found - file is directly in the search root folder
@@ -162,8 +162,8 @@ export default function SearchViewPage() {
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: searchRootFolder,
-                selectedTreeItems: new Set(),
-                highlightedFolderName: null
+                docsSelItems: new Set(),
+                docsHighlightedFolderName: null
             }});
         }
         
@@ -187,7 +187,7 @@ export default function SearchViewPage() {
     };
     
     // Group results by file to show only one instance per file
-    const groupedResults = (gs.searchResults || []).reduce((acc: Record<string, SearchResult[]>, result: SearchResult) => {
+    const groupedResults = (gs.docsSearchResults || []).reduce((acc: Record<string, SearchResult[]>, result: SearchResult) => {
         if (!acc[result.file]) {
             acc[result.file] = [];
         }
@@ -222,8 +222,8 @@ export default function SearchViewPage() {
                         <input
                             ref={searchInputRef}
                             type="text"
-                            value={gs.searchQuery || ''}
-                            onChange={(e) => gd({ type: 'setSearchQuery', payload: { searchQuery: e.target.value }})}
+                            value={gs.docsSearch || ''}
+                            onChange={(e) => gd({ type: 'setSearchQuery', payload: { docsSearch: e.target.value }})}
                             onKeyDown={handleKeyDown}
                             placeholder="Enter your search query..."
                             className="flex-grow px-3 py-2 bg-gray-800 text-gray-300 border border-gray-700 rounded focus:outline-none focus:border-blue-500"
@@ -237,8 +237,8 @@ export default function SearchViewPage() {
                                     type="radio"
                                     name="searchMode"
                                     value="REGEX"
-                                    checked={gs.searchMode === 'REGEX'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
+                                    checked={gs.docsSearchMode === 'REGEX'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { docsSearchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />
@@ -249,8 +249,8 @@ export default function SearchViewPage() {
                                     type="radio"
                                     name="searchMode"
                                     value="MATCH_ANY"
-                                    checked={gs.searchMode === 'MATCH_ANY'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
+                                    checked={gs.docsSearchMode === 'MATCH_ANY'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { docsSearchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />
@@ -261,8 +261,8 @@ export default function SearchViewPage() {
                                     type="radio"
                                     name="searchMode"
                                     value="MATCH_ALL"
-                                    checked={gs.searchMode === 'MATCH_ALL'}
-                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { searchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
+                                    checked={gs.docsSearchMode === 'MATCH_ALL'}
+                                    onChange={(e) => gd({ type: 'setSearchMode', payload: { docsSearchMode: (e.target.value || "MATCH_ANY") as 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL' }})}
                                     className="text-blue-600 focus:ring-blue-500"
                                     disabled={isSearching}
                                 />
@@ -272,7 +272,7 @@ export default function SearchViewPage() {
                         
                         <button 
                             onClick={handleSearch}
-                            disabled={isSearching || !gs.searchQuery?.trim()}
+                            disabled={isSearching || !gs.docsSearch?.trim()}
                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
                         >
                             {isSearching ? 'Searching...' : 'Search'}
@@ -282,13 +282,13 @@ export default function SearchViewPage() {
                 
                 <div className="flex-grow relative">
                     <div className="absolute inset-0 w-full h-full bg-gray-800 text-gray-300 p-3 border border-gray-700 rounded overflow-auto">
-                        {(gs.searchResults || []).length === 0 && !isSearching && !lastSearchQuery && (
+                        {(gs.docsSearchResults || []).length === 0 && !isSearching && !lastSearchQuery && (
                             <div className="text-center text-gray-500">
                                 Search results will appear here
                             </div>
                         )}
                         
-                        {(gs.searchResults || []).length === 0 && !isSearching && lastSearchQuery && (
+                        {(gs.docsSearchResults || []).length === 0 && !isSearching && lastSearchQuery && (
                             <div className="text-center text-gray-500">
                                 No results found for "{lastSearchQuery}"
                             </div>
@@ -300,10 +300,10 @@ export default function SearchViewPage() {
                             </div>
                         )}
                         
-                        {(gs.searchResults || []).length > 0 && (
+                        {(gs.docsSearchResults || []).length > 0 && (
                             <div className="space-y-3">
                                 <div className="mb-4">
-                                    Found {(gs.searchResults || []).length} match{(gs.searchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for [{lastSearchQuery}] in {gs.searchOriginFolder || '/'}
+                                    Found {(gs.docsSearchResults || []).length} match{(gs.docsSearchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for [{lastSearchQuery}] in {gs.docsSearchOriginFolder || '/'}
                                 </div>
                                 
                                 {uniqueFiles.map((filePath) => (

@@ -134,10 +134,10 @@ export class AppService {
         const userDescription: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
-        const viewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.viewWidth, 'medium');
+        const docsViewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
         const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
-        const namesMode: boolean = await idb.getItem(DBKeys.namesMode, false) === true;
+        const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
 
         const state: GlobalState = {
             userName,
@@ -149,10 +149,10 @@ export class AppService {
             userDescription,
             userAvatar,
             headerExpanded,
-            viewWidth,
+            docsViewWidth,
             docsEditMode,
-            docsMetaMode: docsMetaMode,
-            namesMode,
+            docsMetaMode,
+            docsNamesMode,
         };
 
         // if no username we send to settings page.

@@ -48,16 +48,16 @@ export function formatFullPath(path: string): string {
 
 export const handleCancelClick = (gs: GlobalState) => {
     // Clear editing state without saving
-    if (gs.editingNode?.type === 'folder') {
+    if (gs.docsEditNode?.type === 'folder') {
         gd({ type: 'clearFolderEditingState', payload: { 
-            editingNode: null,
-            newFolderName: null
+            docsEditNode: null,
+            docsNewFolderName: null
         }});
     } else {
         gd({ type: 'clearFileEditingState', payload: { 
-            editingNode: null,
-            editingContent: null,
-            newFileName: null
+            docsEditNode: null,
+            docsEditContent: null,
+            docsNewFileName: null
         }});
     }
 };
@@ -79,8 +79,8 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
     // Clear selections and highlighted folder when navigating to a new folder
     gd({ type: 'setTreeFolder', payload: { 
         docsFolder: newFolder,
-        selectedTreeItems: new Set<TreeNode>(),
-        highlightedFolderName: null
+        docsSelItems: new Set<TreeNode>(),
+        docsHighlightedFolderName: null
     }});
 };
 
@@ -117,8 +117,8 @@ export const handleParentClick = (gs: GlobalState) => {
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
             docsFolder: parentFolder,
-            selectedTreeItems: new Set<TreeNode>(),
-            highlightedFolderName: stripOrdinal(folderToScrollTo)
+            docsSelItems: new Set<TreeNode>(),
+            docsHighlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
     } else if (lastSlashIdx === 0 && curFolder.length > 1) {
         // If we're in a direct subfolder of root, go to root
@@ -128,8 +128,8 @@ export const handleParentClick = (gs: GlobalState) => {
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
             docsFolder: '/',
-            selectedTreeItems: new Set<TreeNode>(),
-            highlightedFolderName: stripOrdinal(folderToScrollTo)
+            docsSelItems: new Set<TreeNode>(),
+            docsHighlightedFolderName: stripOrdinal(folderToScrollTo)
         }});
     }
     
@@ -170,19 +170,19 @@ export const handleMetaModeToggle = async (gs: GlobalState) => {
 };
 
 export const handleNamesModeToggle = async (gs: GlobalState) => {
-    const newNamesMode = !gs.namesMode;
+    const newNamesMode = !gs.docsNamesMode;
     
     gd({ type: 'setNamesMode', payload: { 
-        namesMode: newNamesMode
+        docsNamesMode: newNamesMode
     }});
     
     // Persist to IndexedDB
-    await idb.setItem(DBKeys.namesMode, newNamesMode);
+    await idb.setItem(DBKeys.docsNamesMode, newNamesMode);
 };
 
 // Handle checkbox selection for TreeNodes
 export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: boolean) => {
-    const curSels = new Set(gs.selectedTreeItems);
+    const curSels = new Set(gs.docsSelItems);
     if (checked) {
         curSels.add(node);
     } else {
@@ -190,7 +190,7 @@ export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: b
     }
         
     gd({ type: 'setSelectedTreeItems', payload: { 
-        selectedTreeItems: curSels
+        docsSelItems: curSels
     }});
 };
 
@@ -198,22 +198,22 @@ export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: b
 export const handleMasterCheckboxChange = (gs: GlobalState, treeNodes: TreeNode[], checked: boolean) => {
     if (checked) {
         // Select all available nodes (excluding cut items)
-        const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+        const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
         gd({ type: 'setSelectedTreeItems', payload: { 
-            selectedTreeItems: new Set<TreeNode>(availableNodes)
+            docsSelItems: new Set<TreeNode>(availableNodes)
         }});
     } else {
         // Unselect all nodes
         gd({ type: 'setSelectedTreeItems', payload: { 
-            selectedTreeItems: new Set<TreeNode>()
+            docsSelItems: new Set<TreeNode>()
         }});
     }
 };
 
 // Helper function to determine master checkbox state
 export const getMasterCheckboxState = (gs: GlobalState, treeNodes: TreeNode[]): { checked: boolean, indeterminate: boolean } => {
-    const availableNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
-    const selectedCount = gs.selectedTreeItems?.size || 0;
+    const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
+    const selectedCount = gs.docsSelItems?.size || 0;
     const availableCount = availableNodes.length;
     
     if (selectedCount === 0) {
@@ -232,15 +232,15 @@ export const handleEditClick = (node: TreeNode) => {
     const nameWithoutPrefix = stripOrdinal(node.name);   
     if (node.type === 'folder') {
         gd({ type: 'setFolderEditingState', payload: { 
-            editingNode: node,
-            newFolderName: nameWithoutPrefix
+            docsEditNode: node,
+            docsNewFolderName: nameWithoutPrefix
         }});
     } else {
         gd({ type: 'setFileEditingState', payload: { 
-            editingNode: node,
-            editingContent: node.content || '',
+            docsEditNode: node,
+            docsEditContent: node.content || '',
             // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
-            newFileName: '' 
+            docsNewFileName: '' 
         }});
     }
 };
@@ -250,7 +250,7 @@ const deleteFileOrFolderOnServer = async (gs: GlobalState, fileOrFolderName: str
         const requestBody = {
             fileOrFolderName,
             treeFolder: gs.docsFolder || '/',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/delete', requestBody);
     } catch (error) {
@@ -297,7 +297,7 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
             direction,
             filename: node.name,
             treeFolder: gs.docsFolder || '/',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
             
         const response = await httpClientUtil.secureHttpPost('/api/docs/move-up-down', requestBody);
@@ -348,7 +348,7 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
             fileName: fileName,
             treeFolder: gs.docsFolder || '/',
             insertAfterNode: node ? node.name : '',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
         const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
             
@@ -373,10 +373,10 @@ export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeN
 
                     // const fileNameWithoutPrefix = stripOrdinal(newFileNode.name);
                     gd({ type: 'setFileEditingState', payload: { 
-                        editingNode: newFileNode,
-                        editingContent: newFileNode.content || '',
+                        docsEditNode: newFileNode,
+                        docsEditContent: newFileNode.content || '',
                         // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
-                        newFileName: '' // fileNameWithoutPrefix
+                        docsNewFileName: '' // fileNameWithoutPrefix
                     }});
                 }
                 else {
@@ -426,7 +426,7 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
             folderName: name,
             treeFolder: gs.docsFolder || '/',
             insertAfterNode: node ? node.name : '',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
             
         const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
@@ -445,10 +445,10 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
 };
 
 export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
-    if (gs.editingNode && gs.editingContent !== null) {
+    if (gs.docsEditNode && gs.docsEditContent !== null) {
         // Get the original filename and new filename
-        const originalName = gs.editingNode.name;
-        const newFileName = gs.newFileName || stripOrdinal(originalName);
+        const originalName = gs.docsEditNode.name;
+        const newFileName = gs.docsNewFileName || stripOrdinal(originalName);
             
         // Extract the numeric prefix from the original file name
         const underscoreIdx = originalName.indexOf('_');
@@ -464,22 +464,22 @@ export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeN
 
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
-            node === gs.editingNode 
-                ? { ...node, content: gs.editingContent || '', name: newFullFileName }
+            node === gs.docsEditNode 
+                ? { ...node, content: gs.docsEditContent || '', name: newFullFileName }
                 : node
         );
         setTreeNodes(updatedNodes);
             
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
-            editingNode: null,
-            editingContent: null,
-            newFileName: null
+            docsEditNode: null,
+            docsEditContent: null,
+            docsNewFileName: null
         }});
 
         // Save to server with a delay to ensure UI updates first
         setTimeout(() => {
-            saveToServer(gs, gs.editingNode!.name, gs.editingContent || '', newFullFileName);
+            saveToServer(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
         }, 500);
     }
 };
@@ -491,7 +491,7 @@ const saveToServer = async (gs: GlobalState, filename: string, content: string, 
             content: content,
             treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
     } catch (error) {
@@ -505,7 +505,7 @@ const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newF
             oldFolderName,
             newFolderName,
             treeFolder: gs.docsFolder || '/',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
     } catch (error) {
@@ -514,18 +514,18 @@ const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newF
 };
 
 export const handleRenameClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
-    if (gs.editingNode && gs.newFolderName !== null) {
+    if (gs.docsEditNode && gs.docsNewFolderName !== null) {
         // Extract the numeric prefix from the original folder name
-        const originalName = gs.editingNode.name;
+        const originalName = gs.docsEditNode.name;
         const underscoreIdx = originalName.indexOf('_');
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
         // Create the new full folder name with the numeric prefix
-        const newFullFolderName = numericPrefix + gs.newFolderName;
+        const newFullFolderName = numericPrefix + gs.docsNewFolderName;
             
         // Find the node in treeNodes and update its name
         const updatedNodes = treeNodes.map(node => 
-            node === gs.editingNode 
+            node === gs.docsEditNode 
                 ? { ...node, name: newFullFolderName }
                 : node
         );
@@ -533,52 +533,52 @@ export const handleRenameClick = (gs: GlobalState, treeNodes: TreeNode[], setTre
             
         // Clear editing state
         gd({ type: 'clearFolderEditingState', payload: { 
-            editingNode: null,
-            newFolderName: null
+            docsEditNode: null,
+            docsNewFolderName: null
         }});
 
         // Rename on server with a delay to ensure UI updates first
         setTimeout(() => {
-            renameFolderOnServer(gs, gs.editingNode!.name, newFullFolderName);
+            renameFolderOnServer(gs, gs.docsEditNode!.name, newFullFolderName);
         }, 500);
     }
 };
 
 // Header button handlers for Cut, Paste, Delete
 export const onCut = (gs: GlobalState) => {        
-    if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
+    if (!gs.docsSelItems || gs.docsSelItems.size === 0) {
         return;
     }
 
     // Get the file names of selected items
-    const selectedFileNames = Array.from(gs.selectedTreeItems).map(node => node.name);
+    const selectedFileNames = Array.from(gs.docsSelItems).map(node => node.name);
         
-    // Update global state to set cutItems and clear selectedTreeItems
+    // Update global state to set cutItems and clear selected items
     gd({ type: 'setCutAndClearSelections', payload: { 
-        cutItems: new Set<string>(selectedFileNames),
-        selectedTreeItems: new Set<TreeNode>()
+        docsCutItems: new Set<string>(selectedFileNames),
+        docsSelItems: new Set<TreeNode>()
     }});        
 };
 
 export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: TreeNode | null) => {        
-    if (!gs.cutItems || gs.cutItems.size === 0) {
+    if (!gs.docsCutItems || gs.docsCutItems.size === 0) {
         await alertModal("No items to paste.");
         return;
     }
-    const cutItemsArray = Array.from(gs.cutItems);
+    const cutItemsArray = Array.from(gs.docsCutItems);
     const targetFolder = gs.docsFolder || '/';
 
     try {
         const requestBody = {
             targetFolder: targetFolder,
             pasteItems: cutItemsArray,
-            docRootKey: gs.docRootKey,
+            docRootKey: gs.docsRootKey,
             targetOrdinal: targetNode?.name // Include targetOrdinal for positional pasting
         };
         await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
             
         // Clear cutItems from global state
-        gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
+        gd({ type: 'clearCutItems', payload: { docsCutItems: new Set<string>() } });
         await reRenderTree();
     } catch (error) {
         console.error('Error pasting items:', error);
@@ -587,11 +587,11 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: T
 };
 
 export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, folderNode: TreeNode) => {        
-    if (!gs.cutItems || gs.cutItems.size === 0) {
+    if (!gs.docsCutItems || gs.docsCutItems.size === 0) {
         await alertModal("No items to paste.");
         return;
     }
-    const cutItemsArray = Array.from(gs.cutItems);
+    const cutItemsArray = Array.from(gs.docsCutItems);
     
     // Construct the target folder path by combining current path with folder name
     let currentFolder = gs.docsFolder || '';
@@ -604,12 +604,12 @@ export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, fold
         const requestBody = {
             targetFolder: targetFolder,
             pasteItems: cutItemsArray,
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         };
         await httpClientUtil.secureHttpPost('/api/docs/paste', requestBody);
             
         // Clear cutItems from global state
-        gd({ type: 'clearCutItems', payload: { cutItems: new Set<string>() } });
+        gd({ type: 'clearCutItems', payload: { docsCutItems: new Set<string>() } });
         await reRenderTree();
     } catch (error) {
         console.error('Error pasting items into folder:', error);
@@ -618,12 +618,12 @@ export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, fold
 };
 
 export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {        
-    if (!gs.selectedTreeItems || gs.selectedTreeItems.size === 0) {
+    if (!gs.docsSelItems || gs.docsSelItems.size === 0) {
         await alertModal("No items selected for deletion.");
         return;
     }
 
-    const selItems = Array.from(gs.selectedTreeItems);
+    const selItems = Array.from(gs.docsSelItems);
     const itemCount = selItems.length;
     const itemText = itemCount === 1 ? "item" : "items";
         
@@ -641,17 +641,17 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
         const response = await httpClientUtil.secureHttpPost('/api/docs/delete', {
             fileNames: fileNames,
             treeFolder: gs.docsFolder || '/',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         });
             
         if (response && response.success) {
             // Remove the deleted nodes from the UI
-            const remainingNodes = treeNodes.filter((node: any) => !gs.selectedTreeItems!.has(node));
+            const remainingNodes = treeNodes.filter((node: any) => !gs.docsSelItems!.has(node));
             setTreeNodes(remainingNodes);
                 
             // Clear the selections
             gd({ type: 'setSelectedTreeItems', payload: { 
-                selectedTreeItems: new Set<TreeNode>()
+                docsSelItems: new Set<TreeNode>()
             }});
         } else {
             console.error('Error response from server:', response);
@@ -672,11 +672,10 @@ export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "ex
     try {
         // Use the provided item path or default to the current folder
         const treeItem = itemPath || gs.docsFolder || '/';
-        const docRootKey = gs.docRootKey;
 
         const requestBody = {
             treeItem,
-            docRootKey,
+            docRootKey: gs.docsRootKey,
             action
         };
 
@@ -693,10 +692,10 @@ export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "ex
 };
 
 export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
-    if (gs.editingNode && gs.editingContent !== null) {
+    if (gs.docsEditNode && gs.docsEditContent !== null) {
         // Get the original filename and new filename
-        const originalName = gs.editingNode.name;
-        const newFileName = gs.newFileName || stripOrdinal(originalName);
+        const originalName = gs.docsEditNode.name;
+        const newFileName = gs.docsNewFileName || stripOrdinal(originalName);
             
         // Extract the numeric prefix from the original file name
         const underscoreIdx = originalName.indexOf('_');
@@ -712,22 +711,22 @@ export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], set
 
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
-            node === gs.editingNode 
-                ? { ...node, content: gs.editingContent || '', name: newFullFileName }
+            node === gs.docsEditNode 
+                ? { ...node, content: gs.docsEditContent || '', name: newFullFileName }
                 : node
         );
         setTreeNodes(updatedNodes);
             
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
-            editingNode: null,
-            editingContent: null,
-            newFileName: null
+            docsEditNode: null,
+            docsEditContent: null,
+            docsNewFileName: null
         }});
 
         // Save to server with split=true parameter with a delay to ensure UI updates first
         setTimeout(async () => {
-            await saveToServerWithSplit(gs, gs.editingNode!.name, gs.editingContent || '', newFullFileName);
+            await saveToServerWithSplit(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
             await reRenderTree();
         }, 500);
     }
@@ -740,7 +739,7 @@ const saveToServerWithSplit = async (gs: GlobalState, filename: string, content:
             content: content,
             treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
-            docRootKey: gs.docRootKey,
+            docRootKey: gs.docsRootKey,
             split: true
         };
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
@@ -757,20 +756,20 @@ const saveToServerWithSplit = async (gs: GlobalState, filename: string, content:
 };
 
 export const onJoin = async (gs: GlobalState, reRenderTree: any) => {        
-    if (!gs.selectedTreeItems || gs.selectedTreeItems.size < 2) {
+    if (!gs.docsSelItems || gs.docsSelItems.size < 2) {
         await alertModal("At least 2 files must be selected to join them.");
         return;
     }
 
     // Filter selected items to only include files (not folders)
-    const selectedFiles = Array.from(gs.selectedTreeItems).filter(node => node.type === 'text');
+    const selectedFiles = Array.from(gs.docsSelItems).filter(node => node.type === 'text');
     
     if (selectedFiles.length < 2) {
         await alertModal("At least 2 text files must be selected to join them.");
         return;
     }
 
-    if (selectedFiles.length !== gs.selectedTreeItems.size) {
+    if (selectedFiles.length !== gs.docsSelItems.size) {
         await alertModal("Only text files can be joined. Please ensure all selected items are text files.");
         return;
     }
@@ -790,13 +789,13 @@ export const onJoin = async (gs: GlobalState, reRenderTree: any) => {
         const response = await httpClientUtil.secureHttpPost('/api/docs/join', {
             filenames: fileNames,
             treeFolder: gs.docsFolder || '/',
-            docRootKey: gs.docRootKey
+            docRootKey: gs.docsRootKey
         });
             
         if (response && response.success) {
             // Clear the selections
             gd({ type: 'setSelectedTreeItems', payload: { 
-                selectedTreeItems: new Set<TreeNode>()
+                docsSelItems: new Set<TreeNode>()
             }});
 
             // Refresh the tree view to show the updated state
