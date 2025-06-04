@@ -43,7 +43,7 @@ function EditFolder({
         <div className="flex items-center flex-grow">
             <FontAwesomeIcon 
                 icon={faFolder} 
-                className="text-blue-400 text-lg mr-3" 
+                className="text-blue-400 text-lg mr-3 h-5 w-5" 
             />
             <div className="flex-grow">
                 <input
@@ -166,14 +166,14 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                 className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
                 title="Edit"
             >
-                <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
             </button>}
             <button 
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(gs, treeNodes, setTreeNodes, node, index); }}
                 className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
                 title="Delete"
             >
-                <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                <FontAwesomeIcon icon={faTrash} className="h-5 w-5" />
             </button>
             {index > 0 && 
                 <button 
@@ -181,7 +181,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                     title="Move Up"
                 >
-                    <FontAwesomeIcon icon={faArrowUp} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faArrowUp} className="h-5 w-5" />
                 </button>
             }
             {index < numNodes - 1 &&
@@ -190,7 +190,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
                     title="Move Down"
                 >
-                    <FontAwesomeIcon icon={faArrowDown} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faArrowDown} className="h-5 w-5" />
                 </button>}
             {isFolder && hasCutItems &&
                 <button 
@@ -198,7 +198,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
                     title="Paste Into Folder"
                 >
-                    <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faPaste} className="h-5 w-5" />
                 </button>}
         </div>
     );
@@ -419,14 +419,14 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                     className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
                     title="Insert File"
                 >
-                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faPlus} className="h-5 w-5" />
                 </button>
                 <button 
                     onClick={() => insertFolder(gs, reRenderTree, node)}
                     className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
                     title="Insert Folder"
                 >
-                    <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faFolder} className="h-5 w-5" />
                 </button>
                 {gs.cutItems && gs.cutItems.size > 0 && (
                     <button 
@@ -434,7 +434,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                         className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
                         title="Paste Here"
                     >
-                        <FontAwesomeIcon icon={faPaste} className="h-4 w-4" />
+                        <FontAwesomeIcon icon={faPaste} className="h-5 w-5" />
                     </button>
                 )}
             </div>
@@ -554,7 +554,7 @@ function TreeNodeComponent({
                                     >
                                         <FontAwesomeIcon 
                                             icon={faFolder} 
-                                            className="text-blue-400 text-lg mr-3" 
+                                            className="text-blue-400 text-lg mr-3 h-5 w-5" 
                                         />
                                         <span className="text-blue-300 text-lg font-medium hover:text-blue-200">
                                             {formatDisplayName(node.name)}
@@ -563,7 +563,7 @@ function TreeNodeComponent({
                                         {!node.fsChildren && 
                                             <FontAwesomeIcon 
                                                 icon={faExclamationTriangle} 
-                                                className="text-yellow-500 ml-2" 
+                                                className="text-yellow-500 ml-2 h-5 w-5" 
                                                 title="This folder has no children in the file system"
                                             />
                                         }
@@ -615,7 +615,7 @@ function TreeNodeComponent({
                             >
                                 <FontAwesomeIcon 
                                     icon={faFile} 
-                                    className="text-lg mr-3" 
+                                    className="text-lg mr-3 h-5 w-5" 
                                 />
                                 <span className="text-lg font-medium">
                                     {formatDisplayName(node.name)}
@@ -632,7 +632,7 @@ function TreeNodeComponent({
                        >
                            <FontAwesomeIcon 
                                icon={faFile} 
-                               className="text-green-400 text-lg mr-3" 
+                               className="text-green-400 text-lg mr-3 h-5 w-5" 
                            />
                            <span className="text-green-300 text-lg font-medium hover:text-green-200">
                                {formatDisplayName(node.name)}
