@@ -511,12 +511,14 @@ function TreeNodeComponent({
         if (gs.editMode) {
             classes += " border-b-2 border-b-green-400";
         }
+        else if (gs.metaMode) {
+            classes += " border-b border-b-gray-600";
+        }
 
         // if not in edit mode and this is a folder then add more padding at bottom
         if (!gs.editMode && isFolder) {
             classes += " pb-2"; // Add padding at the bottom for folders
-        }
-        
+        }        
         return classes;
     };
 
@@ -583,7 +585,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg" : "max-w-full h-auto rounded-lg shadow-lg"}
+                                className={gs.namesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4"}
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -622,7 +624,9 @@ function TreeNodeComponent({
                                 </span>
                             </div>
                             : 
-                            <Markdown markdownContent={node.content || ''} docMode={true}/>
+                            <div className="mt-4">
+                                <Markdown markdownContent={node.content || ''} docMode={true}/>
+                            </div>
                     )}
 
                     {isBinary && 
@@ -844,6 +848,10 @@ export default function TreeViewerPage() {
     const itemsAreSelected = gs.selectedTreeItems && gs.selectedTreeItems?.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     const filteredTreeNodes = treeNodes.filter(node => !gs.cutItems?.has(node.name));
+    let lastPathPart = gs.treeFolder ? gs.treeFolder.split('/').filter(Boolean).pop() || null : null;
+    if (lastPathPart) {
+        lastPathPart = formatDisplayName(lastPathPart);
+    }
 
     // Determine width class based on viewWidth setting
     const getWidthClass = () => {
@@ -882,7 +890,7 @@ export default function TreeViewerPage() {
                     {PAGE!=PageNames.treeViewer && <BackButtonComp/>}
                 </div>
             </header>
-            <div id="treeViewContent" ref={elmRef}  className="flex-grow overflow-y-auto p-4 bg-gray-900 flex justify-center">
+            <div id="treeViewContent" ref={elmRef}  className="flex-grow overflow-y-auto bg-gray-900 flex justify-center">
                 <div className={`${getWidthClass()} w-full`}>
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-64">
@@ -896,6 +904,7 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
+                            {lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div>}
                             {gs.editMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
