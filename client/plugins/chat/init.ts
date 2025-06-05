@@ -9,6 +9,8 @@ import RoomsPage from "./pages/RoomsPage";
 import RoomsAdminPage from "./pages/RoomsAdminPage";
 import QuantaChatPage from "./pages/QuantaChatPage";
 import ChatSettingsPageComp from './comps/SettingsPageComp';
+import { GlobalState } from '../../GlobalState';
+import { User } from '../../../common/types/CommonTypes';
 
 declare const HOST: string;
 declare const PORT: string;
@@ -16,6 +18,19 @@ declare const SECURE: string;
 
 export async function init(context: any) {
     console.log('Initializing Quanta Chat plugin...');
+
+    const gs: GlobalState = context.initGs;
+    gs.chatConnecting = false;
+    gs.chatConnected = false;
+    gs.chatRoom = '';
+    gs.messages = [];  // todo-0: needs chat prefix
+    gs.participants = new Map<string, User>(); // todo-0: needs chat prefix
+    gs.chatContacts = [];
+    gs.saveToServer = true; // todo-0: needs chat prefix
+    gs.daysOfHistory = 30; // todo-0: needs chat prefix
+    gs.roomHistory = []; // todo-0: needs chat prefix
+
+    // todo-0: initialize chat global state onto 'context.initGs' here.
     const saveToServer = await context.idb.getItem(DBKeys.saveToServer, true);
     rtc.init(HOST, PORT, SECURE==='y', saveToServer);
 }

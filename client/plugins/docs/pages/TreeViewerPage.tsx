@@ -800,6 +800,12 @@ export default function TreeViewerPage() {
     // We have to wrap this in a useCallback in order to be able to use it in
     // the useEffect below
     const reRenderTree = useCallback(async () => {
+        // if 'gs.docsRootKey' is not set, then we cannot render the tree
+        if (!gs.docsRootKey) {
+            setError('No root key set for document tree.');
+            setTreeNodes([]);
+            return [];
+        }
         const folder = gs.docsFolder || '';
         try {
             setIsLoading(true);
@@ -816,7 +822,7 @@ export default function TreeViewerPage() {
                 return [];
             }
         } catch (fetchError) {
-            setError(`Sorry, we encountered an error refreshing the tree for "${folder}".`);
+            setError(`Sorry, we encountered an error refreshing the tree for "${folder}" with rootKey="${gs.docsRootKey}".`);
             console.error('Error refreshing tree after file creation:', fetchError);
             return [];
         }

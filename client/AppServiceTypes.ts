@@ -39,14 +39,14 @@ export enum PageNames {
     settings = 'SettingsPage',
     userGuide = 'UserGuidePage',
     treeViewer = 'TreeViewerPage', 
-    quantaChat = 'QuantaChat',
+    quantaChat = 'QuantaChatPage',
     admin  = 'AdminPage',
     recentAttachments = 'RecentAttachmentsPage',
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
     roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
-    logViewer = "LogViewer",
+    logViewer = "LogViewer", // todo-0: rename to logViewerPage for consistency
     searchView = "SearchViewPage",
 }
 

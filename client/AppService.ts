@@ -53,6 +53,7 @@ export class AppService {
     }
 
     initPlugins = async () => {
+        const initGs: GlobalState = {};
         // parse PLUGINS into string array
         const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
         console.log('Initializing plugins...');
@@ -62,7 +63,7 @@ export class AppService {
                 const pluginModule = await import(`./plugins/${plugin}/init.ts`);
                 pluginsArray.push(pluginModule);
                 if (pluginModule.init) {
-                    pluginModule.init({idb});
+                    pluginModule.init({idb, initGs});
                 } else {
                     console.warn(`Plugin ${plugin} does not have an init function.`);
                 }
@@ -70,6 +71,7 @@ export class AppService {
                 console.error(`Error initializing plugin ${plugin}:`, error);
             }
         }
+        gd({ type: 'PluginStatesInitialized', payload: initGs});
     }
 
     notifyPlugins = async () => {

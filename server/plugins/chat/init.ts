@@ -6,6 +6,7 @@ import { rtc } from "./WebRTCServer.js";
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = config.get("host"); 
 const PORT = config.get("port");
+const defaultPlugin = config.get("defaultPlugin");
 
 export function init(context: any) {
     console.log('init chat plugin...');
@@ -13,7 +14,6 @@ export function init(context: any) {
 }
 
 function initRoutes(app: any, serveIndexHtml: any) {
-
     app.get('/api/rooms/:roomId/message-ids', chatSvc.getMessageIdsForRoom);
     app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
     app.get('/api/messages', chatSvc.getMessageHistory);
@@ -32,11 +32,21 @@ function initRoutes(app: any, serveIndexHtml: any) {
     app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages);
     app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); // check PublicKey
 
-    // Define HTML routes BEFORE static middleware
-    // Explicitly serve index.html for root path
+    // We serve the index.html page for the chat plugin at the root path, if 'chat' is the default plugin.
     // NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when
     // normally we would just pass the function reference directly.
-    app.get('/', serveIndexHtml(""));
+    if (defaultPlugin === "chat") {
+        console.log('Chat plugin is the default plugin, serving index.html at root path(/).');
+        app.get('/', serveIndexHtml("QuantaChatPage"));
+    }
+}
+
+export function finishRoute(context: any) {
+    console.log('finishRoute chat plugin...');
+    if (defaultPlugin === "chat") {
+        console.log('Chat plugin is the default plugin, serving index.html at root path(*).');
+        context.app.get('*', context.serveIndexHtml("QuantaChatPage"));
+    }
 }
 
 export function notify(server: any) {

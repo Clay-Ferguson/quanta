@@ -1,6 +1,9 @@
+import { config } from "../../../common/Config.js";
 import { httpServerUtil } from "../../../common/HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
+
+const defaultPlugin = config.get("defaultPlugin");
 
 export function init(context: any) {
     console.log('init docs plugin...');
@@ -25,6 +28,19 @@ function initRoutes(app: any, serveIndexHtml: any) {
     app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
 
     app.get('/doc/:docRootKey', serveIndexHtml("TreeViewerPage"));
+
+    if (defaultPlugin === "docs") {
+        console.log('Docs plugin is the default plugin, serving index.html at root path(/).');
+        app.get('/', serveIndexHtml("TreeViewerPage"));
+    }
+}
+
+export function finishRoute(context: any) {
+    console.log('finishRoute docs plugin...');
+    if (defaultPlugin === "docs") {
+        console.log('Docs plugin is the default plugin, serving index.html at root path(*).');
+        context.app.get('*', context.serveIndexHtml("TreeViewerPage"));
+    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

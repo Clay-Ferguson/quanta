@@ -2,9 +2,29 @@ import React from 'react';
 import { PageNames } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
 import SearchViewPage from './SearchViewPage';
+import { TreeNode } from '../../../common/types/CommonTypes';
+import { GlobalState } from '../../GlobalState';
 
-export async function init() {
+export async function init(context: any) {
     console.log('Initializing Quanta Docs plugin...');
+    const gs: GlobalState = context.initGs;
+    gs.docsFolder = '/'; 
+    gs.docsEditMode = false;
+    gs.docsMetaMode = false;
+    gs.docsNamesMode = false;
+    gs.docsEditNode = null;
+    gs.docsEditContent = null;
+    gs.docsNewFolderName = null;
+    gs.docsNewFileName = null;
+    gs.docsSelItems = new Set<TreeNode>();
+    gs.docsCutItems = new Set<string>();
+    gs.docsRootKey = 'root'; // defined in config.yaml
+    gs.docsViewWidth = 'medium';
+    gs.docsSearch = '';
+    gs.docsSearchResults = [];
+    gs.docsSearchOriginFolder = '';
+    gs.docsSearchMode = 'MATCH_ANY';
+    gs.docsHighlightedFolderName = null;
 }
 
 export function getRoute(pageName: string) {

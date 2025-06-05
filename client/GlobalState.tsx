@@ -6,7 +6,6 @@ const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
 
 declare const PAGE: string;
-declare const DOC_ROOT_KEY: string;
 
 let applyStateRules: ((gs: GlobalState) => void) | null = null;
 
@@ -16,6 +15,7 @@ export function setApplyStateRules(apply: (gs: GlobalState) => void) {
     applyStateRules = apply;
 }
 
+// todo-0: each plugin needs to define its own state interface which extends this one, insetead of plugin specific ones here.
 export interface GlobalState {
     keyPair?: KeyPairHex;
     // page history so we can go back (we generally don's support going forward tho)
@@ -68,21 +68,13 @@ export interface GlobalState {
     docsHighlightedFolderName?: string | null;
 }
 
+// todo-0: plugins need to do all default settings for their own state.
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
     pages: PAGE ? [PAGE] : [PageNames.quantaChat], 
-    chatConnecting: false,
-    chatConnected: false, 
-    chatRoom: '',
     userName: '', 
-    messages: [], 
-    participants: new Map<string, User>(),
-    chatContacts: [],
     fullSizeImage: null,
     appInitialized: false,
-    saveToServer: true,
-    daysOfHistory: 30,
-    roomHistory: [],
     userDescription: '',
     userAvatar: null,
     userProfile: null,
@@ -93,23 +85,6 @@ const initialState: GlobalState = {
     promptDefaultValue: null,
     headerExpanded: false,
     devMode: false,
-    docsFolder: '/', 
-    docsEditMode: false,
-    docsMetaMode: false,
-    docsNamesMode: false,
-    docsEditNode: null,
-    docsEditContent: null,
-    docsNewFolderName: null,
-    docsNewFileName: null,
-    docsSelItems: new Set<TreeNode>(),
-    docsCutItems: new Set<string>(),
-    docsRootKey: PAGE===PageNames.treeViewer || DOC_ROOT_KEY ? DOC_ROOT_KEY : "user-guide",
-    docsViewWidth: 'medium',
-    docsSearch: '',
-    docsSearchResults: [],
-    docsSearchOriginFolder: '',
-    docsSearchMode: 'MATCH_ANY',
-    docsHighlightedFolderName: null,
 
     collapsedPanels: new Set<string>([
         PanelKeys.settings_storageSpace,
