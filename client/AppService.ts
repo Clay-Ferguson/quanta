@@ -31,6 +31,7 @@ export class AppService {
         console.log("Quanta Chat AppService init");
         setApplyStateRules(this.applyStateRules);
         await idb.init("quantaChatDB", "quantaChatStore", 1);
+        await this.loadPlugins();
         await this.initPlugins();
         await this.restoreSavedValues();
 
@@ -49,48 +50,42 @@ export class AppService {
             appInitialized: true
         }});
         window.addEventListener('keydown', this.handleKeyDown);
-        this.notifyPlugins();
+        this.callPlugins('notify');
+    }
+
+    loadPlugins = async () => {
+        const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
+        console.log('Loading plugins...');
+        for (const plugin of plugins) {
+            try {
+                console.log(`load plugin: ${plugin}`);
+                const pluginModule = await import(`./plugins/${plugin}/init.ts`);
+                pluginsArray.push(pluginModule);
+            } catch (error) {
+                console.error(`Error loading plugin ${plugin}:`, error);
+            }
+        }
+    }
+
+    callPlugins = async (callback: string, payload: any = null) => {
+        for (const plugin of pluginsArray) {
+            try {
+                if (!plugin[callback]) {
+                    console.warn(`Plugin ${plugin.name} does not have a method ${callback}.`);
+                    continue;
+                }
+                console.log(`Calling plugin method: ${callback}`);
+                await plugin[callback](payload);
+            } catch (error) {
+                console.error(`Error calling plugin method ${callback}:`, error);
+            }
+        }
     }
 
     initPlugins = async () => {
         const initGs: GlobalState = {};
-        // parse PLUGINS into string array
-        const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
-        console.log('Initializing plugins...');
-        for (const plugin of plugins) {
-            try {
-                console.log(`plugin: ${plugin}`);
-                const pluginModule = await import(`./plugins/${plugin}/init.ts`);
-                pluginsArray.push(pluginModule);
-                if (pluginModule.init) {
-                    pluginModule.init({idb, initGs});
-                } else {
-                    console.warn(`Plugin ${plugin} does not have an init function.`);
-                }
-            } catch (error) {
-                console.error(`Error initializing plugin ${plugin}:`, error);
-            }
-        }
+        this.callPlugins('init', {idb, initGs});
         gd({ type: 'PluginStatesInitialized', payload: initGs});
-    }
-
-    notifyPlugins = async () => {
-        // parse PLUGINS into string array
-        const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
-        console.log('Notifying plugins...');
-        for (const plugin of plugins) {
-            try {
-                console.log(`notify plugin: ${plugin}`);
-                const pluginModule = await import(`./plugins/${plugin}/init.ts`);
-                if (pluginModule.notify) {
-                    pluginModule.notify();
-                } else {
-                    console.warn(`Plugin ${plugin} does not have a notify function.`);
-                }
-            } catch (error) {
-                console.error(`Error initializing plugin ${plugin}:`, error);
-            }
-        }
     }
 
     /**
