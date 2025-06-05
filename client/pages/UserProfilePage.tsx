@@ -21,7 +21,9 @@ declare const ADMIN_PUBLIC_KEY: string;
  * If the user is not in the contact list, an option to add them as a contact is provided.
  */
 export default function UserProfilePage() {
-    const gs = useGlobalState();
+    // todo-0: need a plugin-compatable typesafety here (chatContacts is not always available)
+    const gs = useGlobalState() as any;
+
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -115,7 +117,8 @@ export default function UserProfilePage() {
                             {profileData.publicKey != gs.keyPair!.publicKey && 
                             <div className="mt-6">
                                 <div className="bg-gray-700 p-4 rounded-lg">
-                                    {gs.chatContacts.some(contact => contact.publicKey === profileData.publicKey) ? (
+                                    {/* todo-0: remove "any" here once this class is using plugin-compatable types */}
+                                    {gs.chatContacts.some((contact: any) => contact.publicKey === profileData.publicKey) ? (
                                         <div className="flex items-center">
                                             <span className="text-green-400 font-medium">
                                                 This user is in your contacts

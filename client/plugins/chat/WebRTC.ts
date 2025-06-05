@@ -5,7 +5,8 @@ import {util} from '../../Util.ts';
 import {crypt} from '../../../common/Crypto.ts';  
 import { canon } from '../../../common/Canonicalizer.ts';
 import { alertModal } from '../../components/AlertModalComp.tsx';
-import { gd } from '../../GlobalState.tsx';
+import { gd } from "./ChatTypes.ts"
+
 
 /**
  * WebRTC class for handling WebRTC connections on the P2P clients.

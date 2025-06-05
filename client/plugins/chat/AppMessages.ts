@@ -6,7 +6,7 @@ import appRooms from "./AppRooms.ts";
 import { DBKeys } from "../../AppServiceTypes.ts";
 import { alertModal } from "../../components/AlertModalComp.tsx";
 import { confirmModal } from "../../components/ConfirmModalComp.tsx";
-import { gd, gs } from "../../GlobalState.tsx";
+import { gd, gs } from "./ChatTypes.ts"
 import { httpClientUtil } from "../../HttpClientUtil.ts";
 import {idb} from '../../IndexedDB.ts';
 import { util } from "../../Util.ts";
@@ -278,8 +278,8 @@ export class AppMessages {
      * @param messages - Array of ChatMessageIntf objects to set as the current messages
      */
     setMessages = (messages: ChatMessageIntf[]) => {
-        // Save into global state
-        gd({ type: 'setMessages', payload: { messages }});
+        // Save into global state - cast to ChatMessage[] since ChatMessage extends ChatMessageIntf
+        gd({ type: 'setMessages', payload: { messages: messages as ChatMessage[] }});
     
         // Save to IndexedDB
         this.saveMessages(gs().chatRoom!, messages);

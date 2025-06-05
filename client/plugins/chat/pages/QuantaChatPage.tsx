@@ -3,7 +3,7 @@ import FooterComp from '../comps/FooterComp';
 import HeaderComp from '../comps/HeaderComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
 import MessagesComp from '../comps/MessagesComp';
-import { useGlobalState } from '../../../GlobalState';
+import { useGlobalState } from '../ChatTypes';
 import { util } from '../../../Util';
 
 /**

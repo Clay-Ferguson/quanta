@@ -34,6 +34,7 @@ export enum PanelKeys {
     settings_Diagnostics = 'settings_Diagnostics',
 }
 
+// todo-0: make a version of this specific to each plugin, and make them named like 'ChatPageNames' etc.
 export enum PageNames {
     contacts = 'ContactsPage',
     settings = 'SettingsPage',
@@ -46,7 +47,7 @@ export enum PageNames {
     rooms = 'RoomsPage',
     roomsAdmin = 'RoomsAdminPage',
     userProfile = 'UserProfilePage',
-    logViewer = "LogViewer", // todo-0: rename to logViewerPage for consistency
+    logViewer = "LogViewerPage",
     searchView = "SearchViewPage",
 }
 

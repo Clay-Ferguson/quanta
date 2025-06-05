@@ -1,7 +1,7 @@
 import LogoBlockComp from '../../../components/LogoBlockComp';
 import BackButtonComp from '../../../components/BackButtonComp';
 import { useState, useEffect } from 'react';
-import { useGlobalState } from '../../../GlobalState';
+import { useGlobalState } from '../ChatTypes';
 import HexKeyComp from '../../../components/HexKeyComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash} from '@fortawesome/free-solid-svg-icons';

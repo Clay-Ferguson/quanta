@@ -1,4 +1,4 @@
-import { useGlobalState } from '../../../GlobalState';
+import { useGlobalState } from '../ChatTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from '../../../components/HexKeyComp';

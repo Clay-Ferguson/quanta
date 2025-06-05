@@ -5,7 +5,6 @@ import BackButtonComp from '../../../components/BackButtonComp';
 import { scrollEffects } from '../../../ScrollEffects';
 import { util } from '../../../Util';
 import { httpClientUtil } from '../../../HttpClientUtil';
-import { useGlobalState, gd, GlobalState } from '../../../GlobalState';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,13 +15,14 @@ import ImageViewerComp from '../../../components/ImageViewerComp';
 import { formatDisplayName, formatFullPath, handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, stripOrdinal, handleMasterCheckboxChange, getMasterCheckboxState } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
+import { useGlobalState, gd, DocsGlobalState } from '../DocsTypes';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
 
 interface EditFolderProps {
-    gs: GlobalState;
+    gs: DocsGlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -74,7 +74,7 @@ function EditFolder({
 }
 
 interface EditFileProps {
-    gs: GlobalState;
+    gs: DocsGlobalState;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
@@ -142,7 +142,7 @@ interface EditIconsProps {
     node: TreeNode;
     index: number;
     numNodes: number;
-    gs: GlobalState;
+    gs: DocsGlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     reRenderTree: () => Promise<TreeNode[]>;
@@ -205,7 +205,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 }
 
 interface ViewWidthDropdownProps {
-    gs: GlobalState;
+    gs: DocsGlobalState;
 }
 
 /**
@@ -241,7 +241,7 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
 }
 
 interface TopRightAdminCompsProps {
-    gs: GlobalState;
+    gs: DocsGlobalState;
     itemsAreSelected: boolean | undefined;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
@@ -369,7 +369,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
 }
 
 interface InsertItemsRowProps {
-    gs: GlobalState;
+    gs: DocsGlobalState;
     reRenderTree: () => Promise<TreeNode[]>;
     node?: TreeNode | null;
     filteredTreeNodes?: TreeNode[];
@@ -447,7 +447,7 @@ interface TreeNodeComponentProps {
     index: number;
     validId: string;
     numNodes: number;
-    gs: GlobalState;
+    gs: DocsGlobalState;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     isNodeSelected: (node: TreeNode) => boolean;
@@ -681,7 +681,7 @@ function TreeNodeComponent({
  */
 function renderTreeNodes(
     nodes: TreeNode[], 
-    gs: GlobalState, 
+    gs: DocsGlobalState, 
     treeNodes: TreeNode[], 
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>, 
     isNodeSelected: (node: TreeNode) => boolean, 

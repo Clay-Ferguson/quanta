@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { gd, useGlobalState } from '../../../GlobalState';
+import { gd, useGlobalState } from '../ChatTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from '../../../components/HexKeyComp';

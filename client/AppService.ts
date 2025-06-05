@@ -117,7 +117,9 @@ export class AppService {
     applyStateRules = (gs: GlobalState) => {
         this.dCount = 0;
         // If not connected show the header to user cannot get confused/lost
-        if (!gs.chatConnected) {
+
+        // todo-0: removing for now until we have the ability to delegate state rules to each plugin as well as globally here
+        if (!(gs as any).chatConnected) {
             gs.headerExpanded = true;
         }
     }
@@ -143,7 +145,9 @@ export class AppService {
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
 
-        const state: GlobalState = {
+        // todo-0: removing typesafety until we ave a way to run this kind of code for each plugin to build
+        // modify state one by one additively to this object.
+        const state: any = {
             userName,
             chatContacts,
             chatRoom,
@@ -207,7 +211,10 @@ export class AppService {
     showHelp = () => {
         const _gs = gs();
         this.setTopPage(_gs, PageNames.treeViewer);
-        _gs.docsFolder = "/";
+        
+        // todo-0: this is a hack because we need a better plugin-speific typed way to do this.
+        (_gs as any).docsFolder = "/";
+
         DOC_ROOT_KEY = "user-guide"; // Ensure DOC_ROOT_KEY is set for user guide
         gd({ type: 'setPage', payload: _gs });
     }

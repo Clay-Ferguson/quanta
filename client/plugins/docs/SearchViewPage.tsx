@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { util } from '../../Util';
 import { httpClientUtil } from '../../HttpClientUtil';
 import { alertModal } from '../../components/AlertModalComp';
-import { useGlobalState, gd } from '../../GlobalState';
+import { useGlobalState, gd } from './DocsTypes';
 import { app } from '../../AppService';
 import { PageNames } from '../../AppServiceTypes';
 

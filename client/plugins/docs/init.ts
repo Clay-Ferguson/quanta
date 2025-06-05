@@ -3,11 +3,11 @@ import { PageNames } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
 import SearchViewPage from './SearchViewPage';
 import { TreeNode } from '../../../common/types/CommonTypes';
-import { GlobalState } from '../../GlobalState';
+import { DocsGlobalState } from './DocsTypes';
 
 export async function init(context: any) {
     console.log('Initializing Quanta Docs plugin...');
-    const gs: GlobalState = context.initGs;
+    const gs: DocsGlobalState = context.initGs;
     gs.docsFolder = '/'; 
     gs.docsEditMode = false;
     gs.docsMetaMode = false;

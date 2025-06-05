@@ -10,6 +10,7 @@ interface LogoBlockCompProps {
  * LogoBlockComp is a React component that displays the Quanta Chat logo and a subtext.
  */
 export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
+    // todo-0: this needs to go to whatever the default plugin page is, which is already defined.
     const handleLogoClick = () => app.goToPage(PageNames.quantaChat);
     
     return (

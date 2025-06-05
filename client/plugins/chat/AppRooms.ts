@@ -2,7 +2,7 @@ import { ChatMessage, KeyPairHex, User } from "../../../common/types/CommonTypes
 import { app } from "../../AppService.ts";
 import { DBKeys, PageNames, RoomHistoryItem } from "../../AppServiceTypes.ts";
 import { confirmModal } from "../../components/ConfirmModalComp.tsx";
-import { gd, gs } from "../../GlobalState.tsx";
+import { gd, gs } from "./ChatTypes.ts"
 import {idb} from '../../IndexedDB.ts';
 import appMessages from "./AppMessages.ts";
 import { rtc } from "./WebRTC.ts";

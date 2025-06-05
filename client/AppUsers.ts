@@ -65,7 +65,8 @@ class AppUsers {
         await idb.setItem(DBKeys.userAvatar, userAvatar);
 
         // Save user info to server if saving to server is enabled
-        if (_gs.saveToServer && _gs.keyPair?.publicKey) {
+        // todo-0: need to handle this in a better plugin-compatable way rather than the ugly "as any" cast
+        if ((_gs as any).saveToServer && _gs.keyPair?.publicKey) {
             const userProfile: UserProfile = {
                 publicKey: _gs.keyPair!.publicKey,
                 name: userName,
@@ -190,7 +191,9 @@ class AppUsers {
      * @param user The user object containing name and publicKey to add to contacts
      */
     addContact = async (user: User) => {
-        const _gs = gs();
+        // todo-0: type hack here which is not quite clean for plugins yet.
+        const _gs = gs() as any;
+
         if (!_gs.chatContacts) {
             console.warn('No contacts available to add a new contact');
             return;

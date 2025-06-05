@@ -3,7 +3,7 @@ import AttachmentComp from '../../../components/AttachmentComp';
 import Markdown from '../../../components/MarkdownComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faCertificate, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useGlobalState } from '../../../GlobalState';
+import { useGlobalState } from '../ChatTypes';
 import {util} from '../../../Util';
 import { scrollEffects } from '../../../ScrollEffects';
 import AvatarImageComp from '../../../components/AvatarImageComp';

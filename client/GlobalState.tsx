@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
-import { PageNames, PanelKeys, RoomHistoryItem } from './AppServiceTypes';
-import { ChatMessage, Contact, FileBase64Intf, KeyPairHex, User, UserProfile, TreeNode } from '../common/types/CommonTypes';
+import { PageNames, PanelKeys } from './AppServiceTypes';
+import { FileBase64Intf, KeyPairHex, UserProfile } from '../common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -15,7 +15,8 @@ export function setApplyStateRules(apply: (gs: GlobalState) => void) {
     applyStateRules = apply;
 }
 
-// todo-0: each plugin needs to define its own state interface which extends this one, insetead of plugin specific ones here.
+// todo-0: each plugin can define its own state interface which extends this one, because all plugins have access to and contribute variables
+// into this same global state using the key-prefix convention to avoid having conflicts.
 export interface GlobalState {
     keyPair?: KeyPairHex;
     // page history so we can go back (we generally don's support going forward tho)
@@ -36,39 +37,8 @@ export interface GlobalState {
     headerExpanded?: boolean;
     collapsedPanels?: Set<string>;
     devMode?: boolean;
-
-    chatConnecting?: boolean;
-    chatConnected?: boolean;
-    chatRoom?: string; 
-    chatContacts?: Array<Contact>; 
-    // todo-0: finish making these have 'chat' prefix
-    messages?: Array<ChatMessage>; 
-    participants?: Map<string, User> | null;
-    saveToServer?: boolean;
-    daysOfHistory?: number;
-    roomHistory?: Array<RoomHistoryItem>;
-
-    // Plugin-specific state uses plugin key perfix, e.g. 'docs'
-    docsFolder?: string;
-    docsEditMode?: boolean; 
-    docsMetaMode?: boolean; 
-    docsNamesMode?: boolean;
-    docsEditNode?: TreeNode | null;
-    docsEditContent?: string | null;
-    docsNewFolderName?: string | null;
-    docsNewFileName?: string | null;
-    docsSelItems?: Set<TreeNode>;
-    docsCutItems?: Set<string>;
-    docsRootKey?: string | null;
-    docsViewWidth?: 'narrow' | 'medium' | 'wide';
-    docsSearch?: string;
-    docsSearchResults?: Array<{file: string, line: number, content: string}>;
-    docsSearchOriginFolder?: string;
-    docsSearchMode?: 'REGEX' | 'MATCH_ANY' | 'MATCH_ALL';
-    docsHighlightedFolderName?: string | null;
 }
 
-// todo-0: plugins need to do all default settings for their own state.
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
     pages: PAGE ? [PAGE] : [PageNames.quantaChat], 

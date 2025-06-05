@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DBKeys, PanelKeys } from "../../../AppServiceTypes";
 import TitledPanelComp from "../../../components/TitledPanelComp";
-import { gd, useGlobalState } from "../../../GlobalState";
+import { gd, useGlobalState } from "../ChatTypes";
 import { idb } from "../../../IndexedDB";
 import { rtc } from "../WebRTC";
 import appRooms from "../AppRooms";

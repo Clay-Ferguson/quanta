@@ -2,7 +2,7 @@ import LogoBlockComp from '../../../components/LogoBlockComp';
 import BackButtonComp from '../../../components/BackButtonComp';
 import RoomMembersComp from '../comps/RoomMembersComp';
 import TitledPanelComp from '../../../components/TitledPanelComp';
-import { useGlobalState } from '../../../GlobalState';
+import { useGlobalState } from '../ChatTypes';
 import { useEffect } from 'react';
 import { util } from '../../../Util';
 

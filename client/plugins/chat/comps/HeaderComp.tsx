@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown  } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../../../components/LogoBlockComp';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
-import { gd, gs, useGlobalState } from '../../../GlobalState';
+import { gd, gs, useGlobalState } from '../ChatTypes';
 import { idb } from '../../../IndexedDB';
 import appRooms from '../AppRooms';
 

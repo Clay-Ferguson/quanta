@@ -2,8 +2,7 @@ import { TreeNode } from "../../../../common/types/CommonTypes";
 import { alertModal } from "../../../components/AlertModalComp";
 import { confirmModal } from "../../../components/ConfirmModalComp";
 import { promptModal } from "../../../components/PromptModalComp";
-import { GlobalState } from "../../../GlobalState";
-import { gd } from '../../../GlobalState';
+import { gd, DocsGlobalState } from "../DocsTypes";
 import { httpClientUtil } from "../../../HttpClientUtil";
 import { DBKeys } from "../../../AppServiceTypes";
 import { idb } from "../../../IndexedDB";
@@ -46,7 +45,7 @@ export function formatFullPath(path: string): string {
     return comps.map(formatDisplayName).join(' / ');
 }
 
-export const handleCancelClick = (gs: GlobalState) => {
+export const handleCancelClick = (gs: DocsGlobalState) => {
     // Clear editing state without saving
     if (gs.docsEditNode?.type === 'folder') {
         gd({ type: 'clearFolderEditingState', payload: { 
@@ -69,7 +68,7 @@ export const stripOrdinal = (name: string) => {
 }   
 
 // Handle folder click navigation
-export const handleFolderClick = (gs: GlobalState, folderName: string) => {
+export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
     let curFolder = gs.docsFolder || '';
     if (curFolder == '/') {
         curFolder = ''; // If we're at root, we want to start with an empty string
@@ -84,7 +83,7 @@ export const handleFolderClick = (gs: GlobalState, folderName: string) => {
     }});
 };
 
-export const handleFileClick = async (gs: GlobalState, fileName: string) => {
+export const handleFileClick = async (gs: DocsGlobalState, fileName: string) => {
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     if (!isAdmin || DESKTOP_MODE!=="y") {
         return;
@@ -101,7 +100,7 @@ export const handleFileClick = async (gs: GlobalState, fileName: string) => {
 }
 
 // Handle parent navigation (go up one level in folder tree)
-export const handleParentClick = (gs: GlobalState) => {
+export const handleParentClick = (gs: DocsGlobalState) => {
     const curFolder = gs.docsFolder || '/';
     
     // Remember the current folder name to scroll back to it after navigating up
@@ -139,7 +138,7 @@ export const handleParentClick = (gs: GlobalState) => {
     }
 };
 
-export const handleEditModeToggle = async (gs: GlobalState) => {
+export const handleEditModeToggle = async (gs: DocsGlobalState) => {
     // Remember the current scroll position before toggling edit mode
     const closestElementId = util.findClosestTreeNodeToTop();
     
@@ -158,7 +157,7 @@ export const handleEditModeToggle = async (gs: GlobalState) => {
     }
 };
 
-export const handleMetaModeToggle = async (gs: GlobalState) => {
+export const handleMetaModeToggle = async (gs: DocsGlobalState) => {
     const newMetaMode = !gs.docsMetaMode;
     
     gd({ type: 'setMetaMode', payload: { 
@@ -169,7 +168,7 @@ export const handleMetaModeToggle = async (gs: GlobalState) => {
     await idb.setItem(DBKeys.docsMetaMode, newMetaMode);
 };
 
-export const handleNamesModeToggle = async (gs: GlobalState) => {
+export const handleNamesModeToggle = async (gs: DocsGlobalState) => {
     const newNamesMode = !gs.docsNamesMode;
     
     gd({ type: 'setNamesMode', payload: { 
@@ -181,7 +180,7 @@ export const handleNamesModeToggle = async (gs: GlobalState) => {
 };
 
 // Handle checkbox selection for TreeNodes
-export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: boolean) => {
+export const handleCheckboxChange = (gs: DocsGlobalState, node: TreeNode, checked: boolean) => {
     const curSels = new Set(gs.docsSelItems);
     if (checked) {
         curSels.add(node);
@@ -195,7 +194,7 @@ export const handleCheckboxChange = (gs: GlobalState, node: TreeNode, checked: b
 };
 
 // Master checkbox functionality for select all/unselect all
-export const handleMasterCheckboxChange = (gs: GlobalState, treeNodes: TreeNode[], checked: boolean) => {
+export const handleMasterCheckboxChange = (gs: DocsGlobalState, treeNodes: TreeNode[], checked: boolean) => {
     if (checked) {
         // Select all available nodes (excluding cut items)
         const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
@@ -211,7 +210,7 @@ export const handleMasterCheckboxChange = (gs: GlobalState, treeNodes: TreeNode[
 };
 
 // Helper function to determine master checkbox state
-export const getMasterCheckboxState = (gs: GlobalState, treeNodes: TreeNode[]): { checked: boolean, indeterminate: boolean } => {
+export const getMasterCheckboxState = (gs: DocsGlobalState, treeNodes: TreeNode[]): { checked: boolean, indeterminate: boolean } => {
     const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
     const selectedCount = gs.docsSelItems?.size || 0;
     const availableCount = availableNodes.length;
@@ -245,7 +244,7 @@ export const handleEditClick = (node: TreeNode) => {
     }
 };
 
-const deleteFileOrFolderOnServer = async (gs: GlobalState, fileOrFolderName: string) => {
+const deleteFileOrFolderOnServer = async (gs: DocsGlobalState, fileOrFolderName: string) => {
     try {
         const requestBody = {
             fileOrFolderName,
@@ -259,7 +258,7 @@ const deleteFileOrFolderOnServer = async (gs: GlobalState, fileOrFolderName: str
     }
 };
 
-export const handleDeleteClick = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, index: number) => {        
+export const handleDeleteClick = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, index: number) => {        
     // Show confirmation dialog
     const confirmText = node.type === 'folder' 
         ? `Delete the folder "${stripOrdinal(node.name)}"? This action cannot be undone.`
@@ -283,15 +282,15 @@ export const handleDeleteClick = async (gs: GlobalState, treeNodes: TreeNode[], 
     }
 };
 
-export const handleMoveUpClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode) => {
+export const handleMoveUpClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode) => {
     moveFileOrFolder(gs, treeNodes, setTreeNodes, node, 'up');
 };
 
-export const handleMoveDownClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode) => {
+export const handleMoveDownClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode) => {
     moveFileOrFolder(gs, treeNodes, setTreeNodes, node, 'down');
 };
 
-const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, direction: 'up' | 'down') => {
+const moveFileOrFolder = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, direction: 'up' | 'down') => {
     try {
         const requestBody = {
             direction,
@@ -335,7 +334,7 @@ const moveFileOrFolder = async (gs: GlobalState, treeNodes: TreeNode[], setTreeN
 };
 
 // Insert functions for creating new files and folders
-export const insertFile = async (gs: GlobalState, reRenderTree: any, node: TreeNode | null) => {
+export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {
     // DO NOT DELETE. Leave this just in case.
     // const fileName = await promptModal("Enter new file name");
     // if (!fileName || fileName.trim() === '') {
@@ -415,7 +414,7 @@ export const scrollToItem = (itemName: string) => {
     }, 250);
 };
 
-export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: TreeNode | null) => {
+export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {
     const name = await promptModal("Enter new folder name");
     if (!name || name.trim() === '') {
         return;
@@ -444,7 +443,7 @@ export const insertFolder = async (gs: GlobalState, reRenderTree: any, node: Tre
     }
 };
 
-export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
+export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
     if (gs.docsEditNode && gs.docsEditContent !== null) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
@@ -484,7 +483,7 @@ export const handleSaveClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeN
     }
 };
 
-const saveToServer = async (gs: GlobalState, filename: string, content: string, newFileName?: string) => {
+const saveToServer = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
     try {
         const requestBody = {
             filename: filename,
@@ -499,7 +498,7 @@ const saveToServer = async (gs: GlobalState, filename: string, content: string, 
     }
 };
 
-const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newFolderName: string) => {
+const renameFolderOnServer = async (gs: DocsGlobalState, oldFolderName: string, newFolderName: string) => {
     try {
         const requestBody = {
             oldFolderName,
@@ -513,7 +512,7 @@ const renameFolderOnServer = async (gs: GlobalState, oldFolderName: string, newF
     }
 };
 
-export const handleRenameClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
+export const handleRenameClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
     if (gs.docsEditNode && gs.docsNewFolderName !== null) {
         // Extract the numeric prefix from the original folder name
         const originalName = gs.docsEditNode.name;
@@ -545,7 +544,7 @@ export const handleRenameClick = (gs: GlobalState, treeNodes: TreeNode[], setTre
 };
 
 // Header button handlers for Cut, Paste, Delete
-export const onCut = (gs: GlobalState) => {        
+export const onCut = (gs: DocsGlobalState) => {        
     if (!gs.docsSelItems || gs.docsSelItems.size === 0) {
         return;
     }
@@ -560,7 +559,7 @@ export const onCut = (gs: GlobalState) => {
     }});        
 };
 
-export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: TreeNode | null) => {        
+export const onPaste = async (gs: DocsGlobalState, reRenderTree: any, targetNode?: TreeNode | null) => {        
     if (!gs.docsCutItems || gs.docsCutItems.size === 0) {
         await alertModal("No items to paste.");
         return;
@@ -586,7 +585,7 @@ export const onPaste = async (gs: GlobalState, reRenderTree: any, targetNode?: T
     }
 };
 
-export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, folderNode: TreeNode) => {        
+export const onPasteIntoFolder = async (gs: DocsGlobalState, reRenderTree: any, folderNode: TreeNode) => {        
     if (!gs.docsCutItems || gs.docsCutItems.size === 0) {
         await alertModal("No items to paste.");
         return;
@@ -617,7 +616,7 @@ export const onPasteIntoFolder = async (gs: GlobalState, reRenderTree: any, fold
     }
 };
 
-export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {        
+export const onDelete = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {        
     if (!gs.docsSelItems || gs.docsSelItems.size === 0) {
         await alertModal("No items selected for deletion.");
         return;
@@ -668,7 +667,7 @@ export const onDelete = async (gs: GlobalState, treeNodes: TreeNode[], setTreeNo
  * @param gs - Global state containing the current tree folder and doc root key
  * @param itemPath - Optional specific item path. If not provided, opens the current folder
  */
-export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "explore", itemPath?: string) => {
+export const openItemInFileSystem = async (gs: DocsGlobalState, action: "edit" | "explore", itemPath?: string) => {
     try {
         // Use the provided item path or default to the current folder
         const treeItem = itemPath || gs.docsFolder || '/';
@@ -691,7 +690,7 @@ export const openItemInFileSystem = async (gs: GlobalState, action: "edit" | "ex
     }
 };
 
-export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
+export const handleSaveSplitClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
     if (gs.docsEditNode && gs.docsEditContent !== null) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
@@ -732,7 +731,7 @@ export const handleSaveSplitClick = (gs: GlobalState, treeNodes: TreeNode[], set
     }
 };
 
-const saveToServerWithSplit = async (gs: GlobalState, filename: string, content: string, newFileName?: string) => {
+const saveToServerWithSplit = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
     try {
         const requestBody = {
             filename: filename,
@@ -755,7 +754,7 @@ const saveToServerWithSplit = async (gs: GlobalState, filename: string, content:
     }
 };
 
-export const onJoin = async (gs: GlobalState, reRenderTree: any) => {        
+export const onJoin = async (gs: DocsGlobalState, reRenderTree: any) => {        
     if (!gs.docsSelItems || gs.docsSelItems.size < 2) {
         await alertModal("At least 2 files must be selected to join them.");
         return;

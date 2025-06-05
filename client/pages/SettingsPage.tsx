@@ -98,7 +98,9 @@ export default function SettingsPage() {
         if (gs.userAvatar) {
             setAvatarPreview(gs.userAvatar.data);
         }        
-    }, [gs.userName, gs.userDescription, gs.userAvatar, gs.saveToServer, gs.daysOfHistory]);
+    }, 
+    // todo-0: need a plugin-compatable solution for 'saveToSErver' and 'daysOfHistory' global state which are specific to the chat plugin
+    [gs.userName, gs.userDescription, gs.userAvatar]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);

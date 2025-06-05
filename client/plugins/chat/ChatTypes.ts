@@ -1,0 +1,46 @@
+// todo-0: we probably need a 'plugins' folder inside 'common' to separate stuff, which will be perfectly consistent with having the
+// parallel plugins in the client and server folders.
+import { ChatMessage, Contact, User } from "../../../common/types/CommonTypes";
+import { RoomHistoryItem } from "../../AppServiceTypes";
+import { GlobalState } from "../../GlobalState";
+import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalStateBase } from "../../GlobalState.tsx";
+
+export interface ChatGlobalState extends GlobalState {
+    chatRoom?: string; 
+    chatConnecting?: boolean;
+    chatConnected?: boolean;  
+    chatContacts?: Array<Contact>; 
+    // todo-0: finish making these have 'chat' prefix
+    messages?: Array<ChatMessage>; 
+    participants?: Map<string, User> | null;
+    saveToServer?: boolean;
+    daysOfHistory?: number;
+    roomHistory?: Array<RoomHistoryItem>;
+}
+
+// =============================================
+// STATE MANAGEMENT BOLIER PLATE
+// Each plugin will have an identical section to this, but with their own GlobalState type. Yes this is
+// slightly ugly, but the reason it's worth it is becasue using this pattern allows the rest of the code
+// for any given plugin to be very clean and not have to be using parameterized types everywhere a state us 
+// used.
+
+// Chat-specific action type that can handle both base and chat-specific properties
+export type ChatGlobalAction = { type: string, payload: Partial<ChatGlobalState> };
+
+// Type-safe re-exports of gd and gs that work with ChatGlobalState
+export function gd(action: ChatGlobalAction): ChatGlobalState {
+    // Cast to GlobalAction for the base function call, but maintain type safety for chat-specific properties
+    return gdBase(action as GlobalAction) as ChatGlobalState;
+}
+
+export function gs(): ChatGlobalState {
+    return gsBase() as ChatGlobalState;
+}
+
+// Type-safe re-export of useGlobalState that works with ChatGlobalState
+export function useGlobalState(): ChatGlobalState {
+    return useGlobalStateBase() as ChatGlobalState;
+}
+// =============================================
+
