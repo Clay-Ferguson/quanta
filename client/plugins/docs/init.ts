@@ -17,3 +17,7 @@ export function getRoute(pageName: string) {
         return null;
     }
 }
+
+export function getSettingsPageComponent() {
+    return null; // No specific settings page for chat plugin
+}

@@ -4,18 +4,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
-import { gd, useGlobalState } from '../GlobalState';
+import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
-import { DBKeys, PanelKeys } from '../AppServiceTypes';
+import { PanelKeys } from '../AppServiceTypes';
 import { PageNames } from '../AppServiceTypes';
 import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
-import { rtc } from '../plugins/chat/WebRTC';
-import appRooms from '../plugins/chat/AppRooms';
+import { pluginsArray } from '../AppService.ts';
 
 async function clear() {
     await idb.clear();
@@ -24,13 +23,20 @@ async function clear() {
     window.location.reload();
 }
 
-async function persistGlobalValue(key: string, value: any) {
-    // save to global state
-    gd({ type: `persistGlobal-${key}`, payload: { 
-        [key]: value
-    }});
-    // Save the keyPair to IndexedDB
-    await idb.setItem(key, value);
+function getPluginsComponents() {
+    const components: React.ReactElement[] = [];
+    // first let any of the plugins handle the page routing
+    for (const plugin of pluginsArray) {
+        if (plugin.getRoute) {
+            // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);
+            const comp = plugin.getSettingsPageComponent();
+            if (comp) {
+                // console.log(`PageRouter: routing to page: ${topPage}`);
+                components.push(comp);
+            }
+        }
+    }
+    return components;
 }
 
 /**
@@ -47,8 +53,6 @@ export default function SettingsPage() {
     const [userDescription, setUserDescription] = useState('');
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [saveToServer, setSaveToServer] = useState(false);
-    const [daysOfHistory, setDaysOfHistory] = useState('');
     const [storageInfo, setStorageInfo] = useState({
         usagePercentage: 0,
         quota: 0,
@@ -93,43 +97,11 @@ export default function SettingsPage() {
         // Initialize avatar preview if available
         if (gs.userAvatar) {
             setAvatarPreview(gs.userAvatar.data);
-        }
-        
-        // Initialize saveToServer from global state
-        setSaveToServer(gs.saveToServer || false);
-        
-        // Initialize daysOfHistory from global state
-        if (gs.daysOfHistory !== undefined) {
-            setDaysOfHistory(gs.daysOfHistory.toString());
-        }
+        }        
     }, [gs.userName, gs.userDescription, gs.userAvatar, gs.saveToServer, gs.daysOfHistory]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
-    };
-
-    const handleSaveToServerChange = (e: any) => {
-        const isChecked = e.target.checked;
-        setSaveToServer(isChecked);
-        persistGlobalValue(DBKeys.saveToServer, isChecked);
-        rtc.setSaveToServer(isChecked);
-    };
-    
-    const handleDaysOfHistoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setDaysOfHistory(value);
-    };
-    
-    const saveDaysOfHistory = async () => {
-        // Convert to number and save to global state
-        const days = parseInt(daysOfHistory);
-        if (!isNaN(days) && days >= 0) {
-            persistGlobalValue(DBKeys.daysOfHistory, days);
-            appRooms.runRoomCleanup();
-            await alertModal(`Saved successfully.`);
-        } else {
-            await alertModal("Please enter a valid number of days (0 or greater)");
-        }
     };
     
     const handleAvatarSelect = () => {
@@ -288,59 +260,11 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    <TitledPanelComp title="Options" collapsibleKey={PanelKeys.settings_options}>               
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
-                                        Sync Messages with Server
-                                </label>
-                                <p className="text-xs text-gray-400 mt-1">
-                                        When enabled, your messages will be stored on the server. Otherwise, server is not used, and you can only send/recieve messages with other users who are online simultaneously with you.
-                                </p>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="saveToServer"
-                                    name="saveToServer"
-                                    checked={saveToServer}
-                                    onChange={handleSaveToServerChange}
-                                    className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
-                                />
-                            </div>
+                    {getPluginsComponents().map((component, index) => (
+                        <div key={`settings-comp${index}`}>
+                            {component}
                         </div>
-                            
-                        {/* Days of History Option */}
-                        <div className="mt-4 pt-4 border-t border-blue-400/20">
-                            <div className="mb-2">
-                                <label htmlFor="daysOfHistory" className="text-sm font-medium text-blue-300">
-                                        Days of History
-                                </label>
-                                <p className="text-xs text-gray-400 mt-1">
-                                        Messages older than this many days will be automatically deleted.
-                                </p>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                <input
-                                    type="number"
-                                    id="daysOfHistory"
-                                    name="daysOfHistory"
-                                    value={daysOfHistory}
-                                    onChange={handleDaysOfHistoryChange}
-                                    min="2"
-                                    className="bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
-                                                  text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Enter days to keep"
-                                />
-                                <button 
-                                    className="btn-primary"
-                                    onClick={saveDaysOfHistory}
-                                >
-                                        Save
-                                </button>
-                            </div>
-                        </div>
-                    </TitledPanelComp>
+                    ))}
 
                     <TitledPanelComp title="Identity Keys" collapsibleKey={PanelKeys.settings_identityKeys}>
                         

@@ -8,6 +8,7 @@ import RoomInfoPage from "./pages/RoomInfoPage";
 import RoomsPage from "./pages/RoomsPage";
 import RoomsAdminPage from "./pages/RoomsAdminPage";
 import QuantaChatPage from "./pages/QuantaChatPage";
+import ChatSettingsPageComp from './comps/SettingsPageComp';
 
 declare const HOST: string;
 declare const PORT: string;
@@ -42,6 +43,11 @@ export function getRoute(pageName: string) {
         return React.createElement(QuantaChatPage);
     default: return null;
     }
+}
+
+// Gets component to display on settings page, for this plugin. 
+export function getSettingsPageComponent() {
+    return React.createElement(ChatSettingsPageComp);
 }
 
  
