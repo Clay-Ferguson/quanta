@@ -9,8 +9,8 @@ import { alertModal } from "../../../components/AlertModalComp";
 
 export default function ChatSettingsPageComp() {
     const gs = useGlobalState();
-    const [saveToServer, setSaveToServer] = useState(false);
-    const [daysOfHistory, setDaysOfHistory] = useState('');
+    const [chatSaveToServer, setChatSaveToServer] = useState(false);
+    const [chatDaysOfHistory, setChatDaysOfHistory] = useState('');
      
     async function persistGlobalValue(key: string, value: any) {
     // save to global state
@@ -23,21 +23,21 @@ export default function ChatSettingsPageComp() {
 
     const handleSaveToServerChange = (e: any) => {
         const isChecked = e.target.checked;
-        setSaveToServer(isChecked);
-        persistGlobalValue(DBKeys.saveToServer, isChecked);
+        setChatSaveToServer(isChecked);
+        persistGlobalValue(DBKeys.chatSaveToServer, isChecked);
         rtc.setSaveToServer(isChecked);
     };
     
     const handleDaysOfHistoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setDaysOfHistory(value);
+        setChatDaysOfHistory(value);
     };
     
     const saveDaysOfHistory = async () => {
         // Convert to number and save to global state
-        const days = parseInt(daysOfHistory);
+        const days = parseInt(chatDaysOfHistory);
         if (!isNaN(days) && days >= 0) {
-            persistGlobalValue(DBKeys.daysOfHistory, days);
+            persistGlobalValue(DBKeys.chatDaysOfHistory, days);
             appRooms.runRoomCleanup();
             await alertModal(`Saved successfully.`);
         } else {
@@ -46,21 +46,21 @@ export default function ChatSettingsPageComp() {
     };
 
     useEffect(() => {    
-        // Initialize saveToServer from global state
-        setSaveToServer(gs.saveToServer || false);
+        // Initialize chatSaveToServer from global state
+        setChatSaveToServer(gs.chatSaveToServer || false);
             
-        // Initialize daysOfHistory from global state
-        if (gs.daysOfHistory !== undefined) {
-            setDaysOfHistory(gs.daysOfHistory.toString());
+        // Initialize chatDaysOfHistory from global state
+        if (gs.chatDaysOfHistory !== undefined) {
+            setChatDaysOfHistory(gs.chatDaysOfHistory.toString());
         }
-    }, [gs.userName, gs.userDescription, gs.userAvatar, gs.saveToServer, gs.daysOfHistory]);
+    }, [gs.userName, gs.userDescription, gs.userAvatar, gs.chatSaveToServer, gs.chatDaysOfHistory]);
     
 
     return (                
         <TitledPanelComp title="Chat Options" collapsibleKey={PanelKeys.settings_options}>               
             <div className="flex items-center justify-between">
                 <div>
-                    <label htmlFor="saveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
+                    <label htmlFor="chatSaveToServer" className="text-sm font-medium text-blue-300 cursor-pointer">
                                             Sync Messages with Server
                     </label>
                     <p className="text-xs text-gray-400 mt-1">
@@ -70,9 +70,9 @@ export default function ChatSettingsPageComp() {
                 <div className="flex items-center">
                     <input
                         type="checkbox"
-                        id="saveToServer"
-                        name="saveToServer"
-                        checked={saveToServer}
+                        id="chatSaveToServer"
+                        name="chatSaveToServer"
+                        checked={chatSaveToServer}
                         onChange={handleSaveToServerChange}
                         className="h-5 w-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
                     />
@@ -82,7 +82,7 @@ export default function ChatSettingsPageComp() {
             {/* Days of History Option */}
             <div className="mt-4 pt-4 border-t border-blue-400/20">
                 <div className="mb-2">
-                    <label htmlFor="daysOfHistory" className="text-sm font-medium text-blue-300">
+                    <label htmlFor="chatDaysOfHistory" className="text-sm font-medium text-blue-300">
                         Days of History
                     </label>
                     <p className="text-xs text-gray-400 mt-1">
@@ -92,9 +92,9 @@ export default function ChatSettingsPageComp() {
                 <div className="flex items-center space-x-3">
                     <input
                         type="number"
-                        id="daysOfHistory"
-                        name="daysOfHistory"
-                        value={daysOfHistory}
+                        id="chatDaysOfHistory"
+                        name="chatDaysOfHistory"
+                        value={chatDaysOfHistory}
                         onChange={handleDaysOfHistoryChange}
                         min="2"
                         className="bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 

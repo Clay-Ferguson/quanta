@@ -16,7 +16,7 @@ export default function RoomsPage() {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);
     
-    if (!gs.roomHistory) {
+    if (!gs.chatRoomHistory) {
         return <div className="text-center text-gray-400">No room history.</div>;
     }
 
@@ -37,7 +37,7 @@ export default function RoomsPage() {
                                                        List of rooms you've previously joined. Click the trash icon to remove a room from history.
                                 </p>
                             </div>
-                            {gs.roomHistory!.length > 0 ? (
+                            {gs.chatRoomHistory!.length > 0 ? (
                                 <div className="mt-3 overflow-x-auto">
                                     <table className="min-w-full divide-y divide-blue-400/20">
                                         <thead className="bg-gray-900/50">
@@ -51,7 +51,7 @@ export default function RoomsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-gray-800 divide-y divide-blue-400/10">
-                                            {gs.roomHistory!.map((room: RoomHistoryItem, index) => (
+                                            {gs.chatRoomHistory!.map((room: RoomHistoryItem, index) => (
                                                 <tr key={index} className="hover:bg-gray-700/50">
                                                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-200 font-mono">
                                                         {room.name}

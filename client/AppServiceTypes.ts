@@ -10,9 +10,9 @@ export enum DBKeys {
     chatContacts = 'chatContacts',
     keyPair = 'keyPair',
     roomPrefix = 'room_',
-    saveToServer = 'saveToServer',
-    daysOfHistory = 'daysOfHistory',
-    roomHistory = 'roomHistory',
+    chatSaveToServer = 'chatSaveToServer',
+    chatDaysOfHistory = 'chatDaysOfHistory',
+    chatRoomHistory = 'chatRoomHistory',
     headerExpanded = 'headerExpanded',
 
     // chat plugin

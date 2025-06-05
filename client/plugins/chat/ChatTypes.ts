@@ -11,11 +11,11 @@ export interface ChatGlobalState extends GlobalState {
     chatConnected?: boolean;  
     chatContacts?: Array<Contact>; 
     // todo-0: finish making these have 'chat' prefix
-    messages?: Array<ChatMessage>; 
-    participants?: Map<string, User> | null;
-    saveToServer?: boolean;
-    daysOfHistory?: number;
-    roomHistory?: Array<RoomHistoryItem>;
+    chatMessages?: Array<ChatMessage>; 
+    chatParticipants?: Map<string, User> | null;
+    chatSaveToServer?: boolean;
+    chatDaysOfHistory?: number;
+    chatRoomHistory?: Array<RoomHistoryItem>;
 }
 
 // =============================================

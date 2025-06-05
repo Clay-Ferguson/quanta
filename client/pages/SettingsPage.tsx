@@ -99,7 +99,6 @@ export default function SettingsPage() {
             setAvatarPreview(gs.userAvatar.data);
         }        
     }, 
-    // todo-0: need a plugin-compatable solution for 'saveToSErver' and 'daysOfHistory' global state which are specific to the chat plugin
     [gs.userName, gs.userDescription, gs.userAvatar]);
 
     const togglePrivateKey = () => {

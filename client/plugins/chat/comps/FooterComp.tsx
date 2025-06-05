@@ -58,7 +58,7 @@ export default function FooterComp() {
             if (!gs.chatConnected) return;
             
             // Skip if nowhere to deliver
-            const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
+            const nowhereToDeliver = (gs.chatParticipants==null || gs.chatParticipants.size === 0) && !gs.chatSaveToServer;
             if (nowhereToDeliver) return;
             
             if (e.clipboardData && e.clipboardData.files.length > 0) {
@@ -79,7 +79,7 @@ export default function FooterComp() {
         return () => {
             document.removeEventListener('paste', handlePaste);
         };
-    }, [gs.chatConnected, gs.participants, gs.saveToServer]);
+    }, [gs.chatConnected, gs.chatParticipants, gs.chatSaveToServer]);
     
     const messageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
@@ -143,7 +143,7 @@ export default function FooterComp() {
         }
     }
 
-    const nowhereToDeliver = (gs.participants==null || gs.participants.size === 0) && !gs.saveToServer;
+    const nowhereToDeliver = (gs.chatParticipants==null || gs.chatParticipants.size === 0) && !gs.chatSaveToServer;
     let textareaPlaceholder = '';
     if (gs.chatConnected) {
         if (nowhereToDeliver) {

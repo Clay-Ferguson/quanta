@@ -30,7 +30,7 @@ class AppRooms {
      * 2. Loads each room's data and calls `cleanRoomMessages` to remove old messages
      * 3. Saves updated room data back to IndexedDB if any messages were removed
      * 
-     * The retention period is determined by `gs().daysOfHistory` with a minimum of 2 days
+     * The retention period is determined by `gs().chatDaysOfHistory` with a minimum of 2 days
      * and a default of 30 days if not configured.
      * 
      * @returns Promise that resolves when cleanup is complete for all rooms
@@ -39,14 +39,14 @@ class AppRooms {
         // Get all room keys
         const roomKeys = await idb.findKeysByPrefix(DBKeys.roomPrefix);
         if (roomKeys) {
-            // Loop through each room and delete all messages older than gs.daysOfHistory
+            // Loop through each room and delete all messages older than gs.chatDaysOfHistory
             for (const roomKey of roomKeys) {
                 console.log(`Cleaning up room: ${roomKey}`);
                 const roomData: any = await idb.getItem(roomKey);
                 if (roomData?.messages) {
                     const cleanedSome = await this.cleanRoomMessages(roomData);
                     if (cleanedSome) {
-                        console.log(`Removed messages from room: ${roomKey} older than ${gs().daysOfHistory || 30} days`);
+                        console.log(`Removed messages from room: ${roomKey} older than ${gs().chatDaysOfHistory || 30} days`);
                         await idb.setItem(roomKey, roomData);
                     }
                 }
@@ -60,7 +60,7 @@ class AppRooms {
      * 
      * This method filters out messages that exceed the configured retention period,
      * logging details about removed messages for debugging purposes. The retention
-     * period is controlled by the global state `daysOfHistory` setting.
+     * period is controlled by the global state `chatDaysOfHistory` setting.
      * 
      * @param roomData The room data object containing a messages array to clean
      * @returns Promise<boolean> that resolves to true if any messages were removed, false otherwise
@@ -70,7 +70,7 @@ class AppRooms {
             return false; // No messages to clean
         }
         const now = new Date().getTime();
-        let days = gs().daysOfHistory || 30; // default to 30 days if not set
+        let days = gs().chatDaysOfHistory || 30; // default to 30 days if not set
         if (days < 2) {
             days = 2;
         }
@@ -96,7 +96,7 @@ class AppRooms {
      * Updates the list of known room names that we maintain a history of.
      * 
      * This method manages the client-side room history stored in IndexedDB under
-     * the `DBKeys.roomHistory` key. The room history is used by the UI to display
+     * the `DBKeys.chatRoomHistory` key. The room history is used by the UI to display
      * a list of previously joined rooms that users can quickly reconnect to.
      * 
      * If the room is not already in the history, it will be added. Existing rooms
@@ -107,16 +107,16 @@ class AppRooms {
      */
     updateRoomHistory = async (roomName: string): Promise<RoomHistoryItem[]> => {
         // Get the current room history from IndexedDB
-        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
+        const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
     
         // Check if the room is already in the history
-        const roomExists = roomHistory.some((item) => item.name === roomName);
+        const roomExists = chatRoomHistory.some((item) => item.name === roomName);
         if (!roomExists) {
             // Add the new room to the history
-            roomHistory.push({ name: roomName });
-            await idb.setItem(DBKeys.roomHistory, roomHistory);
+            chatRoomHistory.push({ name: roomName });
+            await idb.setItem(DBKeys.chatRoomHistory, chatRoomHistory);
         }
-        return roomHistory;
+        return chatRoomHistory;
     }
     
     /**
@@ -149,18 +149,18 @@ class AppRooms {
         if (roomName===_gs.chatRoom) {
             await this.disconnect();
             _gs = gs();
-            _gs.messages = []; 
+            _gs.chatMessages = []; 
         }
 
         // remove room from history
-        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
-        const roomIndex = roomHistory.findIndex((item) => item.name === roomName);
+        const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
+        const roomIndex = chatRoomHistory.findIndex((item) => item.name === roomName);
         if (roomIndex !== -1) {
-            roomHistory.splice(roomIndex, 1);
-            await idb.setItem(DBKeys.roomHistory, roomHistory);
+            chatRoomHistory.splice(roomIndex, 1);
+            await idb.setItem(DBKeys.chatRoomHistory, chatRoomHistory);
         }
 
-        _gs.roomHistory = roomHistory;
+        _gs.chatRoomHistory = chatRoomHistory;
 
         // remove room from IndexedDB
         await idb.removeItem(DBKeys.roomPrefix + roomName);
@@ -180,7 +180,6 @@ class AppRooms {
         const chatConnected = await idb.getItem(DBKeys.chatConnected);
     
         // We don't auto connect if a page was specified, unless it's the Quanta Chat page.
-        // todo-0: this probably need to be reevaluated based on new plugin system
         if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && chatConnected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
             await this.connect(userName, keyPair, roomName);
@@ -215,14 +214,14 @@ class AppRooms {
         }
         await this.setRoomAndUserName(roomName, userName!);
             
-        const roomHistory: RoomHistoryItem[] = await appRooms.updateRoomHistory(roomName);
+        const chatRoomHistory: RoomHistoryItem[] = await appRooms.updateRoomHistory(roomName);
         gd({ type: 'connect', payload: { 
             userName,
             chatRoom: roomName,
-            messages,
+            chatMessages: messages,
             chatConnected: true,
             chatConnecting: false,
-            roomHistory,
+            chatRoomHistory,
             pages: app.setTopPage(gs(), PageNames.quantaChat)
         }});
         await idb.setItem(DBKeys.chatConnected, true);
@@ -242,8 +241,8 @@ class AppRooms {
     disconnect = async () => {
         rtc._disconnect();
         gd({ type: 'disconnect', payload: { 
-            messages: [], 
-            participants: new Map<string, User>(), 
+            chatMessages: [], 
+            chatParticipants: new Map<string, User>(), 
             chatConnected: false, 
         }});
         await idb.setItem(DBKeys.chatConnected, false);

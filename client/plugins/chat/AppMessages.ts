@@ -44,11 +44,11 @@ export class AppMessages {
         
         // Handle deletion for the currently active room
         if (roomName == _gs.chatRoom) {
-            const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+            const messageIndex = _gs.chatMessages?.findIndex((msg: ChatMessage) => msg.id === messageId);
             if (messageIndex !== undefined && messageIndex >= 0) {
-                _gs.messages!.splice(messageIndex, 1);
+                _gs.chatMessages!.splice(messageIndex, 1);
                 _gs = gd({ type: 'deleteMessage', payload: _gs});
-                this.saveMessages(roomName, _gs.messages!);
+                this.saveMessages(roomName, _gs.chatMessages!);
             }
         }
         // Handle deletion for non-active rooms (update IndexedDB only)
@@ -74,11 +74,11 @@ export class AppMessages {
         const confirmed = await confirmModal(`Delete message?`);
         if (!confirmed) return;
         let _gs = gs();
-        const messageIndex = _gs.messages?.findIndex((msg: ChatMessage) => msg.id === messageId);
+        const messageIndex = _gs.chatMessages?.findIndex((msg: ChatMessage) => msg.id === messageId);
         if (messageIndex !== undefined && messageIndex >= 0) {
-            _gs.messages!.splice(messageIndex, 1);
+            _gs.chatMessages!.splice(messageIndex, 1);
             _gs = gd({ type: 'deleteMessage', payload: _gs});
-            this.saveMessages(_gs.chatRoom!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
 
             // Make the secure POST request with body
             await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
@@ -119,20 +119,20 @@ export class AppMessages {
             msg.state = sentOk ? MessageStates.SENT : MessageStates.FAILED;
     
                 // persist in global state
-                _gs.messages!.push(msg);
+                _gs.chatMessages!.push(msg);
                 _gs = gd({ type: 'persistMessage', payload: _gs});
     
                 // persist in IndexedDB
-                await this.saveMessages(_gs.chatRoom!, _gs.messages!);
+                await this.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
     
                 setTimeout(async () => {
                     const _gs = gs();
                     // Monitor for server acknowledgment after 3 seconds
                     // TODO: Add resend button for failed messages (useful for P2P mode)
                     // P2P mode also needs ACK mechanism which is not yet implemented
-                    if (_gs.messages && _gs.saveToServer) {
+                    if (_gs.chatMessages && _gs.chatSaveToServer) {
                         // Verify the message has been acknowledged by the server
-                        const message = _gs.messages!.find((m: ChatMessage) => m.id === msg.id);
+                        const message = _gs.chatMessages!.find((m: ChatMessage) => m.id === msg.id);
                         if (message && message.state!==MessageStates.SAVED) {
                             await alertModal('There was a problem sending that last message. The server did not acknowledge acceptance of the message');
                         }
@@ -155,16 +155,16 @@ export class AppMessages {
      */
     acknowledgeMessage = async (id: string): Promise<void> => {
         let _gs = gs();
-        if (!_gs.messages) {
+        if (!_gs.chatMessages) {
             console.warn('No messages available to acknowledge');
             return;
         }
     
-        const message = _gs.messages!.find((msg: ChatMessage) => msg.id === id);
+        const message = _gs.chatMessages!.find((msg: ChatMessage) => msg.id === id);
         if (message) {
             message.state = MessageStates.SAVED;
             _gs = gd({ type: 'acknowledgeMessage', payload: _gs});
-            await this.saveMessages(_gs.chatRoom!, _gs.messages!);
+            await this.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
             console.log(`Message ID ${id} acknowledged`); 
         } else {
             console.warn(`Message with ID ${id} not found`);
@@ -197,7 +197,7 @@ export class AppMessages {
         }
     
         let _gs = gs();   
-            _gs.messages!.push(msg);
+            _gs.chatMessages!.push(msg);
             try {
                 await this.pruneDB(msg);
                 _gs = gs();
@@ -206,7 +206,7 @@ export class AppMessages {
             }
     
             _gs = gd({ type: 'persistMessage', payload: _gs});
-            this.saveMessages(_gs.chatRoom!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
     }
     
     /**
@@ -243,7 +243,7 @@ export class AppMessages {
      * @returns True if the message already exists, false otherwise
      */
     messageExists(msg: ChatMessage) {
-        return gs().messages!.some((message: any) =>
+        return gs().chatMessages!.some((message: any) =>
             message.timestamp === msg.timestamp &&
                 message.sender === msg.sender &&
                 message.content === msg.content &&
@@ -279,7 +279,7 @@ export class AppMessages {
      */
     setMessages = (messages: ChatMessageIntf[]) => {
         // Save into global state - cast to ChatMessage[] since ChatMessage extends ChatMessageIntf
-        gd({ type: 'setMessages', payload: { messages: messages as ChatMessage[] }});
+        gd({ type: 'setMessages', payload: { chatMessages: messages as ChatMessage[] }});
     
         // Save to IndexedDB
         this.saveMessages(gs().chatRoom!, messages);
@@ -297,11 +297,11 @@ export class AppMessages {
      */
     reSendFailedMessages = () => {
         let _gs = gs();
-        if (!_gs.messages) {
+        if (!_gs.chatMessages) {
             console.warn('Cannot resend messages: RTC not initialized or no messages available');
             return;
         }
-        const unsentMessages = _gs.messages.filter(msg => msg.state !== MessageStates.SENT && msg.publicKey === _gs.keyPair?.publicKey);
+        const unsentMessages = _gs.chatMessages.filter(msg => msg.state !== MessageStates.SENT && msg.publicKey === _gs.keyPair?.publicKey);
             
         if (unsentMessages.length > 0) {
             console.log(`Attempting to resend ${unsentMessages.length} unsent messages`);
@@ -316,7 +316,7 @@ export class AppMessages {
                 
             // Update the global state and save messages after resending
             _gs = gd({ type: 'resendMessages', payload: _gs });
-            this.saveMessages(_gs.chatRoom!, _gs.messages!);
+            this.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
         } else {
             console.log('No unsent messages to resend');
         }
@@ -332,7 +332,7 @@ export class AppMessages {
      * @returns Promise resolving to the updated messages array
      */
     resendFailedMessages = async (roomName: string, messages: ChatMessage[]): Promise<ChatMessage[]> => {
-        if (!gs().saveToServer) return messages;
+        if (!gs().chatSaveToServer) return messages;
         if (!roomName) {
             console.warn('No room name available for resending messages');
             return messages;
@@ -429,12 +429,12 @@ export class AppMessages {
         }
 
         // Next get room messages from server
-        if (gs().saveToServer) {
+        if (gs().chatSaveToServer) {
             let messagesDirty = false;
             try {
-                const daysOfHistory = gs().daysOfHistory || 30;
+                const chatDaysOfHistory = gs().chatDaysOfHistory || 30;
                 // Get all message IDs from the server for this room
-                const respIds: GetMessageIdsForRoom_Response = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${daysOfHistory}`);
+                const respIds: GetMessageIdsForRoom_Response = await httpClientUtil.httpGet(`/api/rooms/${encodeURIComponent(roomId)}/message-ids?daysOfHistory=${chatDaysOfHistory}`);
                
                 const serverMessageIds: string[] = respIds.messageIds || [];
                 if (serverMessageIds.length === 0) {
@@ -449,8 +449,8 @@ export class AppMessages {
                 // 1) Makes sure that any messages that are on the server are marked as SAVED (acknowledged). This should not be necessary,
                 //    but we do it just to be sure the SAVED state is as correct as we can make it, in case there were any problems in the past.
                 // 2) Removes any messages that are no longer on the server but were at one time (state==SAVED). Note that since we always enforce
-                //    'daysOfHistory' such that anything older than that is removed, we don't need to worry about messages that are older than that, or the fact
-                //     that what we just pulled from the server is only the last 'daysOfHistory' worth of messages. 
+                //    'chatDaysOfHistory' such that anything older than that is removed, we don't need to worry about messages that are older than that, or the fact
+                //     that what we just pulled from the server is only the last 'chatDaysOfHistory' worth of messages. 
                 messages = messages.filter((msg: ChatMessage) => {
                     if (serverIdsSet.has(msg.id)) {
                         if (msg.state !== MessageStates.SAVED) {
@@ -540,12 +540,12 @@ export class AppMessages {
                 if (await confirmModal(warningMsg)) {
                     const _gs = gs();
                         // Sort messages by timestamp and remove oldest 20%
-                        _gs.messages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
-                        const countToRemove = Math.ceil(_gs.messages!.length * 0.20);
-                        _gs.messages = _gs.messages!.slice(countToRemove);
+                        _gs.chatMessages!.sort((a: any, b: any) => a.timestamp - b.timestamp);
+                        const countToRemove = Math.ceil(_gs.chatMessages!.length * 0.20);
+                        _gs.chatMessages = _gs.chatMessages!.slice(countToRemove);
     
                         // Save the pruned messages
-                        appMessages.saveMessages(_gs.chatRoom!, _gs.messages!);
+                        appMessages.saveMessages(_gs.chatRoom!, _gs.chatMessages!);
                         console.log(`Removed ${countToRemove} old messages due to storage constraints`);
                 }
             }

@@ -78,7 +78,7 @@ export default function HeaderComp() {
                                 <>
                                     <div className="flex flex-col w-full sm:w-auto">
                                         <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
-                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.chatRoom} (${gs.participants!.size} others)`}</span></span>
+                                        <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.chatRoom} (${gs.chatParticipants!.size} others)`}</span></span>
                                     </div>
                                 
                                     <div className="flex gap-2 w-full sm:w-auto">
@@ -138,7 +138,7 @@ export default function HeaderComp() {
                         <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
                     </button>}
                     {!gs.headerExpanded && gs.chatConnected && gs.userName && 
-                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.chatRoom} (${gs.participants!.size} others)`}</span>}
+                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.chatRoom} (${gs.chatParticipants!.size} others)`}</span>}
 
                     {!gs.headerExpanded && !gs.chatConnected && gs.userName && 
                 <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}

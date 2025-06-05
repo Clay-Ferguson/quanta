@@ -79,13 +79,13 @@ export default function RecentAttachmentsPage() {
         setAttachments(updatedAttachments);
 
         // now scan the 'gs.messages' array which is an array of ChatMessage objects and remove any attachments that are in the 'attachments' array of the ChatMessage object
-        gs.messages = gs.messages!.map(msg => {
+        gs.chatMessages = gs.chatMessages!.map(msg => {
             if (msg.attachments) {
                 msg.attachments = msg.attachments.filter(att => att.id !== id);
             }
             return msg;
         });
-        appMessages.setMessages(gs.messages)
+        appMessages.setMessages(gs.chatMessages)
     };
 
     return (

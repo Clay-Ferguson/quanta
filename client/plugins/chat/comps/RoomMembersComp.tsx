@@ -14,7 +14,7 @@ export default function RoomMembersComp() {
     const gs = useGlobalState();
 
     // Sort contacts alphabetically by name
-    const sortedParticipants: any[] = gs.participants ? Array.from(gs.participants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const sortedParticipants: any[] = gs.chatParticipants ? Array.from(gs.chatParticipants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
 
     // let's add ourselves as the first member in the list
     if (gs.keyPair && gs.userName) {

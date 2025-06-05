@@ -21,7 +21,7 @@ import { idb } from "./IndexedDB";
  * - User avatar and description handling
  * 
  * The class works closely with IndexedDB for client-side persistence and optionally
- * syncs user data with the server when `saveToServer` mode is enabled. It also
+ * syncs user data with the server when `chatSaveToServer` mode is enabled. It also
  * integrates with the cryptographic system for identity verification and signing.
  */
 class AppUsers {
@@ -48,7 +48,7 @@ class AppUsers {
      * This method performs a comprehensive save operation:
      * 1. Updates the global state with the new user information
      * 2. Persists the data to IndexedDB for offline access
-     * 3. If `saveToServer` is enabled and a key pair exists, sends the user profile to the server
+     * 3. If `chatSaveToServer` is enabled and a key pair exists, sends the user profile to the server
      * 
      * The server sync allows for multi-device access and backup of user profile data.
      * 
@@ -66,7 +66,7 @@ class AppUsers {
 
         // Save user info to server if saving to server is enabled
         // todo-0: need to handle this in a better plugin-compatable way rather than the ugly "as any" cast
-        if ((_gs as any).saveToServer && _gs.keyPair?.publicKey) {
+        if ((_gs as any).chatSaveToServer && _gs.keyPair?.publicKey) {
             const userProfile: UserProfile = {
                 publicKey: _gs.keyPair!.publicKey,
                 name: userName,

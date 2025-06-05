@@ -129,14 +129,15 @@ export class AppService {
      * Loads user profile, contacts, room history, and settings.
      * Redirects to settings page if no username is found.
      */
+    // todo-0: need this to be a plugin-specific function that can be called by each plugin to restore its own state.
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
         const userName: string= await idb.getItem(DBKeys.userName);
         const chatContacts: Contact[] = await idb.getItem(DBKeys.chatContacts);
         const chatRoom: string = await idb.getItem(DBKeys.chatRoom);
-        const saveToServer: boolean = await idb.getItem(DBKeys.saveToServer, true) === true;
-        const daysOfHistory: number = await idb.getItem(DBKeys.daysOfHistory) || 30;
-        const roomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.roomHistory) || [];
+        const chatSaveToServer: boolean = await idb.getItem(DBKeys.chatSaveToServer, true) === true;
+        const chatDaysOfHistory: number = await idb.getItem(DBKeys.chatDaysOfHistory) || 30;
+        const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
         const userDescription: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
@@ -151,9 +152,9 @@ export class AppService {
             userName,
             chatContacts,
             chatRoom,
-            saveToServer,
-            daysOfHistory,
-            roomHistory,
+            chatSaveToServer,
+            chatDaysOfHistory,
+            chatRoomHistory,
             userDescription,
             userAvatar,
             headerExpanded,
