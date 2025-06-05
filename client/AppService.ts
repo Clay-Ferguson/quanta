@@ -6,6 +6,7 @@ import appUsers from './AppUsers.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
+export const pluginsArray: any[] = [];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare let DOC_ROOT_KEY: string;
@@ -59,6 +60,7 @@ export class AppService {
             try {
                 console.log(`plugin: ${plugin}`);
                 const pluginModule = await import(`./plugins/${plugin}/init.ts`);
+                pluginsArray.push(pluginModule);
                 if (pluginModule.init) {
                     pluginModule.init({idb});
                 } else {

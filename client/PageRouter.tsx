@@ -1,21 +1,14 @@
-import QuantaChatPage from './plugins/chat/pages/QuantaChatPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
-import ContactsPage from './plugins/chat/pages/ContactsPage.tsx';
 import DocViewerPage from './pages/DocViewerPage.tsx'; 
-import TreeViewerPage from './plugins/docs/pages/TreeViewerPage.tsx';
-import RoomInfoPage from './plugins/chat/pages/RoomInfoPage.tsx';    
-import RoomsPage from './plugins/chat/pages/RoomsPage.tsx';
-import RoomsAdminPage from './plugins/chat/pages/RoomsAdminPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
-import RecentAttachmentsPage from './plugins/chat/pages/RecentAttachmentsPage.tsx';
 import { useGlobalState } from './GlobalState.tsx'; 
 import { PageNames } from './AppServiceTypes.ts';
 import LoadingIndicator from './components/LoadingIndicatorComp.tsx';
 import UserProfilePage from './pages/UserProfilePage.tsx';
 import LogViewerPage from './pages/LogViewerPage.tsx';
-import SearchViewPage from './plugins/docs/SearchViewPage.tsx';
+import { pluginsArray } from './AppService.ts';
 
-declare const DOC_ROOT_KEY: string;
+declare const DOC_ROOT_KEY: string; 
 
 /**
  * Component to handle conditional page rendering based on the current page. This is a SPA and so we don't have the url updating controlling
@@ -39,34 +32,32 @@ export default function PageRouter() {
         return <SettingsPage />;
     }
     
+    // first let any of the plugins handle the page routing
+    for (const plugin of pluginsArray) {
+        if (plugin.getRoute) {
+            // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);
+            const comp = plugin.getRoute(topPage);
+            if (comp) {
+                // console.log(`PageRouter: routing to page: ${topPage}`);
+                return comp;
+            }
+        }
+    }
+
     switch (topPage) {
     case PageNames.settings:
         return <SettingsPage />;
-    case PageNames.contacts:
-        return <ContactsPage />;
     case PageNames.userGuide:
         return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
-    case PageNames.treeViewer:
-        return <TreeViewerPage />;
-    case PageNames.recentAttachments:
-        return <RecentAttachmentsPage />;
     case PageNames.admin:
         return <AdminPage />;
-    case PageNames.roomMembers:
-        return <RoomInfoPage />;
-    case PageNames.rooms:
-        return <RoomsPage />;
-    case PageNames.roomsAdmin:
-        return <RoomsAdminPage />;
     case PageNames.userProfile:
         return <UserProfilePage />;
     case PageNames.logViewer:
         return <LogViewerPage />;
-    case PageNames.searchView:
-        return <SearchViewPage />;
-    case PageNames.quantaChat: // fall thru. to default
     default:
-        return <QuantaChatPage />;
+        console.warn(`PageRouter: No route found for page: ${topPage}`);
+        return null; // need to return something visible that just indicates the page is not found
     }
 }
 
