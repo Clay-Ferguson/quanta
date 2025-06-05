@@ -10,7 +10,6 @@ export interface ChatGlobalState extends GlobalState {
     chatConnecting?: boolean;
     chatConnected?: boolean;  
     chatContacts?: Array<Contact>; 
-    // todo-0: finish making these have 'chat' prefix
     chatMessages?: Array<ChatMessage>; 
     chatParticipants?: Map<string, User> | null;
     chatSaveToServer?: boolean;
