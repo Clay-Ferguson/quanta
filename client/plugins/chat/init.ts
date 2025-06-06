@@ -1,5 +1,5 @@
 import React from 'react';
-import { DBKeys, RoomHistoryItem, IPlugin } from "../../AppServiceTypes";
+import { DBKeys, RoomHistoryItem, IClientPlugin } from "../../AppServiceTypes";
 import appRooms from "./AppRooms";
 import { rtc } from "./WebRTC";
 import ContactsPage from "./pages/ContactsPage";
@@ -17,13 +17,11 @@ import SettingsPage from '../../pages/SettingsPage';
 import { app } from '../../AppService';
 import { ChatAdminPageComp } from './ChatAdminPageComp';
 
-// todo-0: We need Plugins functions to be a class with a polymorphic interface, so that we can have a common interface for all plugins.
-
 declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 
-class ChatPlugin implements IPlugin {
+class ChatPlugin implements IClientPlugin {
 
     getKey(): string {
         return 'chat';

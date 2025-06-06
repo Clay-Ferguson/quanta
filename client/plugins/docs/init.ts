@@ -1,5 +1,5 @@
 import React from 'react';
-import { DBKeys, IPlugin } from "../../AppServiceTypes";
+import { DBKeys, IClientPlugin } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
 import SearchViewPage from './SearchViewPage';
 import { TreeNode, UserProfile } from '../../../common/types/CommonTypes';
@@ -8,7 +8,7 @@ import { GlobalState } from '../../GlobalState';
 import { idb } from '../../IndexedDB';
 import { app } from '../../AppService';
 
-class DocsPlugin implements IPlugin {
+class DocsPlugin implements IClientPlugin {
 
     getKey(): string {
         return 'docs';

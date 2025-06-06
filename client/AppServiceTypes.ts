@@ -46,7 +46,7 @@ export enum PageNames {
     logViewer = "LogViewerPage",
 }
 
-export interface IPlugin {
+export interface IClientPlugin {
     getKey(): string; 
     init(context: any): Promise<void>;
     notify(): Promise<void>;

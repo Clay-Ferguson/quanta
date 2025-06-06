@@ -1,4 +1,4 @@
-import {DBKeys, IPlugin, PageNames} from './AppServiceTypes.ts';
+import {DBKeys, IClientPlugin, PageNames} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
@@ -7,7 +7,7 @@ import appUsers from './AppUsers.ts';
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
 declare const DEFAULT_PLUGIN: string;
-export const pluginsArray: IPlugin[] = [];
+export const pluginsArray: IClientPlugin[] = [];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare let DOC_ROOT_KEY: string;
