@@ -1,7 +1,27 @@
 import { Response } from 'express';
 
+export interface IServerPlugin {
+    /**
+     * Initialize the plugin with the given context
+     * @param context - Contains app (Express app instance) and serveIndexHtml function
+     */
+    init(context: any): void;
+
+    /**
+     * Set up fallback routes after all plugins have been initialized
+     * @param context - Contains app (Express app instance) and serveIndexHtml function
+     */
+    finishRoute(context: any): void;
+
+    /**
+     * Notify the plugin that server startup is complete
+     * @param server - The server instance (for WebRTC or other server-level operations)
+     */
+    notify(server: any): void;
+}
+
 class ServerUtil {
-    pluginsArray: any[] = [];
+    pluginsArray: IServerPlugin[] = [];
 
     getEnvVar = (name: string): string => {
         const value = process.env[name];
@@ -34,51 +54,40 @@ class ServerUtil {
             try {
                 console.log(`plugin: ${plugin.key}`);
                 const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
-                if (pluginModule.init) {
-                    pluginModule.init(context); // Initialize the plugin
+                const pluginInst = pluginModule.plugin;
+                if (pluginInst) {
+                    pluginInst.init(context); // Initialize the plugin
+                    this.pluginsArray.push(pluginInst); // Cache the plugin instance
                 } else {
-                    console.warn(`Plugin ${plugin} does not have an init function.`);
+                    console.warn(`Plugin ${plugin.key} does not have a plugin instance with init method.`);
                 }
-                this.pluginsArray.push(pluginModule);
             } catch (error) {
-                console.error(`Error initializing plugin ${plugin}:`, error);
+                console.error(`Error initializing plugin ${plugin.key}:`, error);
             }
         }
     }
 
-    // todo-0: this needs to use the cached pluginsArray rather than re-importing the modules.
+    // Now uses the cached pluginsArray with proper plugin instances
     finishRoutes = async (plugins: any, context: any) => {
         console.log('Finishing plugin routes...');
-        for (const plugin of plugins) {
-            try {
-                console.log(`plugin: ${plugin.key}`);
-                const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
-                if (pluginModule.finishRoute) {
-                    pluginModule.finishRoute(context); // Initialize the plugin
-                } else {
-                    console.warn(`Plugin ${plugin} does not have an init function.`);
-                }
-            } catch (error) {
-                console.error(`Error initializing plugin ${plugin}:`, error);
-            }
+        for (const plugin of this.pluginsArray) {
+            plugin.finishRoute(context);
         }
     }
 
-    // todo-0: this needs to use the cached pluginsArray rather than re-importing the modules.
+    // Now uses the cached pluginsArray with proper plugin instances
     // Currently this is only called by server and 'context' is the server instance.
     notifyPlugins = async (plugins: any, context: any) => {
         console.log('Notify plugins startup is complete...');
-        for (const plugin of plugins) {
+        for (const pluginInstance of this.pluginsArray) {
             try {
-                console.log(`notify plugin: ${plugin.key}`);
-                const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
-                if (pluginModule.notify) {
-                    pluginModule.notify(context); // Initialize the plugin
+                if (pluginInstance.notify) {
+                    pluginInstance.notify(context);
                 } else {
-                    console.warn(`Plugin ${plugin} does not have an init function.`);
+                    console.warn(`Plugin instance does not have a notify method.`);
                 }
             } catch (error) {
-                console.error(`Error initializing plugin ${plugin}:`, error);
+                console.error(`Error notifying plugin:`, error);
             }
         }
     }

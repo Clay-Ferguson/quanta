@@ -8,7 +8,7 @@ import { GlobalState } from '../../GlobalState';
 import { idb } from '../../IndexedDB';
 import { app } from '../../AppService';
 
-class DocsPlugin implements IClientPlugin {
+class DocsClientPlugin implements IClientPlugin {
 
     getKey(): string {
         return 'docs';
@@ -88,4 +88,4 @@ class DocsPlugin implements IClientPlugin {
     }
 }
 
-export const plugin = new DocsPlugin();
+export const plugin = new DocsClientPlugin();

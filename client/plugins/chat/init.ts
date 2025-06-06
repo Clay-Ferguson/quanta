@@ -21,7 +21,7 @@ declare const HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 
-class ChatPlugin implements IClientPlugin {
+class ChatClientPlugin implements IClientPlugin {
 
     getKey(): string {
         return 'chat';
@@ -112,4 +112,4 @@ class ChatPlugin implements IClientPlugin {
     }
 }
 
-export const plugin = new ChatPlugin();
+export const plugin = new ChatClientPlugin();
