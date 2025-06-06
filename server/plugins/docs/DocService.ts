@@ -1255,7 +1255,7 @@ class DocService {
             
             if (searchMode === 'REGEX') {
                 // For REGEX mode, use the query as-is as a regex pattern
-                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -E "${query.replace(/"/g, '\\"')}" "${absoluteSearchPath}"`;
+                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${query.replace(/"/g, '\\"')}" "${absoluteSearchPath}"`;
             } else {
                 // For MATCH_ANY and MATCH_ALL, parse the query into search terms
                 let searchTerms: string[] = [];
@@ -1291,7 +1291,7 @@ class DocService {
                     const regexPattern = escapedTerms.join('|');
                     
                     // First get the list of files that contain any of the terms
-                    const fileListCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -i -E "${regexPattern}" "${absoluteSearchPath}"`;
+                    const fileListCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -i -E "${regexPattern}" "${absoluteSearchPath}"`;
                     
                     // Then get the actual content with line numbers from those files
                     grepCommand = `${fileListCommand} | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
@@ -1304,7 +1304,7 @@ class DocService {
                     // Build a command that pipes through multiple greps to find files containing all terms
                     // Use -Z option with grep to output null-terminated filenames, and -0 with xargs to handle them properly
                     // This handles filenames with spaces correctly
-                    let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" -i "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -i "${escapedTerms[0]}" "${absoluteSearchPath}"`;
                     
                     // Chain additional greps for each remaining term
                     // Use --no-run-if-empty to prevent xargs from running if there's no input
