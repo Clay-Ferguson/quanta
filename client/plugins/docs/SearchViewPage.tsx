@@ -4,9 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { util } from '../../Util';
 import { httpClientUtil } from '../../HttpClientUtil';
 import { alertModal } from '../../components/AlertModalComp';
-import { useGlobalState, gd } from './DocsTypes';
+import { useGlobalState, gd, DocsPageNames } from './DocsTypes';
 import { app } from '../../AppService';
-import { PageNames } from '../../AppServiceTypes';
 
 interface SearchResult {
     file: string;
@@ -168,7 +167,7 @@ export default function SearchViewPage() {
         }
         
         // Navigate to the TreeViewer page
-        app.goToPage(PageNames.treeViewer);
+        app.goToPage(DocsPageNames.treeViewer);
         
         // Optional: Scroll to the specific file after a short delay to ensure the page has loaded
         // This uses the same scrolling mechanism as the TreeViewerPageOps

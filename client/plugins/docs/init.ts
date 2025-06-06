@@ -1,9 +1,9 @@
 import React from 'react';
-import { DBKeys, PageNames } from "../../AppServiceTypes";
+import { DBKeys } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
 import SearchViewPage from './SearchViewPage';
 import { TreeNode } from '../../../common/types/CommonTypes';
-import { DocsGlobalState } from './DocsTypes';
+import { DocsGlobalState, DocsPageNames } from './DocsTypes';
 import { idb } from '../../IndexedDB';
 
 export async function init(context: any) {
@@ -42,9 +42,9 @@ export async function restoreSavedValues(gs: DocsGlobalState) {
 
 export function getRoute(pageName: string) {
     switch (pageName) {
-    case PageNames.treeViewer:
+    case DocsPageNames.treeViewer:
         return React.createElement(TreeViewerPage);
-    case PageNames.searchView:
+    case DocsPageNames.searchView:
         return React.createElement(SearchViewPage)
     default:
         return null;

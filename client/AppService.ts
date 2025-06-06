@@ -150,7 +150,8 @@ export class AppService {
     getPageName = (): string => {
         const _gs = gs();
         if (!_gs || !_gs.pages || _gs.pages.length === 0) {
-            return PageNames.quantaChat;
+            // todo-0: this is from ChatPageNames, and needs to be handled appropriately for plugin support
+            return "QuantaChatPage";
         }
         return _gs.pages[_gs.pages.length - 1];
     }

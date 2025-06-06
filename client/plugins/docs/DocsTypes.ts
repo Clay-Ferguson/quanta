@@ -4,6 +4,11 @@ import { TreeNode } from "../../../common/types/CommonTypes";
 import { GlobalState } from "../../GlobalState";
 import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalStateBase } from "../../GlobalState.tsx";
 
+export enum DocsPageNames {
+    treeViewer = 'TreeViewerPage', 
+    searchView = "SearchViewPage",
+}
+
 export interface DocsGlobalState extends GlobalState {
     // Plugin-specific state uses plugin key perfix, e.g. 'docs'
     docsFolder?: string;

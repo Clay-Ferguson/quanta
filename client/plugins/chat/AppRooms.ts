@@ -1,8 +1,8 @@
 import { ChatMessage, KeyPairHex, User } from "../../../common/types/CommonTypes.ts";
 import { app } from "../../AppService.ts";
-import { DBKeys, PageNames, RoomHistoryItem } from "../../AppServiceTypes.ts";
+import { DBKeys, RoomHistoryItem } from "../../AppServiceTypes.ts";
 import { confirmModal } from "../../components/ConfirmModalComp.tsx";
-import { gd, gs } from "./ChatTypes.ts"
+import { ChatPageNames, gd, gs } from "./ChatTypes.ts"
 import {idb} from '../../IndexedDB.ts';
 import appMessages from "./AppMessages.ts";
 import { rtc } from "./WebRTC.ts";
@@ -180,7 +180,7 @@ class AppRooms {
         const chatConnected = await idb.getItem(DBKeys.chatConnected);
     
         // We don't auto connect if a page was specified, unless it's the Quanta Chat page.
-        if ((!PAGE || PAGE==PageNames.quantaChat) && userName && roomName && chatConnected) {
+        if ((!PAGE || PAGE==ChatPageNames.quantaChat) && userName && roomName && chatConnected) {
             // in this branch of code after the connect we put the 'appInitialized' setter into the place AFTER we've scrolled to bottom 
             await this.connect(userName, keyPair, roomName);
         }
@@ -222,7 +222,7 @@ class AppRooms {
             chatConnected: true,
             chatConnecting: false,
             chatRoomHistory,
-            pages: app.setTopPage(gs(), PageNames.quantaChat)
+            pages: app.setTopPage(gs(), ChatPageNames.quantaChat)
         }});
         await idb.setItem(DBKeys.chatConnected, true);
     

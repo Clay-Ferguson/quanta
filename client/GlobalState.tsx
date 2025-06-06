@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
-import { PageNames, PanelKeys } from './AppServiceTypes';
+import { PanelKeys } from './AppServiceTypes';
 import { FileBase64Intf, KeyPairHex, UserProfile } from '../common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
@@ -41,7 +41,7 @@ export interface GlobalState {
 
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
-    pages: PAGE ? [PAGE] : [PageNames.quantaChat], 
+    pages: [PAGE], 
     userName: '', 
     fullSizeImage: null,
     appInitialized: false,

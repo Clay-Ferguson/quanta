@@ -1,5 +1,5 @@
 import React from 'react';
-import { DBKeys, PageNames, RoomHistoryItem } from "../../AppServiceTypes";
+import { DBKeys, RoomHistoryItem } from "../../AppServiceTypes";
 import appRooms from "./AppRooms";
 import { rtc } from "./WebRTC";
 import ContactsPage from "./pages/ContactsPage";
@@ -10,7 +10,7 @@ import RoomsAdminPage from "./pages/RoomsAdminPage";
 import QuantaChatPage from "./pages/QuantaChatPage";
 import ChatSettingsPageComp from './comps/SettingsPageComp';
 import { Contact, User } from '../../../common/types/CommonTypes';
-import { ChatGlobalState } from './ChatTypes';
+import { ChatGlobalState, ChatPageNames } from './ChatTypes';
 import { idb } from '../../IndexedDB';
 
 declare const HOST: string;
@@ -65,17 +65,17 @@ export async function restoreSavedValues(gs: ChatGlobalState) {
 
 export function getRoute(pageName: string) {
     switch (pageName) {
-    case PageNames.contacts:
+    case ChatPageNames.contacts:
         return React.createElement(ContactsPage);
-    case PageNames.recentAttachments:
+    case ChatPageNames.recentAttachments:
         return React.createElement(RecentAttachmentsPage);
-    case PageNames.roomMembers:
+    case ChatPageNames.roomMembers:
         return React.createElement(RoomInfoPage);
-    case PageNames.rooms:
+    case ChatPageNames.rooms:
         return React.createElement(RoomsPage);
-    case PageNames.roomsAdmin:
+    case ChatPageNames.roomsAdmin:
         return React.createElement(RoomsAdminPage);
-    case PageNames.quantaChat: // fall thru. to default
+    case ChatPageNames.quantaChat: // fall thru. to default
         return React.createElement(QuantaChatPage);
     default: return null;
     }

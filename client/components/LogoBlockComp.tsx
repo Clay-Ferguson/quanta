@@ -1,6 +1,3 @@
-import { app } from '../AppService';
-import { PageNames } from '../AppServiceTypes';
-
 interface LogoBlockCompProps {
   subText: string;
   clazz?: string;
@@ -11,7 +8,7 @@ interface LogoBlockCompProps {
  */
 export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
     // todo-0: this needs to go to whatever the default plugin page is, which is already defined.
-    const handleLogoClick = () => app.goToPage(PageNames.quantaChat);
+    const handleLogoClick = () => {} // app.goToPage(PageNames.quantaChat);
     
     return (
         <div className={`hidden md:flex items-center ${clazz}`}>

@@ -2,7 +2,6 @@ import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { app } from '../AppService';
-import { PageNames } from '../AppServiceTypes';
 import { httpClientUtil } from '../HttpClientUtil';
 import { useEffect } from 'react';
 import { util } from '../Util';
@@ -27,7 +26,8 @@ export default function AdminPage() {
     };
 
     const getRoomInfo = async () => {
-        app.goToPage(PageNames.roomsAdmin);
+        // todo-0: this needs to come from an enum AND from the plugin, we can't have this here.
+        app.goToPage('RoomsAdminPage');
     };
 
     const blockUser = async () => {
@@ -52,13 +52,15 @@ export default function AdminPage() {
                 <div className="space-y-6 max-w-2xl mx-auto">
 
                     <TitledPanelComp title="Manage Server">
+                        {/* 
+                        todo-0: this will have to be implemented in a plugin-compatable way.
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
                             className="btn-secondary mr-2"
                             title="Recent Attachments"
                         >
                             Recent Attachments
-                        </button>
+                        </button> */}
 
                         <button 
                             onClick={getRoomInfo}

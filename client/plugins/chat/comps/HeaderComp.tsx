@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faQuestionCircle, faScrewdriverWrench, faUsers, faChevronUp, faChevronDown  } from '@fortawesome/free-solid-svg-icons';
 import LogoBlockComp from '../../../components/LogoBlockComp';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
-import { gd, gs, useGlobalState } from '../ChatTypes';
+import { ChatPageNames, gd, gs, useGlobalState } from '../ChatTypes';
 import { idb } from '../../../IndexedDB';
 import appRooms from '../AppRooms';
 
@@ -67,7 +67,7 @@ export default function HeaderComp() {
                                         </button>
                                     
                                         <button 
-                                            onClick={() => app.goToPage(PageNames.rooms)}
+                                            onClick={() => app.goToPage(ChatPageNames.rooms)}
                                             className="btn-secondary w-full sm:w-auto"
                                         >
                                         Rooms
@@ -89,13 +89,13 @@ export default function HeaderComp() {
                                         Leave
                                         </button>
                                         <button 
-                                            onClick={() => app.goToPage(PageNames.roomMembers)}
+                                            onClick={() => app.goToPage(ChatPageNames.roomMembers)}
                                             className="btn-secondary w-full sm:w-auto"
                                         >
                                         Info
                                         </button>
                                         <button 
-                                            onClick={() => app.goToPage(PageNames.rooms)}
+                                            onClick={() => app.goToPage(ChatPageNames.rooms)}
                                             className="btn-secondary w-full sm:w-auto"
                                         >
                                         Rooms
