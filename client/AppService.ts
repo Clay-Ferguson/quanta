@@ -179,17 +179,6 @@ export class AppService {
         this.setTopPage(_gs, page);
         gd({ type: 'setPage', payload: _gs });
     }
-
-    showHelp = () => {
-        const _gs = gs();
-        this.setTopPage(_gs, PageNames.treeViewer);
-        
-        // todo-0: this is a hack because we need a better plugin-speific typed way to do this.
-        (_gs as any).docsFolder = "/";
-
-        DOC_ROOT_KEY = "user-guide"; // Ensure DOC_ROOT_KEY is set for user guide
-        gd({ type: 'setPage', payload: _gs });
-    }
 }
 
 export const app = new AppService();

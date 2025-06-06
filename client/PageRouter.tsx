@@ -48,7 +48,7 @@ export default function PageRouter() {
     case PageNames.settings:
         return <SettingsPage />;
     case PageNames.userGuide:
-        return <DocViewerPage filename="/user-guide.md" title="User Guide" />;
+        return <DocViewerPage filename="/user_guide.md" title="User Guide" />;
     case PageNames.admin:
         return <AdminPage />;
     case PageNames.userProfile:

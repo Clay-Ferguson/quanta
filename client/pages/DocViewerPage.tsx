@@ -20,7 +20,7 @@ interface DocViewerPageProps {
  * which is a more advanced document viewer, but let's keep this component in case we ever need it for simpler documents.
  */
 export default function DocViewerPage({ 
-    filename = '/user-guide.md',
+    filename = '/user_guide.md',
     title = 'Document Viewer' 
 }: DocViewerPageProps) {
     const [docContent, setDocContent] = useState<string | null>(documentCache.get(filename) || null);

@@ -13,8 +13,3 @@ plugins:
   - name: "Quanta Docs"
     key: "docs"
 
-# Public folders configuration - array of folder objects with name and path
-public-folders:    
-  - name: "User Guide"
-    key: "user-guide"
-    path: "/home/clay/quanta-chat/public/user-guide"

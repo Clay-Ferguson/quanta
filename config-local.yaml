@@ -18,6 +18,3 @@ public-folders:
     key: "root"
     path: "/home/clay/ferguson/A-doc-root"
     
-  - name: "User Guide"
-    key: "user-guide"
-    path: "/home/clay/ferguson/quanta-chat/public/user-guide"
