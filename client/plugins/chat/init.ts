@@ -29,14 +29,13 @@ export async function init(context: any) {
     gs.chatConnecting = false;
     gs.chatConnected = false;
     gs.chatRoom = '';
-    gs.chatMessages = [];  // todo-0: needs chat prefix
-    gs.chatParticipants = new Map<string, User>(); // todo-0: needs chat prefix
+    gs.chatMessages = [];
+    gs.chatParticipants = new Map<string, User>(); 
     gs.chatContacts = [];
-    gs.chatSaveToServer = true; // todo-0: needs chat prefix
-    gs.chatDaysOfHistory = 30; // todo-0: needs chat prefix
-    gs.chatRoomHistory = []; // todo-0: needs chat prefix
+    gs.chatSaveToServer = true; 
+    gs.chatDaysOfHistory = 30;
+    gs.chatRoomHistory = []; 
 
-    // todo-0: initialize chat global state onto 'context.initGs' here.
     const chatSaveToServer = await context.idb.getItem(DBKeys.chatSaveToServer, true);
     rtc.init(HOST, PORT, SECURE==='y', chatSaveToServer);
 }

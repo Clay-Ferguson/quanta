@@ -1,7 +1,7 @@
 import { Response } from 'express';
 
 // todo-0: make this method more efficient by caching the plugins, rather than 
-// re-importing them each time.
+// re-importing them each time. See client version of this.
 
 class ServerUtil {
     getEnvVar = (name: string): string => {

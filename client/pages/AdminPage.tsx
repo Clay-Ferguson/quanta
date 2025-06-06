@@ -53,7 +53,7 @@ export default function AdminPage() {
 
                     <TitledPanelComp title="Manage Server">
                         {/* 
-                        todo-0: this will have to be implemented in a plugin-compatable way.
+                        todo-0: this will have to be implemented in a plugin-compatable way. see getPluginComponents in other files.
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
                             className="btn-secondary mr-2"

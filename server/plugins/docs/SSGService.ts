@@ -183,7 +183,7 @@ class SSGService {
             const outputFilePath = path.join(folderPath, '_index.md');
             fs.writeFile(outputFilePath, fullContent.trim(), (err) => {
                 if (err) {
-                    // todo-0: throw error hered
+                    // todo-0: throw error here
                     console.error('Error writing _index.md file: ' + err.message);
                     return;
                 }
