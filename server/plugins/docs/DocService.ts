@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
 import { svrUtil } from "../../ServerUtil.js";
-import { config } from "../../../common/Config.js";
+import { config } from "../../Config.js";
 
 class DocService {
     

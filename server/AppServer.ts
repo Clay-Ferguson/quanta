@@ -3,7 +3,7 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import { logInit } from './ServerLogger.js';
-import { config } from '../common/Config.js'; 
+import { config } from './Config.js'; 
 import { svrUtil } from './ServerUtil.js';
 
 logInit();

@@ -3,7 +3,7 @@ import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
-import { config } from '../common/Config.ts';
+import { config } from '../server/Config.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;

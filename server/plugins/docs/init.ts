@@ -1,5 +1,5 @@
-import { config } from "../../../common/Config.js";
-import { httpServerUtil } from "../../../common/HttpServerUtil.js";
+import { config } from "../../Config.js";
+import { httpServerUtil } from "../../HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
 

@@ -1,5 +1,5 @@
-import { config } from "../../../common/Config.js";
-import { httpServerUtil } from "../../../common/HttpServerUtil.js";
+import { config } from "../../Config.js";
+import { httpServerUtil } from "../../HttpServerUtil.js";
 import { chatSvc } from "./ChatService.js";
 import { rtc } from "./WebRTCServer.js";
 

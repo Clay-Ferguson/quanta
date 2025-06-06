@@ -3,7 +3,7 @@ import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
 import {DBManagerIntf} from '../../../../common/types/CommonTypes.js';
-import { config } from '../../../../common/Config.js';
+import { config } from '../../../Config.js';
 
 const dbPath: string | undefined = config.get("dbFileName");
 if (!dbPath) {
