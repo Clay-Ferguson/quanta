@@ -1,9 +1,10 @@
 import React from 'react';
-import { PageNames } from "../../AppServiceTypes";
+import { DBKeys, PageNames } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
 import SearchViewPage from './SearchViewPage';
 import { TreeNode } from '../../../common/types/CommonTypes';
 import { DocsGlobalState } from './DocsTypes';
+import { idb } from '../../IndexedDB';
 
 export async function init(context: any) {
     console.log('Initializing Quanta Docs plugin...');
@@ -25,6 +26,18 @@ export async function init(context: any) {
     gs.docsSearchOriginFolder = '';
     gs.docsSearchMode = 'MATCH_ANY';
     gs.docsHighlightedFolderName = null;
+}
+
+export async function restoreSavedValues(gs: DocsGlobalState) {
+    const docsViewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
+    const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
+    const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
+    const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
+    
+    gs.docsViewWidth = docsViewWidth;
+    gs.docsEditMode = docsEditMode;
+    gs.docsMetaMode = docsMetaMode;
+    gs.docsNamesMode = docsNamesMode;
 }
 
 export function getRoute(pageName: string) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DBKeys, PageNames } from "../../AppServiceTypes";
+import { DBKeys, PageNames, RoomHistoryItem } from "../../AppServiceTypes";
 import appRooms from "./AppRooms";
 import { rtc } from "./WebRTC";
 import ContactsPage from "./pages/ContactsPage";
@@ -9,8 +9,9 @@ import RoomsPage from "./pages/RoomsPage";
 import RoomsAdminPage from "./pages/RoomsAdminPage";
 import QuantaChatPage from "./pages/QuantaChatPage";
 import ChatSettingsPageComp from './comps/SettingsPageComp';
-import { User } from '../../../common/types/CommonTypes';
+import { Contact, User } from '../../../common/types/CommonTypes';
 import { ChatGlobalState } from './ChatTypes';
+import { idb } from '../../IndexedDB';
 
 declare const HOST: string;
 declare const PORT: string;
@@ -40,6 +41,26 @@ export async function notify() {
     setTimeout(() => {
         appRooms.runRoomCleanup();
     }, 10000);
+}
+
+export function applyStateRules(gs: ChatGlobalState) {
+    if (!gs.chatConnected) {
+        gs.headerExpanded = true;
+    }
+}
+
+export async function restoreSavedValues(gs: ChatGlobalState) {
+    const chatContacts: Contact[] = await idb.getItem(DBKeys.chatContacts);
+    const chatRoom: string = await idb.getItem(DBKeys.chatRoom);
+    const chatSaveToServer: boolean = await idb.getItem(DBKeys.chatSaveToServer, true) === true;
+    const chatDaysOfHistory: number = await idb.getItem(DBKeys.chatDaysOfHistory) || 30;
+    const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
+    
+    gs.chatContacts = chatContacts || [];
+    gs.chatRoom = chatRoom || '';
+    gs.chatSaveToServer = chatSaveToServer;
+    gs.chatDaysOfHistory = chatDaysOfHistory;
+    gs.chatRoomHistory = chatRoomHistory || [];
 }
 
 export function getRoute(pageName: string) {

@@ -1,6 +1,6 @@
-import {DBKeys, PageNames, RoomHistoryItem} from './AppServiceTypes.ts';
+import {DBKeys, PageNames} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
-import { Contact, FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
+import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
 
@@ -84,7 +84,7 @@ export class AppService {
 
     initPlugins = async () => {
         const initGs: GlobalState = {};
-        this.callPlugins('init', {idb, initGs});
+        await this.callPlugins('init', {idb, initGs});
         gd({ type: 'PluginStatesInitialized', payload: initGs});
     }
 
@@ -109,14 +109,10 @@ export class AppService {
      * Resets the 'd' key counter and ensures header is expanded when not connected.
      * @param gs - The global state object to modify
      */
-    applyStateRules = (gs: GlobalState) => {
+    applyStateRules = async (gs: GlobalState) => {
         this.dCount = 0;
         // If not connected show the header to user cannot get confused/lost
-
-        // todo-0: removing for now until we have the ability to delegate state rules to each plugin as well as globally here
-        if (!(gs as any).chatConnected) {
-            gs.headerExpanded = true;
-        }
+        await app.callPlugins('applyStateRules', gs);
     }
 
     /**
@@ -124,45 +120,25 @@ export class AppService {
      * Loads user profile, contacts, room history, and settings.
      * Redirects to settings page if no username is found.
      */
-    // todo-0: need this to be a plugin-specific function that can be called by each plugin to restore its own state.
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
         const userName: string= await idb.getItem(DBKeys.userName);
-        const chatContacts: Contact[] = await idb.getItem(DBKeys.chatContacts);
-        const chatRoom: string = await idb.getItem(DBKeys.chatRoom);
-        const chatSaveToServer: boolean = await idb.getItem(DBKeys.chatSaveToServer, true) === true;
-        const chatDaysOfHistory: number = await idb.getItem(DBKeys.chatDaysOfHistory) || 30;
-        const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
         const userDescription: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
-        const docsViewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
-        const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
-        const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
-        const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
 
-        // todo-0: removing typesafety until we ave a way to run this kind of code for each plugin to build
-        // modify state one by one additively to this object.
-        const state: any = {
+        const state: GlobalState = {
             userName,
-            chatContacts,
-            chatRoom,
-            chatSaveToServer,
-            chatDaysOfHistory,
-            chatRoomHistory,
             userDescription,
             userAvatar,
-            headerExpanded,
-            docsViewWidth,
-            docsEditMode,
-            docsMetaMode,
-            docsNamesMode,
+            headerExpanded
         };
 
         // if no username we send to settings page.
         if (!userName) {
             state.pages?.push(PageNames.settings);
         }
+        await this.callPlugins('restoreSavedValues', state);
         gd({ type: 'restoreSavedValues', payload: state});
     }
 
