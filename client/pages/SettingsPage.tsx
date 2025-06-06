@@ -24,14 +24,12 @@ async function clear() {
 }
 
 function getPluginsComponents() {
+    // todo-0: I think this and simplar functions can be done with a 'map' call over the pluginsArray
     const components: React.ReactElement[] = [];
-    // first let any of the plugins handle the page routing
     for (const plugin of pluginsArray) {
-        if (plugin.getRoute) {
-            // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);
+        if (plugin.getSettingsPageComponent) {
             const comp = plugin.getSettingsPageComponent();
             if (comp) {
-                // console.log(`PageRouter: routing to page: ${topPage}`);
                 components.push(comp);
             }
         }
@@ -262,7 +260,7 @@ export default function SettingsPage() {
                     </TitledPanelComp>
 
                     {getPluginsComponents().map((component, index) => (
-                        <div key={`settings-comp${index}`}>
+                        <div key={`settings-comp-${index}`}>
                             {component}
                         </div>
                     ))}

@@ -9,9 +9,10 @@ import RoomsPage from "./pages/RoomsPage";
 import RoomsAdminPage from "./pages/RoomsAdminPage";
 import QuantaChatPage from "./pages/QuantaChatPage";
 import ChatSettingsPageComp from './comps/SettingsPageComp';
-import { Contact, User } from '../../../common/types/CommonTypes';
+import { Contact, User, UserProfile } from '../../../common/types/CommonTypes';
 import { ChatGlobalState, ChatPageNames } from './ChatTypes';
 import { idb } from '../../IndexedDB';
+import UserProfileChatComp from './UserProfileChatComp';
 
 declare const HOST: string;
 declare const PORT: string;
@@ -84,6 +85,10 @@ export function getRoute(pageName: string) {
 // Gets component to display on settings page, for this plugin. 
 export function getSettingsPageComponent() {
     return React.createElement(ChatSettingsPageComp);
+}
+
+export function getUserProfileComponent(profileData: UserProfile) {
+    return React.createElement(UserProfileChatComp, { profileData });
 }
 
  
