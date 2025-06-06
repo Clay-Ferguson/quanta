@@ -15,6 +15,7 @@ import { idb } from '../../IndexedDB';
 import UserProfileChatComp from './UserProfileChatComp';
 import SettingsPage from '../../pages/SettingsPage';
 import { app } from '../../AppService';
+import { ChatAdminPageComp } from './ChatAdminPageComp';
 
 // todo-0: We need Plugins functions to be a class with a polymorphic interface, so that we can have a common interface for all plugins.
 
@@ -92,6 +93,10 @@ export function getRoute(gs: ChatGlobalState, pageName: string) {
 // Gets component to display on settings page, for this plugin. 
 export function getSettingsPageComponent() {
     return React.createElement(ChatSettingsPageComp);
+}
+
+export function getAdminPageComponent() {
+    return React.createElement(ChatAdminPageComp);
 }
 
 export function getUserProfileComponent(profileData: UserProfile) {

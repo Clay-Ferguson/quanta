@@ -5,7 +5,7 @@ import { pluginsArray } from './AppService.ts';
 class Util {
 
     // Runs the same method on all plugins and returns their components
-    getPluginsComponents = (method: any): React.ReactElement[] | null => {
+    getPluginComponents = (method: any): React.ReactElement[] | null => {
         const components: React.ReactElement[] = [];
         for (const plugin of pluginsArray) {
             if (plugin[method]) { 
@@ -19,7 +19,7 @@ class Util {
     }
 
     getPluginComponentsWrapped = (method: string, divPrefix: string): React.ReactElement | null => {
-        const components = this.getPluginsComponents(method);
+        const components = this.getPluginComponents(method);
         if (!components || components.length === 0) {
             return null;
         }
