@@ -1,6 +1,41 @@
+import React from 'react';
 import { ChatMessage, FileBase64Intf } from "../common/types/CommonTypes";
+import { pluginsArray } from './AppService.ts';
 
 class Util {
+
+    // Runs the same method on all plugins and returns their components
+    getPluginsComponents = (method: any): React.ReactElement[] | null => {
+        const components: React.ReactElement[] = [];
+        for (const plugin of pluginsArray) {
+            if (plugin[method]) { 
+                const comp = plugin[method]();
+                if (comp) {
+                    components.push(comp);
+                }
+            }
+        }
+        return components;
+    }
+
+    getPluginComponentsWrapped = (method: string, divPrefix: string): React.ReactElement | null => {
+        const components = this.getPluginsComponents(method);
+        if (!components || components.length === 0) {
+            return null;
+        }
+        return React.createElement(
+            React.Fragment,
+            null,
+            components.map((component, index) =>
+                React.createElement(
+                    'div',
+                    { key: `${divPrefix}-${index}` },
+                    component
+                )
+            )
+        );
+    }
+
     // Scroll to a specific DOM element by its ID
     scrollToElementById = (elementId: string) => {
         setTimeout(() => {

@@ -14,27 +14,12 @@ import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
-import { pluginsArray } from '../AppService.ts';
 
 async function clear() {
     await idb.clear();
     console.log("Cleared IndexedDB");
     // refresh browser page is the cleanest way to restart from scratch
     window.location.reload();
-}
-
-function getPluginsComponents() {
-    // todo-0: I think this and simplar functions can be done with a 'map' call over the pluginsArray
-    const components: React.ReactElement[] = [];
-    for (const plugin of pluginsArray) {
-        if (plugin.getSettingsPageComponent) {
-            const comp = plugin.getSettingsPageComponent();
-            if (comp) {
-                components.push(comp);
-            }
-        }
-    }
-    return components;
 }
 
 /**
@@ -259,11 +244,7 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    {getPluginsComponents().map((component, index) => (
-                        <div key={`settings-comp-${index}`}>
-                            {component}
-                        </div>
-                    ))}
+                    {util.getPluginComponentsWrapped('getSettingsPageComponent', 'settings')}
 
                     <TitledPanelComp title="Identity Keys" collapsibleKey={PanelKeys.settings_identityKeys}>
                         

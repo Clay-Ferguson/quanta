@@ -54,6 +54,7 @@ export default function AdminPage() {
                     <TitledPanelComp title="Manage Server">
                         {/* 
                         todo-0: this will have to be implemented in a plugin-compatable way. see getPluginComponents in other files.
+                                (also when doing this the getRoomInfo button below can be include)
                         <button 
                             onClick={() => app.goToPage(PageNames.recentAttachments)}
                             className="btn-secondary mr-2"
