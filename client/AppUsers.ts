@@ -65,8 +65,7 @@ class AppUsers {
         await idb.setItem(DBKeys.userAvatar, userAvatar);
 
         // Save user info to server if saving to server is enabled
-        // todo-0: need to handle this in a better plugin-compatable way rather than the ugly "as any" cast
-        if ((_gs as any).chatSaveToServer && _gs.keyPair?.publicKey) {
+        if (_gs.keyPair?.publicKey) {
             const userProfile: UserProfile = {
                 publicKey: _gs.keyPair!.publicKey,
                 name: userName,

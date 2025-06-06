@@ -147,11 +147,10 @@ export class AppService {
      * Returns the default QuantaChat page if no pages are in the stack.
      * @returns The name of the current page
      */
-    getPageName = (): string => {
+    getPageName = (): string | null => {
         const _gs = gs();
         if (!_gs || !_gs.pages || _gs.pages.length === 0) {
-            // todo-0: this is from ChatPageNames, and needs to be handled appropriately for plugin support
-            return "QuantaChatPage";
+            return null;
         }
         return _gs.pages[_gs.pages.length - 1];
     }
