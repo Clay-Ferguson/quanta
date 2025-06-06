@@ -3,6 +3,7 @@ import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
+import { config } from '../common/Config.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
@@ -65,6 +66,20 @@ export class AppService {
                 console.error(`Error loading plugin ${plugin}:`, error);
             }
         }
+    }
+
+    getDefaultPlugin = () => {
+        const defaultPlugin = config.get("defaultPlugin");
+        return this.getPluginByName(defaultPlugin) || null;
+    }
+
+    getPluginByName = (name: string) => {
+        const plugin = pluginsArray.find(p => p.name === name);
+        if (!plugin) {
+            console.warn(`Plugin ${name} not found.`);
+            return null;
+        }
+        return plugin;
     }
 
     callPlugins = async (callback: string, payload: any = null) => {

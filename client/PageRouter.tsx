@@ -25,19 +25,12 @@ export default function PageRouter() {
         return <LoadingIndicator />;
     }
 
-    // Until user enters a username, show the settings page, which will tell them why they're seeing it, unless th
-    // DOC_ROOT_KEY is set, in which case we assume the user is using the app just to view documents and not necessarily to chat.
-    // todo-0: need to delegate the following to the plugins, so that they can decide if they want to show the settings page or not.
-    // if (!gs.userName && !(DOC_ROOT_KEY && topPage === PageNames.treeViewer)) {
-    //     console.log('No username set, in PageRouter, showing settings page');
-    //     return <SettingsPage />;
-    // }
     
     // first let any of the plugins handle the page routing
     for (const plugin of pluginsArray) {
         if (plugin.getRoute) {
             // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);
-            const comp = plugin.getRoute(topPage);
+            const comp = plugin.getRoute(gs, topPage);
             if (comp) {
                 // console.log(`PageRouter: routing to page: ${topPage}`);
                 return comp;

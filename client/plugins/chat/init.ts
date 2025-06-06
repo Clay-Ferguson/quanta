@@ -13,6 +13,10 @@ import { Contact, User, UserProfile } from '../../../common/types/CommonTypes';
 import { ChatGlobalState, ChatPageNames } from './ChatTypes';
 import { idb } from '../../IndexedDB';
 import UserProfileChatComp from './UserProfileChatComp';
+import SettingsPage from '../../pages/SettingsPage';
+import { app } from '../../AppService';
+
+// todo-0: We need Plugins functions to be a class with a polymorphic interface, so that we can have a common interface for all plugins.
 
 declare const HOST: string;
 declare const PORT: string;
@@ -64,7 +68,11 @@ export async function restoreSavedValues(gs: ChatGlobalState) {
     gs.chatRoomHistory = chatRoomHistory || [];
 }
 
-export function getRoute(pageName: string) {
+export function getRoute(gs: ChatGlobalState, pageName: string) {
+    if (!gs.userName) {
+        return React.createElement(SettingsPage);
+    }
+
     switch (pageName) {
     case ChatPageNames.contacts:
         return React.createElement(ContactsPage);
@@ -90,5 +98,10 @@ export function getSettingsPageComponent() {
 export function getUserProfileComponent(profileData: UserProfile) {
     return React.createElement(UserProfileChatComp, { profileData });
 }
+
+export function goToMainPage() {
+    app.goToPage(ChatPageNames.quantaChat);
+}
+
 
  

@@ -1,3 +1,5 @@
+import { app } from "../AppService";
+
 interface LogoBlockCompProps {
   subText: string;
   clazz?: string;
@@ -7,8 +9,10 @@ interface LogoBlockCompProps {
  * LogoBlockComp is a React component that displays the Quanta Chat logo and a subtext.
  */
 export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
-    // todo-0: this needs to go to whatever the default plugin page is, which is already defined.
-    const handleLogoClick = () => {} // app.goToPage(PageNames.quantaChat);
+    const handleLogoClick = () => {
+        const defaultPlugin = app.getDefaultPlugin();
+        defaultPlugin.goToMainPage();
+    }
     
     return (
         <div className={`hidden md:flex items-center ${clazz}`}>

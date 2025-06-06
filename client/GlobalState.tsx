@@ -15,7 +15,7 @@ export function setApplyStateRules(apply: (gs: GlobalState) => void) {
     applyStateRules = apply;
 }
 
-// todo-0: each plugin can define its own state interface which extends this one, because all plugins have access to and contribute variables
+// Note: Each plugin can define its own state interface which extends this one, because all plugins have access to and contribute variables
 // into this same global state using the key-prefix convention to avoid having conflicts.
 export interface GlobalState {
     keyPair?: KeyPairHex;
@@ -65,7 +65,6 @@ const initialState: GlobalState = {
     ]),
 };
 
-// todo-0: AI recommends 'Partial<GlobalState>' instead of 'any' for global state 
 export type GlobalAction = { type: string, payload: GlobalState };
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {

@@ -5,6 +5,7 @@ import SearchViewPage from './SearchViewPage';
 import { TreeNode } from '../../../common/types/CommonTypes';
 import { DocsGlobalState, DocsPageNames } from './DocsTypes';
 import { idb } from '../../IndexedDB';
+import { app } from '../../AppService';
 
 export async function init(context: any) {
     console.log('Initializing Quanta Docs plugin...');
@@ -40,7 +41,7 @@ export async function restoreSavedValues(gs: DocsGlobalState) {
     gs.docsNamesMode = docsNamesMode;
 }
 
-export function getRoute(pageName: string) {
+export function getRoute(_gs: DocsGlobalState, pageName: string) {
     switch (pageName) {
     case DocsPageNames.treeViewer:
         return React.createElement(TreeViewerPage);
@@ -53,4 +54,8 @@ export function getRoute(pageName: string) {
 
 export function getSettingsPageComponent() {
     return null; // No specific settings page for chat plugin
+}
+
+export function goToMainPage() {
+    app.goToPage(DocsPageNames.treeViewer);
 }
