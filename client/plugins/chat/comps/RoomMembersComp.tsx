@@ -5,7 +5,7 @@ import HexKeyComp from '../../../components/HexKeyComp';
 import AvatarImageComp from '../../../components/AvatarImageComp';
 import { Contact } from '../../../../common/types/CommonTypes';
 import { alertModal } from '../../../components/AlertModalComp';
-import appUsers from '../../../AppUsers';
+import { addContact } from '../Contacts';
 
 /**
  * Displays the list of members in the room. This includes the user themselves, and all other participants.
@@ -81,7 +81,7 @@ export default function RoomMembersComp() {
                                             <button 
                                                 className="text-xs bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded flex items-center"
                                                 onClick={async () => {
-                                                    appUsers.addContact(member);
+                                                    addContact(member);
                                                     await alertModal(`Added ${member.name} to contacts`);
                                                 }}
                                                 title="Add to contacts"

@@ -1,6 +1,6 @@
 import { useGlobalState } from './ChatTypes';
 import { UserProfile } from '../../../common/types/CommonTypes';
-import appUsers from '../../AppUsers';
+import { addContact } from './Contacts';
 
 interface UserProfileChatCompProps {
     profileData: UserProfile;
@@ -35,7 +35,7 @@ export default function UserProfileChatComp({ profileData }: UserProfileChatComp
                             This user is not in your contacts
                         </span>
                         <button
-                            onClick={() => appUsers.addContact({
+                            onClick={() => addContact({
                                 name: profileData.name || "Unnamed User",
                                 publicKey: profileData.publicKey
                             })}
