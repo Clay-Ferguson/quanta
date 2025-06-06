@@ -1,13 +1,12 @@
-import {DBKeys, PageNames} from './AppServiceTypes.ts';
+import {DBKeys, IPlugin, PageNames} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
-import { config } from '../server/Config.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
-export const pluginsArray: any[] = [];
+export const pluginsArray: IPlugin[] = [];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare let DOC_ROOT_KEY: string;
@@ -65,7 +64,7 @@ export class AppService {
             try {
                 console.log(`load plugin: ${plugin}`);
                 const pluginModule = await import(`./plugins/${plugin}/init.ts`);
-                pluginsArray.push(pluginModule);
+                pluginsArray.push(pluginModule.plugin);
             } catch (error) {
                 console.error(`Error loading plugin ${plugin}:`, error);
             }
@@ -73,12 +72,13 @@ export class AppService {
     }
 
     getDefaultPlugin = () => {
-        const defaultPlugin = config.get("defaultPlugin");
-        return this.getPluginByName(defaultPlugin) || null;
+        // I accidentally used server code here. Need to fix.
+        // const defaultPlugin = config.get("defaultPlugin");
+        // return this.getPluginByName(defaultPlugin) || null;
     }
 
     getPluginByName = (name: string) => {
-        const plugin = pluginsArray.find(p => p.name === name);
+        const plugin = pluginsArray.find(p => p.getKey() === name);
         if (!plugin) {
             console.warn(`Plugin ${name} not found.`);
             return null;
@@ -88,13 +88,14 @@ export class AppService {
 
     callPlugins = async (callback: string, payload: any = null) => {
         for (const plugin of pluginsArray) {
+            const func = (plugin as any)[callback];
             try {
-                if (!plugin[callback]) {
-                    console.warn(`Plugin ${plugin.name} does not have a method ${callback}.`);
+                if (!func || typeof func !== 'function') {
+                    console.warn(`Plugin ${plugin.getKey()} does not have a method ${callback}.`);
                     continue;
                 }
                 console.log(`Calling plugin method: ${callback}`);
-                await plugin[callback](payload);
+                await func(payload);
             } catch (error) {
                 console.error(`Error calling plugin method ${callback}:`, error);
             }

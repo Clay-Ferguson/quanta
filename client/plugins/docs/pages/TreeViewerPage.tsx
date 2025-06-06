@@ -910,7 +910,9 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
-                            {lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div>}
+                            {/* [This puts the folder name at the top of page, but I don't want this for now
+                            because we should use some kind of syntax to trigger it, instead of it being automatic->] 
+                            lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div> */}
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}

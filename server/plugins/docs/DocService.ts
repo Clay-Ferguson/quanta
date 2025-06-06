@@ -1155,6 +1155,7 @@ class DocService {
                 return;
             }
 
+            // todo-0: this needs to be a normal import at top of file
             // Open the item using the appropriate command for the OS
             const { exec } = await import('child_process');
             const platform = process.platform;
@@ -1249,6 +1250,7 @@ class DocService {
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Use grep to search for the query string recursively
+            // todo-0: this needs to be a normal import at top of file
             const { exec } = await import('child_process');
             
             let grepCommand: string;

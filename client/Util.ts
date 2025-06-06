@@ -8,8 +8,9 @@ class Util {
     getPluginComponents = (method: any): React.ReactElement[] | null => {
         const components: React.ReactElement[] = [];
         for (const plugin of pluginsArray) {
-            if (plugin[method]) { 
-                const comp = plugin[method]();
+            const func = (plugin as any)[method];
+            if (func && typeof func === 'function') { 
+                const comp = func();
                 if (comp) {
                     components.push(comp);
                 }

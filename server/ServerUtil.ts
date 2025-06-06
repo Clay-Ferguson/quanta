@@ -46,6 +46,7 @@ class ServerUtil {
         }
     }
 
+    // todo-0: this needs to use the cached pluginsArray rather than re-importing the modules.
     finishRoutes = async (plugins: any, context: any) => {
         console.log('Finishing plugin routes...');
         for (const plugin of plugins) {
@@ -63,6 +64,7 @@ class ServerUtil {
         }
     }
 
+    // todo-0: this needs to use the cached pluginsArray rather than re-importing the modules.
     // Currently this is only called by server and 'context' is the server instance.
     notifyPlugins = async (plugins: any, context: any) => {
         console.log('Notify plugins startup is complete...');

@@ -1,3 +1,6 @@
+import { UserProfile } from "../common/types/CommonTypes";
+import { GlobalState } from "./GlobalState";
+
 export interface RoomHistoryItem {
     name: string;
 }
@@ -42,4 +45,18 @@ export enum PageNames {
     userProfile = 'UserProfilePage',
     logViewer = "LogViewerPage",
 }
+
+export interface IPlugin {
+    getKey(): string; 
+    init(context: any): Promise<void>;
+    notify(): Promise<void>;
+    applyStateRules(gs: GlobalState): void;
+    restoreSavedValues(gs: GlobalState): Promise<void>;
+    getRoute(gs: GlobalState, pageName: string): React.ReactElement | null;
+    getSettingsPageComponent(): React.ReactElement | null;
+    getAdminPageComponent(): React.ReactElement | null;
+    getUserProfileComponent(profileData: UserProfile): React.ReactElement | null;
+    goToMainPage(): void;
+}
+
 

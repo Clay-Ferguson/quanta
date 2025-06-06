@@ -1,4 +1,3 @@
-import { app } from "../AppService";
 
 interface LogoBlockCompProps {
   subText: string;
@@ -10,8 +9,9 @@ interface LogoBlockCompProps {
  */
 export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
     const handleLogoClick = () => {
-        const defaultPlugin = app.getDefaultPlugin();
-        defaultPlugin.goToMainPage();
+        // todo-0: fix this.
+        // const defaultPlugin: IPlugin | null = app.getDefaultPlugin();
+        // defaultPlugin!.goToMainPage();
     }
     
     return (
