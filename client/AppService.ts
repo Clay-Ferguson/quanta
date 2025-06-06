@@ -6,6 +6,7 @@ import appUsers from './AppUsers.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
+declare const DEFAULT_PLUGIN: string;
 export const pluginsArray: IPlugin[] = [];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -72,9 +73,12 @@ export class AppService {
     }
 
     getDefaultPlugin = () => {
-        // I accidentally used server code here. Need to fix.
-        // const defaultPlugin = config.get("defaultPlugin");
-        // return this.getPluginByName(defaultPlugin) || null;
+        const defaultPlutin = this.getPluginByName(DEFAULT_PLUGIN) || null;
+        if (!defaultPlutin) {
+            console.error(`Default plugin "${DEFAULT_PLUGIN}" not found.`);
+            return null;
+        }
+        return defaultPlutin;
     }
 
     getPluginByName = (name: string) => {

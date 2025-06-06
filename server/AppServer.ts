@@ -58,6 +58,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
             .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
             .replace('{{PLUGINS}}', pluginKeys)
+            .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
 
         // Set the content type and send the modified HTML
         res.contentType('text/html');
