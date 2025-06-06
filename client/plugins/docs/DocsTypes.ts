@@ -1,5 +1,3 @@
-// todo-0: we probably need a 'plugins' folder inside 'common' to separate stuff, which will be perfectly consistent with having the
-// parallel plugins in the client and server folders.
 import { TreeNode } from "../../../common/types/CommonTypes";
 import { GlobalState } from "../../GlobalState";
 import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalStateBase } from "../../GlobalState.tsx";

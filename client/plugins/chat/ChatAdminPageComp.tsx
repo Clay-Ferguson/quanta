@@ -2,14 +2,14 @@
 import { app } from '../../AppService';
 import appUsers from '../../AppUsers';
 import { promptModal } from '../../components/PromptModalComp';
+import { ChatPageNames } from './ChatTypes';
 
 /**
  * Chat admin buttons component for managing chat-related admin features.
  */
 export function ChatAdminPageComp() {
     const getRoomInfo = async () => {
-        // todo-0: this needs to come from an enum AND from the plugin, we can't have this here.
-        app.goToPage('RoomsAdminPage');
+        app.goToPage(ChatPageNames.roomsAdmin);
     };
 
     const blockUser = async () => {

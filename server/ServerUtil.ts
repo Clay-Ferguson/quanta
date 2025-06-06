@@ -1,9 +1,8 @@
 import { Response } from 'express';
 
-// todo-0: make this method more efficient by caching the plugins, rather than 
-// re-importing them each time. See client version of this.
-
 class ServerUtil {
+    pluginsArray: any[] = [];
+
     getEnvVar = (name: string): string => {
         const value = process.env[name];
         if (!value) {
@@ -26,6 +25,10 @@ class ServerUtil {
     }
 
     initPlugins = async (plugins: any, context: any) => {
+        if (this.pluginsArray.length > 0) {
+            console.warn('Plugins have already been initialized. Skipping initialization.');
+            return;
+        }
         console.log('Initializing plugins...');
         for (const plugin of plugins) {
             try {
@@ -36,6 +39,7 @@ class ServerUtil {
                 } else {
                     console.warn(`Plugin ${plugin} does not have an init function.`);
                 }
+                this.pluginsArray.push(pluginModule);
             } catch (error) {
                 console.error(`Error initializing plugin ${plugin}:`, error);
             }

@@ -57,7 +57,7 @@ class SSGService {
             }
             
             // Call the generateDoc method with default options suitable for SSG
-            // todo-0: make user able to set these somehow.
+            // todo-1: make user able to set these somehow.
             const options = {
                 includeFileNames: true,
                 includeSeparatorLines: true,
@@ -183,9 +183,7 @@ class SSGService {
             const outputFilePath = path.join(folderPath, '_index.md');
             fs.writeFile(outputFilePath, fullContent.trim(), (err) => {
                 if (err) {
-                    // todo-0: throw error here
-                    console.error('Error writing _index.md file: ' + err.message);
-                    return;
+                    throw new Error(`Failed to write _index.md file: ${err.message}`);
                 }
                 // DO NOT DELETE: This opens the text view of the file
                 // vscode.window.showTextDocument(vscode.Uri.file(outputFilePath));

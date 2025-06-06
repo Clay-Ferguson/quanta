@@ -55,6 +55,10 @@ export class AppService {
     }
 
     loadPlugins = async () => {
+        if (pluginsArray.length > 0) {
+            console.warn('Plugins have already been initialized. Skipping initialization.');
+            return;
+        }
         const plugins: string[] = PLUGINS ? PLUGINS.split(',') : [];
         console.log('Loading plugins...');
         for (const plugin of plugins) {

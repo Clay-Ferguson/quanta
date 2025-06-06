@@ -1,5 +1,3 @@
-// todo-0: we probably need a 'plugins' folder inside 'common' to separate stuff, which will be perfectly consistent with having the
-// parallel plugins in the client and server folders.
 import { ChatMessage, Contact, User } from "../../../common/types/CommonTypes";
 import { RoomHistoryItem } from "../../AppServiceTypes";
 import { GlobalState } from "../../GlobalState";

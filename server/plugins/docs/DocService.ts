@@ -1209,7 +1209,7 @@ class DocService {
     search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string; searchMode?: string }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
-            // todo-0: make this optional.
+            // todo-1: make this optional.
             const orderByModTime = true;
             const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY' } = req.body;
             
