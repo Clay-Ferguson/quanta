@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -462,7 +462,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                     className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
                     title="Upload from Clipboard"
                 >
-                    <FontAwesomeIcon icon={faClipboard} className="h-5 w-5" />
+                    <FontAwesomeIcon icon={faFileUpload} className="h-5 w-5" />
                 </button>
                 {gs.docsCutItems && gs.docsCutItems.size > 0 && (
                     <button 

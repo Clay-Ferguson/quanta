@@ -209,6 +209,13 @@ class DocBinary {
     
                         try {
                             docUtil.checkFileAccess(finalFilePath, root);
+                            
+                            // Safety check: ensure target doesn't already exist to prevent overwriting
+                            if (fs.existsSync(finalFilePath)) {
+                                console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
+                                continue;
+                            }
+                            
                             fs.writeFileSync(finalFilePath, file.data);
                             savedCount++;
                             console.log(`Uploaded file saved: ${finalFilePath}`);

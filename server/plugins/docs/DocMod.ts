@@ -553,6 +553,13 @@ class DocMod {
         
                         const targetFilePath = path.join(absoluteTargetPath, targetFileName);
 
+                        // Safety check: ensure target doesn't already exist to prevent overwriting
+                        if (fs.existsSync(targetFilePath)) {
+                            console.error(`Target file already exists, skipping: ${targetFilePath}`);
+                            errors.push(`Target file already exists: ${targetFileName}`);
+                            continue;
+                        }
+
                         // Move the file/folder
                         fs.renameSync(sourceFilePath, targetFilePath);                    
                         pastedCount++;

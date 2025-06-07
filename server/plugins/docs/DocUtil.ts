@@ -92,6 +92,13 @@ class DocUtil {
             const oldPath = path.join(absoluteParentPath, file);
             const newPath = path.join(absoluteParentPath, newFileName);
             
+            // Safety check: ensure target doesn't already exist to prevent overwriting
+            if (fs.existsSync(newPath)) {
+                console.error(`Target file already exists during ordinal shift, skipping: ${newPath}`);
+                console.error(`This indicates a problem with ordinal sequencing that needs to be resolved.`);
+                continue;
+            }
+            
             console.log(`Shifting file: ${file} -> ${newFileName}`);
             fs.renameSync(oldPath, newPath);
         }
@@ -119,6 +126,12 @@ class DocUtil {
             const newFilePath = path.join(absolutePath, newFileName);
             
             try {
+                // Safety check: ensure target doesn't already exist to prevent overwriting
+                if (fs.existsSync(newFilePath)) {
+                    console.warn(`Target file already exists, skipping rename: ${newFileName}`);
+                    return fileName; // Return original name if target exists
+                }
+                
                 // Rename the file/folder to have 4-digit ordinal prefix
                 this.checkFileAccess(oldFilePath, root);
                 this.checkFileAccess(newFilePath, root);
@@ -146,6 +159,12 @@ class DocUtil {
                 const newFilePath = path.join(absolutePath, newFileName);
                 
                 try {
+                    // Safety check: ensure target doesn't already exist to prevent overwriting
+                    if (fs.existsSync(newFilePath)) {
+                        console.warn(`Target file already exists, skipping rename: ${newFileName}`);
+                        return fileName; // Return original name if target exists
+                    }
+                    
                     // Rename the file/folder to have 4-digit ordinal prefix
                     this.checkFileAccess(oldFilePath, root);
                     this.checkFileAccess(newFilePath, root);
@@ -220,6 +239,12 @@ class DocUtil {
         const newFilePath = path.join(absolutePath, newFileName);
             
         try {
+            // Safety check: ensure target doesn't already exist to prevent overwriting
+            if (fs.existsSync(newFilePath)) {
+                console.warn(`Target file already exists, skipping rename: ${newFileName}`);
+                return fileName; // Return original name if target exists
+            }
+            
             // Rename the file/folder to have 4-digit ordinal prefix
             this.checkFileAccess(oldFilePath, root);
             this.checkFileAccess(newFilePath, root);

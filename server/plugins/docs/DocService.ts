@@ -230,6 +230,12 @@ class DocService {
             
             const newFilePath = path.join(absoluteParentPath, finalFileName);
 
+            // Safety check: ensure target doesn't already exist to prevent overwriting
+            if (fs.existsSync(newFilePath)) {
+                res.status(409).json({ error: 'A file with this name already exists at the target location' });
+                return;
+            }
+
             // Create the new file as an empty file
             fs.writeFileSync(newFilePath, '', 'utf8');
 
