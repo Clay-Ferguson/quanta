@@ -229,3 +229,29 @@ button:focus-visible {
     padding-right: var(--sar);
   }
 }
+
+// FAT SCOLLBARS BEGIN
+::-webkit-scrollbar {
+    width: 20px;
+    height: 20px;
+    background-color: black;
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgb(41, 52, 68);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: slategray;
+    border: 1px solid silver;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: darkgray;
+}
+
+/* NOTE: This is only required to keep my Dark Reader extension from messing up the scrollbar */
+* {
+    scrollbar-color: unset !important;
+}
+// FAT SCOLLBARS END
