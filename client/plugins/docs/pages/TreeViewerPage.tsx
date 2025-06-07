@@ -481,7 +481,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                 ref={localFileInputRef}
                 style={{ display: 'none' }}
                 multiple
-                onChange={handleFileUpload}
+                onChange={handleFileUpload} 
             />
         </div>
     );
@@ -898,7 +898,14 @@ export default function TreeViewerPage() {
 
     const itemsAreSelected = gs.docsSelItems && gs.docsSelItems?.size > 0;
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
-    const filteredTreeNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
+    
+    // Filter out cut items by comparing full paths
+    const currentFolder = gs.docsFolder || '/';
+    const normalizedFolder = currentFolder === '/' ? '' : currentFolder;
+    const filteredTreeNodes = treeNodes.filter(node => {
+        const fullPath = `${normalizedFolder}/${node.name}`;
+        return !gs.docsCutItems?.has(fullPath);
+    });
     let lastPathPart = gs.docsFolder ? gs.docsFolder.split('/').filter(Boolean).pop() || null : null;
     if (lastPathPart) {
         lastPathPart = formatDisplayName(lastPathPart);

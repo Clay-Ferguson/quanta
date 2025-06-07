@@ -55,6 +55,7 @@ class DocUtil {
      */
     shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
         itemsToIgnore: string[] | null): void => {
+        console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absoluteParentPath);

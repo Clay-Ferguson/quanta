@@ -158,7 +158,12 @@ export const handleCheckboxChange = (gs: DocsGlobalState, node: TreeNode, checke
 export const handleMasterCheckboxChange = (gs: DocsGlobalState, treeNodes: TreeNode[], checked: boolean) => {
     if (checked) {
         // Select all available nodes (excluding cut items)
-        const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
+        const currentFolder = gs.docsFolder || '/';
+        const normalizedFolder = currentFolder === '/' ? '' : currentFolder;
+        const availableNodes = treeNodes.filter(node => {
+            const fullPath = `${normalizedFolder}/${node.name}`;
+            return !gs.docsCutItems?.has(fullPath);
+        });
         gd({ type: 'setSelectedTreeItems', payload: { 
             docsSelItems: new Set<TreeNode>(availableNodes)
         }});
@@ -172,7 +177,12 @@ export const handleMasterCheckboxChange = (gs: DocsGlobalState, treeNodes: TreeN
 
 // Helper function to determine master checkbox state
 export const getMasterCheckboxState = (gs: DocsGlobalState, treeNodes: TreeNode[]): { checked: boolean, indeterminate: boolean } => {
-    const availableNodes = treeNodes.filter(node => !gs.docsCutItems?.has(node.name));
+    const currentFolder = gs.docsFolder || '/';
+    const normalizedFolder = currentFolder === '/' ? '' : currentFolder;
+    const availableNodes = treeNodes.filter(node => {
+        const fullPath = `${normalizedFolder}/${node.name}`;
+        return !gs.docsCutItems?.has(fullPath);
+    });
     const selectedCount = gs.docsSelItems?.size || 0;
     const availableCount = availableNodes.length;
     
@@ -509,12 +519,17 @@ export const onCut = (gs: DocsGlobalState) => {
         return;
     }
 
-    // Get the file names of selected items
-    const selectedFileNames = Array.from(gs.docsSelItems).map(node => node.name);
+    // Get the full paths of selected items (folder + filename)
+    const currentFolder = gs.docsFolder || '/';
+    const selectedFullPaths = Array.from(gs.docsSelItems).map(node => {
+        // Construct the full path: folder/filename
+        const normalizedFolder = currentFolder === '/' ? '' : currentFolder;
+        return `${normalizedFolder}/${node.name}`;
+    });
         
     // Update global state to set cutItems and clear selected items
     gd({ type: 'setCutAndClearSelections', payload: { 
-        docsCutItems: new Set<string>(selectedFileNames),
+        docsCutItems: new Set<string>(selectedFullPaths),
         docsSelItems: new Set<TreeNode>()
     }});        
 };

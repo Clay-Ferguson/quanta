@@ -5,7 +5,7 @@ import { ssg } from "./SSGService.js";
 import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
-import { docBinary } from "./DocBinary.js";
+import { docBinary } from "./DocBinary.js"; 
 
 const defaultPlugin = config.get("defaultPlugin");
 

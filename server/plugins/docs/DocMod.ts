@@ -405,7 +405,7 @@ class DocMod {
      * Supports both positional pasting (at specific ordinal) and appending to end of folder
      * @param req - Express request object containing targetFolder, pasteItems array, docRootKey, and optional targetOrdinal
      * @param res - Express response object 
-     */
+     */ 
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
         try {
             const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
@@ -452,68 +452,114 @@ class DocMod {
             }
     
             // Shift existing items down to make room for the number of items being pasted
-            docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, pasteItems);
+            // For same-folder reordering, we need to handle conflicts by temporarily moving files
+            // For cross-folder moves, we don't ignore any items since they're coming from different directories
+            let itemsToIgnore: string[] | null = null;
+            const tempMoves: { tempPath: string; originalPath: string; finalName: string }[] = [];
+            
+            // Check if any of the items being pasted are from the same target directory
+            const targetFolderNormalized = targetFolder === '/' ? '' : targetFolder;
+            const isSameFolderOperation = pasteItems.some(fullPath => {
+                const itemDir = path.dirname(fullPath);
+                const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                return itemDirNormalized === targetFolderNormalized;
+            });
+            
+            if (isSameFolderOperation) {
+                // For same-folder operations, temporarily move files out of the way first
+                // This prevents conflicts during ordinal shifting
+                for (let i = 0; i < pasteItems.length; i++) {
+                    const itemFullPath = pasteItems[i];
+                    const itemDir = path.dirname(itemFullPath);
+                    const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                    
+                    // Only handle items from the same directory
+                    if (itemDirNormalized === targetFolderNormalized) {
+                        const itemName = path.basename(itemFullPath);
+                        const sourceFilePath = path.join(root, itemFullPath);
+                        
+                        if (fs.existsSync(sourceFilePath)) {
+                            // Create temporary filename
+                            const tempName = `temp_paste_${Date.now()}_${i}_${itemName}`;
+                            const tempPath = path.join(absoluteTargetPath, tempName);
+                            
+                            // Move to temporary location
+                            fs.renameSync(sourceFilePath, tempPath);
+                            
+                            // Calculate final name with new ordinal
+                            const currentOrdinal = insertOrdinal + i;
+                            const nameWithoutPrefix = itemName.includes('_') ? 
+                                itemName.substring(itemName.indexOf('_') + 1) : itemName;
+                            const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
+                            const finalName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                            
+                            tempMoves.push({
+                                tempPath,
+                                originalPath: sourceFilePath,
+                                finalName
+                            });
+                        }
+                    }
+                }
+                
+                // Now all same-folder items are out of the way, so don't ignore anything during shifting
+                itemsToIgnore = null;
+            }
+            
+            docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore);
                 
             // Move each file/folder
             for (let i = 0; i < pasteItems.length; i++) {
-                const itemName = pasteItems[i];
+                const itemFullPath = pasteItems[i];
                 try {
-                    // Find the source path by searching all directories
-                    let sourceFilePath: string | null = null;
-                        
-                    // Helper function to recursively search for the file
-                    const findFile = (searchPath: string): string | null => {
-                        try {
-                            const entries = fs.readdirSync(searchPath, { withFileTypes: true });
-                                
-                            // First check current directory
-                            for (const entry of entries) {
-                                if (entry.name === itemName) {
-                                    return path.join(searchPath, entry.name);
-                                }
-                            }
-                                
-                            // Then search subdirectories
-                            for (const entry of entries) {
-                                if (entry.isDirectory()) {
-                                    const found = findFile(path.join(searchPath, entry.name));
-                                    if (found) return found;
-                                }
-                            }
-                        } catch {
-                            // Continue searching if we hit permission issues
+                    const itemDir = path.dirname(itemFullPath);
+                    const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                    const isFromSameFolder = itemDirNormalized === targetFolderNormalized;
+                    
+                    if (isFromSameFolder && tempMoves.length > 0) {
+                        // Handle same-folder moves using temporary files
+                        const tempMove = tempMoves.find(tm => path.basename(tm.originalPath) === path.basename(itemFullPath));
+                        if (tempMove) {
+                            const finalFilePath = path.join(absoluteTargetPath, tempMove.finalName);
+                            // Move from temp location to final location
+                            fs.renameSync(tempMove.tempPath, finalFilePath);
+                            pastedCount++;
+                        } else {
+                            errors.push(`Temporary file not found for ${itemFullPath}`);
                         }
-                        return null;
-                    };
-    
-                    sourceFilePath = findFile(root);
-    
-                    if (!sourceFilePath) {
-                        console.error(`Source file not found: ${itemName}`);
-                        errors.push(`Source file not found: ${itemName}`);
-                        continue;
-                    }
-    
-                    let targetFileName = itemName;
-                    const currentOrdinal = insertOrdinal + i;
-                            
-                    // Extract name without ordinal prefix if it exists
-                    const nameWithoutPrefix = itemName.includes('_') ? 
-                        itemName.substring(itemName.indexOf('_') + 1) : itemName;
-                            
-                    // Create new filename with correct ordinal
-                    const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
-                    targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                    } else {
+                        // Handle cross-folder moves (regular logic)
+                        const itemName = path.basename(itemFullPath);
+                        const sourceFilePath = path.join(root, itemFullPath);
                         
-    
-                    const targetFilePath = path.join(absoluteTargetPath, targetFileName);
-    
-                    // Move the file/folder
-                    fs.renameSync(sourceFilePath, targetFilePath);                    
-                    pastedCount++;
+                        // Check if source file exists
+                        if (!fs.existsSync(sourceFilePath)) {
+                            console.error(`Source file not found: ${itemFullPath}`);
+                            errors.push(`Source file not found: ${itemFullPath}`);
+                            continue;
+                        }
+
+                        let targetFileName = itemName;
+                        const currentOrdinal = insertOrdinal + i;
+                                
+                        // Extract name without ordinal prefix if it exists
+                        const nameWithoutPrefix = itemName.includes('_') ? 
+                            itemName.substring(itemName.indexOf('_') + 1) : itemName;
+                                
+                        // Create new filename with correct ordinal
+                        const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
+                        targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                            
+        
+                        const targetFilePath = path.join(absoluteTargetPath, targetFileName);
+
+                        // Move the file/folder
+                        fs.renameSync(sourceFilePath, targetFilePath);                    
+                        pastedCount++;
+                    }
                 } catch (error) {
-                    console.error(`Error moving ${itemName}:`, error);
-                    errors.push(`Failed to move ${itemName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    console.error(`Error moving ${itemFullPath}:`, error);
+                    errors.push(`Failed to move ${itemFullPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
             }
     
