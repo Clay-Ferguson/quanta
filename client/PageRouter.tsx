@@ -25,8 +25,7 @@ export default function PageRouter() {
         return <LoadingIndicator />;
     }
 
-    
-    // first let any of the plugins handle the page routing
+    // first let any of the plugins handle the page routing. If a plugin returns a component, we use that.
     for (const plugin of pluginsArray) {
         if (plugin.getRoute) {
             // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);

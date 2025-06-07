@@ -3,6 +3,9 @@ import { httpServerUtil } from "../../HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
 import { IServerPlugin } from "../../ServerUtil.js";
+import { docUtil } from "./DocUtil.js";
+import { docMod } from "./DocMod.js";
+import { docBinary } from "./DocBinary.js";
 
 const defaultPlugin = config.get("defaultPlugin");
 
@@ -14,19 +17,19 @@ class DocsServerPlugin implements IServerPlugin{
 
     private initRoutes(app: any, serveIndexHtml: any) {
         app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
-        app.get('/api/docs/images/:docRootKey/*', docSvc.serveDocImage); 
+        app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage); 
 
         // For now we only allow admin to access the docs API
-        app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile); 
-        app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docSvc.uploadFiles);
-        app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder); 
-        app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder); 
-        app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown); 
+        app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docMod.saveFile); 
+        app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docBinary.uploadFiles);
+        app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docMod.renameFolder); 
+        app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docMod.deleteFileOrFolder); 
+        app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docMod.moveUpOrDown); 
         app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
         app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
-        app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docSvc.pasteItems);
-        app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docSvc.joinFiles);
-        app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docSvc.openFileSystemItem);
+        app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docMod.pasteItems);
+        app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docMod.joinFiles);
+        app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
         app.post('/api/docs/search', httpServerUtil.verifyAdminHTTPSignature, docSvc.search);
         app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
 
