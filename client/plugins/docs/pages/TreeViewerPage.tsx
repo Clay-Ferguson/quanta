@@ -374,19 +374,21 @@ interface InsertItemsRowProps {
     reRenderTree: () => Promise<TreeNode[]>;
     node?: TreeNode | null;
     filteredTreeNodes?: TreeNode[];
-    fileInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
  * Component for rendering insert file/folder buttons
  */
-function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [], fileInputRef }: InsertItemsRowProps) {
+function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] }: InsertItemsRowProps) {
     const showMasterCheckbox = node === null && filteredTreeNodes.length > 0;
     const { checked, indeterminate } = showMasterCheckbox ? getMasterCheckboxState(gs, filteredTreeNodes) : { checked: false, indeterminate: false };
     
+    // Create a unique file input ref for this component instance
+    const localFileInputRef = useRef<HTMLInputElement | null>(null);
+    
     const handleFileSelect = () => {
-        if (fileInputRef?.current) {
-            fileInputRef.current.click();
+        if (localFileInputRef?.current) {
+            localFileInputRef.current.click();
         }
     };
 
@@ -396,8 +398,8 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [],
             await uploadAttachment(gs, reRenderTree, node, filesArray);
             
             // Reset the file input
-            if (fileInputRef?.current) {
-                fileInputRef.current.value = '';
+            if (localFileInputRef?.current) {
+                localFileInputRef.current.value = '';
             }
         }
     };
@@ -474,15 +476,13 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [],
             </div>
             
             {/* Hidden file input */}
-            {fileInputRef && (
-                <input 
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ display: 'none' }}
-                    multiple
-                    onChange={handleFileUpload}
-                />
-            )}
+            <input 
+                type="file"
+                ref={localFileInputRef}
+                style={{ display: 'none' }}
+                multiple
+                onChange={handleFileUpload}
+            />
         </div>
     );
 }
@@ -503,7 +503,6 @@ interface TreeNodeComponentProps {
     formatDisplayName: (name: string) => string;
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
     reRenderTree: () => Promise<TreeNode[]>;
-    fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
@@ -524,8 +523,7 @@ function TreeNodeComponent({
     handleFileNameChange, 
     formatDisplayName,
     contentTextareaRef,
-    reRenderTree,
-    fileInputRef
+    reRenderTree
 }: TreeNodeComponentProps) {
     const isImage = node.type === 'image';
     // For images, node.content now contains the relative path from root
@@ -714,7 +712,7 @@ function TreeNodeComponent({
                 </div>
             </div>
             {gs.docsEditMode && 
-                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} fileInputRef={fileInputRef} />
+                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} />
             }
         </div>
     );
@@ -739,7 +737,6 @@ function renderTreeNodes(
     formatDisplayName: (name: string) => string, 
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>, 
     reRenderTree: () => Promise<TreeNode[]>,
-    fileInputRef: React.RefObject<HTMLInputElement | null>,
     baseIndex: number = 0
 ): React.ReactElement[] {
     const elements: React.ReactElement[] = [];
@@ -763,7 +760,6 @@ function renderTreeNodes(
                 formatDisplayName, 
                 contentTextareaRef, 
                 reRenderTree,
-                fileInputRef,
                 currentIndex
             );
             elements.push(...childElements);
@@ -790,7 +786,6 @@ function renderTreeNodes(
                     formatDisplayName={formatDisplayName}
                     contentTextareaRef={contentTextareaRef}
                     reRenderTree={reRenderTree}
-                    fileInputRef={fileInputRef}
                 />
             );
             currentIndex++;
@@ -811,7 +806,6 @@ export default function TreeViewerPage() {
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
     const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => util.resizeEffect(), []);
 
@@ -965,11 +959,11 @@ export default function TreeViewerPage() {
                             because we should use some kind of syntax to trigger it, instead of it being automatic->] 
                             lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div> */}
                             {gs.docsEditMode && (
-                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} fileInputRef={fileInputRef} />
+                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
                                 () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 
-                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree, fileInputRef)}
+                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree)}
                         </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
