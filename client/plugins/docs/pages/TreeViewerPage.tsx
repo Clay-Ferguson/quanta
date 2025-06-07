@@ -8,11 +8,11 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
-import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState } from './TreeViewerPageOps';
+import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
@@ -374,14 +374,33 @@ interface InsertItemsRowProps {
     reRenderTree: () => Promise<TreeNode[]>;
     node?: TreeNode | null;
     filteredTreeNodes?: TreeNode[];
+    fileInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
  * Component for rendering insert file/folder buttons
  */
-function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] }: InsertItemsRowProps) {
+function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [], fileInputRef }: InsertItemsRowProps) {
     const showMasterCheckbox = node === null && filteredTreeNodes.length > 0;
     const { checked, indeterminate } = showMasterCheckbox ? getMasterCheckboxState(gs, filteredTreeNodes) : { checked: false, indeterminate: false };
+    
+    const handleFileSelect = () => {
+        if (fileInputRef?.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const filesArray = Array.from(e.target.files);
+            await uploadAttachment(gs, reRenderTree, node, filesArray);
+            
+            // Reset the file input
+            if (fileInputRef?.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
     
     return (
         <div className={`relative flex justify-center`}>
@@ -429,6 +448,20 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                 >
                     <FontAwesomeIcon icon={faFolder} className="h-5 w-5" />
                 </button>
+                <button 
+                    onClick={handleFileSelect}
+                    className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
+                    title="Upload File(s)"
+                >
+                    <FontAwesomeIcon icon={faUpload} className="h-5 w-5" />
+                </button>
+                <button 
+                    onClick={() => uploadFromClipboard(gs, reRenderTree, node)}
+                    className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
+                    title="Upload from Clipboard"
+                >
+                    <FontAwesomeIcon icon={faClipboard} className="h-5 w-5" />
+                </button>
                 {gs.docsCutItems && gs.docsCutItems.size > 0 && (
                     <button 
                         onClick={() => onPaste(gs, reRenderTree, node)}
@@ -439,6 +472,17 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                     </button>
                 )}
             </div>
+            
+            {/* Hidden file input */}
+            {fileInputRef && (
+                <input 
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    multiple
+                    onChange={handleFileUpload}
+                />
+            )}
         </div>
     );
 }
@@ -459,6 +503,7 @@ interface TreeNodeComponentProps {
     formatDisplayName: (name: string) => string;
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
     reRenderTree: () => Promise<TreeNode[]>;
+    fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
@@ -479,7 +524,8 @@ function TreeNodeComponent({
     handleFileNameChange, 
     formatDisplayName,
     contentTextareaRef,
-    reRenderTree
+    reRenderTree,
+    fileInputRef
 }: TreeNodeComponentProps) {
     const isImage = node.type === 'image';
     // For images, node.content now contains the relative path from root
@@ -668,7 +714,7 @@ function TreeNodeComponent({
                 </div>
             </div>
             {gs.docsEditMode && 
-                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} />
+                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} fileInputRef={fileInputRef} />
             }
         </div>
     );
@@ -693,6 +739,7 @@ function renderTreeNodes(
     formatDisplayName: (name: string) => string, 
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>, 
     reRenderTree: () => Promise<TreeNode[]>,
+    fileInputRef: React.RefObject<HTMLInputElement | null>,
     baseIndex: number = 0
 ): React.ReactElement[] {
     const elements: React.ReactElement[] = [];
@@ -716,6 +763,7 @@ function renderTreeNodes(
                 formatDisplayName, 
                 contentTextareaRef, 
                 reRenderTree,
+                fileInputRef,
                 currentIndex
             );
             elements.push(...childElements);
@@ -742,6 +790,7 @@ function renderTreeNodes(
                     formatDisplayName={formatDisplayName}
                     contentTextareaRef={contentTextareaRef}
                     reRenderTree={reRenderTree}
+                    fileInputRef={fileInputRef}
                 />
             );
             currentIndex++;
@@ -762,6 +811,7 @@ export default function TreeViewerPage() {
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
     const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => util.resizeEffect(), []);
 
@@ -915,11 +965,11 @@ export default function TreeViewerPage() {
                             because we should use some kind of syntax to trigger it, instead of it being automatic->] 
                             lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div> */}
                             {gs.docsEditMode && (
-                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
+                                <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} fileInputRef={fileInputRef} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
                                 () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 
-                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree)}
+                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree, fileInputRef)}
                         </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}

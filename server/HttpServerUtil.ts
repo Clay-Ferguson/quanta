@@ -122,8 +122,10 @@ class HttpServerUtil {
             // Add other components as needed
             }
         
-            // Remove trailing newline
-            sigBase = sigBase.slice(0, -1);
+            // Remove trailing newline if present
+            if (sigBase.endsWith('\n')) {
+                sigBase = sigBase.slice(0, -1);
+            }
             const msgHash = crypt.getHashBytesOfString(sigBase);
         
             // DO NOT DELETE: Keep for future debugging purposes

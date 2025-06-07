@@ -46,7 +46,8 @@ class HttpClientUtil {
 
         let response: TResponse | null = null;
         try {
-            const headers = await this.buildSecureHeaders(url, _gs.keyPair!);
+            const isFormData = body instanceof FormData;
+            const headers = await this.buildSecureHeaders(url, _gs.keyPair!, isFormData);
             const opts: RequestInit = {
                 method: 'POST',
                 headers
@@ -54,11 +55,16 @@ class HttpClientUtil {
             
             // Add body if provided
             if (body) {
-                opts.headers = {
-                    ...opts.headers,
-                    'Content-Type': 'application/json'
-                };
-                opts.body = JSON.stringify(body);
+                if (isFormData) {
+                    // For FormData, don't set Content-Type header - let browser set it with boundary
+                    opts.body = body as any;
+                } else {
+                    opts.headers = {
+                        ...opts.headers,
+                        'Content-Type': 'application/json'
+                    };
+                    opts.body = JSON.stringify(body);
+                }
             }
             
             url = encodeURI(url);
@@ -81,19 +87,26 @@ class HttpClientUtil {
         return response;
     }
     
-    buildSecureHeaders = async (url: string, keyPair: KeyPairHex): Promise<Record<string,string>> => {
+    buildSecureHeaders = async (url: string, keyPair: KeyPairHex, isFormData: boolean = false): Promise<Record<string,string>> => {
         // Get the current timestamp in seconds
         const created = Math.floor(Date.now() / 1000);
                         
-        // Create the signature-input string
-        const sigInput = `sig1=("@method" "@target-uri" "@created" "content-type");created=${created};keyid="admin-key"`;
+        // Create the signature-input string - exclude content-type for FormData since browser sets boundary
+        const components = isFormData ? 
+            `"@method" "@target-uri" "@created"` : 
+            `"@method" "@target-uri" "@created" "content-type"`;
+        const sigInput = `sig1=(${components});created=${created};keyid="admin-key"`;
                         
         // Build the signature base
         let sigBase = '';
         sigBase += `"@method": post\n`;
         sigBase += `"@target-uri": ${window.location.origin}${url}\n`;
-        sigBase += `"@created": ${created}\n`;
-        sigBase += `"content-type": application/json`;  
+        sigBase += `"@created": ${created}`;
+        
+        // Only include content-type in signature for JSON requests
+        if (!isFormData) {
+            sigBase += `\n"content-type": application/json`;
+        }
             
         if (!keyPair || !keyPair.privateKey) {
             throw new Error("No private key available");
@@ -113,11 +126,17 @@ class HttpClientUtil {
         // console.log('Signature generated:', signatureHex);
         // console.log('Admin public key:', this.adminPublicKey);
     
-        return {
-            'Content-Type': 'application/json',
+        const headers: Record<string, string> = {
             'Signature-Input': sigInput,
             'Signature': signatureHex
         };
+
+        // Only set Content-Type for JSON requests, not FormData
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        return headers;
     }
 }
 

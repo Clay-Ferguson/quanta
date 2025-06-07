@@ -919,7 +919,7 @@ class DocService {
     /**
      * Pastes items from the cut list to the target folder by moving them
      * @param req - Express request object containing targetFolder and pasteItems in body
-     * @param res - Express response object
+     * @param res - Express response object 
      */
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
         try {
@@ -1529,6 +1529,185 @@ class DocService {
         } catch (error) {
             svrUtil.handleError(error, res, 'Failed to join files');
         }
+    }
+
+    /**
+     * Handles file uploads for the docs plugin
+     * @param req - Express request object containing multipart form data
+     * @param res - Express response object
+     */
+    uploadFiles = async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Parse the multipart form data manually
+            const contentType = req.headers['content-type'];
+            if (!contentType || !contentType.includes('multipart/form-data')) {
+                res.status(400).json({ error: 'Content-Type must be multipart/form-data' });
+                return;
+            }
+
+            // Extract boundary from content-type header
+            const boundary = contentType.split('boundary=')[1];
+            if (!boundary) {
+                res.status(400).json({ error: 'No boundary found in multipart data' });
+                return;
+            }
+
+            // Get raw body data
+            const chunks: Buffer[] = [];
+            req.on('data', (chunk: Buffer) => {
+                chunks.push(chunk);
+            });
+
+            req.on('end', async () => {
+                try {
+                    const buffer = Buffer.concat(chunks);
+                    const boundaryBuffer = Buffer.from(`--${boundary}`);
+                    
+                    // Parse multipart data
+                    const parts = this.parseMultipartData(buffer, boundaryBuffer);
+                    
+                    // Extract form fields and files
+                    let docRootKey = '';
+                    let treeFolder = '';
+                    let insertAfterNode = '';
+                    const files: { name: string; data: Buffer; type: string }[] = [];
+
+                    for (const part of parts) {
+                        const headerEnd = part.indexOf('\r\n\r\n');
+                        if (headerEnd === -1) continue;
+
+                        const headers = part.slice(0, headerEnd).toString();
+                        const body = part.slice(headerEnd + 4);
+
+                        // Parse Content-Disposition header
+                        const dispositionMatch = headers.match(/Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/);
+                        if (!dispositionMatch) continue;
+
+                        const fieldName = dispositionMatch[1];
+                        const filename = dispositionMatch[2];
+
+                        if (filename) {
+                            // This is a file
+                            const typeMatch = headers.match(/Content-Type: ([^\r\n]+)/);
+                            const contentType = typeMatch ? typeMatch[1] : 'application/octet-stream';
+                            
+                            files.push({
+                                name: filename,
+                                data: body.slice(0, body.length - 2), // Remove trailing \r\n
+                                type: contentType
+                            });
+                        } else {
+                            // This is a form field
+                            const value = body.toString().replace(/\r\n$/, ''); // Remove trailing \r\n
+                            
+                            switch (fieldName) {
+                            case 'docRootKey':
+                                docRootKey = value;
+                                break;
+                            case 'treeFolder':
+                                treeFolder = value;
+                                break;
+                            case 'insertAfterNode':
+                                insertAfterNode = value;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!docRootKey || !treeFolder || files.length === 0) {
+                        res.status(400).json({ error: 'Missing required fields: docRootKey, treeFolder, or files' });
+                        return;
+                    }
+
+                    const root = config.getPublicFolderByKey(docRootKey).path;
+                    if (!root) {
+                        res.status(500).json({ error: 'Invalid docRootKey' });
+                        return;
+                    }
+
+                    const absoluteFolderPath = path.join(root, treeFolder);
+                    this.checkFileAccess(absoluteFolderPath, root);
+
+                    // Determine insert ordinal
+                    let insertOrdinal = 1;
+                    if (insertAfterNode) {
+                        try {
+                            insertOrdinal = this.getOrdinalFromName(insertAfterNode) + 1;
+                        } catch (error) {
+                            console.warn(`Could not parse ordinal from insertAfterNode: ${insertAfterNode}, using default ordinal 1`, error);
+                        }
+                    }
+
+                    // Shift existing files down to make room
+                    this.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null);
+
+                    // Save uploaded files with proper ordinal prefixes
+                    let savedCount = 0;
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const ordinal = insertOrdinal + i;
+                        const ordinalPrefix = ordinal.toString().padStart(4, '0');
+                        const finalFileName = `${ordinalPrefix}_${file.name}`;
+                        const finalFilePath = path.join(absoluteFolderPath, finalFileName);
+
+                        try {
+                            this.checkFileAccess(finalFilePath, root);
+                            fs.writeFileSync(finalFilePath, file.data);
+                            savedCount++;
+                            console.log(`Uploaded file saved: ${finalFilePath}`);
+                        } catch {
+                            console.error(`Error saving uploaded file ${file.name}:`);
+                        }
+                    }
+
+                    res.json({ 
+                        success: true, 
+                        message: `Successfully uploaded ${savedCount} file(s)`,
+                        uploadedCount: savedCount
+                    });
+
+                } catch {
+                    console.error('Error processing upload:');
+                    res.status(500).json({ error: 'Failed to process upload' });
+                }
+            });
+
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to upload files');
+        }
+    }
+
+    /**
+     * Helper method to parse multipart form data
+     */
+    private parseMultipartData(buffer: Buffer, boundary: Buffer): Buffer[] {
+        const parts: Buffer[] = [];
+        let start = 0;
+
+        while (true) {
+            const boundaryIndex = buffer.indexOf(boundary, start);
+            if (boundaryIndex === -1) break;
+
+            if (start > 0) {
+                // Extract the part between boundaries
+                const part = buffer.slice(start, boundaryIndex);
+                if (part.length > 0) {
+                    parts.push(part);
+                }
+            }
+
+            // Move past the boundary and the following \r\n
+            start = boundaryIndex + boundary.length;
+            if (buffer[start] === 0x2D && buffer[start + 1] === 0x2D) {
+                // This is the final boundary (ends with --)
+                break;
+            }
+            if (buffer[start] === 0x0D && buffer[start + 1] === 0x0A) {
+                start += 2; // Skip \r\n
+            }
+        }
+
+        return parts;
     }
 }
 

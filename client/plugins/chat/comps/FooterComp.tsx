@@ -85,7 +85,7 @@ export default function FooterComp() {
         setMessage(e.target.value);
     };
     
-    const fileSelect = () => {
+    const fileSelect = () => { 
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }

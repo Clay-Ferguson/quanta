@@ -13,11 +13,12 @@ class DocsServerPlugin implements IServerPlugin{
     }
 
     private initRoutes(app: any, serveIndexHtml: any) {
-        app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender);
-        app.get('/api/docs/images/:docRootKey/*', docSvc.serveDocImage);
+        app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
+        app.get('/api/docs/images/:docRootKey/*', docSvc.serveDocImage); 
 
         // For now we only allow admin to access the docs API
         app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docSvc.saveFile); 
+        app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docSvc.uploadFiles);
         app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docSvc.renameFolder); 
         app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docSvc.deleteFileOrFolder); 
         app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docSvc.moveUpOrDown); 

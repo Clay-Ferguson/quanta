@@ -771,3 +771,96 @@ export const onJoin = async (gs: DocsGlobalState, reRenderTree: any) => {
     }
 };
 
+export const uploadAttachment = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null, files: File[]) => {
+    if (!files || files.length === 0) {
+        await alertModal("No files selected for upload.");
+        return;
+    }
+
+    try {
+        // Create FormData for file upload
+        const formData = new FormData();
+        
+        // Add files to form data
+        files.forEach((file) => {
+            formData.append(`files`, file);
+        });
+        
+        // Add metadata
+        formData.append('treeFolder', gs.docsFolder || '/');
+        formData.append('insertAfterNode', node ? node.name : '');
+        formData.append('docRootKey', gs.docsRootKey || '');
+
+        // Upload files to server
+        const response = await httpClientUtil.secureHttpPost('/api/docs/upload', formData);
+
+        if (response && response.success) {
+            // Refresh the tree view to show the new files
+            await reRenderTree();
+            
+            const uploadedCount = response.uploadedCount || files.length;
+            await alertModal(`Successfully uploaded ${uploadedCount} file(s).`);
+        } else {
+            const errorMessage = response?.error || 'Unknown error occurred during upload';
+            await alertModal(`Error uploading files: ${errorMessage}`);
+        }
+    } catch (error) {
+        console.error('Error uploading files:', error);
+        await alertModal(`Error uploading files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+};
+
+export const uploadFromClipboard = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {
+    try {
+        // Check if navigator.clipboard is available
+        if (!navigator.clipboard || !navigator.clipboard.read) {
+            await alertModal("Clipboard access is not supported in this browser or requires HTTPS.");
+            return;
+        }
+
+        // Read clipboard contents
+        const clipboardItems = await navigator.clipboard.read();
+        const files: File[] = [];
+
+        for (const clipboardItem of clipboardItems) {
+            for (const type of clipboardItem.types) {
+                if (type.startsWith('image/') || type.startsWith('application/') || type.startsWith('text/')) {
+                    const blob = await clipboardItem.getType(type);
+                    
+                    // Create a filename based on the type
+                    let filename = 'clipboard-file';
+                    if (type.startsWith('image/')) {
+                        const extension = type.split('/')[1];
+                        filename = `clipboard-image.${extension}`;
+                    } else if (type === 'text/plain') {
+                        filename = 'clipboard-text.txt';
+                    } else {
+                        const extension = type.split('/')[1];
+                        filename = `clipboard-file.${extension}`;
+                    }
+
+                    // Convert blob to File
+                    const file = new File([blob], filename, { type });
+                    files.push(file);
+                }
+            }
+        }
+
+        if (files.length === 0) {
+            await alertModal("No files found in clipboard. Try copying an image or file first.");
+            return;
+        }
+
+        // Upload the files using the existing upload function
+        await uploadAttachment(gs, reRenderTree, node, files);
+        
+    } catch (error) {
+        console.error('Error accessing clipboard:', error);
+        if (error instanceof Error && error.name === 'NotAllowedError') {
+            await alertModal("Permission denied to access clipboard. Please allow clipboard access or use the file upload button instead.");
+        } else {
+            await alertModal("Error accessing clipboard: " + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    }
+};
+
