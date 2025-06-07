@@ -7,8 +7,32 @@ import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 const { exec } = await import('child_process');
 
+/**
+ * Service class for handling document management operations in the docs plugin.
+ * 
+ * Provides comprehensive file and folder management capabilities including:
+ * - Tree rendering and navigation with pullup folder support
+ * - File operations (create, read, update, delete, rename, move)
+ * - Folder operations (create, delete, rename)
+ * - File uploads with multipart form data handling
+ * - Advanced search functionality with multiple modes (REGEX, MATCH_ANY, MATCH_ALL)
+ * - File joining and content splitting operations
+ * - Ordinal-based file ordering system (NNNN_ prefix format)
+ * - Security validation and directory traversal protection
+ * - Image serving with proper content types and caching
+ * - File system integration for desktop mode
+ * 
+ * All operations maintain proper ordinal sequencing for files and folders,
+ * ensuring consistent ordering in the document tree structure.
+ */
 class DocService {
     
+    /**
+     * Extracts the numeric ordinal from a filename with format "NNNN_filename"
+     * @param file - The filename to extract ordinal from
+     * @returns The numeric ordinal value
+     * @throws Error if filename doesn't match expected format
+     */
     getOrdinalFromName = (file: string): number => {
         // use regex go make sure the ordinal is a number followed by an underscore
         if (!/^\d+_/.test(file)) {
@@ -19,6 +43,13 @@ class DocService {
         return ordinal;
     }
 
+    /**
+     * Security check to ensure file access is within allowed root directory
+     * Prevents directory traversal attacks by validating canonical paths
+     * @param filename - The filename/path to check
+     * @param root - The allowed root directory
+     * @throws Error if access is outside allowed root directory
+     */
     checkFileAccess = (filename: string, root: string) => {        
         if (!filename) {
             throw new Error('Invalid file access: '+filename);
@@ -90,6 +121,13 @@ class DocService {
         }
     }
  
+    /**
+     * Recursively builds tree nodes for files and folders in a directory
+     * @param absolutePath - The absolute path to the directory to scan
+     * @param pullup - Whether to treat folders ending with '_' as pullup folders (inline contents)
+     * @param root - The root directory for security validation
+     * @returns Array of TreeNode objects representing the directory contents
+     */
     getTreeNodes = (absolutePath: string, pullup: boolean, root: string): TreeNode[] => {
         this.checkFileAccess(absolutePath, root); 
         // Read directory contents
@@ -187,7 +225,8 @@ class DocService {
 
     /**
      * Saves file content to the server for the tree viewer feature
-     * @param req - Express request object containing filename, content, and optional newFileName in body
+     * Supports file renaming and content splitting on delimiter '\n~\n'
+     * @param req - Express request object containing filename, content, treeFolder, newFileName, docRootKey, and split options
      * @param res - Express response object
      */
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
@@ -314,7 +353,7 @@ class DocService {
 
     /**
      * Renames a folder on the server for the tree viewer feature
-     * @param req - Express request object containing oldFolderName and newFolderName in body
+     * @param req - Express request object containing oldFolderName, newFolderName, treeFolder, and docRootKey
      * @param res - Express response object
      */
     renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
@@ -375,8 +414,9 @@ class DocService {
     }
 
     /**
-     * Deletes a file or folder, or multiple files/folders from the server for the tree viewer feature
-     * @param req - Express request object containing fileOrFolderName (string) or fileNames (array) and treeFolder in body
+     * Deletes one or more files or folders from the server
+     * Supports both single item and batch deletion operations
+     * @param req - Express request object containing fileOrFolderName (single) or fileNames (array), treeFolder, and docRootKey
      * @param res - Express response object
      */
     deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
@@ -476,7 +516,7 @@ class DocService {
 
     /**
      * Moves a file or folder up or down in the ordered list by swapping numeric prefixes
-     * @param req - Express request object containing direction and filename in body
+     * @param req - Express request object containing direction ('up' or 'down'), filename, treeFolder, and docRootKey
      * @param res - Express response object
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
@@ -578,8 +618,8 @@ class DocService {
     }
 
     /**
-     * Serves image files from the document tree
-     * @param req - Express request object with image path
+     * Serves image files from the document tree with appropriate content types and caching headers
+     * @param req - Express request object with image path and docRootKey parameter
      * @param res - Express response object
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
@@ -660,8 +700,12 @@ class DocService {
 
     /**
      * Shifts ordinals down for all files/folders at or below a given ordinal position
+     * This creates space for new files to be inserted at specific positions
+     * @param slotsToAdd - Number of ordinal slots to add (shift amount)
      * @param absoluteParentPath - The absolute path to the directory
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
+     * @param root - The root directory for security validation
+     * @param itemsToIgnore - Array of filenames to skip during shifting (optional)
      */
     private shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
         itemsToIgnore: string[] | null): void => {
@@ -708,8 +752,10 @@ class DocService {
 
     /**
      * Ensures a file/folder has a 4-digit ordinal prefix (i.e. "NNNN_"), renaming it if necessary
+     * Handles both padding short ordinals and truncating long ones from legacy systems
      * @param absolutePath - The absolute path to the directory containing the file
      * @param fileName - The original filename
+     * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
     private ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string): string => {
@@ -776,8 +822,8 @@ class DocService {
     };
 
     /**
-     * Creates a new file in the tree viewer
-     * @param req - Express request object containing fileName, treeFolder, and insertAfterNode in body
+     * Creates a new file in the tree viewer with proper ordinal positioning
+     * @param req - Express request object containing fileName, treeFolder, insertAfterNode, and docRootKey
      * @param res - Express response object
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
@@ -850,8 +896,8 @@ class DocService {
     }
 
     /**
-     * Creates a new folder in the tree viewer
-     * @param req - Express request object containing folderName, treeFolder, and insertAfterNode in body
+     * Creates a new folder in the tree viewer with proper ordinal positioning
+     * @param req - Express request object containing folderName, treeFolder, insertAfterNode, and docRootKey
      * @param res - Express response object
      */
     createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
@@ -917,8 +963,9 @@ class DocService {
     }
 
     /**
-     * Pastes items from the cut list to the target folder by moving them
-     * @param req - Express request object containing targetFolder and pasteItems in body
+     * Pastes items from the cut list to the target folder by moving them with proper ordinal positioning
+     * Supports both positional pasting (at specific ordinal) and appending to end of folder
+     * @param req - Express request object containing targetFolder, pasteItems array, docRootKey, and optional targetOrdinal
      * @param res - Express response object 
      */
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
@@ -1048,6 +1095,7 @@ class DocService {
     /**
      * Gets the maximum ordinal value from all numbered files/folders in a directory
      * @param absolutePath - The absolute path to the directory
+     * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
     // todo-1: this method is not used any longer, so we can remove it some day.
@@ -1079,6 +1127,7 @@ class DocService {
      * @param absolutePath - The absolute path to the directory containing the file
      * @param fileName - The original filename without ordinal prefix
      * @param ordinal - The ordinal number to use as prefix
+     * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
     private ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
@@ -1112,7 +1161,8 @@ class DocService {
 
     /**
      * Opens an item (file or folder) in the file system using the OS default application
-     * @param req - Express request object containing treeItem and docRootKey in body
+     * Requires desktop mode to be enabled for security reasons
+     * @param req - Express request object containing treeItem, docRootKey, and action
      * @param res - Express response object
      */
     openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string, action: string }>, res: Response): Promise<void> => {
@@ -1206,8 +1256,9 @@ class DocService {
     }
 
     /**
-     * Searches through documents for the given query string
-     * @param req - Express request object containing query, treeFolder, and docRootKey in body
+     * Searches through documents for the given query string using various search modes
+     * Supports REGEX, MATCH_ANY, and MATCH_ALL search modes with file modification time ordering
+     * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
     search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string; searchMode?: string }>, res: Response): Promise<void> => {
@@ -1438,7 +1489,8 @@ class DocService {
 
     /**
      * Joins multiple selected files by concatenating their content and saving to the first file
-     * @param req - Express request object containing filenames array, treeFolder and docRootKey in body
+     * Files are sorted by ordinal before joining, and all but the first file are deleted
+     * @param req - Express request object containing filenames array, treeFolder, and docRootKey
      * @param res - Express response object
      */
     joinFiles = (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): void => {
@@ -1532,8 +1584,9 @@ class DocService {
     }
 
     /**
-     * Handles file uploads for the docs plugin
-     * @param req - Express request object containing multipart form data
+     * Handles file uploads for the docs plugin with multipart form data parsing
+     * Supports uploading multiple files with proper ordinal positioning
+     * @param req - Express request object containing multipart form data with files, docRootKey, treeFolder, and insertAfterNode
      * @param res - Express response object
      */
     uploadFiles = async (req: Request, res: Response): Promise<void> => {
@@ -1678,7 +1731,11 @@ class DocService {
     }
 
     /**
-     * Helper method to parse multipart form data
+     * Helper method to parse multipart form data from a buffer
+     * Splits the buffer into individual parts based on boundary markers
+     * @param buffer - The raw buffer containing multipart data
+     * @param boundary - The boundary buffer used to separate parts
+     * @returns Array of Buffer objects representing individual parts
      */
     private parseMultipartData(buffer: Buffer, boundary: Buffer): Buffer[] {
         const parts: Buffer[] = [];
