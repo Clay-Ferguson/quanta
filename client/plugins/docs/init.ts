@@ -32,6 +32,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsSearch = '';
         gs.docsSearchResults = [];
         gs.docsSearchOriginFolder = '';
+        gs.docsLastSearch = '';
         gs.docsSearchMode = 'MATCH_ANY';
         gs.docsHighlightedFolderName = null;
     }

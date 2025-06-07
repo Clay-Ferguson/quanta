@@ -7,43 +7,10 @@ import { httpClientUtil } from "../../../HttpClientUtil";
 import { DBKeys } from "../../../AppServiceTypes";
 import { idb } from "../../../IndexedDB";
 import { util } from "../../../Util";
+import { stripOrdinal } from "../../../../common/CommonUtils";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
-
-export const formatDisplayName = (name: string) => {
-    name = stripOrdinal(name);
-    const endsWithUnderscore = name.endsWith('_');
-
-    // Replace underscores and dashes with spaces
-    name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
-
-    // we preserve the display of the final underscore if it exists, because that's important for the user to see
-    // becasue it represents a 'pullup'
-    if (endsWithUnderscore) {
-        // If the name ends with an underscore, we add a space at the end
-        name += '_';
-    }
-
-    // If name ends with ".Md" remove it. Replace with ".md" if it exists
-    if (name.endsWith('.Md')) {
-        name = name.slice(0, -3) + '.md';
-    }
-        
-    return name;
-}   
-
-// This method should split apart path into its components and format it nicely
-// using formatFileName for each component.
-export function formatFullPath(path: string): string {
-    if (!path || path === '/') {
-        return '';
-    }
-        
-    // Split the path by '/' and format each component
-    const comps = path.split('/').filter(Boolean); // Filter out empty components
-    return comps.map(formatDisplayName).join(' / ');
-}
 
 export const handleCancelClick = (gs: DocsGlobalState) => {
     // Clear editing state without saving
@@ -60,12 +27,6 @@ export const handleCancelClick = (gs: DocsGlobalState) => {
         }});
     }
 };
-
-// Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
-export const stripOrdinal = (name: string) => {
-    const idx = name.indexOf('_');
-    return idx !== -1 ? name.substring(idx + 1) : name;
-}   
 
 // Handle folder click navigation
 export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
