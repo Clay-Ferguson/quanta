@@ -357,8 +357,7 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
                 
             // Automatically start editing the newly created file
             setTimeout(() => {
-                const findStr = `_${fileName}.md`;
-                const newFileNode = updatedNodes.find((n: any) => n.name.endsWith(findStr));
+                const newFileNode = updatedNodes.find((n: any) => n.name ===response.fileName);
                 if (newFileNode) {
                     // DO NOT DELETE. Leave this just in case.
                     // Now let's check to make sure the count of matching files is not more than 1

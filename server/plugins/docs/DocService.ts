@@ -924,6 +924,10 @@ class DocService {
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
         try {
             const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
+
+            // sort the pasteItems string[] to ensure they are in the correct order
+            pasteItems.sort((a, b) => a.localeCompare(b));
+
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
                 res.status(500).json({ error: 'bad key' });
