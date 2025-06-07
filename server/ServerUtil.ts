@@ -1,5 +1,8 @@
 import { Response } from 'express';
 
+/**
+ * Interface for server plugins that can be loaded and managed by ServerUtil
+ */
 export interface IServerPlugin {
     /**
      * Initialize the plugin with the given context
@@ -20,9 +23,19 @@ export interface IServerPlugin {
     notify(server: any): void;
 }
 
+/**
+ * Utility class for server-side operations including plugin management and error handling
+ */
 class ServerUtil {
+    /** Array of initialized plugin instances implementing IServerPlugin interface */
     pluginsArray: IServerPlugin[] = [];
 
+    /**
+     * Retrieves and validates an environment variable
+     * @param name - The name of the environment variable to retrieve
+     * @returns The value of the environment variable
+     * @throws Error if the environment variable is not set
+     */
     getEnvVar = (name: string): string => {
         const value = process.env[name];
         if (!value) {
@@ -33,6 +46,7 @@ class ServerUtil {
         }
         return value;
     }
+
     /**
      * Centralized error handling method for all controller endpoints
      * @param error - The error object or message
@@ -44,6 +58,12 @@ class ServerUtil {
         res.status(500).json({ error: message });
     }
 
+    /**
+     * Initialize all plugins by loading them from their respective directories
+     * Skips initialization if plugins have already been loaded to prevent duplicate initialization
+     * @param plugins - Array of plugin configurations containing plugin keys
+     * @param context - Context object passed to each plugin's init method (typically contains Express app instance)
+     */
     initPlugins = async (plugins: any, context: any) => {
         if (this.pluginsArray.length > 0) {
             console.warn('Plugins have already been initialized. Skipping initialization.');
@@ -67,7 +87,12 @@ class ServerUtil {
         }
     }
 
-    // Now uses the cached pluginsArray with proper plugin instances
+    /**
+     * Finish route setup for all initialized plugins
+     * This method is called after all plugins have been initialized to allow them to set up fallback routes
+     * @param plugins - Array of plugin configurations (unused, method uses cached pluginsArray)
+     * @param context - Context object passed to each plugin's finishRoute method
+     */
     finishRoutes = async (plugins: any, context: any) => {
         console.log('Finishing plugin routes...');
         for (const plugin of this.pluginsArray) {
@@ -75,8 +100,12 @@ class ServerUtil {
         }
     }
 
-    // Now uses the cached pluginsArray with proper plugin instances
-    // Currently this is only called by server and 'context' is the server instance.
+    /**
+     * Notify all initialized plugins that server startup is complete
+     * This method is typically called by the server after full initialization
+     * @param plugins - Array of plugin configurations (unused, method uses cached pluginsArray)
+     * @param context - Server instance or context object passed to each plugin's notify method
+     */
     notifyPlugins = async (plugins: any, context: any) => {
         console.log('Notify plugins startup is complete...');
         for (const pluginInstance of this.pluginsArray) {
@@ -93,4 +122,5 @@ class ServerUtil {
     }
 }
 
+/** Singleton instance of ServerUtil for use throughout the application */
 export const svrUtil = new ServerUtil();

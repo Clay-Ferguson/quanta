@@ -20,6 +20,9 @@ class SSGService {
     /**
      * Generates static site by creating _index.md files in each folder containing
      * concatenated markdown content from ordered files in that folder
+     * 
+     * @param req - Express request object containing treeFolder and docRootKey in body
+     * @param res - Express response object for sending back the result
      */
     generateStaticSite = async (req: Request, res: Response) => {
         try {
@@ -84,6 +87,15 @@ class SSGService {
         }
     };
 
+    /**
+     * Generates documentation for a folder by processing all ordered files and subfolders
+     * Creates _index.md files with concatenated content based on provided options
+     * 
+     * @param folderPath - Absolute path to the folder to process
+     * @param options - Configuration options for document generation
+     * @param isRootCall - Whether this is the initial call (used for table of contents generation)
+     * @param tableOfContents - Array to accumulate table of contents entries
+     */
     generateDoc = (folderPath: string, options: GenerateDocOptions = 
     { 
         includeFileNames: true, 
@@ -196,7 +208,14 @@ class SSGService {
         });
     }
 
-    // Helper function to process inline folder content (folders ending with '_')
+    /**
+     * Helper function to process inline folder content (folders ending with '_')
+     * Inline folders have their content embedded directly rather than linked
+     * 
+     * @param folderPath - Absolute path to the inline folder to process
+     * @param options - Configuration options for document generation
+     * @returns String containing the processed markdown content from the inline folder
+     */
     processInlineFolderContent = (folderPath: string, options: GenerateDocOptions): string => {
         let inlineContent = '';
 	
@@ -263,6 +282,14 @@ class SSGService {
         return inlineContent;
     }
 
+    /**
+     * Sorts files based on their numeric prefix (e.g., "01_", "02_", etc.)
+     * Only includes files that start with a number followed by an underscore
+     * 
+     * @param folderPath - Path to the folder (used for context, not directly in sorting)
+     * @param files - Array of file names to sort
+     * @returns Array of file names sorted by their numeric prefix
+     */
     sortFiles = (folderPath: string, files: string[]): string[] => {
         const sortedFiles = files
             .filter((file) => /^\d+_/.test(file))
@@ -272,10 +299,26 @@ class SSGService {
         return sortedFiles;
     }
 
+    /**
+     * Extracts the numeric prefix from a file name for sorting purposes
+     * 
+     * @param fileName - File name with numeric prefix (e.g., "01_example.md")
+     * @returns The numeric value of the prefix
+     */
     getFileNumber = (fileName: string): number => {
         return parseInt(fileName.split('_')[0], 10);
     }
 
+    /**
+     * Recursively builds a table of contents for all folders in the directory structure
+     * Skips inline folders (ending with '_') as they don't have separate _index.md files
+     * 
+     * @param folderPath - Current folder path being processed
+     * @param options - Configuration options for document generation
+     * @param tableOfContents - Array to accumulate table of contents entries
+     * @param depth - Current nesting depth for proper indentation
+     * @param rootPath - Root path for calculating relative links (defaults to folderPath)
+     */
     buildTableOfContents = (folderPath: string, options: GenerateDocOptions, tableOfContents: string[], depth: number, rootPath: string = folderPath) =>  {
         try {
             const files = fs.readdirSync(folderPath);
@@ -316,6 +359,13 @@ class SSGService {
         }
     }
 
+    /**
+     * Removes the numeric prefix from a file or folder name
+     * Useful for displaying clean names without the ordering prefix
+     * 
+     * @param fileName - File name with numeric prefix (e.g., "01_example.md")
+     * @returns File name without the numeric prefix (e.g., "example.md")
+     */
     removeNumberPrefix = (fileName: string): string => {
         const underscoreIndex = fileName.indexOf('_');
         if (underscoreIndex !== -1) {
@@ -324,12 +374,26 @@ class SSGService {
         return fileName;
     }
 
+    /**
+     * Formats a display name by converting dashes and underscores to spaces
+     * and capitalizing the first letter of each word
+     * 
+     * @param name - Raw name to format
+     * @returns Formatted display name with proper capitalization and spacing
+     */
     formatDisplayName = (name: string): string => {
         // Converts all dashes and underscores to spaces
         return name.replace(/[-_]/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    // Helper function to fix file/folder names by converting spaces and dashes to underscores
+    /**
+     * Helper function to fix file/folder names by converting spaces and dashes to underscores
+     * Automatically renames files in the filesystem to maintain consistency
+     * 
+     * @param folderPath - Path to the folder containing the file
+     * @param item - Original file or folder name
+     * @returns Fixed file name (with spaces and dashes converted to underscores)
+     */
     fixFileName = (folderPath: string, item: string): string => {
         if (item.includes(' ') || item.includes('-')) {
             const fixedName = item.replace(/[ -]/g, '_');
