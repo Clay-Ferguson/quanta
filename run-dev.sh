@@ -7,7 +7,12 @@ rm -f package-lock.json
 rm -rf ./dist
 QUANTA_DEV=true yarn build
 
-yarn start
-
-read -p "Quanta Chat Ended. press ENTER to exit..."
+# Check if yarn build succeeded
+if [ $? -eq 0 ]; then
+    yarn start
+    read -p "Quanta Chat Ended. press ENTER to exit..."
+else
+    echo "Build failed. Terminating script."
+    exit 1
+fi
 
