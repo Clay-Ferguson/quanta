@@ -10,6 +10,7 @@ export enum ChatPageNames {
     roomMembers = 'RoomInfoPage',
     rooms = 'RoomsPage',
     roomsAdmin = 'RoomsAdminPage',
+    chatUserGuide = 'ChatUserGuidePage',
 }
 
 export interface ChatGlobalState extends GlobalState {

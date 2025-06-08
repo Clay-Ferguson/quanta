@@ -7,6 +7,7 @@ import { DocsGlobalState, DocsPageNames } from './DocsTypes';
 import { GlobalState } from '../../GlobalState';
 import { idb } from '../../IndexedDB';
 import { app } from '../../AppService';
+import DocViewerPage from '../../pages/DocViewerPage';
 
 class DocsClientPlugin implements IClientPlugin {
 
@@ -66,6 +67,8 @@ class DocsClientPlugin implements IClientPlugin {
             return React.createElement(TreeViewerPage);
         case DocsPageNames.searchView:
             return React.createElement(SearchViewPage)
+        case DocsPageNames.docsUserGuide:
+            return React.createElement(DocViewerPage, { filename: "/docs/docs_extension/docs_user_guide.md", title: "Quanta User Guide" });
         default:
             return null;
         }

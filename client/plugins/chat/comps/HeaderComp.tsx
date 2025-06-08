@@ -131,7 +131,7 @@ export default function HeaderComp() {
                     </button>}
                     
                     {gs.headerExpanded && <button 
-                        onClick={() => app.goToPage(PageNames.userGuide)}
+                        onClick={() => app.goToPage(ChatPageNames.chatUserGuide)}
                         className="btn-icon"
                         title="Help"
                     >

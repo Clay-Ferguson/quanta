@@ -40,7 +40,6 @@ export enum PanelKeys {
 export enum PageNames {
     contacts = 'ContactsPage',
     settings = 'SettingsPage',
-    userGuide = 'UserGuidePage',
     admin  = 'AdminPage',
     userProfile = 'UserProfilePage',
     logViewer = "LogViewerPage",

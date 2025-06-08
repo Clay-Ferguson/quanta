@@ -5,6 +5,7 @@ import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalSt
 export enum DocsPageNames {
     treeViewer = 'TreeViewerPage', 
     searchView = "SearchViewPage",
+    docsUserGuide = 'DocsUserGuidePage',
 }
 
 export interface DocsGlobalState extends GlobalState {

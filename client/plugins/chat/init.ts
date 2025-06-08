@@ -16,6 +16,7 @@ import UserProfileChatComp from './UserProfileChatComp';
 import SettingsPage from '../../pages/SettingsPage';
 import { app } from '../../AppService';
 import { ChatAdminPageComp } from './ChatAdminPageComp';
+import DocViewerPage from '../../pages/DocViewerPage';
 
 declare const HOST: string;
 declare const PORT: string;
@@ -90,6 +91,8 @@ class ChatClientPlugin implements IClientPlugin {
             return React.createElement(RoomsAdminPage);
         case ChatPageNames.quantaChat: // fall thru. to default
             return React.createElement(QuantaChatPage);
+        case ChatPageNames.chatUserGuide:
+            return React.createElement(DocViewerPage, { filename: "/docs/chat_extension/chat_user_guide.md", title: "Callisto User Guide" });
         default: return null;
         }
     }

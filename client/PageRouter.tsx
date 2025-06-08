@@ -1,5 +1,4 @@
 import SettingsPage from './pages/SettingsPage.tsx';
-import DocViewerPage from './pages/DocViewerPage.tsx'; 
 import AdminPage from './pages/AdminPage.tsx';
 import { useGlobalState } from './GlobalState.tsx'; 
 import { PageNames } from './AppServiceTypes.ts';
@@ -40,10 +39,6 @@ export default function PageRouter() {
     switch (topPage) {
     case PageNames.settings:
         return <SettingsPage />;
-    case PageNames.userGuide:
-        // todo-0: need a way to make this dynamic, so that we can have different user guides for different plugins,
-        // based on which plugins are installed and/or active.
-        return <DocViewerPage filename="/docs/chat_extension/chat_user_guide.md" title="User Guide" />;
     case PageNames.admin:
         return <AdminPage />;
     case PageNames.userProfile:
