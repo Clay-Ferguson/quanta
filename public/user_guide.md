@@ -4,7 +4,7 @@
 
 For an overview of this app refer to the [README.md File](https://github.com/Clay-Ferguson/quanta-chat/blob/main/README.md). Here's what the main chat view looks like.
 
-![Settings Page](/_img/chat-window.png)
+![Settings Page](./_img/chat-window.png)
 
 ## Joining a Chat Room
 
@@ -32,35 +32,35 @@ So there can be any number of users who choose to use "Jack" as their username, 
 
 Similar to other decentralized or Peer-to-Peer apps (like Nostr for example), your identity is considered to be your public key, and your messages are signed with your private key. In fact since Quanta Chat uses the same security algorithms as Nostr, your Quanta Chat key will be a valid Nostr key, even if you're not using Nostr. 
 
-![Settings Page](/_img/about-you.png)
+![Settings Page](./_img/about-you.png)
 
 ## Key Management
 
 You can import a Key Pair simply by entering your Private Key, or generate a new Key Pair.
 
-![Settings Page](/_img/identity-keys.png)
+![Settings Page](./_img/identity-keys.png)
 
 ## Contact List
 
 As mentioned already, if you want to verify that messages you receive are from a specific person, you can add them to your contacts list.  You can also add a nickname for them, so you can easily identify them in the chat room, by your own nickname. Any time a message is displayed, the authenticity is always checked via cryptographic signature, and if the sender is not in your contacts list, you will see a warning icon next to their name, just meaning you may not know them.
 
-![Contacts List](/_img/contacts.png)
+![Contacts List](./_img/contacts.png)
 
 ## Avatars
 
 Each user can upload an Avatar image, set their User Name, and Description in their settings page. Then other users can always click that avatar image, wherever it appears, to display this information.
 
-![Settings Page](/_img/user-profile.png)
+![Settings Page](./_img/user-profile.png)
 
 ## Your Room History 
 
 You can view the rooms you've visited before using the "Rooms" button.
 
-![Settings Page](/_img/rooms.png)
+![Settings Page](./_img/rooms.png)
 
 ## Room's Current Members
 
 You can view who's in your current room using the "Info" button.
 
-![Settings Page](/_img/room-info.png)
+![Settings Page](./_img/room-info.png)
 
