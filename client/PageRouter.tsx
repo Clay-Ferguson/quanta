@@ -41,7 +41,9 @@ export default function PageRouter() {
     case PageNames.settings:
         return <SettingsPage />;
     case PageNames.userGuide:
-        return <DocViewerPage filename="/docs/user_guide/user_guide.md" title="User Guide" />;
+        // todo-0: need a way to make this dynamic, so that we can have different user guides for different plugins,
+        // based on which plugins are installed and/or active.
+        return <DocViewerPage filename="/docs/chat_extension/chat_user_guide.md" title="User Guide" />;
     case PageNames.admin:
         return <AdminPage />;
     case PageNames.userProfile:
