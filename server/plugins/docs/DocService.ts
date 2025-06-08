@@ -200,7 +200,7 @@ class DocService {
                 return;
             }
 
-            let insertOrdinal = 1; // Default to insert at top
+            let insertOrdinal = 0; // Default to insert at top
 
             if (insertAfterNode && insertAfterNode.trim() !== '') {
                 console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
@@ -280,7 +280,7 @@ class DocService {
                 return;
             }
 
-            let insertOrdinal = 1; // Default to insert at top
+            let insertOrdinal = 0; // Default to insert at top
 
             if (insertAfterNode && insertAfterNode.trim() !== '') {
                 console.log(`Create folder "${folderName}" below node: ${insertAfterNode}`);
