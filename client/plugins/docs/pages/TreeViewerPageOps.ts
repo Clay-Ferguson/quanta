@@ -513,6 +513,21 @@ export const handleRenameClick = (gs: DocsGlobalState, treeNodes: TreeNode[], se
     }
 };
 
+export const onUndoCut = (gs: DocsGlobalState, reRenderTree: any) => {
+    if (!gs.docsCutItems || gs.docsCutItems.size === 0) {
+        return;
+    }
+    
+    // Clear cut items from global state
+    gd({ type: 'clearCutItems', payload: { docsCutItems: new Set<string>() } });
+
+    // Re-render the tree to reflect the changes
+    reRenderTree();
+    
+    // Optionally, show a message to the user
+    alertModal("Cut/Past cancelled.");
+}
+
 // Header button handlers for Cut, Paste, Delete
 export const onCut = (gs: DocsGlobalState) => {        
     if (!gs.docsSelItems || gs.docsSelItems.size === 0) {

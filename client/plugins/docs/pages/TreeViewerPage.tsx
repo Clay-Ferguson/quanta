@@ -12,7 +12,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
-import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
+import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
@@ -161,7 +161,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 
     return (
         <div className={containerClass}>
-            {showEditButton && !isImage && 
+            {!hasCutItems && showEditButton && !isImage && 
             <button 
                 onClick={(e) => { e.stopPropagation(); handleEditClick(node); }}
                 className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
@@ -169,14 +169,16 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
             >
                 <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
             </button>}
+
+            {!hasCutItems && 
             <button 
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(gs, treeNodes, setTreeNodes, node, index); }}
                 className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
                 title="Delete"
             >
                 <FontAwesomeIcon icon={faTrash} className="h-5 w-5" />
-            </button>
-            {index > 0 && 
+            </button>}
+            {!hasCutItems && index > 0 && 
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveUpClick(gs, treeNodes, setTreeNodes, node); }}
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
@@ -185,7 +187,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     <FontAwesomeIcon icon={faArrowUp} className="h-5 w-5" />
                 </button>
             }
-            {index < numNodes - 1 &&
+            {!hasCutItems && index < numNodes - 1 &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveDownClick(gs, treeNodes, setTreeNodes, node); }}
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
@@ -254,6 +256,8 @@ interface TopRightAdminCompsProps {
  * Component for rendering the admin controls in the top right of the header
  */
 function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
+    const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
+
     return (
         <div className="flex items-center gap-2">
             <label className="flex items-center cursor-pointer">
@@ -293,7 +297,15 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Cut
                         </button>}
-                    {itemsAreSelected && 
+                    {hasCutItems && 
+                        <button 
+                            onClick={() => onUndoCut(gs, reRenderTree)}
+                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                            title="Undo Cut"
+                        >
+                        Undo Cut
+                        </button>}
+                    {!hasCutItems && itemsAreSelected && 
                         <button 
                             onClick={() => onDelete(gs, treeNodes, setTreeNodes)}
                             className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
@@ -301,7 +313,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                         >
                         Delete
                         </button>}
-                    {gs.docsSelItems && gs.docsSelItems.size >= 2 && 
+                    {!hasCutItems && gs.docsSelItems && gs.docsSelItems.size >= 2 && 
                      (Array.from(gs.docsSelItems) as TreeNode[]).every(node => node.type === 'text') && 
                         <button 
                             onClick={() => onJoin(gs, reRenderTree)}
@@ -382,7 +394,8 @@ interface InsertItemsRowProps {
 function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] }: InsertItemsRowProps) {
     const showMasterCheckbox = node === null && filteredTreeNodes.length > 0;
     const { checked, indeterminate } = showMasterCheckbox ? getMasterCheckboxState(gs, filteredTreeNodes) : { checked: false, indeterminate: false };
-    
+    const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
+
     // Create a unique file input ref for this component instance
     const localFileInputRef = useRef<HTMLInputElement | null>(null);
     
@@ -407,7 +420,7 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
     return (
         <div className={`relative flex justify-center`}>
             {/* Master checkbox - positioned absolutely to the left */}
-            {showMasterCheckbox && (
+            {!hasCutItems && showMasterCheckbox && (
                 <div className="absolute left-0 top-0 flex items-center gap-3 pl-2 border-l-4 border-l-transparent">
                     <div className="flex items-center">
                         <input
@@ -436,35 +449,39 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
             
             {/* Insert buttons - always centered */}
             <div className="flex gap-2">
-                <button 
-                    onClick={() => insertFile(gs, reRenderTree, node)}
-                    className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
-                    title="Insert File"
-                >
-                    <FontAwesomeIcon icon={faPlus} className="h-5 w-5" />
-                </button>
-                <button 
-                    onClick={() => insertFolder(gs, reRenderTree, node)}
-                    className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
-                    title="Insert Folder"
-                >
-                    <FontAwesomeIcon icon={faFolder} className="h-5 w-5" />
-                </button>
-                <button 
-                    onClick={handleFileSelect}
-                    className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
-                    title="Upload File(s)"
-                >
-                    <FontAwesomeIcon icon={faUpload} className="h-5 w-5" />
-                </button>
-                <button 
-                    onClick={() => uploadFromClipboard(gs, reRenderTree, node)}
-                    className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
-                    title="Upload from Clipboard"
-                >
-                    <FontAwesomeIcon icon={faFileUpload} className="h-5 w-5" />
-                </button>
-                {gs.docsCutItems && gs.docsCutItems.size > 0 && (
+                {!hasCutItems && 
+                    <button 
+                        onClick={() => insertFile(gs, reRenderTree, node)}
+                        className="text-gray-400 hover:text-green-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Insert File"
+                    >
+                        <FontAwesomeIcon icon={faPlus} className="h-5 w-5" />
+                    </button>}
+                {!hasCutItems && 
+                    <button 
+                        onClick={() => insertFolder(gs, reRenderTree, node)}
+                        className="text-gray-400 hover:text-blue-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Insert Folder"
+                    >
+                        <FontAwesomeIcon icon={faFolder} className="h-5 w-5" />
+                    </button>}
+                {!hasCutItems && 
+                    <button 
+                        onClick={handleFileSelect}
+                        className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Upload File(s)"
+                    >
+                        <FontAwesomeIcon icon={faUpload} className="h-5 w-5" />
+                    </button>}
+                {!hasCutItems && 
+                    <button 
+                        onClick={() => uploadFromClipboard(gs, reRenderTree, node)}
+                        className="text-gray-400 hover:text-purple-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Upload from Clipboard"
+                    >
+                        <FontAwesomeIcon icon={faFileUpload} className="h-5 w-5" />
+                    </button>}
+                {hasCutItems && (
                     <button 
                         onClick={() => onPaste(gs, reRenderTree, node)}
                         className="text-gray-400 hover:text-yellow-400 transition-colors p-1 border-0 bg-transparent"
