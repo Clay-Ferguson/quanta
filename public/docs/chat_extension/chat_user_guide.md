@@ -1,10 +1,10 @@
-# Quanta Chat User Guide
+# Callisto User Guide
 
-# About Quanta Chat 
+# About Callisto
 
-The Quanta Chat extension implements a Peer-to-Peer capable WebRTC-based Chat Web App.
+The Callisto extension implements a Peer-to-Peer capable WebRTC-based Chat Web App.
 
-The purpose of `Quanta Chat` is to be the simplest possible, yet full featured, chat app that can work for any small or medium sized group of people, while still using all modern web standards and technologies for a NodeJS-based app. The idea is that larger apps like Slack, for example, are much more complex than necessary, and not self-hosted. Quanta Chat is something simple enough for any developer to deploy and has code that's arguably as simple as possible.
+The purpose of **Callisto** is to be the simplest possible, yet full featured, chat app that can work for any small or medium sized group of people, while still using all modern web standards and technologies for a NodeJS-based app. The idea is that larger apps like Slack, for example, are much more complex than necessary, and not self-hosted. Callisto is something simple enough for any developer to deploy and has code that's arguably as simple as possible.
 
 This app also serves as a good pedagogical example of not only a modern Web App, but demonstrates the power of WebRTC, also, again hopefully in the simplest, and best organized, and easiest way to understant that's possible. The app allows users to select a pure-P2P mode where messages are never sent thru the master server, as well as a standard Server-Mode where messages are stored on the server, so that people don't need to be online simultaneously to communicate.
 
@@ -25,12 +25,6 @@ SQLite DB was chosen for this app primarily to keep it as small and simple as po
 * Admin features include ability to block users by Public Key, and any message, or any attachment from any user. Admins can also easily view *all* recently uploaded attachments to find/delete any unwanted kinds of content.
 
 ![Settings Page](img/chat-window.png)
-
-## The Chat Client
-
-The chat client itself is very simple. It allows users to enter their username and a chat room name, and then click "Join" button, to join that room. Rooms are automatically created once they're needed by someone. The room's history of chat message is kept only on the peers (clients) and is saved in browser local storage. None of the messages are ever seen by the server, because they're sent directly to the browsers of all chat room participants in a peer-to-peer way.
-
-If you refresh the browser you'll need to click "Join" again to resume, but the chat room's history will still be there. Note, however that since this is a peer-to-peer system (with no central storage or database) any conversations that happen in a room while you're not online and in that room, will not be visible to you. There's currently no strategy for syncing messages across all users that have ever participated in a room. This could be a potential future feature.
 
 ## Joining a Chat Room
 

@@ -7,7 +7,7 @@ import { alertModal } from '../../components/AlertModalComp';
 import { useGlobalState, gd, DocsPageNames } from './DocsTypes';
 import { app } from '../../AppService';
 import { formatFullPath } from '../../../common/CommonUtils';
-
+// todo-0: need to move this file into the 'pages' folder.
 interface SearchResult {
     file: string;
     line: number;

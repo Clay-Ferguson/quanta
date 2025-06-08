@@ -8,8 +8,8 @@ desktopMode: "n"
 defaultPlugin: "chat"
 
 plugins:
-  - name: "Quanta Chat"
+  - name: "Callisto"
     key: "chat"
-  - name: "Quanta Docs"
+  - name: "Quanta"
     key: "docs"
 
