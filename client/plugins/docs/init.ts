@@ -1,7 +1,7 @@
 import React from 'react';
 import { DBKeys, IClientPlugin } from "../../AppServiceTypes";
 import TreeViewerPage from "./pages/TreeViewerPage";
-import SearchViewPage from './SearchViewPage';
+import SearchViewPage from './pages/SearchViewPage';
 import { TreeNode, UserProfile } from '../../../common/types/CommonTypes';
 import { DocsGlobalState, DocsPageNames } from './DocsTypes';
 import { GlobalState } from '../../GlobalState';

@@ -1,13 +1,13 @@
-import LogoBlockComp from '../../components/LogoBlockComp';
-import BackButtonComp from '../../components/BackButtonComp';
+import LogoBlockComp from '../../../components/LogoBlockComp';
+import BackButtonComp from '../../../components/BackButtonComp';
 import { useEffect, useState, useRef } from 'react';
-import { util } from '../../Util';
-import { httpClientUtil } from '../../HttpClientUtil';
-import { alertModal } from '../../components/AlertModalComp';
-import { useGlobalState, gd, DocsPageNames } from './DocsTypes';
-import { app } from '../../AppService';
-import { formatFullPath } from '../../../common/CommonUtils';
-// todo-0: need to move this file into the 'pages' folder.
+import { util } from '../../../Util';
+import { httpClientUtil } from '../../../HttpClientUtil';
+import { alertModal } from '../../../components/AlertModalComp';
+import { useGlobalState, gd, DocsPageNames } from '../DocsTypes';
+import { app } from '../../../AppService';
+import { formatFullPath } from '../../../../common/CommonUtils';
+
 interface SearchResult {
     file: string;
     line: number;
