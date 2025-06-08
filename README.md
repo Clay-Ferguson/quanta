@@ -14,6 +14,10 @@ Currently there are two available plugins/extensions:
 * [Callisto User Guide](./public/docs/chat_extension/chat_user_guide.md)
 * [Quanta User Guide](./public/docs/docs_extension/docs_user_guide.md)
 
+# Developer Guide
+
+* [Extensions Guide](./public/docs/extensions_guide/extensions_guide.md)
+
 ## Core Platform Tech Stack
 
 Quanta is designed to work well on both desktop browsers as well as mobile devices and uses the following technologies.
