@@ -16,7 +16,7 @@ import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditC
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
-import { formatDisplayName, formatFullPath, stripOrdinal } from '../../../../common/CommonUtils';
+import { formatDisplayName, formatFullPath, getHeadingLevel, stripHashMarkFirstLine, stripOrdinal } from '../../../../common/CommonUtils';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -670,7 +670,7 @@ function TreeNodeComponent({
                             </div>
                             : 
                             <div className="mb-3">
-                                <Markdown markdownContent={node.content || ''} docMode={true}/>
+                                <Markdown markdownContent={stripHashMarkFirstLine(node.content)} docMode={true}/>
                             </div>
                     )}
 
@@ -911,6 +911,23 @@ export default function TreeViewerPage() {
         lastPathPart = formatDisplayName(lastPathPart);
     }
 
+    // scan through tree items to find the first 'text' type item and get heading level based on hash symbols
+    const firstTextItem = filteredTreeNodes.find(node => node.type === 'text') || null;
+    const headingLevel = firstTextItem ? getHeadingLevel(firstTextItem.content) : 0;
+    
+    // Function to render the appropriate heading element
+    const renderHeading = (level: number, text: string) => {
+        switch (level) {
+        case 1: return <h1>{text}</h1>;
+        case 2: return <h2>{text}</h2>;
+        case 3: return <h3>{text}</h3>;
+        case 4: return <h4>{text}</h4>;
+        case 5: return <h5>{text}</h5>;
+        case 6: return <h6>{text}</h6>;
+        default: return <div className="h-4"></div>;
+        }
+    };
+
     // Determine width class based on viewWidth setting
     const getWidthClass = () => {
         switch (gs.docsViewWidth) {
@@ -962,9 +979,11 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div>
-                            {/* [This puts the folder name at the top of page, but I don't want this for now
-                            because we should use some kind of syntax to trigger it, instead of it being automatic->] 
-                            lastPathPart ? <h1>{lastPathPart}</h1> : <div className="h-6"></div> */}
+                            {lastPathPart && headingLevel > 0 ? (
+                                renderHeading(headingLevel, lastPathPart)
+                            ) : (
+                                <div className="h-4"></div>
+                            )}
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
