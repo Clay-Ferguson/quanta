@@ -28,7 +28,7 @@ SQLite DB was chosen for this app primarily to keep it as small and simple as po
 
 # User Guide
 
-Learn how to use the app with the [User Guide](public/user_guide.md)
+Learn how to use the app with the [User Guide](./public/docs/user_guide/user_guide.md)
 
 ## Tech Stack
 

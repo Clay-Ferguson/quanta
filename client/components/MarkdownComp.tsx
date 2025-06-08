@@ -14,12 +14,13 @@ declare const DOC_ROOT_KEY: string;
 interface MarkdownDisplayProps {
   markdownContent: string;
   docMode?: boolean;
+  basePath?: string; // Optional base path for images
 }
 
 /**
  * Displays a markdown content using ReactMarkdown. It uses rehypeRaw and rehypeSanitize for security and remarkGfm for GitHub Flavored Markdown support.
  */
-export default function Markdown({ markdownContent, docMode }: MarkdownDisplayProps) {
+export default function Markdown({ markdownContent, docMode, basePath }: MarkdownDisplayProps) {
     const comps: Components = {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         a: ({ node, ...props }) => (
@@ -48,8 +49,12 @@ export default function Markdown({ markdownContent, docMode }: MarkdownDisplayPr
     comps.img = ({ node, src, ...props }) => {
         let imgSrc = src;
 
+        if (basePath) {
+            imgSrc = `${basePath}/${src}`;
+            console.log(`Transformed image path: [${src}] -> [${imgSrc}]`);
+        }
         // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
-        if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
+        else if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
             // Transform relative paths to use the docs images API
             imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}`;
             console.log(`Transformed image path: ${src} -> ${imgSrc}`);

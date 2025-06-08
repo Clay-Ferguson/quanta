@@ -20,11 +20,15 @@ interface DocViewerPageProps {
  * which is a more advanced document viewer, but let's keep this component in case we ever need it for simpler documents.
  */
 export default function DocViewerPage({ 
-    filename = '/user_guide.md',
+    filename = '',
     title = 'Document Viewer' 
 }: DocViewerPageProps) {
     const [docContent, setDocContent] = useState<string | null>(documentCache.get(filename) || null);
     const [isLoading, setIsLoading] = useState<boolean>(!documentCache.has(filename));
+
+    // get the path part from filename, and store in string named `docPath`
+    const basePath = filename.split('/').slice(0, -1).join('/');
+    console.log(`Base path for document: ${basePath}`);
 
     useEffect(() => util.resizeEffect(), []);
 
@@ -84,7 +88,7 @@ export default function DocViewerPage({
                             <p className="mt-4 text-blue-300">Loading document...</p>
                         </div>
                     ) : (
-                        <Markdown markdownContent={docContent || ''} />
+                        <Markdown basePath={basePath} markdownContent={docContent || ''} />
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}
                 </div>
