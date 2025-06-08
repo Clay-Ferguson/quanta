@@ -52,11 +52,19 @@ class DocUtil {
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
      * @param root - The root directory for security validation
      * @param itemsToIgnore - Array of filenames to skip during shifting (optional)
+     * @returns Map of old relative paths to new relative paths for renamed items
      */
     shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
-        itemsToIgnore: string[] | null): void => {
+        itemsToIgnore: string[] | null): Map<string, string> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
+        
+        // Map to track old relative paths to new relative paths
+        const pathMapping = new Map<string, string>();
+        
+        // Calculate the relative folder path from root for path mapping
+        const relativeFolderPath = path.relative(root, absoluteParentPath);
+        
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = fs.readdirSync(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
@@ -101,7 +109,17 @@ class DocUtil {
             
             console.log(`Shifting file: ${file} -> ${newFileName}`);
             fs.renameSync(oldPath, newPath);
+            
+            // Track the path mapping for relative paths
+            const oldRelativePath = relativeFolderPath ? path.join(relativeFolderPath, file) : file;
+            const newRelativePath = relativeFolderPath ? path.join(relativeFolderPath, newFileName) : newFileName;
+            // console.log('    Path mapping:');
+            // console.log(`    Old relative path: ${oldRelativePath}`);
+            // console.log(`    New relative path: ${newRelativePath}`);
+            pathMapping.set(oldRelativePath, newRelativePath);
         }
+        
+        return pathMapping;
     };
 
     /**

@@ -506,7 +506,40 @@ class DocMod {
                 itemsToIgnore = null;
             }
             
-            docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore);
+            const pathMapping = docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore);
+            
+            // Update pasteItems with new paths after ordinal shifting
+            for (let i = 0; i < pasteItems.length; i++) {
+                const originalPath = pasteItems[i];
+                // console.log('  Checking if mapped to new name:', originalPath);
+                
+                // Normalize the path by removing leading slash for comparison
+                const normalizedOriginalPath = originalPath.startsWith('/') ? originalPath.substring(1) : originalPath;
+                
+                // Check if any folder in the path hierarchy was renamed
+                let updatedPath = originalPath;
+                let pathChanged = false;
+                
+                // Check each mapping to see if it affects this file's path
+                for (const [oldFolderPath, newFolderPath] of pathMapping) {
+                    // Check if the file path starts with the old folder path
+                    if (normalizedOriginalPath.startsWith(oldFolderPath + '/') || normalizedOriginalPath === oldFolderPath) {
+                        // Replace the old folder path with the new one
+                        const relativePart = normalizedOriginalPath.substring(oldFolderPath.length);
+                        const newNormalizedPath = newFolderPath + relativePart;
+                        updatedPath = originalPath.startsWith('/') ? '/' + newNormalizedPath : newNormalizedPath;
+                        pathChanged = true;
+                        // console.log(`    Updated paste item path: ${originalPath} -> ${updatedPath}`);
+                        break;
+                    }
+                }
+                
+                if (pathChanged) {
+                    pasteItems[i] = updatedPath;
+                } else {
+                    // console.log(`    No mapping needed for: ${originalPath}`);
+                }
+            }
                 
             // Move each file/folder
             for (let i = 0; i < pasteItems.length; i++) {
