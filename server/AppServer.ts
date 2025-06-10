@@ -57,6 +57,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
             .replace(`{{PAGE}}`, page)
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
+            .replace('{{DOC_PATH}}', req.query.path as string || "")
             .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
             .replace('{{PLUGINS}}', pluginKeys)
             .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");

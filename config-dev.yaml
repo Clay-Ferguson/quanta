@@ -16,5 +16,5 @@ plugins:
 public-folders:
   - name: "Doc Root"
     key: "root"
-    path: "/home/clay/ferguson/A-doc-root"
+    path: "/home/clay/ferguson/A-doc-root-dev"
   

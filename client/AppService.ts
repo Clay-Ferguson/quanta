@@ -14,9 +14,6 @@ declare const DEFAULT_PLUGIN: string;
  */
 export const pluginsArray: IClientPlugin[] = [];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare let DOC_ROOT_KEY: string;
-
 /**
  * Main application service that manages the lifecycle and state of the Quanta Chat application.
  * Handles initialization, connection management, page navigation, and state persistence.

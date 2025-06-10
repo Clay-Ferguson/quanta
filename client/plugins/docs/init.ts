@@ -9,6 +9,8 @@ import { idb } from '../../IndexedDB';
 import { app } from '../../AppService';
 import DocViewerPage from '../../pages/DocViewerPage';
 
+declare const DOC_PATH: string;
+
 class DocsClientPlugin implements IClientPlugin {
 
     getKey(): string {
@@ -18,7 +20,7 @@ class DocsClientPlugin implements IClientPlugin {
     async init(context: any) {
         console.log('Initializing Quanta Docs plugin...');
         const gs: DocsGlobalState = context.initGs;
-        gs.docsFolder = '/'; 
+        gs.docsFolder = DOC_PATH ? ('/'+DOC_PATH) : '/'; 
         gs.docsEditMode = false;
         gs.docsMetaMode = false;
         gs.docsNamesMode = false;
