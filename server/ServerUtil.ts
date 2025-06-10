@@ -1,4 +1,7 @@
-import { Response } from 'express';
+import { Response, Request } from 'express';
+import { spawn } from 'child_process';
+import open from 'open';
+import path from 'path';
 
 /**
  * Interface for server plugins that can be loaded and managed by ServerUtil
@@ -118,6 +121,63 @@ class ServerUtil {
             } catch (error) {
                 console.error(`Error notifying plugin:`, error);
             }
+        }
+    }
+
+    runAdminCommand = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const item = req.body;
+            console.log('Received command from client:');
+            console.log(JSON.stringify(item, null, 2));
+
+            if (item.cmd && item.args) {     
+                const env = { ...process.env, DISPLAY: ":0" }; // Ensure the correct display is set (Linux-specific)          
+                // Check if the _args contains spaces
+                if (item.args.includes(" ")) {
+                // Split the _args into a list
+                    item.args = item.args.split(" ");
+                    // Run the command with the arguments as a list
+                    spawn(item.cmd, item.args, { detached: true, stdio: 'ignore', env: env });
+                } else {
+                    spawn(item.cmd, [item.args], { detached: true, stdio: 'ignore', env: env });
+                }
+            }
+            else if (item.bash) {
+                this.run_bash(item.bash, "", !!item.background);
+            }
+            else if (item.link) {
+                if (item.link.startsWith("http:") || item.link.startsWith("https:") || item.link.startsWith("file:")) {
+                    open(item.link);
+                }
+            }
+            
+            // For now, just pretty print the item object and return success
+            res.json({ 
+                success: true, 
+                message: `Command received: ${item.cmd}`,
+                item: item
+            });
+        } catch (error) {
+            this.handleError(error, res, 'Error processing admin command');
+        }
+    }
+
+    run_bash = (file_name: string, args: any, background: boolean) => {
+        const folder = path.dirname(file_name);
+        if (background) {
+            spawn(file_name, args ? args.split(" ") : [], {
+                cwd: folder,
+                detached: true,
+                stdio: 'ignore',
+                shell: true
+            });
+        } else {
+            spawn('gnome-terminal', ['--', 'bash', '-c', `${file_name} ${args} || bash`], {
+                cwd: folder,
+                detached: true,
+                stdio: 'ignore',
+                shell: true
+            });
         }
     }
 }

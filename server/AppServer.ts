@@ -5,6 +5,7 @@ import http from 'http';
 import { logInit } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil } from './ServerUtil.js';
+import { httpServerUtil } from './HttpServerUtil.js';
 
 logInit();
 
@@ -65,6 +66,8 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         res.send(result);
     });
 };
+
+app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, svrUtil.runAdminCommand); 
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
 await svrUtil.initPlugins(plugins, {app, serveIndexHtml});

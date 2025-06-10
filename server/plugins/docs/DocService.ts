@@ -23,7 +23,7 @@ class DocService {
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
         const pathName = req.path.replace("//", "/"); // Remove trailing slash if present
-        console.log("Tree Render Request:", pathName);
+        // console.log("Tree Render Request:", pathName);
         try {
             // Extract the path after /api/docs/render/ and decode URL encoding
             const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
