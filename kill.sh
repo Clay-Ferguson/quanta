@@ -1,7 +1,5 @@
 #!/bin/bash
 
-read -p "About to run. press ENTER to continue..."
-
 # Check for and terminate any existing AppServer.js processes
 echo "Checking for existing AppServer.js processes..."
 EXISTING_PIDS=$(pgrep -f "AppServer.js")

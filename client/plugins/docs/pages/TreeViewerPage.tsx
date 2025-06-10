@@ -115,7 +115,7 @@ function EditFile({
                 className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter content here..."
             />
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-2 mb-3">
                 <button
                     onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -607,6 +607,26 @@ function TreeNodeComponent({
                     </div>
                 }
                 <div className="flex-grow">
+                    {!isFolder && 
+                        <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
+                            {gs.docsMetaMode && 
+                                <>
+                                    <span className="mr-4">{node.name}</span>
+                                    <span className="mr-4">{new Date(node.modifyTime).toLocaleDateString()}</span>
+                                </>}
+                            {gs.docsEditMode && 
+                                <EditIcons 
+                                    node={node} 
+                                    index={index} 
+                                    numNodes={numNodes}
+                                    gs={gs} 
+                                    treeNodes={treeNodes} 
+                                    setTreeNodes={setTreeNodes} 
+                                    reRenderTree={reRenderTree}
+                                    containerClass="flex items-center gap-2"
+                                />}
+                        </div>
+                    }
                     {isFolder &&
                         <div className="flex items-center justify-between">
                             {gs.docsEditNode === node &&
@@ -712,27 +732,6 @@ function TreeNodeComponent({
                                {formatDisplayName(node.name)}
                            </span>
                        </div>
-                    }
-                
-                    {!isFolder && 
-                        <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
-                            {gs.docsMetaMode && 
-                                <>
-                                    <span className="mr-4">{node.name}</span>
-                                    <span className="mr-4">{new Date(node.modifyTime).toLocaleDateString()}</span>
-                                </>}
-                            {gs.docsEditMode && 
-                                <EditIcons 
-                                    node={node} 
-                                    index={index} 
-                                    numNodes={numNodes}
-                                    gs={gs} 
-                                    treeNodes={treeNodes} 
-                                    setTreeNodes={setTreeNodes} 
-                                    reRenderTree={reRenderTree}
-                                    containerClass="flex items-center gap-2"
-                                />}
-                        </div>
                     }
                 </div>
             </div>
