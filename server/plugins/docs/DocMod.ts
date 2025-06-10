@@ -178,6 +178,12 @@ class DocMod {
                 return;
             }
 
+            // If folder is not renamed, return success
+            if (oldFolderName === newFolderName) {
+                res.json({ success: true, message: 'Folder name is unchanged' });
+                return;
+            }
+
             // Check if the new name already exists
             if (fs.existsSync(newAbsolutePath)) {
                 res.status(409).json({ error: 'A folder with the new name already exists' });
