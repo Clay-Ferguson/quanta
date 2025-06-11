@@ -263,11 +263,11 @@ interface ViewWidthDropdownProps {
 }
 
 /**
- * Component for selecting view width (narrow, medium, wide)
+ * Component for selecting view width (narrow, medium, wide, full)
  */
 function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
     const handleWidthChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const newWidth = event.target.value as 'narrow' | 'medium' | 'wide';
+        const newWidth = event.target.value as 'narrow' | 'medium' | 'wide' | 'full';
         
         // Update global state
         gd({ type: 'setViewWidth', payload: { 
@@ -289,6 +289,7 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
                 <option value="narrow">Narrow</option>
                 <option value="medium">Medium</option>
                 <option value="wide">Wide</option>
+                <option value="full">Full</option>
             </select>
         </div>
     );
@@ -991,6 +992,7 @@ export default function TreeViewerPage() {
         switch (gs.docsViewWidth) {
         case 'narrow': return 'max-w-xl';
         case 'wide': return 'max-w-5xl';
+        case 'full': return 'max-w-none w-full px-4';
         case 'medium':
         default: return 'max-w-3xl';
         }

@@ -21,7 +21,7 @@ export interface DocsGlobalState extends GlobalState {
     docsSelItems?: Set<TreeNode>;
     docsCutItems?: Set<string>;
     docsRootKey?: string | null;
-    docsViewWidth?: 'narrow' | 'medium' | 'wide';
+    docsViewWidth?: 'narrow' | 'medium' | 'wide' | 'full';
     docsSearch?: string;
     docsSearchResults?: Array<{file: string, line: number, content: string}>;
     docsSearchOriginFolder?: string;

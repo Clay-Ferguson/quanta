@@ -52,7 +52,7 @@ class DocsClientPlugin implements IClientPlugin {
     }
 
     async restoreSavedValues(gs: DocsGlobalState) {
-        const docsViewWidth: 'narrow' | 'medium' | 'wide' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
+        const docsViewWidth: 'narrow' | 'medium' | 'wide' | 'full' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
         const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
