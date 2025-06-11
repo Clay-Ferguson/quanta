@@ -50,7 +50,7 @@ export default function Markdown({ markdownContent, docMode, basePath }: Markdow
                             <button
                                 key={itemIndex}
                                 onClick={() => run(item)}
-                                className="inline-block px-4 py-2 mr-2 mb-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md border border-gray-300 transition-colors duration-200"
+                                className="inline-block px-2 py-1 mr-2 mb-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md border border-gray-300 transition-colors duration-200"
                             >
                                 {item.title}
                             </button>

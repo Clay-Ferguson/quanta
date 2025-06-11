@@ -680,7 +680,7 @@ export const openItemInFileSystem = async (gs: DocsGlobalState, action: "edit" |
     }
 };
 
-export const handleSaveSplitClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
+export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
     if (gs.docsEditNode && gs.docsEditContent !== null) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
@@ -715,13 +715,13 @@ export const handleSaveSplitClick = (gs: DocsGlobalState, treeNodes: TreeNode[],
 
         // Save to server with split=true parameter with a delay to ensure UI updates first
         setTimeout(async () => {
-            await saveToServerWithSplit(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
+            await serverSplitFile(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
             await reRenderTree();
         }, 500);
     }
 };
 
-const saveToServerWithSplit = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
+const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
     try {
         const requestBody = {
             filename: filename,

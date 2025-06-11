@@ -12,7 +12,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
-import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSaveSplitClick, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
+import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
@@ -28,12 +28,12 @@ interface ColumnMarkdownRendererProps {
 }
 
 /**
- * Component that renders markdown content in columns if tilde delimiters (~~~) are found,
+ * Component that renders markdown content in columns if tilde delimiters (***) are found,
  * otherwise renders as a single markdown component.
  */
 function ColumnMarkdownRenderer({ content, docMode = true }: ColumnMarkdownRendererProps) {
-    // Check if content contains tilde delimiters on their own lines
-    const tildeDelimiterRegex = /\n~~~\n/g;
+    // Check if content contains asterisk delimiters on their own lines
+    const tildeDelimiterRegex = /\n\*\*\*\n/g;
     const hasDelimiters = tildeDelimiterRegex.test(content);
     
     if (!hasDelimiters) {
@@ -41,8 +41,8 @@ function ColumnMarkdownRenderer({ content, docMode = true }: ColumnMarkdownRende
         return <Markdown markdownContent={content} docMode={docMode} />;
     }
     
-    // Split content by tilde delimiters
-    const columns = content.split(/\n~~~\n/);
+    // Split content by asterisk delimiters
+    const columns = content.split(/\n\*\*\*\n/);
     
     // Remove empty columns that might result from splitting
     const nonEmptyColumns = columns.filter(col => col.trim().length > 0);
@@ -174,7 +174,7 @@ function EditFile({
                 Save
                 </button>
                 <button
-                    onClick={() => handleSaveSplitClick(gs, treeNodes, setTreeNodes, reRenderTree)}
+                    onClick={() => handleSplitInline(gs, treeNodes, setTreeNodes, reRenderTree)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                 Split
