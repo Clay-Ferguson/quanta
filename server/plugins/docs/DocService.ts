@@ -362,7 +362,8 @@ class DocService {
                 res.status(404).json({ error: 'Search directory not found' });
                 return;
             }
-            
+
+            // NOTE: To find dates the REGEX query would be: \[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\]
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Use grep to search for the query string recursively            
@@ -370,7 +371,10 @@ class DocService {
             
             if (searchMode === 'REGEX') {
                 // For REGEX mode, use the query as-is as a regex pattern
-                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${query.replace(/"/g, '\\"')}" "${absoluteSearchPath}"`;
+                // Escape backslashes for shell usage (other characters like quotes are handled by the shell quoting)
+                const escapedQuery = query.replace(/\\/g, '\\\\');
+                
+                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${escapedQuery}" "${absoluteSearchPath}"`;
             } else {
                 // For MATCH_ANY and MATCH_ALL, parse the query into search terms
                 let searchTerms: string[] = [];
@@ -432,6 +436,8 @@ class DocService {
                     grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
                 }
             }
+
+            console.log(`Executing grep command: ${grepCommand}`);
             
             exec(grepCommand, (error, stdout, stderr) => {
                 if (error) {

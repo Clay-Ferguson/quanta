@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -150,6 +150,50 @@ function EditFile({
     handleCancelClick, 
     contentTextareaRef 
 }: EditFileProps) {
+    
+    const handleInsertTime = () => {
+        if (!contentTextareaRef.current) return;
+        
+        const textarea = contentTextareaRef.current;
+        const cursorPosition = textarea.selectionStart;
+        const currentContent = gs.docsEditContent || '';
+        
+        // Create formatted timestamp: YYYY/MM/DD HH:MM:SS AM/PM
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        const hoursStr = String(hours).padStart(2, '0');
+        
+        const timestamp = `[${year}/${month}/${day} ${hoursStr}:${minutes}:${seconds} ${ampm}]`;
+        
+        // Insert timestamp at cursor position
+        const beforeCursor = currentContent.substring(0, cursorPosition);
+        const afterCursor = currentContent.substring(cursorPosition);
+        const newContent = beforeCursor + timestamp + afterCursor;
+        
+        // Update the content
+        gd({ type: 'setEditingContent', payload: { 
+            docsEditContent: newContent
+        }});
+        
+        // Set cursor position after the inserted timestamp
+        setTimeout(() => {
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(cursorPosition + timestamp.length, cursorPosition + timestamp.length);
+            }
+        }, 0);
+    };
+    
     return (
         <div>
             <input
@@ -185,6 +229,13 @@ function EditFile({
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                     Make Folder
+                </button>
+                <button 
+                    onClick={handleInsertTime}
+                    className="btn-icon"
+                    title="Insert Time"
+                >
+                    <FontAwesomeIcon icon={faClock} className="h-5 w-5" />
                 </button>
                 <button
                     onClick={handleCancelClick}
