@@ -363,18 +363,26 @@ class DocService {
                 return;
             }
 
-            // NOTE: To find dates the REGEX query would be: \[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\]
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Use grep to search for the query string recursively            
             let grepCommand: string;
+            // Set to null to disable timestamp filtering (search all files), 
+            // or set to a regex pattern to enable filtering (search only files with timestamps)
+            const dateRegex: string | null = null; // "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]";
             
             if (searchMode === 'REGEX') {
                 // For REGEX mode, use the query as-is as a regex pattern
                 // Escape backslashes for shell usage (other characters like quotes are handled by the shell quoting)
                 const escapedQuery = query.replace(/\\/g, '\\\\');
                 
-                grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                if (dateRegex) {
+                    // Search only in files that contain timestamps
+                    grepCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}" | xargs -0 --no-run-if-empty grep -niH -E "${escapedQuery}"`;
+                } else {
+                    // Search in all files (no timestamp filtering)
+                    grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                }
             } else {
                 // For MATCH_ANY and MATCH_ALL, parse the query into search terms
                 let searchTerms: string[] = [];
@@ -404,36 +412,43 @@ class DocService {
                 }
                 
                 if (searchMode === 'MATCH_ANY') {
-                    // For MATCH_ANY, find files that contain any of the terms anywhere in the file
-                    // Use -l flag to get just filenames, then get content with line numbers
+                    // For MATCH_ANY, search for any of the terms
                     const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
                     const regexPattern = escapedTerms.join('|');
                     
-                    // First get the list of files that contain any of the terms
-                    const fileListCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -i -E "${regexPattern}" "${absoluteSearchPath}"`;
-                    
-                    // Then get the actual content with line numbers from those files
-                    grepCommand = `${fileListCommand} | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
+                    if (dateRegex) {
+                        // Search only in files that contain timestamps
+                        grepCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}" | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
+                    } else {
+                        // Search in all files (no timestamp filtering)
+                        grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${regexPattern}" "${absoluteSearchPath}"`;
+                    }
                 } else { 
                     // MATCH_ALL
-                    // For MATCH_ALL, find files that contain all terms anywhere in the file
-                    // We'll do this by chaining grep commands to filter files step by step
+                    // For MATCH_ALL, ensure files contain all terms
                     const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
                     
-                    // Build a command that pipes through multiple greps to find files containing all terms
-                    // Use -Z option with grep to output null-terminated filenames, and -0 with xargs to handle them properly
-                    // This handles filenames with spaces correctly
-                    let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -i "${escapedTerms[0]}" "${absoluteSearchPath}"`;
-                    
-                    // Chain additional greps for each remaining term
-                    // Use --no-run-if-empty to prevent xargs from running if there's no input
-                    for (let i = 1; i < escapedTerms.length; i++) {
-                        baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                    if (dateRegex) {
+                        // Search only in files that contain timestamps
+                        let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}"`;
+                        
+                        // Chain additional greps for each search term
+                        for (let i = 0; i < escapedTerms.length; i++) {
+                            baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                        }
+                        
+                        grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
+                    } else {
+                        // Search in all files (no timestamp filtering)
+                        let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                        
+                        // Chain additional greps for each search term
+                        for (let i = 1; i < escapedTerms.length; i++) {
+                            baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                        }
+                        
+                        grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
                     }
-                    
-                    // Now get the actual content with line numbers from the matching files
-                    // Use --no-run-if-empty to prevent xargs from running if there's no input
-                    grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
                 }
             }
 
