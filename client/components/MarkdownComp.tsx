@@ -6,14 +6,10 @@ import remarkGfm from 'remark-gfm';
 import { setFullSizeImage } from './ImageViewerComp';
 import yaml from 'js-yaml';
 import { httpClientUtil } from '../HttpClientUtil';
-
-// Import rehype-highlight
 import rehypeHighlight from 'rehype-highlight';
-// Import a highlight.js theme (e.g., 'atom-one-dark' or 'github-dark')
 import 'highlight.js/styles/github-dark.css'; 
 
 declare const DOC_ROOT_KEY: string;
-
 // todo-0: Update docs to mention the new "menu yaml" format for YAML code blocks
 
 // Run function that calls the server endpoint

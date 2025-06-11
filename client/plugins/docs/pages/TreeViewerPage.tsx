@@ -214,11 +214,12 @@ interface EditIconsProps {
 function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRenderTree, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
     const isImage = node.type === 'image';
     const isFolder = node.type === 'folder';
+    const isBinary = node.type === 'binary';
     const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
 
     return (
         <div className={containerClass}>
-            {!hasCutItems && showEditButton && !isImage && 
+            {!hasCutItems && showEditButton && !isImage && !isBinary && 
             <button 
                 onClick={(e) => { e.stopPropagation(); handleEditClick(node); }}
                 className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
@@ -227,7 +228,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                 <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
             </button>}
 
-            {!hasCutItems && 
+            {!hasCutItems && !isBinary &&
             <button 
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(gs, treeNodes, setTreeNodes, node, index); }}
                 className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
@@ -235,6 +236,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
             >
                 <FontAwesomeIcon icon={faTrash} className="h-5 w-5" />
             </button>}
+
             {!hasCutItems && index > 0 && 
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveUpClick(gs, treeNodes, setTreeNodes, node); }}
@@ -242,8 +244,8 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     title="Move Up"
                 >
                     <FontAwesomeIcon icon={faArrowUp} className="h-5 w-5" />
-                </button>
-            }
+                </button>}
+
             {!hasCutItems && index < numNodes - 1 &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveDownClick(gs, treeNodes, setTreeNodes, node); }}
@@ -252,6 +254,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                 >
                     <FontAwesomeIcon icon={faArrowDown} className="h-5 w-5" />
                 </button>}
+
             {isFolder && hasCutItems &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); onPasteIntoFolder(gs, reRenderTree, node); }}
@@ -665,7 +668,7 @@ function TreeNodeComponent({
                     </div>
                 }
                 <div className="flex-grow">
-                    {!isFolder && 
+                    {!isFolder && !isBinary && 
                         <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
                             {gs.docsMetaMode && 
                                 <>
@@ -778,18 +781,23 @@ function TreeNodeComponent({
                     )}
 
                     {isBinary && 
-                       <div 
-                           className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg mb-4 transition-colors flex-grow"
-                           onClick={() => handleFileClick(gs, node.name)}
-                       >
-                           <FontAwesomeIcon 
-                               icon={faFile} 
-                               className="text-green-400 text-lg mr-3 h-5 w-5" 
-                           />
-                           <span className="text-green-300 text-lg font-medium hover:text-green-200">
-                               {formatDisplayName(node.name)}
-                           </span>
-                       </div>
+                        <div className="flex items-center justify-between">
+                            <div 
+                                className="flex items-center cursor-pointer hover:bg-gray-800/30 rounded-lg transition-colors flex-grow"
+                                onClick={() => handleFileClick(gs, node.name)}
+                            >
+                                <FontAwesomeIcon 
+                                    icon={faFile} 
+                                    className="text-lg mr-3 h-5 w-5" 
+                                />
+                                <span className="text-lg font-medium">
+                                    {formatDisplayName(node.name)}
+                                </span>
+                            </div>
+                            {gs.docsEditMode && 
+                                <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
+                            }
+                        </div>
                     }
                 </div>
             </div>
