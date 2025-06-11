@@ -385,10 +385,12 @@ export const scrollToItem = (itemName: string) => {
 };
 
 export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {
-    const name = await promptModal("Enter new folder name");
+    let name = await promptModal("Enter new folder name");
     if (!name || name.trim() === '') {
         return;
     }
+    // replace spaces and dashes with underscores to create a valid folder name
+    name = name.replace(/[ -]/g, '_');
         
     try {
         const requestBody = {
@@ -423,8 +425,8 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
         const underscoreIdx = originalName.indexOf('_');
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
-        // Create the new full file name with the numeric prefix
-        let newFullFileName = numericPrefix + newFileName;
+        // Create the new full file name with the numeric prefix, and replace spaces and dashes with underscores to create a valid file name
+        let newFullFileName = numericPrefix + newFileName.replace(/[ -]/g, '_');
 
         // if newFullName doesn't have a file any extension at all, add '.md' to it
         if (!newFullFileName.includes('.')) {
@@ -489,8 +491,8 @@ export const handleRenameClick = (gs: DocsGlobalState, treeNodes: TreeNode[], se
         const underscoreIdx = originalName.indexOf('_');
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
-        // Create the new full folder name with the numeric prefix
-        const newFullFolderName = numericPrefix + gs.docsNewFolderName;
+        // Create the new full folder name with the numeric prefix, but replace spaces and dashes with underscores to create a valid folder name
+        const newFullFolderName = numericPrefix + gs.docsNewFolderName!.replace(/[ -]/g, '_');
             
         // Find the node in treeNodes and update its name
         const updatedNodes = treeNodes.map(node => 
@@ -945,7 +947,7 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
                 // Refresh the tree to show the new folder
                 await reRenderTree();
                 
-                await alertModal(response.message || 'File converted to folder successfully');
+                // await alertModal(response.message || 'File converted to folder successfully');
             } else {
                 await alertModal('Error converting file to folder: ' + (response?.error || 'Unknown error'));
             }

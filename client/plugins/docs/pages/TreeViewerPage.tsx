@@ -17,6 +17,7 @@ import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
 import { formatDisplayName, formatFullPath, stripOrdinal } from '../../../../common/CommonUtils';
+import { alertModal } from '../../../components/AlertModalComp';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -421,21 +422,16 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
             </button>
 
             <button 
-                onClick={() => app.goToPage(DocsPageNames.docsUserGuide)}
-                className="btn-icon"
-                title="Help"
-            >
-                <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
-            </button>
-
-            <button 
                 onClick={async () => {
                     try {
                         const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
                             treeFolder: gs.docsFolder,
                             docRootKey: gs.docsRootKey 
                         });
-                        console.log('SSG completed:', response);
+                        if (!response || !response.success) {
+                            throw new Error(response?.message || "SSG failed");
+                        }
+                        alertModal("Static Site Generate Complete.");
                     } catch (error) {
                         console.error('SSG failed:', error);
                     }
@@ -445,6 +441,14 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 disabled={isLoading}
             >
                 <FontAwesomeIcon icon={faCubes} className="h-5 w-5" />
+            </button>
+
+            <button 
+                onClick={() => app.goToPage(DocsPageNames.docsUserGuide)}
+                className="btn-icon"
+                title="Help"
+            >
+                <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
             </button>
         </div>
     );
