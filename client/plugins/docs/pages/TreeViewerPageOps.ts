@@ -894,3 +894,65 @@ export const uploadFromClipboard = async (gs: DocsGlobalState, reRenderTree: any
     }
 };
 
+export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode[], _setTreeNodes: any, reRenderTree: any) => {
+    if (gs.docsEditNode && gs.docsEditContent !== null && gs.docsEditContent !== undefined) {
+        // Get the first line as the folder name
+        const lines = gs.docsEditContent.split('\n');
+        const firstLine = lines[0]?.trim() || '';
+        
+        // Check if first line is too long
+        if (firstLine.length > 140) {
+            await alertModal("The first line is too long to use as a folder name. Maximum 140 characters allowed.");
+            return;
+        }
+
+        // Use the first line as the folder name
+        const folderName = firstLine;
+        
+        if (!folderName) {
+            await alertModal("First line is empty. Cannot create folder with empty name.");
+            return;
+        }
+
+        // Get the remaining content (everything after the first line)
+        const remainingContent = lines.slice(1).join('\n').trim();
+
+        // Confirm the operation
+        const confirmText = `Convert file "${stripOrdinal(gs.docsEditNode.name)}" into a folder named "${folderName}"? The file will be deleted and replaced with a folder${remainingContent ? ', and the remaining content will be saved as a new file in the folder' : ''}. This action cannot be undone.`;
+        if (!await confirmModal(confirmText)) {
+            return;
+        }
+
+        try {
+            const requestBody = {
+                filename: gs.docsEditNode.name,
+                folderName: folderName,
+                remainingContent: remainingContent,
+                treeFolder: gs.docsFolder || '/',
+                docRootKey: gs.docsRootKey
+            };
+            
+            const response = await httpClientUtil.secureHttpPost('/api/docs/make-folder', requestBody);
+            
+            if (response && response.success) {
+                // Clear editing state (like cancel)
+                gd({ type: 'clearFileEditingState', payload: { 
+                    docsEditNode: null,
+                    docsEditContent: null,
+                    docsNewFileName: null
+                }});
+                
+                // Refresh the tree to show the new folder
+                await reRenderTree();
+                
+                await alertModal(response.message || 'File converted to folder successfully');
+            } else {
+                await alertModal('Error converting file to folder: ' + (response?.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error converting file to folder:', error);
+            await alertModal('Error converting file to folder: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    }
+};
+

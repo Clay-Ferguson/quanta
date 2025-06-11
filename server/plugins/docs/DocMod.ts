@@ -716,6 +716,102 @@ class DocMod {
         } catch (error) {
             svrUtil.handleError(error, res, 'Failed to join files');
         }
+    }
+
+    /**
+     * Converts a file into a folder by using the first line of the file's content as the folder name
+     * Deletes the original file and creates a folder with the specified name, then creates a new file
+     * with the remaining content inside the folder
+     * @param req - Express request object containing filename, folderName, remainingContent, treeFolder, and docRootKey
+     * @param res - Express response object
+     */
+    makeFolder = async (req: Request<any, any, { filename: string; folderName: string; remainingContent: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+        console.log("Make Folder Request");
+        try {
+            const { filename, folderName, remainingContent, treeFolder, docRootKey } = req.body;
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
+                res.status(500).json({ error: 'bad root' });
+                return;
+            }
+
+            if (!filename || !folderName || !treeFolder) {
+                res.status(400).json({ error: 'Filename, folder name, and treeFolder are required' });
+                return;
+            }
+
+            // Check if folder name is too long
+            if (folderName.length > 140) {
+                res.status(400).json({ error: 'Folder name is too long. Maximum 140 characters allowed.' });
+                return;
+            }
+
+            // Construct the absolute paths
+            const absoluteFolderPath = path.join(root, treeFolder);
+            const absoluteFilePath = path.join(absoluteFolderPath, filename);
+
+            // Check if the parent directory exists
+            docUtil.checkFileAccess(absoluteFolderPath, root);
+            if (!fs.existsSync(absoluteFolderPath)) {
+                res.status(404).json({ error: 'Parent directory not found' });
+                return;
+            }
+
+            // Check if the file exists
+            if (!fs.existsSync(absoluteFilePath)) {
+                res.status(404).json({ error: 'File not found' });
+                return;
+            }
+
+            // Check if it's actually a file
+            const fileStat = fs.statSync(absoluteFilePath);
+            if (!fileStat.isFile()) {
+                res.status(400).json({ error: 'Path is not a file' });
+                return;
+            }
+
+            // Extract the numeric prefix from the original file name
+            const underscoreIndex = filename.indexOf('_');
+            const numericPrefix = underscoreIndex !== -1 ? filename.substring(0, underscoreIndex + 1) : '';
+            
+            // Create the new folder name with the numeric prefix
+            const newFolderName = numericPrefix + folderName;
+            const absoluteNewFolderPath = path.join(absoluteFolderPath, newFolderName);
+
+            // Check if a folder with this name already exists
+            if (fs.existsSync(absoluteNewFolderPath)) {
+                res.status(409).json({ error: 'A folder with this name already exists' });
+                return;
+            }
+
+            // Delete the original file
+            docUtil.checkFileAccess(absoluteFilePath, root);
+            fs.unlinkSync(absoluteFilePath);
+            console.log(`File deleted: ${absoluteFilePath}`);
+
+            // Create the new folder
+            docUtil.checkFileAccess(absoluteNewFolderPath, root);
+            fs.mkdirSync(absoluteNewFolderPath, { recursive: true });
+            console.log(`Folder created: ${absoluteNewFolderPath}`);
+
+            // If there's remaining content, create a new file inside the folder
+            if (remainingContent && remainingContent.trim().length > 0) {
+                const newFileName = '0001_file.md';
+                const newFilePath = path.join(absoluteNewFolderPath, newFileName);
+                
+                docUtil.checkFileAccess(newFilePath, root);
+                fs.writeFileSync(newFilePath, remainingContent, 'utf8');
+                console.log(`New file created with remaining content: ${newFilePath}`);
+            }
+
+            res.json({ 
+                success: true, 
+                message: `File "${filename}" converted to folder "${newFolderName}" successfully${remainingContent && remainingContent.trim().length > 0 ? ' with remaining content saved as 0001_file.md' : ''}`,
+                folderName: newFolderName
+            });
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to convert file to folder');
+        }
     }        
 }
 export const docMod = new DocMod();

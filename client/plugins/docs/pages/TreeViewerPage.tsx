@@ -12,7 +12,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
-import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
+import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, handleMakeFolder, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
@@ -171,19 +171,25 @@ function EditFile({
                     onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
-                Save
+                    Save
                 </button>
-                <button
+                <button 
                     onClick={() => handleSplitInline(gs, treeNodes, setTreeNodes, reRenderTree)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
-                Split
+                    Split
+                </button>
+                <button 
+                    onClick={() => handleMakeFolder(gs, treeNodes, setTreeNodes, reRenderTree)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                    Make Folder
                 </button>
                 <button
                     onClick={handleCancelClick}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
-                Cancel
+                    Cancel
                 </button>
             </div>
         </div>

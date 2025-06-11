@@ -5,7 +5,7 @@ import { ssg } from "./SSGService.js";
 import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
-import { docBinary } from "./DocBinary.js"; 
+import { docBinary } from "./DocBinary.js";
 
 const defaultPlugin = config.get("defaultPlugin");
 
@@ -27,6 +27,7 @@ class DocsServerPlugin implements IServerPlugin{
         app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docMod.moveUpOrDown); 
         app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
         app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
+        app.post('/api/docs/make-folder', httpServerUtil.verifyAdminHTTPSignature, docMod.makeFolder); 
         app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docMod.pasteItems);
         app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docMod.joinFiles);
         app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
