@@ -1070,7 +1070,7 @@ export default function TreeViewerPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText={formatFullPath(gs.docsFolder || "Doc Viewer")}/>
+                <LogoBlockComp subText="Doc Viewer"/>
                 <div className="flex items-center space-x-4">
                     <ViewWidthDropdown gs={gs} />
                     {isAdmin && 
@@ -1108,6 +1108,13 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div className="mt-4">
+                            {gs.docsFolder && gs.docsFolder.length > 1 &&
+                                <div className="text-center mb-3">
+                                    <div className="inline-block text-blue-300 text-xl font-medium">
+                                        {formatFullPath(gs.docsFolder)}
+                                    </div>
+                                </div>}
+
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
