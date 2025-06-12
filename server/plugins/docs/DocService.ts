@@ -371,12 +371,17 @@ class DocService {
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Use grep to search for the query string recursively            
-            let grepCommand: string;
+            let cmd: string; 
+
             // Set to null to disable timestamp filtering (search all files), 
             // or set to a regex pattern to enable filtering (search only files with timestamps)
             const dateRegex: string | null = requireDate ? 
                 "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+
+            const include = '--include="*.md" --include="*.txt" --exclude-dir="_*"';
+            const chain = 'xargs -0 --no-run-if-empty';
             
+            // REGEX
             if (searchMode === 'REGEX') {
                 // For REGEX mode, use the query as-is as a regex pattern
                 // Escape backslashes for shell usage (other characters like quotes are handled by the shell quoting)
@@ -384,13 +389,14 @@ class DocService {
                 
                 if (dateRegex) {
                     // Search only in files that contain timestamps
-                    grepCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}" | xargs -0 --no-run-if-empty grep -niH -E "${escapedQuery}"`;
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${escapedQuery}"`;
                 } else {
                     // Search in all files (no timestamp filtering)
-                    grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                    cmd = `grep -rniH ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
                 }
-            } else {
-                // For MATCH_ANY and MATCH_ALL, parse the query into search terms
+            } 
+            // MATCH_ANY / MATCH_ALL
+            else {
                 let searchTerms: string[] = [];
                 
                 // Check if the query contains quotes
@@ -417,6 +423,7 @@ class DocService {
                     return;
                 }
                 
+                // MATCH_ANY
                 if (searchMode === 'MATCH_ANY') {
                     // For MATCH_ANY, search for any of the terms
                     const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -424,43 +431,41 @@ class DocService {
                     
                     if (dateRegex) {
                         // Search only in files that contain timestamps
-                        grepCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}" | xargs -0 --no-run-if-empty grep -niH -E "${regexPattern}"`;
+                        cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${regexPattern}"`;
                     } else {
                         // Search in all files (no timestamp filtering)
-                        grepCommand = `grep -rniH --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${regexPattern}" "${absoluteSearchPath}"`;
+                        cmd = `grep -rniH ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
                     }
-                } else { 
-                    // MATCH_ALL
-                    // For MATCH_ALL, ensure files contain all terms
+                } 
+                // MATCH_ALL
+                else { 
                     const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
                     
                     if (dateRegex) {
                         // Search only in files that contain timestamps
-                        let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" -E "${dateRegex}" "${absoluteSearchPath}"`;
+                        let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
                         
                         // Chain additional greps for each search term
                         for (let i = 0; i < escapedTerms.length; i++) {
-                            baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                            baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
                         }
-                        
-                        grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
+                        cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
                     } else {
                         // Search in all files (no timestamp filtering)
-                        let baseCommand = `grep -rlZ --include="*.md" --include="*.txt" --include="*.json" --include="*.js" --include="*.ts" --include="*.html" --include="*.css" --exclude-dir="_*" "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                        let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
                         
                         // Chain additional greps for each search term
                         for (let i = 1; i < escapedTerms.length; i++) {
-                            baseCommand += ` | xargs -0 --no-run-if-empty grep -lZ -i "${escapedTerms[i]}"`;
+                            baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
                         }
-                        
-                        grepCommand = `${baseCommand} | xargs -0 --no-run-if-empty grep -niH -E "${escapedTerms.join('|')}"`;
+                        cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
                     }
                 }
             }
 
-            console.log(`Executing grep command: ${grepCommand}`);
+            console.log(`Executing grep command: ${cmd}`);
             
-            exec(grepCommand, (error, stdout, stderr) => {
+            exec(cmd, (error, stdout, stderr) => {
                 if (error) {
                     // grep returns exit code 1 when no matches found, which is not an error for us
                     if (error.code === 1) {

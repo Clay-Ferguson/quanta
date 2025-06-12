@@ -219,10 +219,6 @@ export default function SearchViewPage() {
 
             <div className="flex flex-col p-4 bg-gray-900 h-full">
                 <div className="mb-4">
-                    <div className="text-sm text-gray-400 mb-2">
-                        Search through documents and content
-                    </div>
-                    
                     <div className="flex gap-2 items-center">
                         <input
                             ref={searchInputRef}
