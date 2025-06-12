@@ -236,8 +236,8 @@ export default function SearchViewPage() {
                         />
                         
                         {/* Search Mode Radio Buttons */}
-                        <div className="flex gap-3 text-sm">
-                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                        <div className="flex gap-3 text-sm px-3 py-2 border border-gray-600 rounded-md bg-gray-800">
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
                                 <input
                                     type="radio"
                                     name="searchMode"
@@ -249,7 +249,7 @@ export default function SearchViewPage() {
                                 />
                                 <span>REGEX</span>
                             </label>
-                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
                                 <input
                                     type="radio"
                                     name="searchMode"
@@ -261,7 +261,7 @@ export default function SearchViewPage() {
                                 />
                                 <span>Match Any</span>
                             </label>
-                            <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
                                 <input
                                     type="radio"
                                     name="searchMode"
@@ -276,7 +276,7 @@ export default function SearchViewPage() {
                         </div>
                         
                         {/* Has Dates Checkbox */}
-                        <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer ml-3">
                             <input
                                 type="checkbox"
                                 checked={gs.docsRequireDate || false}
@@ -295,7 +295,7 @@ export default function SearchViewPage() {
                         <button 
                             onClick={handleSearch}
                             disabled={isSearching || !gs.docsSearch?.trim()}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed ml-4"
                         >
                             {isSearching ? 'Searching...' : 'Search'}
                         </button>
