@@ -12,6 +12,56 @@ const { exec } = await import('child_process');
  * Service class for handling document management operations in the docs plugin.
  */
 class DocService {
+
+    // Takes a 'treeFolder' that may optionally start with '~' and treates the tilde as a wildcard, and the tilde exists
+    // it finds the first folder in the root that matches that wildcard path, and returns that as new 'treeFolder' 
+    resolveWildcardPath = (docRootKey: string, treeFolder: string): string => {
+        // Resolve the wildcard path based on the docRootKey and treeFolder
+        const root = config.getPublicFolderByKey(docRootKey).path;
+        if (!root) {
+            throw new Error('Invalid document root key');
+        }
+        // Ensure the treeFolder is properly decoded and sanitized
+        const decodedTreeFolder = decodeURIComponent(treeFolder);
+        let foundFolder: string = '';
+        
+        // If the path doesn't start with tilde, return it as is
+        if (!decodedTreeFolder.startsWith('~')) {
+            foundFolder = decodedTreeFolder;
+        }
+        // If path is just a tilde, return root path
+        else if (decodedTreeFolder === '~') {
+            foundFolder = '/';
+        }
+        else {
+            // Extract the name to match (remove the tilde)
+            const nameToMatch = decodedTreeFolder.substring(1);
+            
+            // Read the directory contents at root level
+            const files = fs.readdirSync(root);
+            
+            // Look for folders that match the pattern
+            for (const file of files) {
+                // Get full path and check if it's a directory
+                const filePath = path.join(root, file);
+                if (fs.statSync(filePath).isDirectory()) {
+                    // Extract name without ordinal (everything after the underscore)
+                    const underscoreIndex = file.indexOf('_');
+                    if (underscoreIndex !== -1) {
+                        const nameWithoutOrdinal = file.substring(underscoreIndex + 1);
+                        
+                        // If this folder name (without ordinal) matches, use the full folder name with ordinal
+                        if (nameWithoutOrdinal === nameToMatch) {
+                            foundFolder = `/${file}`; // Include leading slash for proper path joining
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return foundFolder;
+    }
+
     /**
      * Tree render method that returns an array of TreeNode objects representing files and folders
      * @param req - Express request object containing treeFolder in the URL path and optional pullup query parameter

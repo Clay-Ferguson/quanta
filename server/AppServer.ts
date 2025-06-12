@@ -6,6 +6,7 @@ import { logInit } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
+import { docSvc } from './plugins/docs/DocService.js';
 
 logInit();
 
@@ -49,6 +50,18 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         }
         console.log(`Serving index.html for page: ${page}`);
 
+        let docPath = req.query.path as string || "";
+        if (docPath) {
+            // We originally wrote this code to have the leading tilde be optional, but let's make things cleaner now by forcing
+            // all paths to be treated this way now. That is, any ordinal values are subject to change so user always enters a path without ordinal
+            // and as of now without the tilde either.
+            if (!docPath.startsWith('~')) {
+                docPath = `~${docPath}`;
+            }
+            docPath = docSvc.resolveWildcardPath(req.params.docRootKey, docPath);
+            console.log(`Resolved docPath: ${docPath}`);
+        }
+
         // Replace the placeholders with actual values
         const result = data
             .replace('{{HOST}}', HOST)
@@ -57,7 +70,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
             .replace(`{{PAGE}}`, page)
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
-            .replace('{{DOC_PATH}}', req.query.path as string || "")
+            .replace('{{DOC_PATH}}', docPath)
             .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
             .replace('{{PLUGINS}}', pluginKeys)
             .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
