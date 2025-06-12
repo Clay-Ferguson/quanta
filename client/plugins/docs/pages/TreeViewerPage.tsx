@@ -344,10 +344,10 @@ function ClickableBreadcrumb({ gs }: ClickableBreadcrumbProps) {
 
     return (
         <div className="text-center mb-3">
-            <div className="inline-flex items-center text-blue-300 text-xl font-medium">
+            <div className="inline-flex items-center text-blue-300 text-2xl font-medium">
                 {pathComponents.map((component, index) => (
                     <span key={index} className="flex items-center">
-                        {index > 0 && <span className="mx-2 text-gray-500">/</span>}
+                        {index > 0 && <span className="text-gray-500">/</span>}
                         <button
                             onClick={() => handlePathClick(component.navigationPath)}
                             className="text-blue-300 hover:text-blue-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-1"

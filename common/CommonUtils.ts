@@ -61,5 +61,12 @@ export function createClickablePathComponents(path: string): Array<{ displayName
         });
     }
     
+    // If we have more than 4 components, replace the leftmost ones with ".." to keep breadcrumbs compact
+    if (result.length > 4) {
+        for (let i = 0; i < result.length - 4; i++) {
+            result[i].displayName = '..';
+        }
+    }
+    
     return result;
 }
