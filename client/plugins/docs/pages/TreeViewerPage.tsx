@@ -989,7 +989,15 @@ function renderTreeNodes(
  * Fetches file content from the server and displays each file as a separate component based on its MIME type.
  */
 export default function TreeViewerPage() {
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    // -------------------
+    // NOTE: I'm leaving the isLoading state commented out for now, because I might change my mind. Right now when it
+    // shows up it's only for a fraction of a second and it creates a flicker as it shows the progress spinner during that time.
+    // If we pring this back we can use some kind of animated CSS to make sure the progress fades in slow enough to only be seen when
+    // the page is actually loading, and not just for a fraction of a second.
+    // const [isLoading, setIsLoading] = useState<boolean>(true);
+    // -------------------
+    const isLoading = false; // Disable loading state for now
+
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
@@ -1041,7 +1049,7 @@ export default function TreeViewerPage() {
         }
         const folder = gs.docsFolder || '';
         try {
-            setIsLoading(true);
+            // setIsLoading(true);
             setError(null);
             const url = `/api/docs/render/${gs.docsRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
@@ -1060,13 +1068,13 @@ export default function TreeViewerPage() {
             return [];
         }
         finally {
-            setIsLoading(false);
+            // setIsLoading(false);
         }
     }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
-            setIsLoading(true);
+            // setIsLoading(true);
             setError(null);
             try {
                 await reRenderTree();
@@ -1074,7 +1082,7 @@ export default function TreeViewerPage() {
                 console.error('Error loading tree:', error);
                 setError(`Sorry, we encountered an error loading the tree for "${gs.docsFolder || '/'}".`);
             } finally {
-                setIsLoading(false);
+                // setIsLoading(false);
             }
         };
         fetchTree();
