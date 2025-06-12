@@ -1086,10 +1086,10 @@ export default function TreeViewerPage() {
                     {gs.docsFolder && gs.docsFolder.length > 1 && 
                         <button 
                             onClick={() => handleParentClick(gs)}
-                            className="btn-icon"
+                            className="p-2 bg-gray-600 text-white rounded-md flex items-center justify-center"
                             title="Go to parent folder"
                         >
-                            <FontAwesomeIcon icon={faLevelUpAlt} className="h-5 w-5" />
+                            <FontAwesomeIcon icon={faLevelUpAlt} className="h-5 w-5 mr-1" />Parent
                         </button>}
                     {PAGE!=DocsPageNames.treeViewer && <BackButtonComp/>}
                 </div>
