@@ -37,3 +37,29 @@ export function formatFullPath(path: string): string {
     const comps = path.split('/').filter(Boolean); // Filter out empty components
     return comps.map(formatDisplayName).join(' / ');
 }
+
+// Creates an array of path components with their corresponding navigation paths
+// for rendering clickable breadcrumb navigation
+export function createClickablePathComponents(path: string): Array<{ displayName: string; navigationPath: string }> {
+    if (!path || path === '/') {
+        return [];
+    }
+    
+    const components = path.split('/').filter(Boolean);
+    const result = [];
+    
+    for (let i = 0; i < components.length; i++) {
+        // Build the navigation path up to this component
+        const navigationPath = '/' + components.slice(0, i + 1).join('/');
+        
+        // Format the display name (remove ordinals, capitalize, etc.)
+        const displayName = formatDisplayName(components[i]);
+        
+        result.push({
+            displayName,
+            navigationPath
+        });
+    }
+    
+    return result;
+}

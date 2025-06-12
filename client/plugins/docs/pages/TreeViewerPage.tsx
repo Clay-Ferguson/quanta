@@ -16,7 +16,7 @@ import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditC
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
-import { formatDisplayName, formatFullPath, stripOrdinal } from '../../../../common/CommonUtils';
+import { formatDisplayName, stripOrdinal, createClickablePathComponents } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
 
 declare const PAGE: string;
@@ -315,6 +315,49 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                 >
                     <FontAwesomeIcon icon={faPaste} className="h-5 w-5" />
                 </button>}
+        </div>
+    );
+}
+
+interface ClickableBreadcrumbProps {
+    gs: DocsGlobalState;
+}
+
+/**
+ * Component for rendering clickable folder path breadcrumbs
+ */
+function ClickableBreadcrumb({ gs }: ClickableBreadcrumbProps) {
+    if (!gs.docsFolder || gs.docsFolder.length <= 1) {
+        return null;
+    }
+
+    const pathComponents = createClickablePathComponents(gs.docsFolder);
+    
+    const handlePathClick = (navigationPath: string) => {
+        // Clear selections and highlighted folder when navigating via breadcrumb
+        gd({ type: 'setTreeFolder', payload: { 
+            docsFolder: navigationPath,
+            docsSelItems: new Set<TreeNode>(),
+            docsHighlightedFolderName: null
+        }});
+    };
+
+    return (
+        <div className="text-center mb-3">
+            <div className="inline-flex items-center text-blue-300 text-xl font-medium">
+                {pathComponents.map((component, index) => (
+                    <span key={index} className="flex items-center">
+                        {index > 0 && <span className="mx-2 text-gray-500">/</span>}
+                        <button
+                            onClick={() => handlePathClick(component.navigationPath)}
+                            className="text-blue-300 hover:text-blue-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-1"
+                            title={`Go to ${component.displayName}`}
+                        >
+                            {component.displayName}
+                        </button>
+                    </span>
+                ))}
+            </div>
         </div>
     );
 }
@@ -1108,12 +1151,7 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div className="mt-4">
-                            {gs.docsFolder && gs.docsFolder.length > 1 &&
-                                <div className="text-center mb-3">
-                                    <div className="inline-block text-blue-300 text-xl font-medium">
-                                        {formatFullPath(gs.docsFolder)}
-                                    </div>
-                                </div>}
+                            <ClickableBreadcrumb gs={gs} />
 
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
