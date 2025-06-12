@@ -26,6 +26,7 @@ export enum DBKeys {
     docsEditMode = 'docsEditMode',
     docsMetaMode = 'docsMetaMode',
     docsNamesMode = 'docsNamesMode',
+    docsRequireDate = 'docsRequireDate',
 }
 
 export enum PanelKeys {

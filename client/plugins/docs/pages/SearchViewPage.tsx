@@ -7,6 +7,8 @@ import { alertModal } from '../../../components/AlertModalComp';
 import { useGlobalState, gd, DocsPageNames } from '../DocsTypes';
 import { app } from '../../../AppService';
 import { formatFullPath } from '../../../../common/CommonUtils';
+import { idb } from '../../../IndexedDB';
+import { DBKeys } from '../../../AppServiceTypes';
 
 interface SearchResult {
     file: string;
@@ -90,7 +92,8 @@ export default function SearchViewPage() {
                 query: search,
                 treeFolder: searchFolder,
                 docRootKey: gs.docsRootKey,
-                searchMode: gs.docsSearchMode || 'MATCH_ANY'
+                searchMode: gs.docsSearchMode || 'MATCH_ANY',
+                requireDate: gs.docsRequireDate || false
             }) as any;
             
             if (response && response.success) {
@@ -271,6 +274,23 @@ export default function SearchViewPage() {
                                 <span>Match All</span>
                             </label>
                         </div>
+                        
+                        {/* Has Dates Checkbox */}
+                        <label className="flex items-center gap-1 text-gray-300 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={gs.docsRequireDate || false}
+                                onChange={async (e) => {
+                                    const checked = e.target.checked;
+                                    gd({ type: 'setRequireDate', payload: { docsRequireDate: checked }});
+                                    // Persist to IndexedDB
+                                    await idb.setItem(DBKeys.docsRequireDate, checked);
+                                }}
+                                className="text-blue-600 focus:ring-blue-500"
+                                disabled={isSearching}
+                            />
+                            <span>Has Dates</span>
+                        </label>
                         
                         <button 
                             onClick={handleSearch}

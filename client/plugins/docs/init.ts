@@ -37,6 +37,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsSearchOriginFolder = '';
         gs.docsLastSearch = '';
         gs.docsSearchMode = 'MATCH_ANY';
+        gs.docsRequireDate = false;
         gs.docsHighlightedFolderName = null;
     }
 
@@ -56,11 +57,13 @@ class DocsClientPlugin implements IClientPlugin {
         const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
+        const docsRequireDate: boolean = await idb.getItem(DBKeys.docsRequireDate, false) === true;
     
         gs.docsViewWidth = docsViewWidth;
         gs.docsEditMode = docsEditMode;
         gs.docsMetaMode = docsMetaMode;
         gs.docsNamesMode = docsNamesMode;
+        gs.docsRequireDate = docsRequireDate;
     }
 
     getRoute(_gs: DocsGlobalState, pageName: string) {

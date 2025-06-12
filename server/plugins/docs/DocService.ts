@@ -323,12 +323,17 @@ class DocService {
      * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
-    search = async (req: Request<any, any, { query: string; treeFolder: string; docRootKey: string; searchMode?: string }>, res: Response): Promise<void> => {
+    search = async (req: Request<any, any, { 
+        query: string; 
+        treeFolder: string; 
+        docRootKey: string; 
+        searchMode?: string,
+        requireDate?: boolean }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
             // todo-1: make this optional.
             const orderByModTime = true;
-            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY' } = req.body;
+            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate } = req.body;
             
             if (!query || typeof query !== 'string') {
                 res.status(400).json({ error: 'Query string is required' });
@@ -369,7 +374,8 @@ class DocService {
             let grepCommand: string;
             // Set to null to disable timestamp filtering (search all files), 
             // or set to a regex pattern to enable filtering (search only files with timestamps)
-            const dateRegex: string | null = null; // "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]";
+            const dateRegex: string | null = requireDate ? 
+                "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
             
             if (searchMode === 'REGEX') {
                 // For REGEX mode, use the query as-is as a regex pattern

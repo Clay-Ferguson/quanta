@@ -9,7 +9,7 @@ import { docBinary } from "./DocBinary.js";
 
 const defaultPlugin = config.get("defaultPlugin");
 
-class DocsServerPlugin implements IServerPlugin{
+class DocsServerPlugin implements IServerPlugin {
     init(context: any) {
         console.log('init docs plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
