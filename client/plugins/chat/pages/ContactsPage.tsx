@@ -4,15 +4,19 @@ import BackButtonComp from '../../../components/BackButtonComp';
 import { useEffect } from 'react';
 import { util } from '../../../Util';
 
+interface ContactsPageProps {
+    pluginTitle?: string;
+}
+
 /**
  * Page for displaying the list of contacts.
  */
-export default function ContactsPage() {
+export default function ContactsPage({ pluginTitle }: ContactsPageProps) {
     useEffect(() => util.resizeEffect(), []);
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Contacts"/>
+                <LogoBlockComp subText="Contacts" pluginTitle={pluginTitle}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>

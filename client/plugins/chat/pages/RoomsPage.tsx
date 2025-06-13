@@ -9,10 +9,14 @@ import { useEffect } from 'react';
 import { util } from '../../../Util';
 import appRooms from '../AppRooms';
 
+interface RoomsPageProps {
+    pluginTitle?: string;
+}
+
 /**
  * Page for displaying the list of rooms the user has previously joined.
  */
-export default function RoomsPage() {
+export default function RoomsPage({ pluginTitle }: RoomsPageProps) {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);
     
@@ -23,7 +27,7 @@ export default function RoomsPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Rooms"/>
+                <LogoBlockComp subText="Rooms" pluginTitle={pluginTitle}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>

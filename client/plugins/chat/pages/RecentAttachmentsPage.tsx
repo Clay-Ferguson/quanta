@@ -15,11 +15,15 @@ import appMessages from '../AppMessages';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
+interface RecentAttachmentsPageProps {
+    pluginTitle?: string;
+}
+
 /**
  * Displays a list of recent attachments sent in the chat application, which are saved to the server. Maily for moderation purposes and to keep an eye
  * on the content being shared.
  */
-export default function RecentAttachmentsPage() {
+export default function RecentAttachmentsPage({ pluginTitle }: RecentAttachmentsPageProps) {
     const gs = useGlobalState();
     const [loading, setLoading] = useState(true);
     const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
@@ -91,7 +95,7 @@ export default function RecentAttachmentsPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Recent Attachments"/>
+                <LogoBlockComp subText="Recent Attachments" pluginTitle={pluginTitle}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>

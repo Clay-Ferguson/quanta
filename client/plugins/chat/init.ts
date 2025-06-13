@@ -78,19 +78,21 @@ class ChatClientPlugin implements IClientPlugin {
             return React.createElement(SettingsPage);
         }
 
+        const pluginTitle = "Callisto";
+
         switch (pageName) {
         case ChatPageNames.contacts:
-            return React.createElement(ContactsPage);
+            return React.createElement(ContactsPage, { pluginTitle });
         case ChatPageNames.recentAttachments:
-            return React.createElement(RecentAttachmentsPage);
+            return React.createElement(RecentAttachmentsPage, { pluginTitle });
         case ChatPageNames.roomMembers:
-            return React.createElement(RoomInfoPage);
+            return React.createElement(RoomInfoPage, { pluginTitle });
         case ChatPageNames.rooms:
-            return React.createElement(RoomsPage);
+            return React.createElement(RoomsPage, { pluginTitle });
         case ChatPageNames.roomsAdmin:
-            return React.createElement(RoomsAdminPage);
+            return React.createElement(RoomsAdminPage, { pluginTitle });
         case ChatPageNames.quantaChat: 
-            return React.createElement(QuantaChatPage, { pluginTitle: "Callisto" });
+            return React.createElement(QuantaChatPage, { pluginTitle });
         case ChatPageNames.chatUserGuide:
             return React.createElement(DocViewerPage, { filename: "/docs/chat_extension/chat_user_guide.md", title: "Callisto User Guide" });
         default: return null;

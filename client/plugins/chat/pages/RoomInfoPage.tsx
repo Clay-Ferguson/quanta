@@ -6,11 +6,15 @@ import { useGlobalState } from '../ChatTypes';
 import { useEffect } from 'react';
 import { util } from '../../../Util';
 
+interface RoomInfoPageProps {
+    pluginTitle?: string;
+}
+
 /**
  * Page for displaying information about the current chat room.
  * It shows the room name and a list of members currently in the room.
  */
-export default function RoomInfoPage() {
+export default function RoomInfoPage({ pluginTitle }: RoomInfoPageProps) {
     const gs = useGlobalState();
     useEffect(() => util.resizeEffect(), []);
     
@@ -21,7 +25,7 @@ export default function RoomInfoPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Room Info"/>
+                <LogoBlockComp subText="Room Info" pluginTitle={pluginTitle}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>
