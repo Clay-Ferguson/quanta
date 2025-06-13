@@ -52,13 +52,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
         let docPath = req.query.path as string || "";
         if (docPath) {
-            // We originally wrote this code to have the leading tilde be optional, but let's make things cleaner now by forcing
-            // all paths to be treated this way now. That is, any ordinal values are subject to change so user always enters a path without ordinal
-            // and as of now without the tilde either.
-            if (!docPath.startsWith('~')) {
-                docPath = `~${docPath}`;
-            }
-            docPath = docSvc.resolveWildcardPath(req.params.docRootKey, docPath);
+            docPath = docSvc.resolveNonOrdinalPath(req.params.docRootKey, docPath);
             console.log(`Resolved docPath: ${docPath}`);
         }
 

@@ -13,53 +13,90 @@ const { exec } = await import('child_process');
  */
 class DocService {
 
-    // Takes a 'treeFolder' that may optionally start with '~' and treates the tilde as a wildcard, and the tilde exists
-    // it finds the first folder in the root that matches that wildcard path, and returns that as new 'treeFolder' 
-    resolveWildcardPath = (docRootKey: string, treeFolder: string): string => {
+    /**
+     * On the file system we have folders that all have 4-digit ordinals in their names, like "1234_FolderName/1234_SubFolderName".
+     * This method allows us to resolve a non-ordinal path like "FolderName/SubFolderName" to the correct ordinal path based on the document root key and tree folder.
+     *
+     * @param docRootKey key of the document root, for which we can get the actual root via 'getPublicFolderByKey'
+     * @param treeFolder non-ordinal path to resolve, e.g. "FolderName/SubFolderName"
+     * @returns the resolved path with ordinals, e.g. "/1234_FolderName/5678_SubFolderName"
+     */
+    resolveNonOrdinalPath = (docRootKey: string, treeFolder: string): string => {        
         // Resolve the wildcard path based on the docRootKey and treeFolder
         const root = config.getPublicFolderByKey(docRootKey).path;
         if (!root) {
             throw new Error('Invalid document root key');
         }
+        
         // Ensure the treeFolder is properly decoded and sanitized
         const decodedTreeFolder = decodeURIComponent(treeFolder);
-        let foundFolder: string = '';
         
-        // If the path doesn't start with tilde, return it as is
-        if (!decodedTreeFolder.startsWith('~')) {
-            foundFolder = decodedTreeFolder;
+        // Handle root case
+        if (decodedTreeFolder === '/' || decodedTreeFolder === '') {
+            return '/';
         }
-        // If path is just a tilde, return root path
-        else if (decodedTreeFolder === '~') {
-            foundFolder = '/';
-        }
-        else {
-            // Extract the name to match (remove the tilde)
-            const nameToMatch = decodedTreeFolder.substring(1);
+        
+        // Split the path into individual folder components, removing empty strings
+        const folderComponents = decodedTreeFolder.split('/').filter(component => component.length > 0);
+        
+        // Build the resolved path by finding the ordinal version of each folder
+        let currentPath = root;
+        let resolvedPath = '';
+        
+        for (let i = 0; i < folderComponents.length; i++) {
+            const folderName = folderComponents[i];
             
-            // Read the directory contents at root level
-            const files = fs.readdirSync(root);
+            // Read the current directory to find matching folders
+            if (!fs.existsSync(currentPath)) {
+                throw new Error(`Directory not found: ${currentPath}`);
+            }
             
-            // Look for folders that match the pattern
-            for (const file of files) {
-                // Get full path and check if it's a directory
-                const filePath = path.join(root, file);
-                if (fs.statSync(filePath).isDirectory()) {
-                    // Extract name without ordinal (everything after the underscore)
-                    const underscoreIndex = file.indexOf('_');
-                    if (underscoreIndex !== -1) {
-                        const nameWithoutOrdinal = file.substring(underscoreIndex + 1);
-                        
-                        // If this folder name (without ordinal) matches, use the full folder name with ordinal
-                        if (nameWithoutOrdinal === nameToMatch) {
-                            foundFolder = `/${file}`; // Include leading slash for proper path joining
-                            break;
-                        }
+            docUtil.checkFileAccess(currentPath, root);
+            const entries = fs.readdirSync(currentPath);
+            
+            // Find the folder that matches the non-ordinal name
+            let matchedFolder: string | null = null;
+            
+            for (const entry of entries) {
+                // Skip hidden files and files starting with underscore
+                if (entry.startsWith('.') || entry.startsWith('_')) {
+                    continue;
+                }
+                
+                // Check if this entry is a directory with an ordinal prefix
+                const entryPath = path.join(currentPath, entry);
+                const stat = fs.statSync(entryPath);
+                
+                if (stat.isDirectory() && /^\d+_/.test(entry)) {                    // Extract the name without ordinal prefix
+                    const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
+                    
+                    // Check if this matches our target folder name (case-insensitive)
+                    if (nameWithoutOrdinal.toLowerCase() === folderName.toLowerCase()) {
+                        matchedFolder = entry;
+                        break;
                     }
+                } else {
+                    console.log(`    Entry "${entry}" is ${!stat.isDirectory() ? 'not a directory' : 'directory without ordinal prefix'}`);
                 }
             }
-        }
-        return foundFolder;
+            
+            if (!matchedFolder) {
+                for (const entry of entries) {
+                    const entryPath = path.join(currentPath, entry);
+                    const stat = fs.statSync(entryPath);
+                    if (stat.isDirectory() && /^\d+_/.test(entry)) {
+                        const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
+                        console.log(`  - "${entry}" -> "${nameWithoutOrdinal}"`);
+                    }
+                }
+                throw new Error(`Folder not found: ${folderName} in path ${currentPath}`);
+            }
+            
+            // Update current path and resolved path
+            currentPath = path.join(currentPath, matchedFolder);
+            resolvedPath += '/' + matchedFolder;
+        }        
+        return resolvedPath;
     }
 
     /**
