@@ -407,10 +407,14 @@ class DocService {
     /**
      * Searches through documents for the given query string using various search modes
      * Supports REGEX, MATCH_ANY, and MATCH_ALL search modes with file modification time ordering
+     * 
+     * NOTE: This method is no longer being used. We use the simpleSearch method instead, which is more efficient, and works with
+     * PDF files as well. Let's keep this method for now, just in case, but we can remove it later if we want.
+     * 
      * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
-    search = async (req: Request<any, any, { 
+    search_v1 = async (req: Request<any, any, { 
         query: string; 
         treeFolder: string; 
         docRootKey: string; 
@@ -667,6 +671,315 @@ class DocService {
             svrUtil.handleError(error, res, 'Failed to perform search');
         }
     }
+
+    /**
+     * Simple search that treats all files as binary matches (no line-by-line parsing)
+     * Supports REGEX, MATCH_ANY, and MATCH_ALL search modes with file modification time ordering
+     * 
+     * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
+     * @param res - Express response object
+     */
+    search = async (req: Request<any, any, { 
+        query: string; 
+        treeFolder: string; 
+        docRootKey: string; 
+        searchMode?: string,
+        requireDate?: boolean }>, res: Response): Promise<void> => {
+        console.log("Document Simple Search Request");
+        try {
+            // todo-1: make this optional.
+            const orderByModTime = true;
+            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate } = req.body;
+            
+            if (!query || typeof query !== 'string') {
+                res.status(400).json({ error: 'Query string is required' });
+                return;
+            }
+            
+            if (!treeFolder || typeof treeFolder !== 'string') {
+                res.status(400).json({ error: 'Tree folder is required' });
+                return;
+            }
+            
+            if (!docRootKey || typeof docRootKey !== 'string') {
+                res.status(400).json({ error: 'Document root key is required' });
+                return;
+            }
+            
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
+                res.status(500).json({ error: 'Invalid document root key' });
+                return;
+            }
+            
+            // Construct the absolute path to search within
+            const absoluteSearchPath = path.join(root, treeFolder);
+            
+            // Security check - ensure the path is within the allowed root
+            docUtil.checkFileAccess(absoluteSearchPath, root);
+            
+            // Check if the search directory exists
+            if (!fs.existsSync(absoluteSearchPath)) {
+                res.status(404).json({ error: 'Search directory not found' });
+                return;
+            }
+
+            console.log(`Simple search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
+            
+            // Build search commands - separate grep for non-PDFs and pdfgrep for PDFs
+            let grepCmd: string = '';
+            let pdfgrepCmd: string = '';
+
+            // Set to null to disable timestamp filtering (search all files), 
+            // or set to a regex pattern to enable filtering (search only files with timestamps)
+            const dateRegex: string | null = requireDate ? 
+                "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+
+            // Include all non-PDF files and exclude hidden directories for grep
+            const grepInclude = '--exclude="*.pdf" --exclude-dir="_*" --exclude-dir=".*"';
+            const chain = 'xargs -0 --no-run-if-empty';
+            
+            // Build search terms first
+            let searchTerms: string[] = [];
+            if (searchMode !== 'REGEX') {
+                // Check if the query contains quotes
+                if (query.includes('"')) {
+                    // Extract quoted phrases and individual words
+                    const regex = /"([^"]+)"|(\S+)/g;
+                    let match;
+                    while ((match = regex.exec(query)) !== null) {
+                        if (match[1]) {
+                            // Quoted phrase
+                            searchTerms.push(match[1]);
+                        } else if (match[2] && !match[2].startsWith('"')) {
+                            // Unquoted word (not part of a quote)
+                            searchTerms.push(match[2]);
+                        }
+                    }
+                } else {
+                    // No quotes, split by spaces
+                    searchTerms = query.trim().split(/\s+/).filter(term => term.length > 0);
+                }
+                
+                if (searchTerms.length === 0) {
+                    res.status(400).json({ error: 'No valid search terms found' });
+                    return;
+                }
+            }
+            
+            // REGEX MODE
+            // todo-0: Claude put in '-E' for all the pdfgrep calls, which I think was wrong, because searches like "this|that" were not working.
+            //         but when I switchd the upper case '-E' to lower case '-e', it worked, but this hasn't been fully tested yet in all scenarios.
+            if (searchMode === 'REGEX') {
+                // For REGEX mode, use the query as-is as a regex pattern
+                const escapedQuery = query.replace(/\\/g, '\\\\');
+                
+                if (dateRegex) {
+                    // Search only in files that contain timestamps
+                    grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                    pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${escapedQuery}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                } else {
+                    // Search in all files (no timestamp filtering)
+                    grepCmd = `grep -rl ${grepInclude} -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                    pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${escapedQuery}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+                }
+            } 
+            // MATCH_ANY MODE
+            else if (searchMode === 'MATCH_ANY') {
+                // For MATCH_ANY, search for any of the terms
+                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                
+                if (searchTerms.length === 1) {
+                    // Single term - use simple string search for better compatibility
+                    if (dateRegex) {
+                        // Search only in files that contain timestamps
+                        grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
+                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    } else {
+                        // Search in all files (no timestamp filtering)
+                        grepCmd = `grep -rl ${grepInclude} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q "${escapedTerms[0]}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+                    }
+                } else {
+                    // Multiple terms - use regex pattern
+                    const regexPattern = escapedTerms.join('|');
+                    if (dateRegex) {
+                        // Search only in files that contain timestamps
+                        grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
+                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${regexPattern}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    } else {
+                        // Search in all files (no timestamp filtering)
+                        grepCmd = `grep -rl ${grepInclude} -E "${regexPattern}" "${absoluteSearchPath}"`;
+                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${regexPattern}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+                    }
+                }
+            } 
+            // MATCH_ALL MODE
+            else { 
+                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                
+                if (dateRegex) {
+                    // Search only in files that contain timestamps
+                    let baseCommand = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}"`;
+                    
+                    // Chain additional greps for each search term
+                    for (let i = 0; i < escapedTerms.length; i++) {
+                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                    }
+                    grepCmd = baseCommand;
+                    
+                    // For PDFs with timestamp filtering and MATCH_ALL
+                    let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    for (let i = 0; i < escapedTerms.length; i++) {
+                        pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    }
+                    pdfgrepCmd = pdfBaseCommand;
+                } else {
+                    // Search in all files (no timestamp filtering)
+                    let baseCommand = `grep -rlZ ${grepInclude} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    
+                    // Chain additional greps for each search term
+                    for (let i = 1; i < escapedTerms.length; i++) {
+                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                    }
+                    grepCmd = baseCommand;
+                    
+                    // For PDFs with MATCH_ALL
+                    let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    for (let i = 1; i < escapedTerms.length; i++) {
+                        pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                    }
+                    pdfgrepCmd = pdfBaseCommand;
+                }
+            }
+
+            console.log(`Executing grep command: ${grepCmd}`);
+            console.log(`Executing pdfgrep command: ${pdfgrepCmd}`);
+            
+            // Execute both commands and combine results
+            const allResults: any[] = [];
+            const fileModTimes = orderByModTime ? new Map<string, number>() : null;
+            let completedCommands = 0;
+            const totalCommands = 2;
+            
+            const processResults = () => {
+                completedCommands++;
+                if (completedCommands === totalCommands) {
+                    // Sort results by modification time (newest first), then by file name
+                    if (orderByModTime) {
+                        allResults.sort((a, b) => {
+                            // First sort by modification time (descending - newest first)
+                            if (a.modTime !== b.modTime) {
+                                return b.modTime - a.modTime;
+                            }
+                            // If modification times are equal, sort by file name (ascending)
+                            return a.file.localeCompare(b.file);
+                        });
+                    }
+                    
+                    // Remove the modTime property from results before sending to client (if it was added)
+                    const cleanResults = orderByModTime ? 
+                        allResults.map(result => ({
+                            file: result.file,
+                            line: result.line,
+                            content: result.content
+                        })) : 
+                        allResults;
+                    
+                    res.json({ 
+                        success: true, 
+                        message: `Simple search completed for query: "${query}". Found ${cleanResults.length} matches.`,
+                        query: query,
+                        searchPath: treeFolder,
+                        results: cleanResults
+                    });
+                }
+            };
+            
+            const addResultsFromOutput = (stdout: string, isFromPdf: boolean = false) => {
+                if (stdout.trim()) {
+                    const filePaths = stdout.trim().split('\n');
+                    
+                    for (const filePath of filePaths) {
+                        if (filePath.trim()) {
+                            // Make the file path relative to the search root
+                            const relativePath = path.relative(absoluteSearchPath, filePath.trim());
+                            
+                            let modTime: number | undefined;
+                            
+                            // Get modification time for this file if ordering is enabled
+                            if (orderByModTime && fileModTimes && !fileModTimes.has(relativePath)) {
+                                try {
+                                    const stat = fs.statSync(filePath.trim());
+                                    const fileModTime = stat.mtime.getTime();
+                                    fileModTimes.set(relativePath, fileModTime);
+                                    modTime = fileModTime;
+                                } catch (error) {
+                                    console.warn(`Failed to get modification time for ${relativePath}:`, error);
+                                    // Use current time as fallback
+                                    const fallbackTime = Date.now();
+                                    fileModTimes.set(relativePath, fallbackTime);
+                                    modTime = fallbackTime;
+                                }
+                            } else if (orderByModTime && fileModTimes) {
+                                modTime = fileModTimes.get(relativePath);
+                            }
+                            
+                            const result: any = {
+                                file: relativePath,
+                                // No line number for simple search - just indicate file match
+                                line: 0,
+                                content: isFromPdf ? 'PDF file contains match' : 'File contains match'
+                            };
+                            
+                            // Only add modTime if ordering is enabled
+                            if (orderByModTime && modTime !== undefined) {
+                                result.modTime = modTime;
+                            }
+                            
+                            allResults.push(result);
+                        }
+                    }
+                }
+            };
+            
+            // Execute grep command for non-PDF files
+            exec(grepCmd, (error, stdout, stderr) => {
+                if (error && error.code !== 1) {
+                    console.error('Grep command error:', error);
+                    if (completedCommands === 0) {
+                        res.status(500).json({ error: 'Search command failed' });
+                        return;
+                    }
+                }
+                
+                if (stderr) {
+                    console.warn('Grep stderr:', stderr);
+                }
+                
+                addResultsFromOutput(stdout, false);
+                processResults();
+            });
+            
+            // Execute pdfgrep command for PDF files
+            exec(pdfgrepCmd, (error, stdout, stderr) => {
+                if (error && error.code !== 1) {
+                    console.warn('Pdfgrep command error (this is normal if no PDFs found):', error);
+                }
+                
+                if (stderr) {
+                    console.warn('Pdfgrep stderr:', stderr);
+                }
+                
+                addResultsFromOutput(stdout, true);
+                processResults();
+            });
+            
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to perform simple search');
+        }
+    }
 }
 
 export const docSvc = new DocService();
+                         
