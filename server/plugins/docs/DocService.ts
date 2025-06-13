@@ -466,10 +466,11 @@ class DocService {
 
             // Set to null to disable timestamp filtering (search all files), 
             // or set to a regex pattern to enable filtering (search only files with timestamps)
+            // Note: remove the '^' at the start of the regex to allow matching lines that don't start with a timestamp but just contain it.
             const dateRegex: string | null = requireDate ? 
-                "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+                "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
-            const include = '--include="*.md" --include="*.txt" --exclude-dir="_*"';
+            const include = '--include="*.md" --include="*.txt" --exclude="_*" --exclude=".*"';
             const chain = 'xargs -0 --no-run-if-empty';
             
             // REGEX
@@ -553,7 +554,6 @@ class DocService {
                     }
                 }
             }
-
             console.log(`Executing grep command: ${cmd}`);
             
             exec(cmd, (error, stdout, stderr) => {
@@ -733,11 +733,12 @@ class DocService {
 
             // Set to null to disable timestamp filtering (search all files), 
             // or set to a regex pattern to enable filtering (search only files with timestamps)
+            // Note: remove the '^' at the start of the regex to allow matching lines that don't start with a timestamp but just contain it.
             const dateRegex: string | null = requireDate ? 
-                "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+                "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
             // Include text-based files only
-            const grepInclude = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude-dir="_*" --exclude-dir=".*"';
+            const grepInclude = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude="_*" --exclude=".*"';
             const chain = 'xargs -0 --no-run-if-empty';
             
             // Build search terms first
