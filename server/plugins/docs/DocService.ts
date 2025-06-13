@@ -738,7 +738,7 @@ class DocService {
                 "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
             // Include text-based files only
-            const grepInclude = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude="_*" --exclude=".*"';
+            const include = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude="_*" --exclude=".*"';
             const chain = 'xargs -0 --no-run-if-empty';
             
             // Build search terms first
@@ -778,11 +778,11 @@ class DocService {
                 
                 if (dateRegex) {
                     // Search only in files that contain timestamps
-                    grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                    grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
                     pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${escapedQuery}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
                 } else {
                     // Search in all files (no timestamp filtering)
-                    grepCmd = `grep -rl ${grepInclude} -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                    grepCmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
                     pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${escapedQuery}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
                 }
             } 
@@ -795,11 +795,11 @@ class DocService {
                     // Single term - use simple string search for better compatibility
                     if (dateRegex) {
                         // Search only in files that contain timestamps
-                        grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
+                        grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
                         pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
                     } else {
                         // Search in all files (no timestamp filtering)
-                        grepCmd = `grep -rl ${grepInclude} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                        grepCmd = `grep -rl ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
                         pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q "${escapedTerms[0]}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
                     }
                 } else {
@@ -807,11 +807,11 @@ class DocService {
                     const regexPattern = escapedTerms.join('|');
                     if (dateRegex) {
                         // Search only in files that contain timestamps
-                        grepCmd = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
+                        grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
                         pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${regexPattern}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
                     } else {
                         // Search in all files (no timestamp filtering)
-                        grepCmd = `grep -rl ${grepInclude} -E "${regexPattern}" "${absoluteSearchPath}"`;
+                        grepCmd = `grep -rl ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
                         pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${regexPattern}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
                     }
                 }
@@ -822,7 +822,7 @@ class DocService {
                 
                 if (dateRegex) {
                     // Search only in files that contain timestamps
-                    let baseCommand = `grep -rlZ ${grepInclude} -E "${dateRegex}" "${absoluteSearchPath}"`;
+                    let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
                     
                     // Chain additional greps for each search term
                     for (let i = 0; i < escapedTerms.length; i++) {
@@ -838,7 +838,7 @@ class DocService {
                     pdfgrepCmd = pdfBaseCommand;
                 } else {
                     // Search in all files (no timestamp filtering)
-                    let baseCommand = `grep -rlZ ${grepInclude} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
                     
                     // Chain additional greps for each search term
                     for (let i = 1; i < escapedTerms.length; i++) {
