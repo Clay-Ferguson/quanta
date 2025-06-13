@@ -4,12 +4,13 @@ import { IClientPlugin } from "../AppServiceTypes";
 interface LogoBlockCompProps {
   subText: string;
   clazz?: string;
+  pluginTitle?: string;
 }
 
 /**
  * LogoBlockComp is a React component that displays the Quanta Chat logo and a subtext.
  */
-export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCompProps) {
+export default function LogoBlockComp({ subText = '', clazz = '', pluginTitle = 'Quanta' }: LogoBlockCompProps) {
     const handleLogoClick = () => {
         const defaultPlugin: IClientPlugin | null = app.getDefaultPlugin();
         defaultPlugin!.goToMainPage();
@@ -25,7 +26,7 @@ export default function LogoBlockComp({ subText = '', clazz = '' }: LogoBlockCom
                 />
             </div>
             <div className="overflow-hidden cursor-pointer min-w-[200px]" onClick={handleLogoClick}>
-                <div className="font-semibold text-blue-400 text-xl">Quanta</div>
+                <div className="font-semibold text-blue-400 text-xl">{pluginTitle}</div>
                 <div className="font-semibold text-gray-300 text-lg">{subText}</div>
             </div>
         </div>

@@ -6,11 +6,15 @@ import MessagesComp from '../comps/MessagesComp';
 import { useGlobalState } from '../ChatTypes';
 import { util } from '../../../Util';
 
+interface QuantaChatPageProps {
+    pluginTitle?: string;
+}
+
 /**
  * Main chat page for the Quanta Chat application. This page displays the chat messages and handles user interactions.
  * It also includes a header and footer for navigation and additional features.
  */
-export default function QuantaChatPage() {
+export default function QuantaChatPage({ pluginTitle }: QuantaChatPageProps) {
     const gs = useGlobalState();
     let mainComp = null;
     
@@ -39,10 +43,9 @@ export default function QuantaChatPage() {
         )
     }
 
-    // #QuantaChatPageLayout 
     return (
         <div className="page-container pt-safe">
-            <HeaderComp/>
+            <HeaderComp pluginTitle={pluginTitle}/>
             {mainComp}
             <FooterComp/>
             <ImageViewerComp />

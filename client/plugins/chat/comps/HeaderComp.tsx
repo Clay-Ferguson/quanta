@@ -17,10 +17,14 @@ function toggleHeaderExpand() {
     idb.setItem(DBKeys.headerExpanded, _gs.headerExpanded);
 }
 
+interface HeaderCompProps {
+    pluginTitle?: string;
+}
+
 /**
  * Header component for the chat application. It includes a logo, room name input, and buttons for joining/leaving rooms.
  */
-export default function HeaderComp() {
+export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
     const gs = useGlobalState();
     const [roomName, setRoomName] = useState('');
     
@@ -37,6 +41,7 @@ export default function HeaderComp() {
             {gs.headerExpanded && 
              <LogoBlockComp clazz="flex-shrink-0 mb-2 md:mb-0" 
                  subText={!gs.chatConnected && gs.userName ? `Hi ${gs.userName}` : ''}
+                 pluginTitle={pluginTitle}
              />}
             
             <div className="flex flex-col lg:flex-row w-full gap-3">
