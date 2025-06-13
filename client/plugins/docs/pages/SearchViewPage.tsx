@@ -89,6 +89,7 @@ export default function SearchViewPage() {
         try {
             const searchFolder = gs.docsFolder || '/';
             const endpoint = gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries';
+
             const response = await httpClientUtil.secureHttpPost(endpoint, {
                 query: search,
                 treeFolder: searchFolder,
@@ -98,7 +99,8 @@ export default function SearchViewPage() {
             }) as any;
             
             if (response && response.success) {
-                console.log('Search response:', response);
+                // pretty print the search results using formatted JSON
+                // console.log('Search results:', JSON.stringify(response.results, null, 2));
                 gd({ type: 'setSearchResults', payload: { 
                     docsSearchResults: response.results || [],
                     docsSearchOriginFolder: searchFolder,
@@ -192,7 +194,7 @@ export default function SearchViewPage() {
                     inline: 'nearest'
                 });
             }
-        }, 500);
+        }, 1000);
     };
     
     // Group results by file to show only one instance per file
