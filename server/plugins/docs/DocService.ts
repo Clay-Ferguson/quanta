@@ -407,14 +407,14 @@ class DocService {
     /**
      * Searches through documents for the given query string using various search modes
      * Supports REGEX, MATCH_ANY, and MATCH_ALL search modes with file modification time ordering
-     * 
-     * NOTE: This method is no longer being used. We use the simpleSearch method instead, which is more efficient, and works with
-     * PDF files as well. Let's keep this method for now, just in case, but we can remove it later if we want.
+     *
+     * todo-0: make this method still be available, as a text only search, and give users option for 'text only files' or 'all files' because
+     * the text only is much faster. 
      * 
      * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
-    search_v1 = async (req: Request<any, any, { 
+    searchTextFiles = async (req: Request<any, any, { 
         query: string; 
         treeFolder: string; 
         docRootKey: string; 
@@ -675,11 +675,12 @@ class DocService {
     /**
      * Simple search that treats all files as binary matches (no line-by-line parsing)
      * Supports REGEX, MATCH_ANY, and MATCH_ALL search modes with file modification time ordering
+     * This method will run slower because it searches thru PDFs in a special way too
      * 
      * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
-    search = async (req: Request<any, any, { 
+    searchBinaries = async (req: Request<any, any, { 
         query: string; 
         treeFolder: string; 
         docRootKey: string; 
@@ -735,8 +736,8 @@ class DocService {
             const dateRegex: string | null = requireDate ? 
                 "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
-            // Include all non-PDF files and exclude hidden directories for grep
-            const grepInclude = '--exclude="*.pdf" --exclude-dir="_*" --exclude-dir=".*"';
+            // Include text-based files only
+            const grepInclude = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude-dir="_*" --exclude-dir=".*"';
             const chain = 'xargs -0 --no-run-if-empty';
             
             // Build search terms first
@@ -896,7 +897,8 @@ class DocService {
                 }
             };
             
-            const addResultsFromOutput = (stdout: string, isFromPdf: boolean = false) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const addResultsFromOutput = (stdout: string, _isFromPdf: boolean = false) => {
                 if (stdout.trim()) {
                     const filePaths = stdout.trim().split('\n');
                     
@@ -928,8 +930,8 @@ class DocService {
                             const result: any = {
                                 file: relativePath,
                                 // No line number for simple search - just indicate file match
-                                line: 0,
-                                content: isFromPdf ? 'PDF file contains match' : 'File contains match'
+                                line: -1,
+                                content: ''
                             };
                             
                             // Only add modTime if ordering is enabled

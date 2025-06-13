@@ -34,7 +34,7 @@ function SearchResultItem({ filePath, fileResults, onFileClick }: SearchResultIt
             className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
             onClick={() => onFileClick(filePath)}
         >
-            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'} mb-2`}>
+            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'}`}>
                 {formatFullPath(filePath)}
             </div>
             
@@ -42,7 +42,7 @@ function SearchResultItem({ filePath, fileResults, onFileClick }: SearchResultIt
                 {filePath}
             </div>} */}
             
-            {fileResults.length > 0 && (
+            {fileResults.length > 0 && fileResults[0].line >= 0 && (
                 <div className="mt-2 space-y-1">
                     {fileResults.slice(0, 3).map((result: SearchResult, index: number) => (
                         <div key={index} className="text-xs">
@@ -88,7 +88,8 @@ export default function SearchViewPage() {
         const search = gs.docsSearch.trim();
         try {
             const searchFolder = gs.docsFolder || '/';
-            const response = await httpClientUtil.secureHttpPost('/api/docs/search', {
+            const endpoint = gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries';
+            const response = await httpClientUtil.secureHttpPost(endpoint, {
                 query: search,
                 treeFolder: searchFolder,
                 docRootKey: gs.docsRootKey,
@@ -289,6 +290,23 @@ export default function SearchViewPage() {
                                 disabled={isSearching}
                             />
                             <span>Has Dates</span>
+                        </label>
+                        
+                        {/* Text Only Checkbox */}
+                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer ml-3">
+                            <input
+                                type="checkbox"
+                                checked={gs.docsSearchTextOnly || false}
+                                onChange={async (e) => {
+                                    const checked = e.target.checked;
+                                    gd({ type: 'setSearchTextOnly', payload: { docsSearchTextOnly: checked }});
+                                    // Persist to IndexedDB
+                                    await idb.setItem(DBKeys.docsSearchTextOnly, checked);
+                                }}
+                                className="text-blue-600 focus:ring-blue-500"
+                                disabled={isSearching}
+                            />
+                            <span>Text Only</span>
                         </label>
                         
                         <button 
