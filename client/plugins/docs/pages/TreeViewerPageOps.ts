@@ -40,7 +40,8 @@ export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
     gd({ type: 'setTreeFolder', payload: { 
         docsFolder: newFolder,
         docsSelItems: new Set<TreeNode>(),
-        docsHighlightedFolderName: null
+        docsHighlightedFolderName: null,
+        docsHighlightedFileName: null
     }});
 };
 
@@ -61,7 +62,7 @@ export const handleFileClick = async (gs: DocsGlobalState, fileName: string) => 
 }
 
 // Handle parent navigation (go up one level in folder tree)
-export const handleParentClick = (gs: DocsGlobalState) => {
+export const handleParentClick = (gs: DocsGlobalState) => { 
     const curFolder = gs.docsFolder || '/';
     
     // Remember the current folder name to scroll back to it after navigating up
@@ -78,7 +79,8 @@ export const handleParentClick = (gs: DocsGlobalState) => {
         gd({ type: 'setTreeFolder', payload: { 
             docsFolder: parentFolder,
             docsSelItems: new Set<TreeNode>(),
-            docsHighlightedFolderName: stripOrdinal(folderToScrollTo)
+            docsHighlightedFolderName: stripOrdinal(folderToScrollTo),
+            docsHighlightedFileName: null
         }});
     } else if (lastSlashIdx === 0 && curFolder.length > 1) {
         // If we're in a direct subfolder of root, go to root
@@ -89,7 +91,8 @@ export const handleParentClick = (gs: DocsGlobalState) => {
         gd({ type: 'setTreeFolder', payload: { 
             docsFolder: '/',
             docsSelItems: new Set<TreeNode>(),
-            docsHighlightedFolderName: stripOrdinal(folderToScrollTo)
+            docsHighlightedFolderName: stripOrdinal(folderToScrollTo),
+            docsHighlightedFileName: null
         }});
     }
     

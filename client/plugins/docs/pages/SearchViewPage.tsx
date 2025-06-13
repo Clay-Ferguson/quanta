@@ -6,7 +6,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { alertModal } from '../../../components/AlertModalComp';
 import { useGlobalState, gd, DocsPageNames } from '../DocsTypes';
 import { app } from '../../../AppService';
-import { formatFullPath } from '../../../../common/CommonUtils';
+import { formatFullPath, stripOrdinal } from '../../../../common/CommonUtils';
 import { idb } from '../../../IndexedDB';
 import { DBKeys } from '../../../AppServiceTypes';
 
@@ -125,7 +125,7 @@ export default function SearchViewPage() {
         }
     };
     
-    const fileClicked = (filePath: string) => {
+    const fileClicked = (filePath: string) => { 
         // Parse the file path to extract the folder path and filename
         // Note: filePath is relative to the searchOriginFolder where the search was performed
         const lastSlashIndex = filePath.lastIndexOf('/');
@@ -148,7 +148,8 @@ export default function SearchViewPage() {
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: targetFolderPath,
                 docsSelItems: new Set(),
-                docsHighlightedFolderName: null
+                docsHighlightedFolderName: null,
+                docsHighlightedFileName: stripOrdinal(fileName)
             }});
         } else if (lastSlashIndex === 0) {
             // File is in root folder (relative to search root)
@@ -158,7 +159,8 @@ export default function SearchViewPage() {
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: searchRootFolder,
                 docsSelItems: new Set(),
-                docsHighlightedFolderName: null
+                docsHighlightedFolderName: null,
+                docsHighlightedFileName: stripOrdinal(fileName)
             }});
         } else {
             // No slash found - file is directly in the search root folder
@@ -168,7 +170,8 @@ export default function SearchViewPage() {
             gd({ type: 'setTreeFolder', payload: { 
                 docsFolder: searchRootFolder,
                 docsSelItems: new Set(),
-                docsHighlightedFolderName: null
+                docsHighlightedFolderName: null,
+                docsHighlightedFileName: stripOrdinal(fileName)
             }});
         }
         
