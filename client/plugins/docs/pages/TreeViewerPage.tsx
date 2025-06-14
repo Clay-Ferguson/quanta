@@ -132,7 +132,6 @@ interface EditFileProps {
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleContentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
     handleCancelClick: () => void;
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }
@@ -146,17 +145,27 @@ function EditFile({
     treeNodes, 
     setTreeNodes, 
     handleFileNameChange, 
-    handleContentChange, 
     handleCancelClick, 
     contentTextareaRef 
 }: EditFileProps) {
-    
+    // Use local state for content to avoid sluggish updates on every keystroke
+    const [localContent, setLocalContent] = useState(gs.docsEditNode?.content || '');
+
+    // Update local content when editing a different node
+    useEffect(() => {
+        setLocalContent(gs.docsEditNode?.content || '');
+    }, [gs.docsEditNode]);
+
+    const handleLocalContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setLocalContent(event.target.value);
+    };
+
     const handleInsertTime = () => {
         if (!contentTextareaRef.current) return;
         
         const textarea = contentTextareaRef.current;
         const cursorPosition = textarea.selectionStart;
-        const currentContent = gs.docsEditContent || '';
+        const currentContent = localContent;
         
         // Create formatted timestamp: YYYY/MM/DD HH:MM:SS AM/PM
         const now = new Date();
@@ -180,10 +189,8 @@ function EditFile({
         const afterCursor = currentContent.substring(cursorPosition);
         const newContent = beforeCursor + timestamp + afterCursor;
         
-        // Update the content
-        gd({ type: 'setEditingContent', payload: { 
-            docsEditContent: newContent
-        }});
+        // Update local content only
+        setLocalContent(newContent);
         
         // Set cursor position after the inserted timestamp
         setTimeout(() => {
@@ -195,16 +202,14 @@ function EditFile({
     };
 
     const calculateRows = () => {
-        if (!gs.docsEditContent || gs.docsEditContent.length < 240) return 3;
-        const newlineCount = (gs.docsEditContent.match(/\n/g) || []).length;
-        const len = gs.docsEditContent.length;
-        let min = 2;
-        if (len > 1000) {
-            min = 10;
+        if (!localContent || localContent.trim() === '') {
+            return 3; // Default minimum rows if content is empty
         }
-        else if (len > 300) {
-            min = 5;
+        let min = 10;
+        if (localContent.length > 1000) {
+            min = 20;
         }
+        const newlineCount = (localContent.match(/\n/g) || []).length;
         return Math.max(min, newlineCount + 1); // Minimum of 'min' rows, always +1 more than content needs
     };
     
@@ -219,27 +224,27 @@ function EditFile({
             />
             <textarea
                 ref={contentTextareaRef}
-                value={gs.docsEditContent || ''}
-                onChange={handleContentChange}
+                value={localContent}
+                onChange={handleLocalContentChange}
                 rows={calculateRows()}
                 className="w-full p-3 bg-gray-800 border border-gray-600 text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter content here..."
             />
             <div className="flex gap-2 mt-2 mb-3">
                 <button
-                    onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes)}
+                    onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes, localContent)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                     Save
                 </button>
                 <button 
-                    onClick={() => handleSplitInline(gs, treeNodes, setTreeNodes, reRenderTree)}
+                    onClick={() => handleSplitInline(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                     Split
                 </button>
                 <button 
-                    onClick={() => handleMakeFolder(gs, treeNodes, setTreeNodes, reRenderTree)}
+                    onClick={() => handleMakeFolder(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                     Make Folder
@@ -696,7 +701,6 @@ interface TreeNodeComponentProps {
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
     isNodeSelected: (node: TreeNode) => boolean;
     handleCancelClick: () => void;
-    handleContentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     formatDisplayName: (name: string) => string;
@@ -717,7 +721,6 @@ function TreeNodeComponent({
     setTreeNodes, 
     isNodeSelected, 
     handleCancelClick, 
-    handleContentChange, 
     handleFolderNameChange, 
     handleFileNameChange, 
     formatDisplayName,
@@ -875,7 +878,6 @@ function TreeNodeComponent({
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 
                             handleFileNameChange={handleFileNameChange} 
-                            handleContentChange={handleContentChange} 
                             handleCancelClick={handleCancelClick} 
                             contentTextareaRef={contentTextareaRef} 
                         />
@@ -939,7 +941,6 @@ function renderTreeNodes(
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>, 
     isNodeSelected: (node: TreeNode) => boolean, 
     handleCancelClick: () => void, 
-    handleContentChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void, 
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
     handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
     formatDisplayName: (name: string) => string, 
@@ -962,7 +963,6 @@ function renderTreeNodes(
                 setTreeNodes, 
                 isNodeSelected, 
                 handleCancelClick, 
-                handleContentChange, 
                 handleFolderNameChange, 
                 handleFileNameChange, 
                 formatDisplayName, 
@@ -988,7 +988,6 @@ function renderTreeNodes(
                     setTreeNodes={setTreeNodes}
                     isNodeSelected={isNodeSelected}
                     handleCancelClick={handleCancelClick}
-                    handleContentChange={handleContentChange}
                     handleFolderNameChange={handleFolderNameChange}
                     handleFileNameChange={handleFileNameChange}
                     formatDisplayName={formatDisplayName}
@@ -1038,12 +1037,6 @@ export default function TreeViewerPage() {
     // Check if a node is selected
     const isNodeSelected = (node: TreeNode): boolean => {
         return gs.docsSelItems?.has(node) || false;
-    };
-
-    const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        gd({ type: 'setEditingContent', payload: { 
-            docsEditContent: event.target.value
-        }});
     };
 
     const handleFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1185,7 +1178,7 @@ export default function TreeViewerPage() {
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
-                                () => handleCancelClick(gs), handleContentChange, handleFolderNameChange, 
+                                () => handleCancelClick(gs), handleFolderNameChange, 
                                 handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree)}
                         </div>
                     )}

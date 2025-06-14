@@ -25,7 +25,6 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsMetaMode = false;
         gs.docsNamesMode = false;
         gs.docsEditNode = null;
-        gs.docsEditContent = null;
         gs.docsNewFolderName = null;
         gs.docsNewFileName = null;
         gs.docsSelItems = new Set<TreeNode>();

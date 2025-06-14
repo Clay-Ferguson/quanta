@@ -15,7 +15,6 @@ export interface DocsGlobalState extends GlobalState {
     docsMetaMode?: boolean; 
     docsNamesMode?: boolean;
     docsEditNode?: TreeNode | null;
-    docsEditContent?: string | null;
     docsNewFolderName?: string | null;
     docsNewFileName?: string | null;
     docsSelItems?: Set<TreeNode>;

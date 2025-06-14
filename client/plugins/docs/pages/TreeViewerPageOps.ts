@@ -22,7 +22,6 @@ export const handleCancelClick = (gs: DocsGlobalState) => {
     } else {
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsEditContent: null,
             docsNewFileName: null
         }});
     }
@@ -211,7 +210,6 @@ export const handleEditClick = (node: TreeNode) => {
     } else {
         gd({ type: 'setFileEditingState', payload: { 
             docsEditNode: node,
-            docsEditContent: node.content || '',
             // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
             docsNewFileName: '' 
         }});
@@ -235,8 +233,8 @@ const deleteFileOrFolderOnServer = async (gs: DocsGlobalState, fileOrFolderName:
 export const handleDeleteClick = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, index: number) => {        
     // Show confirmation dialog
     const confirmText = node.type === 'folder' 
-        ? `Delete the folder "${stripOrdinal(node.name)}"? This action cannot be undone.`
-        : `Delete the file "${stripOrdinal(node.name)}"? This action cannot be undone.`;
+        ? `Delete the folder "${stripOrdinal(node.name)}"?`
+        : `Delete the file "${stripOrdinal(node.name)}"?`;
             
     if (!await confirmModal(confirmText)) {
         return;
@@ -346,7 +344,6 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
                     // const fileNameWithoutPrefix = stripOrdinal(newFileNode.name);
                     gd({ type: 'setFileEditingState', payload: { 
                         docsEditNode: newFileNode,
-                        docsEditContent: newFileNode.content || '',
                         // nameWithoutPrefix (default to blank works just fine to keep same name and makes it easier to edit a new name when wanted.
                         docsNewFileName: '' // fileNameWithoutPrefix
                     }});
@@ -418,8 +415,8 @@ export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node:
     }
 };
 
-export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any) => {
-    if (gs.docsEditNode && gs.docsEditContent !== null) {
+export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, content: string) => {
+    if (gs.docsEditNode) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
         const newFileName = gs.docsNewFileName || stripOrdinal(originalName);
@@ -439,7 +436,7 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
             node === gs.docsEditNode 
-                ? { ...node, content: gs.docsEditContent || '', name: newFullFileName }
+                ? { ...node, content: content, name: newFullFileName }
                 : node
         );
         setTreeNodes(updatedNodes);
@@ -447,13 +444,12 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsEditContent: null,
             docsNewFileName: null
         }});
 
         // Save to server with a delay to ensure UI updates first
         setTimeout(() => {
-            saveToServer(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
+            saveToServer(gs, gs.docsEditNode!.name, content, newFullFileName);
         }, 500);
     }
 };
@@ -622,7 +618,7 @@ export const onDelete = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTr
     const itemText = itemCount === 1 ? "item" : "items";
         
     // Show confirmation dialog
-    const confirmText = `Are you sure you want to delete ${itemCount} selected ${itemText}? This action cannot be undone.`;
+    const confirmText = `Are you sure you want to delete ${itemCount} selected ${itemText}?`;
     if (!await confirmModal(confirmText)) {
         return;
     }
@@ -685,8 +681,8 @@ export const openItemInFileSystem = async (gs: DocsGlobalState, action: "edit" |
     }
 };
 
-export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any) => {
-    if (gs.docsEditNode && gs.docsEditContent !== null) {
+export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: any, content: string) => {
+    if (gs.docsEditNode) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
         const newFileName = gs.docsNewFileName || stripOrdinal(originalName);
@@ -706,7 +702,7 @@ export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], se
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
             node === gs.docsEditNode 
-                ? { ...node, content: gs.docsEditContent || '', name: newFullFileName }
+                ? { ...node, content: content, name: newFullFileName }
                 : node
         );
         setTreeNodes(updatedNodes);
@@ -714,13 +710,12 @@ export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], se
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsEditContent: null,
             docsNewFileName: null
         }});
 
         // Save to server with split=true parameter with a delay to ensure UI updates first
         setTimeout(async () => {
-            await serverSplitFile(gs, gs.docsEditNode!.name, gs.docsEditContent || '', newFullFileName);
+            await serverSplitFile(gs, gs.docsEditNode!.name, content, newFullFileName);
             await reRenderTree();
         }, 500);
     }
@@ -769,7 +764,7 @@ export const onJoin = async (gs: DocsGlobalState, reRenderTree: any) => {
     }
 
     const fileCount = selectedFiles.length;
-    const confirmText = `Are you sure you want to join ${fileCount} selected files? This will concatenate their content into the first file (by ordinal) and delete the remaining files. This action cannot be undone.`;
+    const confirmText = `Are you sure you want to join ${fileCount} selected files? This will concatenate their content into the first file (by ordinal) and delete the remaining files.`;
     
     if (!await confirmModal(confirmText)) {
         return;
@@ -899,10 +894,10 @@ export const uploadFromClipboard = async (gs: DocsGlobalState, reRenderTree: any
     }
 };
 
-export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode[], _setTreeNodes: any, reRenderTree: any) => {
-    if (gs.docsEditNode && gs.docsEditContent !== null && gs.docsEditContent !== undefined) {
+export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode[], _setTreeNodes: any, reRenderTree: any, content: string) => {
+    if (gs.docsEditNode) {
         // Get the first line as the folder name
-        const lines = gs.docsEditContent.split('\n');
+        const lines = content.split('\n');
         const firstLine = lines[0]?.trim() || '';
         
         // Check if first line is too long
@@ -923,7 +918,7 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
         const remainingContent = lines.slice(1).join('\n').trim();
 
         // Confirm the operation
-        const confirmText = `Convert file "${stripOrdinal(gs.docsEditNode.name)}" into a folder named "${folderName}"? The file will be deleted and replaced with a folder${remainingContent ? ', and the remaining content will be saved as a new file in the folder' : ''}. This action cannot be undone.`;
+        const confirmText = `Convert file "${stripOrdinal(gs.docsEditNode.name)}" into a folder named "${folderName}"? The file will be deleted and replaced with a folder${remainingContent ? ', and the remaining content will be saved as a new file in the folder' : ''}.`;
         if (!await confirmModal(confirmText)) {
             return;
         }
@@ -943,7 +938,6 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
                 // Clear editing state (like cancel)
                 gd({ type: 'clearFileEditingState', payload: { 
                     docsEditNode: null,
-                    docsEditContent: null,
                     docsNewFileName: null
                 }});
                 

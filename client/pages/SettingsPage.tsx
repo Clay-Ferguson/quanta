@@ -329,7 +329,7 @@ export default function SettingsPage() {
                             <button 
                                 className="btn-danger"
                                 onClick={async () => {
-                                    if (await confirmModal("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. This operation cannot be undone. Are you sure?")) {
+                                    if (await confirmModal("WARNING: This will completely wipe all your data including chat history, contacts, and identity keys. Are you sure?")) {
                                         clear();
                                     }
                                 }}
