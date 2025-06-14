@@ -193,6 +193,20 @@ function EditFile({
             }
         }, 0);
     };
+
+    const calculateRows = () => {
+        if (!gs.docsEditContent || gs.docsEditContent.length < 240) return 3;
+        const newlineCount = (gs.docsEditContent.match(/\n/g) || []).length;
+        const len = gs.docsEditContent.length;
+        let min = 2;
+        if (len > 1000) {
+            min = 10;
+        }
+        else if (len > 300) {
+            min = 5;
+        }
+        return Math.max(min, newlineCount + 1); // Minimum of 'min' rows, always +1 more than content needs
+    };
     
     return (
         <div>
@@ -200,15 +214,15 @@ function EditFile({
                 type="text"
                 value={gs.docsNewFileName || ''}
                 onChange={handleFileNameChange}
-                className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Filename (optional)"
             />
             <textarea
                 ref={contentTextareaRef}
                 value={gs.docsEditContent || ''}
                 onChange={handleContentChange}
-                rows={10}
-                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={calculateRows()}
+                className="w-full p-3 bg-gray-800 border border-gray-600 text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter content here..."
             />
             <div className="flex gap-2 mt-2 mb-3">
