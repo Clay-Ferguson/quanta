@@ -95,7 +95,8 @@ export default function SearchViewPage() {
                 treeFolder: searchFolder,
                 docRootKey: gs.docsRootKey,
                 searchMode: gs.docsSearchMode || 'MATCH_ANY',
-                requireDate: gs.docsRequireDate || false
+                requireDate: gs.docsRequireDate || false,
+                searchOrder: gs.docsSearchOrder || 'MOD_TIME'
             }) as any;
             
             if (response && response.success) {
@@ -274,6 +275,44 @@ export default function SearchViewPage() {
                                     disabled={isSearching}
                                 />
                                 <span>Match All</span>
+                            </label>
+                        </div>
+                        
+                        {/* Sort Order Radio Buttons */}
+                        <div className="flex gap-3 text-sm px-3 py-2 border border-gray-600 rounded-md bg-gray-800">
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="searchOrder"
+                                    value="MOD_TIME"
+                                    checked={gs.docsSearchOrder === 'MOD_TIME'}
+                                    onChange={async (e) => {
+                                        const value = e.target.value as 'MOD_TIME' | 'DATE';
+                                        gd({ type: 'setSearchOrder', payload: { docsSearchOrder: value }});
+                                        // Persist to IndexedDB
+                                        await idb.setItem(DBKeys.docsSearchOrder, value);
+                                    }}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                    disabled={isSearching}
+                                />
+                                <span>by Mod Time</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="searchOrder"
+                                    value="DATE"
+                                    checked={gs.docsSearchOrder === 'DATE'}
+                                    onChange={async (e) => {
+                                        const value = e.target.value as 'MOD_TIME' | 'DATE';
+                                        gd({ type: 'setSearchOrder', payload: { docsSearchOrder: value }});
+                                        // Persist to IndexedDB
+                                        await idb.setItem(DBKeys.docsSearchOrder, value);
+                                    }}
+                                    className="text-blue-600 focus:ring-blue-500"
+                                    disabled={isSearching}
+                                />
+                                <span>by Text Date</span>
                             </label>
                         </div>
                         

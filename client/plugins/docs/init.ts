@@ -39,6 +39,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsSearchMode = 'MATCH_ANY';
         gs.docsRequireDate = false;
         gs.docsSearchTextOnly = false;
+        gs.docsSearchOrder = 'MOD_TIME';
         gs.docsHighlightedFolderName = null;
     }
 
@@ -60,6 +61,7 @@ class DocsClientPlugin implements IClientPlugin {
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
         const docsRequireDate: boolean = await idb.getItem(DBKeys.docsRequireDate, false) === true;
         const docsSearchTextOnly: boolean = await idb.getItem(DBKeys.docsSearchTextOnly, false) === true;
+        const docsSearchOrder: 'MOD_TIME' | 'DATE' = await idb.getItem(DBKeys.docsSearchOrder, 'MOD_TIME');
     
         gs.docsViewWidth = docsViewWidth;
         gs.docsEditMode = docsEditMode;
@@ -67,6 +69,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsNamesMode = docsNamesMode;
         gs.docsRequireDate = docsRequireDate;
         gs.docsSearchTextOnly = docsSearchTextOnly;
+        gs.docsSearchOrder = docsSearchOrder;
     }
 
     getRoute(_gs: DocsGlobalState, pageName: string) {

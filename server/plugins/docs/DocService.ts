@@ -414,17 +414,18 @@ class DocService {
      * @param req - Express request object containing query, treeFolder, docRootKey, and optional searchMode
      * @param res - Express response object
      */
-    searchTextFiles = async (req: Request<any, any, { 
+    searchTextFiles = async (req: Request<any, any, {  
         query: string; 
         treeFolder: string; 
         docRootKey: string; 
         searchMode?: string,
-        requireDate?: boolean }>, res: Response): Promise<void> => {
+        requireDate?: boolean,
+        searchOrder?: string }>, res: Response): Promise<void> => {
         console.log("Document Search Request");
         try {
-            // todo-1: make this optional.
-            const orderByModTime = true;
-            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate } = req.body;
+            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate, searchOrder = 'MOD_TIME' } = req.body;
+            const orderByModTime = searchOrder === 'MOD_TIME';
+            const orderByDate = searchOrder === 'DATE';
             
             if (!query || typeof query !== 'string') {
                 res.status(400).json({ error: 'Query string is required' });
@@ -568,8 +569,7 @@ class DocService {
                             results: []
                         });
                         return;
-                    }
-                    
+                    }                    
                     console.error('Grep command error:', error);
                     res.status(500).json({ error: 'Search command failed' });
                     return;
@@ -581,37 +581,84 @@ class DocService {
                 
                 // Parse grep output
                 const results = [];
-                const fileModTimes = orderByModTime ? new Map<string, number>() : null;
+                const fileTimes = (orderByModTime || orderByDate) ? new Map<string, number>() : null;
                 
                 if (stdout.trim()) {
                     const lines = stdout.trim().split('\n');
                     
+                    // todo-0: move this into a function because indentation got too deep
                     for (const line of lines) {
                         // Parse grep output format: filename:line_number:content
                         const match = line.match(/^([^:]+):(\d+):(.*)$/);
                         if (match) {
                             const [, filePath, lineNumber, content] = match;
-                            // Make the file path relative to the search root
                             const relativePath = path.relative(absoluteSearchPath, filePath);
-                            
-                            let modTime: number | undefined;
-                            
-                            // Get modification time for this file if ordering is enabled and we haven't already
-                            if (orderByModTime && fileModTimes && !fileModTimes.has(relativePath)) {
-                                try {
-                                    const stat = fs.statSync(filePath);
-                                    const fileModTime = stat.mtime.getTime();
-                                    fileModTimes.set(relativePath, fileModTime);
-                                    modTime = fileModTime;
-                                } catch (error) {
-                                    console.warn(`Failed to get modification time for ${relativePath}:`, error);
-                                    // Use current time as fallback
-                                    const fallbackTime = Date.now();
-                                    fileModTimes.set(relativePath, fallbackTime);
-                                    modTime = fallbackTime;
+                            let timeVal: number | undefined;
+
+                            if (orderByModTime || orderByDate) {
+                                // Get modification time for this file if ordering is enabled and we haven't already
+                                if (fileTimes && !fileTimes.has(relativePath)) {
+                                    try {
+                                        let fileTime = null;
+                                        if (orderByModTime) {
+                                            const stat = fs.statSync(filePath);
+                                            fileTime = stat.mtime.getTime();
+                                        }
+                                        else {
+                                            // read the entire file content and search for the first line that matches the date pattern
+                                            const fileContent = fs.readFileSync(filePath, 'utf8');
+                                            const lines = fileContent.split('\n');
+                                            
+                                            // Search through all lines to find the first one that matches the date pattern
+                                            let dateMatch = null;
+                                            for (const line of lines) {
+                                                const trimmedLine = line.trim();
+                                                const match = trimmedLine.match(/^\[(20[0-9]{2}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM))\]/);
+                                                if (match) {
+                                                    dateMatch = match;
+                                                    break;
+                                                }
+                                            }                                            
+                                            if (dateMatch) {
+                                                const dateStr = dateMatch[1];
+                                                // Convert the date string to a Date object
+                                                const dateParts = dateStr.split(/\/|:|\s/);
+                                                if (dateParts.length === 7) {
+                                                    const year = parseInt(dateParts[0], 10);
+                                                    const month = parseInt(dateParts[1], 10) - 1; // Months are zero-based
+                                                    const day = parseInt(dateParts[2], 10);
+                                                    let hours = parseInt(dateParts[3], 10);
+                                                    const minutes = parseInt(dateParts[4], 10);
+                                                    const seconds = parseInt(dateParts[5], 10);
+                                                    const ampm = dateParts[6];
+                                                    
+                                                    // Convert to 24-hour format
+                                                    if (ampm === 'PM' && hours !== 12) {
+                                                        hours += 12;
+                                                    } else if (ampm === 'AM' && hours === 12) {
+                                                        hours = 0;
+                                                    }
+                                                    
+                                                    // Create a new Date object
+                                                    fileTime = new Date(year, month, day, hours, minutes, seconds).getTime();
+                                                }
+                                            }
+                                        }
+
+                                        if (fileTime!=null) {
+                                            fileTimes.set(relativePath, fileTime);
+                                            timeVal = fileTime;
+                                        }
+                                    } catch (error) {
+                                        console.warn(`Failed to get modification time for ${relativePath}:`, error);
+                                        // Use current time as fallback
+                                        const fallbackTime = Date.now();
+                                        fileTimes.set(relativePath, fallbackTime);
+                                        timeVal = fallbackTime;
+                                    }
+                                } else if (fileTimes) {
+                                    timeVal = fileTimes.get(relativePath);
                                 }
-                            } else if (orderByModTime && fileModTimes) {
-                                modTime = fileModTimes.get(relativePath);
                             }
                             
                             const result: any = {
@@ -620,23 +667,22 @@ class DocService {
                                 content: content.trim()
                             };
                             
-                            // Only add modTime if ordering is enabled
-                            if (orderByModTime && modTime !== undefined) {
-                                result.modTime = modTime;
+                            // Only add timeVal if ordering is enabled
+                            if ((orderByModTime || orderByDate) && timeVal !== undefined) {
+                                result.timeVal = timeVal;
                             }
                             
                             results.push(result);
-                            // console.log(`Match found - File: ${relativePath}, Line: ${lineNumber}, Content: ${content.trim()}`);
                         }
                     }
                 }
                 
                 // Sort results by modification time (newest first), then by file name, then by line number
-                if (orderByModTime) {
+                if (orderByModTime || orderByDate) {
                     results.sort((a, b) => {
                         // First sort by modification time (descending - newest first)
-                        if (a.modTime !== b.modTime) {
-                            return b.modTime - a.modTime;
+                        if (a.timeVal !== b.timeVal) {
+                            return b.timeVal - a.timeVal;
                         }
                         // If modification times are equal, sort by file name (ascending)
                         if (a.file !== b.file) {
@@ -647,8 +693,8 @@ class DocService {
                     });
                 }
                 
-                // Remove the modTime property from results before sending to client (if it was added)
-                const cleanResults = orderByModTime ? 
+                // Remove the timeVal property from results before sending to client (if it was added)
+                const cleanResults = (orderByModTime || orderByDate) ? 
                     results.map(result => ({
                         file: result.file,
                         line: result.line,
@@ -657,7 +703,6 @@ class DocService {
                     results;
                 
                 // console.log(`Search completed. Found ${cleanResults.length} matches.`);
-                
                 res.json({ 
                     success: true, 
                     message: `Search completed for query: "${query}". Found ${cleanResults.length} matches.`,
@@ -685,12 +730,12 @@ class DocService {
         treeFolder: string; 
         docRootKey: string; 
         searchMode?: string,
-        requireDate?: boolean }>, res: Response): Promise<void> => {
+        requireDate?: boolean,
+        searchOrder?: string }>, res: Response): Promise<void> => {
         console.log("Document Simple Search Request");
         try {
-            // todo-1: make this optional.
-            const orderByModTime = true;
-            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate } = req.body;
+            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate, searchOrder = 'MOD_TIME' } = req.body;
+            const orderByModTime = searchOrder === 'MOD_TIME';
             
             if (!query || typeof query !== 'string') {
                 res.status(400).json({ error: 'Query string is required' });
