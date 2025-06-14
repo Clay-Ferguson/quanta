@@ -715,13 +715,12 @@ export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], se
 
         // Save to server with split=true parameter with a delay to ensure UI updates first
         setTimeout(async () => {
-            await serverSplitFile(gs, gs.docsEditNode!.name, content, newFullFileName);
-            await reRenderTree();
+            await serverSplitFile(gs, gs.docsEditNode!.name, content, newFullFileName, reRenderTree);
         }, 500);
     }
 };
 
-const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
+const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: string, newFileName: string, reRenderTree: any) => {
     try {
         const requestBody = {
             filename: filename,
@@ -734,6 +733,7 @@ const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: s
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
         
         if (response && response.success) {
+            await reRenderTree();
             await alertModal(response.message || 'File split successfully');
         } else {
             await alertModal('Error splitting file');
