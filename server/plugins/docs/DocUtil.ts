@@ -5,15 +5,31 @@ import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 const { exec } = await import('child_process');
 
+/**
+ * Utility class for document management operations including file/folder ordering,
+ * security validation, and file system integration.
+ * 
+ * This class provides functionality for:
+ * - Managing ordinal-based file/folder naming (NNNN_filename format)
+ * - Shifting ordinals to maintain proper sequencing during insertions
+ * - Security validation to prevent directory traversal attacks
+ * - File system integration for opening files/folders in desktop applications
+ * 
+ * All methods that access the file system include security checks to ensure
+ * operations are restricted to allowed root directories.
+ */
 class DocUtil {
     /**
      * Extracts the numeric ordinal from a filename with format "NNNN_filename"
-     * @param file - The filename to extract ordinal from
-     * @returns The numeric ordinal value
-     * @throws Error if filename doesn't match expected format
+     * 
+     * This method validates that the filename follows the expected ordinal naming convention
+     * where files are prefixed with a numeric value followed by an underscore.
+     * 
+     * @param file - The filename to extract ordinal from (e.g., "0001_document.md")
+     * @returns The numeric ordinal value (e.g., 1 from "0001_document.md")
      */
     getOrdinalFromName = (file: string): number => {
-        // use regex go make sure the ordinal is a number followed by an underscore
+        // Use regex to ensure the ordinal is a number followed by an underscore
         if (!/^\d+_/.test(file)) {
             throw new Error(`Invalid file name format: ${file}. Expected format is "NNNN_" where N is a digit.`);
         }
@@ -24,10 +40,18 @@ class DocUtil {
     
     /**
      * Security check to ensure file access is within allowed root directory
-     * Prevents directory traversal attacks by validating canonical paths
-     * @param filename - The filename/path to check
-     * @param root - The allowed root directory
-     * @throws Error if access is outside allowed root directory
+     * 
+     * Prevents directory traversal attacks by validating that the canonical (resolved)
+     * path of the requested file is within the allowed root directory. This is crucial
+     * for preventing malicious access to files outside the intended document root.
+     * 
+     * The method resolves both paths to their canonical forms to handle:
+     * - Relative path components (../, ./)
+     * - Symbolic links
+     * - Path normalization
+     * 
+     * @param filename - The filename/path to check (can be relative or absolute)
+     * @param root - The allowed root directory (absolute path)
      */
     checkFileAccess = (filename: string, root: string) => {        
         if (!filename) {
@@ -39,6 +63,7 @@ class DocUtil {
         const canonicalRoot = path.resolve(root);
             
         // Check if the canonical path is within the allowed root directory
+        // Must either start with root + path separator OR be exactly the root
         if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
             throw new Error('Invalid file access: '+filename);
         }
@@ -46,12 +71,23 @@ class DocUtil {
     
     /**
      * Shifts ordinals down for all files/folders at or below a given ordinal position
-     * This creates space for new files to be inserted at specific positions
+     * 
+     * This method creates space for new files to be inserted at specific positions by
+     * incrementing the ordinal prefixes of existing files. It's essential for maintaining
+     * proper sequential ordering when inserting new items.
+     * 
+     * Process:
+     * 1. Reads directory contents and filters for ordinal-prefixed items
+     * 2. Identifies items that need shifting (ordinal >= insertOrdinal)
+     * 3. Sorts in reverse order to avoid naming conflicts during renaming
+     * 4. Increments each ordinal by the specified amount
+     * 5. Tracks path mappings for external systems that reference these files
+     * 
      * @param slotsToAdd - Number of ordinal slots to add (shift amount)
-     * @param absoluteParentPath - The absolute path to the directory
+     * @param absoluteParentPath - The absolute path to the directory containing items to shift
      * @param insertOrdinal - The ordinal position where we're inserting (files at this position and below get shifted)
      * @param root - The root directory for security validation
-     * @param itemsToIgnore - Array of filenames to skip during shifting (optional)
+     * @param itemsToIgnore - Array of filenames to skip during shifting (optional, useful for newly created items)
      * @returns Map of old relative paths to new relative paths for renamed items
      */
     shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
@@ -59,7 +95,7 @@ class DocUtil {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
         
-        // Map to track old relative paths to new relative paths
+        // Map to track old relative paths to new relative paths for external reference updates
         const pathMapping = new Map<string, string>();
         
         // Calculate the relative folder path from root for path mapping
@@ -69,7 +105,7 @@ class DocUtil {
         const allFiles = fs.readdirSync(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
-        // Sort files by name (which will sort by numeric prefix)
+        // Sort files by name (which will sort by numeric prefix for proper ordering)
         numberedFiles.sort((a, b) => a.localeCompare(b));
 
         // Find files that need to be shifted (ordinal >= insertOrdinal)
@@ -79,15 +115,20 @@ class DocUtil {
         });
 
         // Sort in reverse order to avoid conflicts during renaming
+        // (rename highest ordinals first to prevent overwriting)
         filesToShift.sort((a, b) => b.localeCompare(a));
 
         // Shift each file down by incrementing its ordinal prefix
         for (const file of filesToShift) {
             console.log(`Shifting file: ${file}`);
+            
+            // Skip files that should be ignored (e.g., newly created items)
             if (itemsToIgnore && itemsToIgnore.includes(file)) {
                 console.log(`    Skipping file: ${file} (in itemsToIgnore)`);
                 continue;
             }
+            
+            // Parse current filename components
             const prefix = file.substring(0, file.indexOf('_'));
             const nameWithoutPrefix = file.substring(file.indexOf('_') + 1);
             const currentOrdinal = parseInt(prefix);
@@ -110,12 +151,9 @@ class DocUtil {
             console.log(`Shifting file: ${file} -> ${newFileName}`);
             fs.renameSync(oldPath, newPath);
             
-            // Track the path mapping for relative paths
+            // Track the path mapping for relative paths (used by external systems)
             const oldRelativePath = relativeFolderPath ? path.join(relativeFolderPath, file) : file;
             const newRelativePath = relativeFolderPath ? path.join(relativeFolderPath, newFileName) : newFileName;
-            // console.log('    Path mapping:');
-            // console.log(`    Old relative path: ${oldRelativePath}`);
-            // console.log(`    New relative path: ${newRelativePath}`);
             pathMapping.set(oldRelativePath, newRelativePath);
         }
         
@@ -124,9 +162,18 @@ class DocUtil {
 
     /**
      * Ensures a file/folder has a 4-digit ordinal prefix (i.e. "NNNN_"), renaming it if necessary
-     * Handles both padding short ordinals and truncating long ones from legacy systems
+     * 
+     * This method standardizes ordinal prefixes to a consistent 4-digit format for proper
+     * sorting and display. It handles both padding short ordinals with leading zeros and
+     * truncating long ordinals from legacy systems.
+     * 
+     * The method supports:
+     * - Padding short ordinals: "1_file.md" becomes "0001_file.md"
+     * - Truncating legacy 5+ digit ordinals that start with zero: "00001_file.md" becomes "0001_file.md"
+     * - Preserving already correctly formatted 4-digit ordinals
+     * 
      * @param absolutePath - The absolute path to the directory containing the file
-     * @param fileName - The original filename
+     * @param fileName - The original filename with existing ordinal prefix
      * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
@@ -164,13 +211,13 @@ class DocUtil {
                 return fileName;
             }
         }
-        // note: todo-1: This is just a hack to be able to import files that have more than 4 digits in the ordinal prefix.
-        // but with a zero prefix, because this is a common thing encountered in legacy Quanta CMS export files, which
-        // used 5-digit ordinals. We can remove this 'else if' block when we no longer need to support those files.
+        // Legacy support: Handle ordinals with more than 4 digits from legacy Quanta CMS exports
+        // TODO: This is a temporary hack for importing legacy files with 5+ digit ordinals
+        // Remove this block when legacy file support is no longer needed
         else if (ordinalPrefix.length > 4) {
-            // remove as many leading zeroes as needed to make it 4 digits, but if it doesn't start
-            // with a zero throw an error
+            // Only truncate if the ordinal starts with zero (safety check for legacy files)
             if (ordinalPrefix.startsWith('0')) {
+                // Take the last 4 digits to create a 4-digit ordinal
                 const newOrdinal = ordinalPrefix.substring(ordinalPrefix.length - 4);
                 const newFileName = newOrdinal + restOfName;
                 const oldFilePath = path.join(absolutePath, fileName);
@@ -197,21 +244,28 @@ class DocUtil {
                     return fileName;
                 }
             } else {
+                // Ordinal is too long and doesn't start with zero - this is an error condition
                 throw new Error(`Invalid ordinal prefix in filename: ${fileName}`);
             }
         }
         
-        // No rename needed, return original filename
+        // No rename needed, return original filename (already 4 digits)
         return fileName;
     };
 
     /**
      * Gets the maximum ordinal value from all numbered files/folders in a directory
-     * @param absolutePath - The absolute path to the directory
+     * 
+     * This method scans a directory for files with ordinal prefixes and returns the
+     * highest ordinal value found. It's useful for determining where to place new
+     * files when appending to the end of a sequence.
+     * 
+     * @param absolutePath - The absolute path to the directory to scan
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
+     * 
+     * @deprecated This method is no longer used and may be removed in future versions
      */
-    // todo-1: this method is not used any longer, so we can remove it some day.
     getMaxOrdinal = (absolutePath: string, root: string): number => {
         this.checkFileAccess(absolutePath, root);
                 
@@ -219,11 +273,12 @@ class DocUtil {
         const allFiles = fs.readdirSync(absolutePath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
                 
+        // Return 0 if no numbered files exist
         if (numberedFiles.length === 0) {
             return 0;
         }
                 
-        // Extract ordinals and find the maximum
+        // Extract ordinals and find the maximum value
         let maxOrdinal = 0;
         for (const file of numberedFiles) {
             const ordinal = this.getOrdinalFromName(file);
@@ -236,16 +291,25 @@ class DocUtil {
     };
     
     /**
-     * Ensures a file/folder has a 4-digit ordinal prefix by renaming it
+     * Adds a 4-digit ordinal prefix to a filename that doesn't already have one
+     * 
+     * This method takes a filename without an ordinal prefix and adds one with the
+     * specified ordinal value. It's commonly used when importing files or creating
+     * new files that need to be integrated into the ordinal naming system.
+     * 
+     * The method includes special handling for "content.md" files which are given
+     * ordinal 0 as a convention in the system.
+     * 
      * @param absolutePath - The absolute path to the directory containing the file
-     * @param fileName - The original filename without ordinal prefix
+     * @param fileName - The original filename without ordinal prefix (e.g., "document.md")
      * @param ordinal - The ordinal number to use as prefix
      * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
     ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
     
-        // todo-1: Special case hack for injesting quanta exports better. This will be removed later.
+        // Special case: content.md files are always given ordinal 0 by convention
+        // TODO: This is a temporary hack for better Quanta export ingestion and will be removed later
         if (fileName === "content.md") {
             ordinal = 0;
         }
@@ -280,13 +344,25 @@ class DocUtil {
     
     /**
      * Opens an item (file or folder) in the file system using the OS default application
-     * Requires desktop mode to be enabled for security reasons
+     * 
+     * This method provides integration between the web application and the desktop environment,
+     * allowing users to open files and folders directly in their preferred applications.
+     * 
+     * Security requirements:
+     * - Desktop mode must be enabled in configuration for security reasons
+     * - All file paths are validated against the allowed document root
+     * 
+     * Special handling:
+     * - Text files (.md, .txt) can be opened for editing in VS Code on Linux
+     * - The action parameter determines whether to edit or view the item
+     * 
      * @param req - Express request object containing treeItem, docRootKey, and action
-     * @param res - Express response object
+     * @param res - Express response object for sending the HTTP response
      */
     openFileSystemItem = async (req: Request<any, any, { treeItem: string; docRootKey: string, action: string }>, res: Response): Promise<void> => {
         console.log("Open File System Item Request");
     
+        // Security check: ensure desktop mode is enabled before allowing file system access
         if (config.get("desktopMode") !== 'y') {
             console.warn("File system access is disabled in this mode");
             res.status(403).json({ error: 'File system access is disabled in this mode' });
@@ -297,6 +373,7 @@ class DocUtil {
             const { treeItem, docRootKey, action } = req.body;
             const root = config.getPublicFolderByKey(docRootKey).path;
                 
+            // Validate required parameters
             if (!root) {
                 res.status(500).json({ error: 'Invalid root key' });
                 return;
@@ -313,13 +390,13 @@ class DocUtil {
             // Security check - ensure the path is within the allowed root
             this.checkFileAccess(absoluteItemPath, root);
     
-            // Check if the item exists
+            // Verify the item exists in the file system
             if (!fs.existsSync(absoluteItemPath)) {
                 res.status(404).json({ error: 'Item not found' });
                 return;
             }
     
-            // Check if it's a file or directory
+            // Determine if the item is a file or directory
             const stat = fs.statSync(absoluteItemPath);
             const isDirectory = stat.isDirectory();
             const isFile = stat.isFile();
@@ -329,7 +406,7 @@ class DocUtil {
                 return;
             }
     
-            // Open the item using the appropriate command for the OS
+            // Determine the appropriate command based on the operating system
             const platform = process.platform;
             let command: string;
     
@@ -344,17 +421,20 @@ class DocUtil {
                 break;
             case 'linux':
             default:
-                // On Linux, xdg-open can handle both files and folders
+                // On Linux, choose application based on action and file type
                 if (action == "edit" || absoluteItemPath.endsWith('.md') || absoluteItemPath.endsWith('.txt')) {
-                    // todo-1: for now we run VSCode, but we'll make both these commands configurable later, via yaml file
+                    // Open text files in VS Code for editing
+                    // TODO: Make editor command configurable via YAML configuration file
                     command = `code "${absoluteItemPath}"`;
                 }
                 else {
+                    // Use system default application for other files/folders
                     command = `xdg-open "${absoluteItemPath}"`;
                 }
                 break;
             }
     
+            // Execute the command to open the item
             exec(command, (error) => {
                 if (error) {
                     console.error(`Error opening ${isDirectory ? 'folder' : 'file'}:`, error);
@@ -370,6 +450,7 @@ class DocUtil {
             });
     
         } catch (error) {
+            // Handle any errors that occur during the process
             svrUtil.handleError(error, res, 'Failed to open item in file system');
         }
     }

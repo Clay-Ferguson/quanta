@@ -201,7 +201,6 @@ class DBMessages {
      * 
      * @param roomId - ID or name of the room
      * @returns A Promise resolving to an array of message IDs
-     * @throws Error if database operation fails
      */
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
@@ -226,7 +225,6 @@ class DBMessages {
      * @param messageIds - Array of message IDs to retrieve
      * @param roomId - ID or name of the room for security filtering
      * @returns A Promise resolving to an array of chat messages with attachments
-     * @throws Error if database operation fails
      */
     getMessagesByIds = async (messageIds: string[], roomId: string): Promise<ChatMessageIntf[]> => {
         if (!messageIds || messageIds.length === 0) {
@@ -307,7 +305,6 @@ class DBMessages {
      * @param roomId - ID or name of the room
      * @param cutoffTimestamp - Minimum timestamp for messages to include
      * @returns A Promise resolving to an array of message IDs
-     * @throws Error if database operation fails
      */
     getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {

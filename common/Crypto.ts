@@ -72,7 +72,6 @@ class Crypto {
      * @param obj - The object to be signed (will be modified in-place)
      * @param canonicalizr - Function to convert the object to a canonical string representation
      * @param keyPair - The key pair containing the private key for signing
-     * @throws Error if the private key is invalid
      */
     signObject = async (obj: SignableObject, canonicalizr: (obj: any) => string, keyPair: KeyPairHex) => {
         const privKeyBytes: Uint8Array | null = this.importPrivateKey(keyPair.privateKey);
@@ -221,7 +220,6 @@ class Crypto {
      * @param data - The string data to sign
      * @param keyPair - The key pair containing the private key for signing
      * @returns The signature as a hexadecimal string
-     * @throws Error if no private key is available or if the private key is invalid
      */
     signWithPrivateKey = async (data: string, keyPair: KeyPairHex) => {
         if (!keyPair || !keyPair.privateKey) {

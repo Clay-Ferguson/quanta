@@ -37,7 +37,6 @@ class ServerUtil {
      * Retrieves and validates an environment variable
      * @param name - The name of the environment variable to retrieve
      * @returns The value of the environment variable
-     * @throws Error if the environment variable is not set
      */
     getEnvVar = (name: string): string => {
         const value = process.env[name];

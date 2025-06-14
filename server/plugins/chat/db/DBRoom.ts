@@ -193,7 +193,6 @@ class DBRoom {
      * Results are ordered alphabetically by room name.
      * 
      * @returns A Promise resolving to an array of room information objects
-     * @throws Error if the database operation fails
      */
     getAllRoomsInfo = async (): Promise<RoomInfo[]> => {
         try {

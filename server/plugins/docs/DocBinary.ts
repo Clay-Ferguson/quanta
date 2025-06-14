@@ -5,24 +5,55 @@ import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 
+/**
+ * DocBinary class handles binary file operations for the docs plugin
+ * 
+ * This class provides functionality for:
+ * - Serving image files from the document tree with proper content types and caching
+ * - Handling file uploads with multipart form data parsing
+ * - Managing ordinal-based file positioning in the document tree structure
+ * 
+ * The class ensures proper security checks, validates file types, and maintains
+ * the hierarchical structure of documents with ordinal prefixes for ordering.
+ */
 class DocBinary {
     /**
      * Serves image files from the document tree with appropriate content types and caching headers
-     * @param req - Express request object with image path and docRootKey parameter
-     * @param res - Express response object
+     * 
+     * This method handles HTTP requests for image files stored in the document tree structure.
+     * It validates the request, checks file permissions, determines the correct MIME type,
+     * and serves the image with appropriate caching headers for optimal performance.
+     * 
+     * Security features:
+     * - Validates docRootKey against configured public folders
+     * - Checks file access permissions using docUtil.checkFileAccess
+     * - Validates file extensions to ensure only supported image formats are served
+     * - Prevents directory traversal attacks through path validation
+     * 
+     * Supported image formats: PNG, JPEG, JPG, GIF, BMP, WEBP
+     * 
+     * @param req - Express request object containing:
+     *              - req.path: The request path containing the image path
+     *              - req.params.docRootKey: Key identifying the document root folder
+     * @param res - Express response object for sending the image data
+     * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
         // console.log("Serve Doc Image Request:", req.path);
         try {
-            // Extract the path after /api/docs/images/ and decode URL encoding
+            // Extract the relative image path from the request URL
+            // Remove the API prefix and docRootKey to get the actual file path
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
             const imagePath = decodeURIComponent(rawImagePath);
+            
+            // Resolve the document root path using the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
                 res.status(500).json({ error: `bad root key: ` });
                 return;
             }
 
+            // Validate that an image path was provided
             if (!imagePath) {
                 res.status(400).json({ error: 'Image path parameter is required' });
                 return;
@@ -31,29 +62,30 @@ class DocBinary {
             // Construct the absolute path to the image file
             const absoluteImagePath = path.join(root, imagePath);
 
-            // Check if the file exists
+            // Perform security check to ensure file is within allowed directory
+            // and verify file exists
             docUtil.checkFileAccess(absoluteImagePath, root);
             if (!fs.existsSync(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
             }
 
-            // Check if it's actually a file (not a directory)
+            // Verify the path points to a file, not a directory
             const stat = fs.statSync(absoluteImagePath);
             if (!stat.isFile()) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;
             }
 
-            // Validate that it's an image file by extension
+            // Validate file extension against supported image formats
             const ext = path.extname(absoluteImagePath).toLowerCase();
             if (!['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.webp'].includes(ext)) {
                 res.status(400).json({ error: 'File is not a supported image format' });
                 return;
             }
 
-            // Set appropriate content type based on file extension
-            let contentType = 'image/jpeg'; // default
+            // Determine the appropriate MIME type based on file extension
+            let contentType = 'image/jpeg'; // Default fallback
             switch (ext) {
             case '.png':
                 contentType = 'image/png';
@@ -74,69 +106,99 @@ class DocBinary {
                 break;
             }
 
-            // Set headers for image serving
+            // Set HTTP headers for optimal image delivery
             res.setHeader('Content-Type', contentType);
             res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
             
-            // Read and send the image file
+            // Read the image file and send it as the response
             const imageBuffer = fs.readFileSync(absoluteImagePath);
             res.send(imageBuffer);
             
         } catch (error) {
+            // Handle any errors that occur during image serving
             svrUtil.handleError(error, res, 'Failed to serve image');
         }
     }
 
     /**
      * Handles file uploads for the docs plugin with multipart form data parsing
-     * Supports uploading multiple files with proper ordinal positioning
-     * @param req - Express request object containing multipart form data with files, docRootKey, treeFolder, and insertAfterNode
-     * @param res - Express response object
+     * 
+     * This method processes multipart form data uploads containing multiple files and metadata.
+     * It manually parses the multipart data to extract files and form fields, then saves the
+     * files to the document tree with proper ordinal-based naming for hierarchical organization.
+     * 
+     * Key features:
+     * - Manual multipart form data parsing (no external dependencies)
+     * - Support for multiple file uploads in a single request
+     * - Ordinal-based file naming for maintaining document order
+     * - Automatic ordinal shifting to insert files at specific positions
+     * - Security validation of file paths and access permissions
+     * 
+     * Form data fields expected:
+     * - docRootKey: Key identifying the target document root folder
+     * - treeFolder: Relative path to the target folder within the document tree
+     * - insertAfterNode: Optional node name to determine insertion position
+     * - files: One or more file uploads
+     * 
+     * File naming convention:
+     * Files are saved with ordinal prefixes (e.g., "0001_filename.txt") to maintain
+     * order within the document tree structure.
+     * 
+     * @param req - Express request object containing multipart form data with:
+     *              - Content-Type: multipart/form-data with boundary
+     *              - Body: Raw multipart data containing files and form fields
+     * @param res - Express response object for sending upload results
+     * @returns Promise<void> - Resolves when upload processing is complete
      */
     uploadFiles = async (req: Request, res: Response): Promise<void> => {
         try {
-            // Parse the multipart form data manually
+            // Validate that the request contains multipart form data
             const contentType = req.headers['content-type'];
             if (!contentType || !contentType.includes('multipart/form-data')) {
                 res.status(400).json({ error: 'Content-Type must be multipart/form-data' });
                 return;
             }
     
-            // Extract boundary from content-type header
+            // Extract the boundary string used to separate multipart sections
             const boundary = contentType.split('boundary=')[1];
             if (!boundary) {
                 res.status(400).json({ error: 'No boundary found in multipart data' });
                 return;
             }
     
-            // Get raw body data
+            // Collect raw request body data as it streams in
             const chunks: Buffer[] = [];
             req.on('data', (chunk: Buffer) => {
                 chunks.push(chunk);
             });
     
+            // Process the complete request body when all data has been received
             req.on('end', async () => {
                 try {
+                    // Combine all chunks into a single buffer for parsing
                     const buffer = Buffer.concat(chunks);
                     const boundaryBuffer = Buffer.from(`--${boundary}`);
                         
-                    // Parse multipart data
+                    // Parse the multipart data into individual sections
                     const parts = this.parseMultipartData(buffer, boundaryBuffer);
                         
-                    // Extract form fields and files
+                    // Initialize variables to store extracted form data
                     let docRootKey = '';
                     let treeFolder = '';
                     let insertAfterNode = '';
                     const files: { name: string; data: Buffer; type: string }[] = [];
     
+                    // Process each multipart section to extract form fields and files
                     for (const part of parts) {
+                        // Find the end of headers (marked by double CRLF)
                         const headerEnd = part.indexOf('\r\n\r\n');
                         if (headerEnd === -1) continue;
     
+                        // Split headers and body content
                         const headers = part.slice(0, headerEnd).toString();
                         const body = part.slice(headerEnd + 4);
     
-                        // Parse Content-Disposition header
+                        // Parse the Content-Disposition header to determine field type
                         const dispositionMatch = headers.match(/Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/);
                         if (!dispositionMatch) continue;
     
@@ -144,7 +206,7 @@ class DocBinary {
                         const filename = dispositionMatch[2];
     
                         if (filename) {
-                            // This is a file
+                            // This section contains a file upload
                             const typeMatch = headers.match(/Content-Type: ([^\r\n]+)/);
                             const contentType = typeMatch ? typeMatch[1] : 'application/octet-stream';
                                 
@@ -154,9 +216,10 @@ class DocBinary {
                                 type: contentType
                             });
                         } else {
-                            // This is a form field
+                            // This section contains a form field
                             const value = body.toString().replace(/\r\n$/, ''); // Remove trailing \r\n
                                 
+                            // Store form field values based on field name
                             switch (fieldName) {
                             case 'docRootKey':
                                 docRootKey = value;
@@ -171,51 +234,60 @@ class DocBinary {
                         }
                     }
     
+                    // Validate that all required fields are present
                     if (!docRootKey || !treeFolder || files.length === 0) {
                         res.status(400).json({ error: 'Missing required fields: docRootKey, treeFolder, or files' });
                         return;
                     }
     
+                    // Resolve the document root path and validate access
                     const root = config.getPublicFolderByKey(docRootKey).path;
                     if (!root) {
                         res.status(500).json({ error: 'Invalid docRootKey' });
                         return;
                     }
     
+                    // Construct target folder path and validate permissions
                     const absoluteFolderPath = path.join(root, treeFolder);
                     docUtil.checkFileAccess(absoluteFolderPath, root);
     
-                    // Determine insert ordinal
-                    let insertOrdinal = 1;
+                    // Determine the ordinal position for inserting new files
+                    let insertOrdinal = 1; // Default to beginning if no position specified
                     if (insertAfterNode) {
                         try {
+                            // Extract ordinal from the specified node and insert after it
                             insertOrdinal = docUtil.getOrdinalFromName(insertAfterNode) + 1;
                         } catch (error) {
                             console.warn(`Could not parse ordinal from insertAfterNode: ${insertAfterNode}, using default ordinal 1`, error);
                         }
                     }
     
-                    // Shift existing files down to make room
+                    // Shift existing files down to make room for new uploads
+                    // This maintains the ordinal sequence without gaps
                     docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null);
     
-                    // Save uploaded files with proper ordinal prefixes
+                    // Save each uploaded file with proper ordinal prefix
                     let savedCount = 0;
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
                         const ordinal = insertOrdinal + i;
+                        
+                        // Create zero-padded ordinal prefix (e.g., "0001", "0002")
                         const ordinalPrefix = ordinal.toString().padStart(4, '0');
                         const finalFileName = `${ordinalPrefix}_${file.name}`;
                         const finalFilePath = path.join(absoluteFolderPath, finalFileName);
     
                         try {
+                            // Validate file access permissions
                             docUtil.checkFileAccess(finalFilePath, root);
                             
-                            // Safety check: ensure target doesn't already exist to prevent overwriting
+                            // Prevent overwriting existing files
                             if (fs.existsSync(finalFilePath)) {
                                 console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                                 continue;
                             }
                             
+                            // Write the file data to disk
                             fs.writeFileSync(finalFilePath, file.data);
                             savedCount++;
                             console.log(`Uploaded file saved: ${finalFilePath}`);
@@ -224,6 +296,7 @@ class DocBinary {
                         }
                     }
     
+                    // Send success response with upload statistics
                     res.json({ 
                         success: true, 
                         message: `Successfully uploaded ${savedCount} file(s)`,
@@ -237,39 +310,60 @@ class DocBinary {
             });
     
         } catch (error) {
+            // Handle any top-level errors in the upload process
             svrUtil.handleError(error, res, 'Failed to upload files');
         }
     }
     
     /**
      * Helper method to parse multipart form data from a buffer
-     * Splits the buffer into individual parts based on boundary markers
-     * @param buffer - The raw buffer containing multipart data
-     * @param boundary - The boundary buffer used to separate parts
-     * @returns Array of Buffer objects representing individual parts
+     * 
+     * This method manually parses multipart/form-data content by locating boundary markers
+     * and extracting individual parts. It handles the RFC 7578 multipart format without
+     * relying on external parsing libraries.
+     * 
+     * The parsing process:
+     * 1. Locates boundary markers in the buffer
+     * 2. Extracts content between boundaries as individual parts
+     * 3. Handles both intermediate boundaries and final boundary (ending with --)
+     * 4. Skips CRLF characters following boundaries
+     * 
+     * Boundary format in multipart data:
+     * - Intermediate: --{boundary}\r\n
+     * - Final: --{boundary}--\r\n
+     * 
+     * @param buffer - The raw buffer containing the complete multipart form data
+     * @param boundary - The boundary buffer used to separate individual parts
+     * @returns Array of Buffer objects, each representing one multipart section
+     *          (including headers and body content)
      */
     private parseMultipartData(buffer: Buffer, boundary: Buffer): Buffer[] {
         const parts: Buffer[] = [];
         let start = 0;
     
+        // Search for boundary markers throughout the buffer
         while (true) {
             const boundaryIndex = buffer.indexOf(boundary, start);
-            if (boundaryIndex === -1) break;
+            if (boundaryIndex === -1) break; // No more boundaries found
     
             if (start > 0) {
-                // Extract the part between boundaries
+                // Extract the content between the previous boundary and current boundary
                 const part = buffer.slice(start, boundaryIndex);
                 if (part.length > 0) {
                     parts.push(part);
                 }
             }
     
-            // Move past the boundary and the following \r\n
+            // Move past the current boundary
             start = boundaryIndex + boundary.length;
+            
+            // Check if this is the final boundary (ends with --)
             if (buffer[start] === 0x2D && buffer[start + 1] === 0x2D) {
-                // This is the final boundary (ends with --)
+                // Final boundary found (--boundary--), stop parsing
                 break;
             }
+            
+            // Skip CRLF characters that follow the boundary
             if (buffer[start] === 0x0D && buffer[start + 1] === 0x0A) {
                 start += 2; // Skip \r\n
             }
