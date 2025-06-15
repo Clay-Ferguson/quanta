@@ -202,10 +202,10 @@ function EditFile({
     };
 
     const calculateRows = () => {
-        if (!localContent || localContent.trim() === '') {
-            return 3; // Default minimum rows if content is empty
-        }
         let min = 10;
+        if (!localContent || localContent.length < 300) {
+            min = 3; // Default minimum rows if content is empty
+        }
         if (localContent.length > 1000) {
             min = 20;
         }
