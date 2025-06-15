@@ -78,7 +78,7 @@ class DocsClientPlugin implements IClientPlugin {
         case DocsPageNames.searchView:
             return React.createElement(SearchViewPage)
         case DocsPageNames.docsUserGuide:
-            return React.createElement(DocViewerPage, { filename: "/docs/docs_extension/docs_user_guide.md", title: "Quanta User Guide" });
+            return React.createElement(DocViewerPage, { filename: "/docs/extensions/docs/docs_user_guide.md", title: "Quanta User Guide" });
         default:
             return null;
         }

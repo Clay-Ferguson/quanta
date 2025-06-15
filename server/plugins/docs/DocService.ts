@@ -308,6 +308,7 @@ class DocService {
             let fsChildren = false; // Indicates if folder has children in filesystem
             let children: TreeNode[] | null = null;
 
+            // DIRECTORY
             if (fileStat.isDirectory()) {
                 type = 'folder';
 
@@ -324,16 +325,21 @@ class DocService {
                 
                 // Check if folder has any children in the filesystem
                 fsChildren = fs.readdirSync(filePath).length > 0;
-            } else {
+            } 
+            // FILE
+            else {
                 // Process files based on their extension
                 const ext = path.extname(currentFileName).toLowerCase();
                     
+                // IMAGE FILE
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
                     // Image files: store relative path for URL construction
                     type = 'image';
                     const relativePath = path.relative(root, filePath);
                     content = relativePath;
-                } else if (['.md', '.txt'].includes(ext)) {
+                } 
+                // TEXT FILE
+                else if (['.md', '.txt'].includes(ext)) {
                     // Text files: read and store content
                     type = 'text';
                     try {
@@ -343,7 +349,9 @@ class DocService {
                         content = '';
                         type = 'unknown';
                     }
-                } else {
+                } 
+                // BINAY FILE
+                else {
                     // Binary/other files: don't load content
                     type = 'binary';
                     content = '';

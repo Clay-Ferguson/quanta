@@ -94,7 +94,7 @@ class ChatClientPlugin implements IClientPlugin {
         case ChatPageNames.quantaChat: 
             return React.createElement(QuantaChatPage, { pluginTitle });
         case ChatPageNames.chatUserGuide:
-            return React.createElement(DocViewerPage, { filename: "/docs/chat_extension/chat_user_guide.md", title: "Callisto User Guide" });
+            return React.createElement(DocViewerPage, { filename: "/docs/extensions/chat/chat_user_guide.md", title: "Callisto User Guide" });
         default: return null;
         }
     }

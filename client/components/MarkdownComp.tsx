@@ -10,7 +10,6 @@ import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css'; 
 
 declare const DOC_ROOT_KEY: string;
-// todo-0: Update docs to mention the new "menu yaml" format for YAML code blocks
 
 // Run function that calls the server endpoint
 async function run(item: any) {

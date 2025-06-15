@@ -11,8 +11,8 @@ Currently there are two available plugins/extensions:
 
 # User Guides
 
-* [Callisto User Guide](./public/docs/chat_extension/chat_user_guide.md)
-* [Quanta User Guide](./public/docs/docs_extension/docs_user_guide.md)
+* [Callisto User Guide](./public/docs/extensions/chat/chat_user_guide.md)
+* [Quanta User Guide](./public/docs/extensions/docs/docs_user_guide.md)
 
 # Developer Guides
 

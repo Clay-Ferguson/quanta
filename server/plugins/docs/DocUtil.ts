@@ -120,7 +120,7 @@ class DocUtil {
 
         // Shift each file down by incrementing its ordinal prefix
         for (const file of filesToShift) {
-            console.log(`Shifting file: ${file}`);
+            // console.log(`Shifting file: ${file}`);
             
             // Skip files that should be ignored (e.g., newly created items)
             if (itemsToIgnore && itemsToIgnore.includes(file)) {
@@ -148,7 +148,7 @@ class DocUtil {
                 continue;
             }
             
-            console.log(`Shifting file: ${file} -> ${newFileName}`);
+            // console.log(`Shifting file: ${file} -> ${newFileName}`);
             fs.renameSync(oldPath, newPath);
             
             // Track the path mapping for relative paths (used by external systems)
@@ -263,8 +263,6 @@ class DocUtil {
      * @param absolutePath - The absolute path to the directory to scan
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
-     * 
-     * @deprecated This method is no longer used and may be removed in future versions
      */
     getMaxOrdinal = (absolutePath: string, root: string): number => {
         this.checkFileAccess(absolutePath, root);
