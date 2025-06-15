@@ -452,6 +452,49 @@ class DocUtil {
             svrUtil.handleError(error, res, 'Failed to open item in file system');
         }
     }
+
+    /**
+     * Parses a search query string into individual search terms, handling quoted phrases and unquoted words.
+     * 
+     * This utility method extracts search terms from a query string, properly handling:
+     * - Quoted phrases: "exact phrase" - treated as single search terms
+     * - Unquoted words: individual words separated by whitespace
+     * - Mixed queries: combination of quoted phrases and unquoted words
+     * 
+     * The parsing preserves the integrity of quoted phrases while splitting unquoted text
+     * by whitespace. This is essential for search functionality that needs to distinguish
+     * between exact phrase matches and individual word matches.
+     * 
+     * Examples:
+     * - 'hello world' → ['hello', 'world']
+     * - '"hello world"' → ['hello world']
+     * - 'hello "exact phrase" world' → ['hello', 'exact phrase', 'world']
+     * 
+     * @param query - The search query string to parse
+     * @returns Array of search terms, with quoted phrases preserved as single terms
+     */
+    parseSearchTerms = (query: string): string[] => {
+        const searchTerms: string[] = [];
+        
+        // Handle quoted phrases and individual words
+        if (query.includes('"')) {
+            // Extract quoted phrases and unquoted words using regex
+            const regex = /"([^"]+)"|(\S+)/g;
+            let match;
+            while ((match = regex.exec(query)) !== null) {
+                if (match[1]) {
+                    searchTerms.push(match[1]); // Quoted phrase
+                } else if (match[2] && !match[2].startsWith('"')) {
+                    searchTerms.push(match[2]); // Unquoted word
+                }
+            }
+        } else {
+            // Split by whitespace for simple queries
+            searchTerms.push(...query.trim().split(/\s+/).filter(term => term.length > 0));
+        }
+        
+        return searchTerms;
+    }
 }
 
 export const docUtil = new DocUtil();

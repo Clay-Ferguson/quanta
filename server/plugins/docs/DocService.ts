@@ -693,24 +693,7 @@ class DocService {
                 }
             } else {
                 // MATCH_ANY / MATCH_ALL MODES: Parse search terms
-                let searchTerms: string[] = [];
-                
-                // Handle quoted phrases and individual words
-                if (query.includes('"')) {
-                    // Extract quoted phrases and unquoted words
-                    const regex = /"([^"]+)"|(\S+)/g;
-                    let match;
-                    while ((match = regex.exec(query)) !== null) {
-                        if (match[1]) {
-                            searchTerms.push(match[1]); // Quoted phrase
-                        } else if (match[2] && !match[2].startsWith('"')) {
-                            searchTerms.push(match[2]); // Unquoted word
-                        }
-                    }
-                } else {
-                    // Split by whitespace for simple queries
-                    searchTerms = query.trim().split(/\s+/).filter(term => term.length > 0);
-                }
+                const searchTerms = docUtil.parseSearchTerms(query);
                 
                 if (searchTerms.length === 0) {
                     res.status(400).json({ error: 'No valid search terms found' });
@@ -961,7 +944,6 @@ class DocService {
         searchMode?: string,
         requireDate?: boolean,
         searchOrder?: string }>, res: Response): Promise<void> => {
-        console.log("Document Simple Search Request");
         try {
             // Extract and validate parameters
             const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate, searchOrder = 'MOD_TIME' } = req.body;
@@ -1017,21 +999,8 @@ class DocService {
             // Parse search terms for non-REGEX modes
             let searchTerms: string[] = [];
             if (searchMode !== 'REGEX') {
-                if (query.includes('"')) {
-                    // Handle quoted phrases and individual words
-                    const regex = /"([^"]+)"|(\S+)/g;
-                    let match;
-                    while ((match = regex.exec(query)) !== null) {
-                        if (match[1]) {
-                            searchTerms.push(match[1]); // Quoted phrase
-                        } else if (match[2] && !match[2].startsWith('"')) {
-                            searchTerms.push(match[2]); // Unquoted word
-                        }
-                    }
-                } else {
-                    // Simple whitespace-separated terms
-                    searchTerms = query.trim().split(/\s+/).filter(term => term.length > 0);
-                }
+                // Parse search terms using utility function
+                searchTerms = docUtil.parseSearchTerms(query);
                 
                 if (searchTerms.length === 0) {
                     res.status(400).json({ error: 'No valid search terms found' });
