@@ -2,9 +2,15 @@
 
 The **Quanta** Extension is a powerful file system-based document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an actual file on the file system rather than in a monolithic document file. This extension provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) but using your file system itself for storage.
 
+The Quanta Extension does run commands on the Operating System, and is only designed for local users running on their own machine, or perhaps an admin running on a server machine, but it not a multi-user web app. Security is done by crytographically signing requests by the browser which is expected to have a public key which matches the public key defined in 'adminPublicKey' of the config yaml.
+
 ## Getting Started
 
 Quanta presents your files and folders as a unified document view. Each file in a folder is displayed as a separate section/cell, creating the appearance of one continuous document while maintaining individual file organization.
+
+## System Requirements
+
+This extension assumes the server will be running in a Linux environment, and has only been tested on Ubuntu. The search function uses 'grep' on the OS level, and also for searching binary files (namely PDFs) it requires the `pdfgrep` utility to have been installed on the machine.
 
 ### Navigation
 
