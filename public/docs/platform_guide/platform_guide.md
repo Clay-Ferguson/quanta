@@ -1,11 +1,14 @@
 # Quanta Platform Developer Guide
 
+*Note: The official name for the Quanta File System viewer/editor is "Quanta FS" but we almost always refer to it simply as "Quanta", although this is admittedly confusing because Quanta is the same name as the platform itself.*
+
 ## Overview
 
 Quanta is a modern React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications.
 
 The platform currently includes two main applications:
-- **Quanta (Docs)**: A filesystem-based document editor with Jupyter Notebook-style interface
+
+- **Quanta FS (Docs)**: A filesystem-based document editor with Jupyter Notebook-style interface
 - **Callisto (Chat)**: A WebRTC-powered peer-to-peer chat application with optional server persistence
 
 ## Technology Stack
