@@ -2,6 +2,8 @@
 
 export CONFIG_FILE="./config-local.yaml"
 
+# WARNING: You need to 'yarn install' before running this script!
+
 ./kill.sh
 
 # Start the Node.js app in a new session (completely detached)

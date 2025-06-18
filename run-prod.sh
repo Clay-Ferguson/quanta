@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# WARNING: You need to 'yarn install' before running this script!
+
 # NOTE: This var is not acutally used because we're not doing the build here.
 export QUANTA_DEV="true"
 export CONFIG_FILE="./config-prod.yaml"

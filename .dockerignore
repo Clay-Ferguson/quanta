@@ -1,0 +1,49 @@
+# Node modules (will be installed fresh in container)
+node_modules/
+
+# Source files (we only need the built dist folder)
+client/
+server/
+common/
+LLM/
+
+# Build artifacts that aren't needed
+*.log
+*.tmp
+
+# Version control
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+
+# Database directories (mounted as volumes)
+postgres-data/
+pgadmin-data/
+data/
+
+# Other build tools
+.eslintrc*
+tsconfig*.json
+vite.config.ts
+tailwind.config.js
+postcss.config.js
+eslint.config.js
+
+# Scripts that run on host
+run-*.sh
+kill.sh
+
+# Desktop files
+*.desktop
+desktop-icon.png
