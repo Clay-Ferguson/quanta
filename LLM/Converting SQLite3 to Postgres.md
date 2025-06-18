@@ -34,6 +34,9 @@ Please convert `DBRoom.ts` to Postgre. You should be able to keep almost identic
 
 Please convert `DBMessages.ts` to Postgre.
 
+## Step 6
+
+Please convert `DBUsers.ts` to Postgre.
 
 
 

@@ -20,8 +20,8 @@ class DBUsers {
             }
         
             const result = await dbMgr.get(
-                'SELECT pub_key FROM blocked_keys WHERE pub_key = ?',
-                [pub_key]
+                'SELECT pub_key FROM blocked_keys WHERE pub_key = $1',
+                pub_key
             );
         
             return !!result; // Convert to boolean - true if found, false if not found
@@ -47,14 +47,14 @@ class DBUsers {
 
             // First delete all attachments associated with this user's messages
             await dbMgr.run(
-                'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = ?)',
-                [pub_key]
+                'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = $1)',
+                pub_key
             );
 
             // Then delete all messages associated with the public key
             await dbMgr.run(
-                'DELETE FROM messages WHERE public_key = ?',
-                [pub_key]
+                'DELETE FROM messages WHERE public_key = $1',
+                pub_key
             );
         
             console.log(`Deleted content for public key: ${pub_key}`);
@@ -79,10 +79,10 @@ class DBUsers {
                 return;
             }
         
-            // Use INSERT OR IGNORE to avoid errors if the key is already blocked
+            // Use INSERT ON CONFLICT DO NOTHING to avoid errors if the key is already blocked
             await dbMgr.run(
-                'INSERT OR IGNORE INTO blocked_keys (pub_key) VALUES (?)',
-                [pub_key]
+                'INSERT INTO blocked_keys (pub_key) VALUES ($1) ON CONFLICT (pub_key) DO NOTHING',
+                pub_key
             );
             console.log(`Public key blocked: ${pub_key}`);
         } catch (error) {
@@ -113,20 +113,25 @@ class DBUsers {
                 }
             }
 
-            // Use INSERT OR REPLACE to handle both insert and update cases
+            // Use INSERT ON CONFLICT DO UPDATE to handle both insert and update cases
             await dbMgr.run(
-                `INSERT OR REPLACE INTO user_info 
+                `INSERT INTO user_info 
             (pub_key, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    userProfile.publicKey,
-                    userProfile.name,
-                    userProfile.description,
-                    userProfile.avatar?.name || null,
-                    userProfile.avatar?.type || null,
-                    userProfile.avatar?.size || null,
-                    avatarBinaryData
-                ]
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (pub_key) DO UPDATE SET
+                user_name = EXCLUDED.user_name,
+                user_desc = EXCLUDED.user_desc,
+                avatar_name = EXCLUDED.avatar_name,
+                avatar_type = EXCLUDED.avatar_type,
+                avatar_size = EXCLUDED.avatar_size,
+                avatar_data = EXCLUDED.avatar_data`,
+                userProfile.publicKey,
+                userProfile.name,
+                userProfile.description,
+                userProfile.avatar?.name || null,
+                userProfile.avatar?.type || null,
+                userProfile.avatar?.size || null,
+                avatarBinaryData
             );
             console.log(`User info saved for public key: ${userProfile.publicKey}`);
             return true;
@@ -153,8 +158,8 @@ class DBUsers {
             const userInfo = await dbMgr.get(
                 `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
              FROM user_info 
-             WHERE pub_key = ?`,
-                [publicKey]
+             WHERE pub_key = $1`,
+                publicKey
             );
 
             if (!userInfo) {
