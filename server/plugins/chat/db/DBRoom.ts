@@ -27,7 +27,7 @@ class DBRoom {
         
         try {
             // First, get the room ID
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
             if (!room) {
                 console.log(`Room '${roomName}' not found, nothing to delete`);
                 return false;
@@ -37,33 +37,33 @@ class DBRoom {
             console.log(`Found room ID ${roomId} for room '${roomName}'`);
                 
             // Get all message IDs in this room to delete their attachments
-            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', roomId);
+            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = $1', roomId);
             const messageIds = messages.map(msg => msg.id);
                 
             // If there are messages, delete their attachments first
             if (messageIds.length > 0) {
                 console.log(`Deleting attachments for ${messageIds.length} messages in room '${roomName}'`);
                 // Create placeholders for the query
-                const placeholders = messageIds.map(() => '?').join(',');
+                const placeholders = messageIds.map((_, index) => `$${index + 1}`).join(',');
                     
                 // Delete all attachments associated with these messages
                 const attachmentResult = await dbMgr.run(
                     `DELETE FROM attachments WHERE message_id IN (${placeholders})`, 
-                    messageIds
+                    ...messageIds
                 );
-                console.log(`Deleted ${attachmentResult.changes} attachments`);
+                console.log(`Deleted ${attachmentResult.rowCount} attachments`);
             }
                 
             // Delete all messages in the room
             console.log(`Deleting messages in room '${roomName}'`);
-            const messageResult = await dbMgr.run('DELETE FROM messages WHERE room_id = ?', roomId);
-            console.log(`Deleted ${messageResult.changes} messages`);
+            const messageResult = await dbMgr.run('DELETE FROM messages WHERE room_id = $1', roomId);
+            console.log(`Deleted ${messageResult.rowCount} messages`);
                 
             // Finally, delete the room itself
             console.log(`Deleting room '${roomName}'`);
-            const roomResult: any = await dbMgr.run('DELETE FROM rooms WHERE id = ?', roomId);
+            const roomResult: any = await dbMgr.run('DELETE FROM rooms WHERE id = $1', roomId);
                 
-            const success = roomResult.changes > 0;
+            const success = roomResult.rowCount > 0;
             if (success) {
                 console.log(`Successfully deleted room '${roomName}' and all its data`);
             } else {
@@ -89,28 +89,28 @@ class DBRoom {
         console.log(`Wiping all messages from room: ${roomName}`);
             
         // Get the room ID
-        const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
+        const room = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
         if (!room) {
             console.log(`Room '${roomName}' not found, nothing to wipe`);
             return;
         }
             
         // Get all message IDs in this room to delete their attachments
-        const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', room.id);
+        const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = $1', room.id);
         const messageIds = messages.map((msg: any) => msg.id);
             
         // If there are messages, delete their attachments first
         if (messageIds.length > 0) {
             // Create placeholders for the query
-            const placeholders = messageIds.map(() => '?').join(',');
+            const placeholders = messageIds.map((_, index) => `$${index + 1}`).join(',');
                 
             // Delete all attachments associated with these messages
-            await dbMgr.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, messageIds);
+            await dbMgr.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, ...messageIds);
         }
             
         // Delete all messages in the room
-        const result = await dbMgr.run('DELETE FROM messages WHERE room_id = ?', room.id);
-        console.log(`Successfully wiped ${result.changes} messages from room '${roomName}'`);
+        const result = await dbMgr.run('DELETE FROM messages WHERE room_id = $1', room.id);
+        console.log(`Successfully wiped ${result.rowCount} messages from room '${roomName}'`);
     }
     
     /**
@@ -153,8 +153,9 @@ class DBRoom {
                         
                 // Insert the message
                 await dbMgr.run(
-                    `INSERT OR IGNORE INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
-                             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
+                             VALUES ($1, $2, $3, $4, $5, $6, $7)
+                             ON CONFLICT (id) DO NOTHING`,
                     [
                         messageId,
                         roomId,
@@ -178,14 +179,14 @@ class DBRoom {
      */
     async getOrCreateRoom(roomName: string): Promise<number> {
         // Check if room exists
-        let result = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
+        let result = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
         if (result) {
             return result.id;
         }
         
         // Create new room if it doesn't exist
-        result = await dbMgr.run('INSERT INTO rooms (name) VALUES (?)', roomName);
-        return result.lastID;
+        result = await dbMgr.run('INSERT INTO rooms (name) VALUES ($1) RETURNING id', roomName);
+        return result.rows[0].id;
     }
 
     /**
