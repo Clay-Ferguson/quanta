@@ -480,9 +480,13 @@ export class AppMessages {
                     // Fetch only the missing messages from the server
                     const respMessages: GetMessagesByIds_Response = await httpClientUtil.httpPost(`/api/rooms/${encodeURIComponent(roomId)}/get-messages-by-id`, { ids: missingIds });
             
+                    // Debug the message response
+                    console.log('GetMessagesByIds_Response:', JSON.stringify(respMessages, null, 2));
+                    
                     if (respMessages.messages && respMessages.messages.length > 0) {
                         messagesDirty = true;
                         console.log(`Fetched ${respMessages.messages.length} messages from server for room: ${roomId}`);
+                        console.log('First message sample:', JSON.stringify(respMessages.messages[0], null, 2));
 
                         // Add the fetched messages to our local array
                         messages = [...messages, ...respMessages.messages];

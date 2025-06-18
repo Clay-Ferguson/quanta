@@ -210,7 +210,7 @@ class DBMessages {
     
             // Get messages
             const messages = await this.all(`
-                    SELECT m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature
+                    SELECT m.id, m.timestamp, m.sender, m.content, m.public_key, m.signature, m.state
                     FROM messages m
                     WHERE m.room_id = $1
                     ORDER BY m.timestamp DESC
@@ -219,9 +219,12 @@ class DBMessages {
     
             // For each message, get its attachments
             for (const message of messages) {
-                // This came from DB so no matter what states is consider id 'ack'
+                // Ensure all properties use correct mapping from PostgreSQL columns
+                // PostgreSQL uses lowercase column names by default
                 message.state = MessageStates.SAVED;
-
+                message.timestamp = Number(message.timestamp);
+                message.publicKey = message.public_key; // Map from column name
+                
                 const attachments = await this.all(`
                         SELECT name, type, size, data
                         FROM attachments
@@ -258,8 +261,14 @@ class DBMessages {
      */
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
-            // First, get the room_id from the name or id
-            const room = await this.get('SELECT id FROM rooms WHERE name = $1 OR id = $2', roomId, roomId);
+            // First, check if roomId is numeric (an actual ID) or a string (room name)
+            const isNumeric = /^\d+$/.test(roomId);
+            
+            // Use appropriate query based on whether roomId is a numeric ID or string name
+            const room = isNumeric 
+                ? await this.get('SELECT id FROM rooms WHERE id = $1', parseInt(roomId, 10))
+                : await this.get('SELECT id FROM rooms WHERE name = $1', roomId);
+                
             if (!room) {
                 return [];
             }
@@ -286,20 +295,37 @@ class DBMessages {
         }
     
         try {
-            // First, get the room_id from the name or id
-            const room = await this.get('SELECT id FROM rooms WHERE name = $1 OR id = $2', roomId, roomId);
+            // First, check if roomId is numeric (an actual ID) or a string (room name)
+            const isNumeric = /^\d+$/.test(roomId);
+            
+            // Use appropriate query based on whether roomId is a numeric ID or string name
+            const room = isNumeric 
+                ? await this.get('SELECT id FROM rooms WHERE id = $1', parseInt(roomId, 10))
+                : await this.get('SELECT id FROM rooms WHERE name = $1', roomId);
+                
             if (!room) {
                 return [];
             }
             
             // Using parameterized query with placeholders for security
-            const placeholders = messageIds.map((_, index) => `$${index + 3}`).join(',');
+            const placeholders = messageIds.map((_, index) => `$${index + 2}`).join(',');
             
             // Join messages and attachments in a single query
+            // Use consistent naming to avoid case confusion in PostgreSQL results
             const query = `
                 SELECT 
-                    m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature,
-                    a.id as attachment_id, a.name, a.type, a.size, a.data
+                    m.id, 
+                    m.timestamp, 
+                    m.sender, 
+                    m.content, 
+                    m.public_key, 
+                    m.signature,
+                    m.state,
+                    a.id as attachment_id, 
+                    a.name, 
+                    a.type, 
+                    a.size, 
+                    a.data
                 FROM messages m
                 LEFT JOIN attachments a ON m.id = a.message_id
                 WHERE m.id IN (${placeholders}) AND m.room_id = $1
@@ -307,20 +333,22 @@ class DBMessages {
             `;
             
             // Add room_id as the first parameter, then messageIds
-            const params = [room.id, roomId, ...messageIds];
+            const params = [room.id, ...messageIds];
             const rows = await this.all(query, ...params);            
             const messageMap = new Map<string, ChatMessageIntf>();
             
             for (const row of rows) {
                 // If this is a new message id we haven't processed yet
                 if (!messageMap.has(row.id)) {
+                    // Using explicit type conversion to ensure correct property mapping from PostgreSQL result
+                    // PostgreSQL returns lowercase column names by default
                     const message: ChatMessageIntf = {
                         id: row.id,
                         state: MessageStates.SAVED, // anything from the DB is a SAVED state by definition
-                        timestamp: row.timestamp,
+                        timestamp: Number(row.timestamp), // Ensure it's a number type
                         sender: row.sender,
                         content: row.content,
-                        publicKey: row.publicKey,
+                        publicKey: row.public_key || null, // Using the actual column name from DB
                         signature: row.signature,
                         attachments: []
                     };
@@ -362,8 +390,14 @@ class DBMessages {
      */
     getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {
-            // First, get the room_id from the room name
-            const room = await this.get('SELECT id FROM rooms WHERE name = $1', roomId);
+            // First, check if roomId is numeric (an actual ID) or a string (room name)
+            const isNumeric = /^\d+$/.test(roomId);
+            
+            // Use appropriate query based on whether roomId is a numeric ID or string name
+            const room = isNumeric 
+                ? await this.get('SELECT id FROM rooms WHERE id = $1', parseInt(roomId, 10))
+                : await this.get('SELECT id FROM rooms WHERE name = $1', roomId);
+                
             if (!room) {
                 return [];
             }
