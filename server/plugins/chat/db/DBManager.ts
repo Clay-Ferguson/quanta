@@ -1,17 +1,14 @@
-import sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import {DBManagerIntf} from '../../../../common/types/CommonTypes.js';
-import { config } from '../../../Config.js';
+import pgdb from '../../../PDGB.js';
+import { getTransactionClient } from './Transactional.js';
 
-const dbPath: string | undefined = config.get("dbFileName");
-if (!dbPath) {
-    throw new Error('Database path is not set');
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class DBManager implements DBManagerIntf {
-    private db: Database | null = null;
     private tranCounter = 0;
 
     constructor() {
@@ -19,109 +16,78 @@ export class DBManager implements DBManagerIntf {
     }
 
     private async initialize(): Promise<void> {
-        // Ensure data directory exists
-        const dbDir = path.dirname(dbPath!);
-        if (!fs.existsSync(dbDir)) {
-            fs.mkdirSync(dbDir, { recursive: true });
-        }
-
-        // Open and initialize the database
-        console.log('Opening database:', dbPath);
-        this.db = await open({
-            filename: dbPath!,
-            driver: sqlite3.Database
-        });
-
-        if (!this.db) {
-            throw new Error('Failed to open database: ' + dbPath);
-        }
-
-        // Create tables if they don't exist
-        console.log('Initializing database schema');
-        await this.db.exec(`
-            CREATE TABLE IF NOT EXISTS rooms (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS messages (
-                id TEXT PRIMARY KEY,
-                room_id INTEGER NOT NULL,
-                timestamp INTEGER NOT NULL,
-                sender TEXT NOT NULL,
-                content TEXT,
-                public_key TEXT,
-                signature TEXT,
-                FOREIGN KEY (room_id) REFERENCES rooms (id)
-            );
-
-            CREATE TABLE IF NOT EXISTS attachments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                message_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                size INTEGER NOT NULL,
-                data BLOB,
-                FOREIGN KEY (message_id) REFERENCES messages (id)
-            );
-
-            CREATE TABLE IF NOT EXISTS blocked_keys (
-                pub_key TEXT PRIMARY KEY
-            );
-            
-            CREATE TABLE IF NOT EXISTS user_info (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                pub_key TEXT UNIQUE NOT NULL,
-                user_name TEXT,
-                user_desc TEXT,
-                avatar_name TEXT,
-                avatar_type TEXT,
-                avatar_size INTEGER,
-                avatar_data BLOB
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages (room_id);
-            CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
-            CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments (message_id);
-            CREATE INDEX IF NOT EXISTS idx_user_info_pub_key ON user_info (pub_key);
-        `);
-
-        // Try to add the state column and ignore errors if it already exists
-        // This is the cleanest way to do it, but SQLite doesn't support "IF NOT EXISTS" for ALTER TABLE
+        const client = await pgdb.getClient();
         try {
-            await this.db.exec('ALTER TABLE messages ADD COLUMN state TEXT;');
-        } 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        catch (error) {
-            // Column likely already exists, ignore the error
-            console.log('State column might already exist, continuing...');
+            // Read schema.sql file from the same directory as this plugin
+            const schemaPath = path.join(__dirname, '..', 'schema.sql');
+            console.log('Reading schema from:', schemaPath);
+            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+                
+            console.log('Executing database schema...');
+            await client.query(schemaSql);
+            console.log('Database schema created successfully');
+    
+        } catch (error) {
+            console.error('Error initializing database schema:', error);
+            throw error;
+        } finally {
+            client.release();
         }
-
-        // I'm not skilled with SQLite, but followed the advice of Claude to add these two PRAGMAs.
-        await this.db!.exec('PRAGMA journal_mode = WAL;');
-        await this.db!.exec('PRAGMA busy_timeout = 5000;'); // 5 second timeout
     }
 
     checkDb = (): void => {
-        if (!this.db) {
-            console.trace();
-            throw new Error('Database not initialized.');   
+        // PostgreSQL connection is managed by pgdb pool, no need to check individual db instance
+    }
+
+    async get<T = any>(sql: any, ...params: any[]): Promise<T | undefined> {
+        this.checkDb();
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result.rows[0] as T;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result.rows[0] as T;
+        } finally {
+            client.release();
         }
     }
 
-    get<T = any>(sql: any, ...params: any[]): Promise<T | undefined> {
+    async all<T = any[]>(sql: any, ...params: any[]): Promise<T> {
         this.checkDb();
-        return this.db!.get(sql, ...params);
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result.rows as T;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result.rows as T;
+        } finally {
+            client.release();
+        }
     }
 
-    all<T = any[]>(sql: any, ...params: any[]): Promise<T> {
+    async run(sql: any, ...params: any[]): Promise<any> {
         this.checkDb();
-        return this.db!.all(sql, ...params);
-    }
-
-    run(sql: any, ...params: any[]): Promise<any> {
-        this.checkDb();
-        return this.db!.run(sql, ...params);
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result;
+        } finally {
+            client.release();
+        }
     }
 }
 
