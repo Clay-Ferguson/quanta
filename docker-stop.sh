@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Stopping Quanta Docker containers..."
-docker-compose down
+docker-compose -f docker-compose.yaml down 
 
 echo "Removing any orphaned containers..."
 docker container prune -f
