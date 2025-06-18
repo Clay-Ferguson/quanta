@@ -1,10 +1,12 @@
 # Notes to Copilot AI Agent about the `Converting SQLite3 to Postgres` 
 
+Note: This file contains information and instructions for the Github Copilot Agent to use to perform the below refactorings on this project:
+
 Our chat plugin currently uses SQLite3. 
 
 This is what we're currently doing in this project: We're converting the chat plugin SQLite code to Postres. The common Postgres database connection code is found in '/server/PDGB.ts', and will be used for all plugins, for non-plugin specific code. However we're focusing right now only on the 'chat' plugin and specifically the files in '/server/plugins/chat/db'. We will be doing this conversion one step at a time, and we won't expect the code to be able to fully run the 'chat' plugin again until all steps are complete.
 
-Here are the steps (below). Right now we are doing Step #4.
+Here are the steps (below). Right now we are doing Step #6.
 
 ## Step 1 (completed)
 
@@ -27,4 +29,12 @@ Please convert `DBAttachments.ts` to Postgre. You should be able to keep almost 
 ## Step 4 (completed)
 
 Please convert `DBRoom.ts` to Postgre. You should be able to keep almost identical SQL again, of course.
+
+## Step 5 (completed)
+
+Please convert `DBMessages.ts` to Postgre.
+
+
+
+
 

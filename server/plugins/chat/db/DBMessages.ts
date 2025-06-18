@@ -1,7 +1,8 @@
 import { ChatMessageIntf, MessageStates } from "../../../../common/types/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
 import { Transactional } from './Transactional.js';
-import { dbMgr } from './DBManager.js';
+import pgdb from '../../../PDGB.js';
+import { getTransactionClient } from './Transactional.js';
 
 /**
  * Database operations for handling chat messages.
@@ -16,6 +17,63 @@ class DBMessages {
     }
 
     /**
+     * Execute a database query that returns a single row
+     */
+    private async get<T = any>(sql: string, ...params: any[]): Promise<T | undefined> {
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result.rows[0] as T;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result.rows[0] as T;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Execute a database query that returns multiple rows
+     */
+    private async all<T = any[]>(sql: string, ...params: any[]): Promise<T> {
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result.rows as T;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result.rows as T;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Execute a database query that modifies data
+     */
+    private async run(sql: string, ...params: any[]): Promise<any> {
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            const result = await transactionClient.query(sql, params);
+            return result;
+        }
+        
+        const client = await pgdb.getClient();
+        try {
+            const result = await client.query(sql, params);
+            return result;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * Persists a message to a room identified by name.
      * Uses a transaction to ensure database consistency.
      * 
@@ -27,9 +85,9 @@ class DBMessages {
     // Because of @Transactional() decorator, we can't use fat-arrow function so we bind to this in constructor.
     async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         
-        const existingMessage = await dbMgr.get(
-            'SELECT rowid FROM messages WHERE id = ?',
-            [message.id]
+        const existingMessage = await this.get(
+            'SELECT rowid FROM messages WHERE id = $1',
+            message.id
         );
         if (existingMessage) {
             console.log('Message already exists, skipping insert');
@@ -58,22 +116,21 @@ class DBMessages {
         // with the state SAVED (acknowledged) so they're up to date immediately with correct state on the object.
         message.state = MessageStates.SAVED; 
 
-        const result: any = await dbMgr.run(
-            `INSERT OR IGNORE INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                message.id, 
-                message.state,
-                roomId, 
-                message.timestamp, 
-                message.sender, 
-                message.content,
-                message.publicKey || null,
-                message.signature || null
-            ]
+        const result: any = await this.run(
+            `INSERT INTO messages (id, state, room_id, timestamp, sender, content, public_key, signature)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                 ON CONFLICT (id) DO NOTHING`,
+            message.id, 
+            message.state,
+            roomId, 
+            message.timestamp, 
+            message.sender, 
+            message.content,
+            message.publicKey || null,
+            message.signature || null
         );
 
-        if (result.changes === 0) {
+        if (result.rowCount === 0) {
             console.log('Message already exists, skipping insert');
             return true;
         }
@@ -92,18 +149,15 @@ class DBMessages {
                     }
                 }
 
-                await dbMgr.run(
+                await this.run(
                     `INSERT INTO attachments (message_id, name, type, size, data)
-                         VALUES (?, ?, ?, ?, ?)`,
-                    [
-                        message.id,
-                        attachment.name,
-                        attachment.type,
-                        attachment.size,
-                        binaryData
-                    ]
+                         VALUES ($1, $2, $3, $4, $5)`,
+                    message.id,
+                    attachment.name,
+                    attachment.type,
+                    attachment.size,
+                    binaryData
                 );
-                attachment.id = result.lastID;
             }
         }
         // console.log(`Message persisted successfully: id=${message.id}`);
@@ -149,33 +203,33 @@ class DBMessages {
     getMessagesForRoom = async (roomName: string, limit = 100, offset = 0): Promise<ChatMessageIntf[]> => {
         try {
             // Get the room ID
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', roomName);
+            const room = await this.get('SELECT id FROM rooms WHERE name = $1', roomName);
             if (!room) {
                 return [];
             }
     
             // Get messages
-            const messages = await dbMgr.all(`
+            const messages = await this.all(`
                     SELECT m.id, m.timestamp, m.sender, m.content, m.public_key as publicKey, m.signature
                     FROM messages m
-                    WHERE m.room_id = ?
+                    WHERE m.room_id = $1
                     ORDER BY m.timestamp DESC
-                    LIMIT ? OFFSET ?
-                `, [room.id, limit, offset]);
+                    LIMIT $2 OFFSET $3
+                `, room.id, limit, offset);
     
             // For each message, get its attachments
             for (const message of messages) {
                 // This came from DB so no matter what states is consider id 'ack'
                 message.state = MessageStates.SAVED;
 
-                const attachments = await dbMgr.all(`
+                const attachments = await this.all(`
                         SELECT name, type, size, data
                         FROM attachments
-                        WHERE message_id = ?
-                    `, [message.id]);
+                        WHERE message_id = $1
+                    `, message.id);
                     
                 // Convert binary data back to data URLs
-                message.attachments = attachments.map(att => {
+                message.attachments = attachments.map((att: any) => {
                     let dataUrl = '';
                     if (att.data) {
                         dataUrl = `data:${att.type};base64,${Buffer.from(att.data).toString('base64')}`;
@@ -205,13 +259,13 @@ class DBMessages {
     async getMessageIdsForRoom(roomId: string): Promise<string[]> {
         try {
             // First, get the room_id from the name or id
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            const room = await this.get('SELECT id FROM rooms WHERE name = $1 OR id = $2', roomId, roomId);
             if (!room) {
                 return [];
             }
                 
-            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = ?', [room.id]);
-            return messages.map(msg => msg.id);
+            const messages = await this.all('SELECT id FROM messages WHERE room_id = $1', room.id);
+            return messages.map((msg: any) => msg.id);
         } catch (error) {
             console.error('Error retrieving message IDs for room:', error);
             throw error;
@@ -233,13 +287,13 @@ class DBMessages {
     
         try {
             // First, get the room_id from the name or id
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ? OR id = ?', [roomId, roomId]);
+            const room = await this.get('SELECT id FROM rooms WHERE name = $1 OR id = $2', roomId, roomId);
             if (!room) {
                 return [];
             }
             
             // Using parameterized query with placeholders for security
-            const placeholders = messageIds.map(() => '?').join(',');
+            const placeholders = messageIds.map((_, index) => `$${index + 3}`).join(',');
             
             // Join messages and attachments in a single query
             const query = `
@@ -248,13 +302,13 @@ class DBMessages {
                     a.id as attachment_id, a.name, a.type, a.size, a.data
                 FROM messages m
                 LEFT JOIN attachments a ON m.id = a.message_id
-                WHERE m.id IN (${placeholders}) AND m.room_id = ?
+                WHERE m.id IN (${placeholders}) AND m.room_id = $1
                 ORDER BY m.timestamp, a.id
             `;
             
-            // Add room_id as the last parameter
-            const params = [...messageIds, room.id];
-            const rows = await dbMgr.all(query, params);            
+            // Add room_id as the first parameter, then messageIds
+            const params = [room.id, roomId, ...messageIds];
+            const rows = await this.all(query, ...params);            
             const messageMap = new Map<string, ChatMessageIntf>();
             
             for (const row of rows) {
@@ -309,18 +363,18 @@ class DBMessages {
     getMessageIdsForRoomWithDateFilter = async (roomId: string, cutoffTimestamp: number): Promise<string[]> => {
         try {
             // First, get the room_id from the room name
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = ?', [roomId]);
+            const room = await this.get('SELECT id FROM rooms WHERE name = $1', roomId);
             if (!room) {
                 return [];
             }
                 
             // Add timestamp filter to only get messages after the cutoff date
-            const messages = await dbMgr.all(
-                'SELECT id FROM messages WHERE room_id = ? AND timestamp >= ?', 
-                [room.id, cutoffTimestamp]
+            const messages = await this.all(
+                'SELECT id FROM messages WHERE room_id = $1 AND timestamp >= $2', 
+                room.id, cutoffTimestamp
             );
                 
-            return messages.map(msg => msg.id);
+            return messages.map((msg: any) => msg.id);
         } catch (error) {
             console.error('Error retrieving filtered message IDs for room:', error);
             throw error;
@@ -344,7 +398,7 @@ class DBMessages {
         try {
             // Select the public key of the message to verify ownership, we already trust the publicKey argument because 
             // the HTTP request was verified by the server
-            const results = await dbMgr.all('SELECT public_key FROM messages WHERE id = ?', [messageId]);
+            const results = await this.all('SELECT public_key FROM messages WHERE id = $1', messageId);
 
             // Check if the message exists and the public key matches
             if (results.length === 0) {
@@ -359,19 +413,19 @@ class DBMessages {
             }
                 
             // Delete all attachments associated with this message
-            const attachmentResult = await dbMgr.run(
-                'DELETE FROM attachments WHERE message_id = ?', 
+            const attachmentResult = await this.run(
+                'DELETE FROM attachments WHERE message_id = $1', 
                 messageId
             );
-            console.log(`Deleted ${attachmentResult.changes} attachments for message ${messageId}`);
+            console.log(`Deleted ${attachmentResult.rowCount} attachments for message ${messageId}`);
                 
             // Delete the message itself
-            const messageResult: any = await dbMgr.run(
-                'DELETE FROM messages WHERE id = ?',
+            const messageResult: any = await this.run(
+                'DELETE FROM messages WHERE id = $1',
                 messageId
             );
                 
-            const success = messageResult.changes > 0;
+            const success = messageResult.rowCount > 0;
             if (success) {
                 console.log(`Successfully deleted message '${messageId}' and all its attachments`);
             } else {
