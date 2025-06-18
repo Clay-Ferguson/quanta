@@ -16,8 +16,8 @@ class DBAttachments {
     getAttachmentById = async (id: number): Promise<FileBlob | null> => {
         try {
             const attachment = await dbMgr.get(
-                'SELECT data, type, name, size FROM attachments WHERE id = ?',
-                [id]
+                'SELECT data, type, name, size FROM attachments WHERE id = $1',
+                id
             );
                 
             if (!attachment) {
@@ -51,17 +51,17 @@ class DBAttachments {
             }
 
             // First verify the attachment exists
-            const attachment = await dbMgr.get('SELECT id FROM attachments WHERE id = ?', [id]);
+            const attachment = await dbMgr.get('SELECT id FROM attachments WHERE id = $1', id);
             if (!attachment) {
                 console.log(`Attachment with ID ${id} not found`);
                 return false;
             }
 
             // Delete the attachment
-            const result: any = await dbMgr!.run('DELETE FROM attachments WHERE id = ?', [id]);
+            const result: any = await dbMgr!.run('DELETE FROM attachments WHERE id = $1', id);
             
             // Check if a row was affected
-            const success = result.changes > 0;
+            const success = result.rowCount > 0;
             if (success) {
                 console.log(`Successfully deleted attachment ID: ${id}`);
             } else {
@@ -101,10 +101,10 @@ class DBAttachments {
                     JOIN messages m ON a.message_id = m.id
                     JOIN rooms r ON m.room_id = r.id
                     ORDER BY m.timestamp DESC
-                    LIMIT ?
+                    LIMIT $1
                 `;
                 
-            const attachments = await dbMgr!.all(query, [limit]);
+            const attachments = await dbMgr!.all(query, limit);
             return attachments;
         } catch (error) {
             console.error('Error getting recent attachments:', error);
