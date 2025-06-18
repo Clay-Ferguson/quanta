@@ -28,8 +28,12 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@quanta.dev
       - PGADMIN_DEFAULT_PASSWORD=admin123
       - PGADMIN_CONFIG_SERVER_MODE=False
-      # Reduce logging verbosity
-      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=30
+      # Disable pgAdmin logging completely
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=60
+      - PGADMIN_CONFIG_FILE_LOG_LEVEL=60
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=False
+      - GUNICORN_ACCESS_LOGFILE=/dev/null
+      - PGADMIN_DISABLE_POSTFIX=True
     volumes:
       - ./pgadmin-data:/var/lib/pgadmin
     ports:
@@ -38,10 +42,7 @@ services:
       - postgres
     restart: unless-stopped
     logging:
-      driver: "none" # "json-file" # set to "none" to disable logging
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: "none"
 
   quanta-app:
     build: .
