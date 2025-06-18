@@ -38,7 +38,7 @@ services:
       - postgres
     restart: unless-stopped
     logging:
-      driver: "json-file" # set to "none" to disable logging
+      driver: "none" # "json-file" # set to "none" to disable logging
       options:
         max-size: "10m"
         max-file: "3"

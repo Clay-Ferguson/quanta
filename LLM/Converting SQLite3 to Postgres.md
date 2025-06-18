@@ -38,9 +38,8 @@ Please convert `DBMessages.ts` to Postgre.
 
 Please convert `DBUsers.ts` to Postgre.
 
-## Step 7 - Troubleshooting Conversion Errors:
+## Step 7 - Troubleshooting Conversion Problems
 
-TBD. no errors currently
+Problems identified during testing:
 
-
-
+None, at this time.

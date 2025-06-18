@@ -58,7 +58,7 @@ class DBAttachments {
             }
 
             // Delete the attachment
-            const result: any = await dbMgr!.run('DELETE FROM attachments WHERE id = $1', id);
+            const result: any = await dbMgr.run('DELETE FROM attachments WHERE id = $1', id);
             
             // Check if a row was affected
             const success = result.rowCount > 0;
@@ -104,7 +104,21 @@ class DBAttachments {
                     LIMIT $1
                 `;
                 
-            const attachments = await dbMgr!.all(query, limit);
+            const rows = await dbMgr.all(query, limit);
+            
+            // Convert the rows to ensure proper data types and handle PostgreSQL case sensitivity
+            const attachments: AttachmentInfo[] = rows.map((row: any) => ({
+                id: parseInt(row.id),
+                name: row.name || '',
+                type: row.type || '',
+                size: parseInt(row.size) || 0,
+                messageId: row.messageid || row.messageId || '',
+                sender: row.sender || '',
+                publicKey: row.publickey || row.publicKey || '',
+                timestamp: parseInt(row.timestamp) || 0,
+                roomName: row.roomname || row.roomName || ''
+            }));
+            
             return attachments;
         } catch (error) {
             console.error('Error getting recent attachments:', error);

@@ -142,10 +142,11 @@ class AppRooms {
         console.log("checkpoint 1"); // todo-0: remove these console logs
         
         let _gs = gs();
-        if (!_gs.chatConnected) {
-            console.log("Not connected, cannot clear messages.");
-            return;
-        }
+        // todo-0: This was a mistake right? We need to be able to clear rooms without being IN them at the time.
+        // if (!_gs.chatConnected) {
+        //     console.log("Not connected, cannot clear messages.");
+        //     return;
+        // }
 
         console.log("checkpoint 2");
         // if deleting current room disconnect
