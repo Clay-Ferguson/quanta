@@ -16,7 +16,7 @@ Note: In this document 'FS' refers to 'File System'. 'PGFS' means Postgres File 
 
 # Current Status
 
-Notice the 'DATABAS.md' file in the project root, which describes how we're setting up our Postgre Database, to run inside a Docker Compose container along with our app.
+Notice the 'DATABASE.md' file in the project root, which describes how we're setting up our Postgre Database, to run inside a Docker Compose container along with our app.
 
 
 # PostgreSQL File System Abstraction Layer Requirements

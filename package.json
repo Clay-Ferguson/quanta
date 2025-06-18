@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build:client": "tsc -b && vite build",
-    "build:server": "tsc -p server/tsconfig.json",
+    "build:server": "tsc -p server/tsconfig.json && npm run copy:sql",
+    "copy:sql": "mkdir -p dist/server/plugins/docs && cp server/plugins/docs/*.sql dist/server/plugins/docs/",
     "build": "yarn build:client && yarn build:server",
     "start": "node dist/server/AppServer.js",
     "postinstall": "[ -f package-lock.json ] && rm package-lock.json || true"
@@ -16,11 +17,13 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@noble/hashes": "^1.7.1",
     "@noble/secp256k1": "^2.2.3",
+    "@types/pg": "^8.15.4",
     "date-fns": "^4.1.0",
     "express": "4.18.2",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.0",
     "open": "^10.1.2",
+    "pg": "^8.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",

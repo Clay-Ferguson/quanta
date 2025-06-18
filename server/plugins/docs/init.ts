@@ -6,13 +6,21 @@ import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
+import { pgdbTest } from "./PGDBTest.js";
 
 const defaultPlugin = config.get("defaultPlugin");
 
 class DocsServerPlugin implements IServerPlugin {
-    init(context: any) {
+    async init(context: any) {
         console.log('init docs plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
+        
+        // Test PostgreSQL database functionality
+        try {
+            await pgdbTest(); // todo-0: temporary for development.
+        } catch (error) {
+            console.error('PGDB test failed during plugin initialization:', error);
+        }
     }
 
     private initRoutes(app: any, serveIndexHtml: any) {

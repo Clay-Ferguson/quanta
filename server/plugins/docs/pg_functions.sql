@@ -9,11 +9,11 @@ CREATE OR REPLACE FUNCTION pg_readdir(
     root_key TEXT
 ) 
 RETURNS TABLE(
-    filename TEXT,
+    filename VARCHAR(255),
     ordinal INTEGER,
     is_directory BOOLEAN,
     size_bytes BIGINT,
-    content_type TEXT,
+    content_type VARCHAR(100),
     created_time TIMESTAMP WITH TIME ZONE,
     modified_time TIMESTAMP WITH TIME ZONE
 ) AS $$
@@ -65,11 +65,11 @@ CREATE OR REPLACE FUNCTION pg_readdir_numbered(
     root_key TEXT
 ) 
 RETURNS TABLE(
-    filename TEXT,
+    filename VARCHAR(255),
     ordinal INTEGER,
     is_directory BOOLEAN,
     size_bytes BIGINT,
-    content_type TEXT,
+    content_type VARCHAR(100),
     created_time TIMESTAMP WITH TIME ZONE,
     modified_time TIMESTAMP WITH TIME ZONE
 ) AS $$
@@ -103,8 +103,8 @@ CREATE OR REPLACE FUNCTION pg_shift_ordinals_down(
     items_to_ignore TEXT[] DEFAULT NULL
 ) 
 RETURNS TABLE(
-    old_filename TEXT,
-    new_filename TEXT,
+    old_filename VARCHAR(255),
+    new_filename VARCHAR(255),
     old_ordinal INTEGER,
     new_ordinal INTEGER
 ) AS $$
@@ -361,7 +361,7 @@ RETURNS TABLE(
     size_bytes BIGINT,
     created_time TIMESTAMP WITH TIME ZONE,
     modified_time TIMESTAMP WITH TIME ZONE,
-    content_type TEXT,
+    content_type VARCHAR(100),
     ordinal INTEGER
 ) AS $$
 BEGIN
