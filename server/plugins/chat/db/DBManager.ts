@@ -16,6 +16,7 @@ export class DBManager implements DBManagerIntf {
     }
 
     private async initialize(): Promise<void> {
+        await pgdb.initDb();
         const client = await pgdb.getClient();
         try {
             // Read schema.sql file from the same directory as this plugin

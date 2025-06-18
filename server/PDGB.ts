@@ -50,7 +50,7 @@ class PGDB {
             throw error;
         }
     }
-
+    
     /**
      * Get database configuration from environment variables or defaults
      */

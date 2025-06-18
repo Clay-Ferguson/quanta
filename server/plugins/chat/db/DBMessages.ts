@@ -86,7 +86,7 @@ class DBMessages {
     async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
         
         const existingMessage = await this.get(
-            'SELECT rowid FROM messages WHERE id = $1',
+            'SELECT id FROM messages WHERE id = $1',
             message.id
         );
         if (existingMessage) {
