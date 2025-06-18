@@ -1,3 +1,7 @@
+# IMPORTANT: This file On Hold!
+
+This work, for the PostgreSQL File System is currently on hold in it's current state until we first switch SQLite3 over to PostgreSQL. Instructions to AI for this can be found in file 'Converting SQLite3 to Postgres.md' file in this same folder.
+
 # Notes to Copilot AI Agent about the `PostgreSQL-based File System Implementation` 
 
 Note: In this document 'FS' refers to 'File System'. 'PGFS' means Postgres File System, which is what we'll be creating. 

@@ -1,10 +1,4 @@
 import { Pool, PoolClient } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 interface PostgresConfig {
     host: string;
@@ -24,6 +18,9 @@ class PGDB {
      * Initialize the PostgreSQL database connection and create tables/functions
      */
     async initDb(): Promise<void> {
+        if (this.isInitialized) {
+            return;
+        }
         try {
             console.log('Initializing PostgreSQL Database...');
 
@@ -44,12 +41,6 @@ class PGDB {
 
             // Test the connection
             await this.testConnection();
-
-            // Initialize database schema
-            await this.initializeSchema();
-
-            // Initialize stored functions
-            await this.initializeFunctions();
 
             this.isInitialized = true;
             console.log('PostgreSQL Database initialized successfully');
@@ -90,57 +81,12 @@ class PGDB {
         }
     }
 
-    /**
-     * Initialize database schema by reading and executing schema.sql
-     */
-    private async initializeSchema(): Promise<void> {
+    checkDb() {
+        if (!this.isInitialized) {
+            throw new Error('Database not initialized. Call initDb() first.');
+        }
         if (!this.pool) {
-            throw new Error('Database pool not initialized');
-        }
-
-        const client = await this.pool.connect();
-        try {
-            // Read schema.sql file from dist directory (copied during build)
-            const schemaPath = path.join(__dirname, 'schema.sql');
-            console.log('Reading schema from:', schemaPath);
-            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-            
-            console.log('Executing database schema...');
-            await client.query(schemaSql);
-            console.log('Database schema created successfully');
-
-        } catch (error) {
-            console.error('Error initializing database schema:', error);
-            throw error;
-        } finally {
-            client.release();
-        }
-    }
-
-    /**
-     * Initialize PostgreSQL functions by reading and executing pg_functions.sql
-     */
-    private async initializeFunctions(): Promise<void> {
-        if (!this.pool) {
-            throw new Error('Database pool not initialized');
-        }
-
-        const client = await this.pool.connect();
-        try {
-            // Read pg_functions.sql file from dist directory (copied during build)
-            const functionsPath = path.join(__dirname, 'pg_functions.sql');
-            console.log('Reading functions from:', functionsPath);
-            const functionsSql = fs.readFileSync(functionsPath, 'utf8');
-            
-            console.log('Creating PostgreSQL functions...');
-            await client.query(functionsSql);
-            console.log('PostgreSQL functions created successfully');
-
-        } catch (error) {
-            console.error('Error creating PostgreSQL functions:', error);
-            throw error;
-        } finally {
-            client.release();
+            throw new Error('Database not initialized. Call initDb() first.');
         }
     }
 
@@ -148,20 +94,16 @@ class PGDB {
      * Get a client from the connection pool
      */
     async getClient(): Promise<PoolClient> {
-        if (!this.pool) {
-            throw new Error('Database not initialized. Call initDb() first.');
-        }
-        return this.pool.connect();
+        this.checkDb();
+        return this.pool!.connect();
     }
 
     /**
      * Execute a query using the connection pool
      */
     async query(text: string, params?: any[]): Promise<any> {
-        if (!this.pool) {
-            throw new Error('Database not initialized. Call initDb() first.');
-        }
-        return this.pool.query(text, params);
+        this.checkDb();
+        return this.pool!.query(text, params);
     }
 
     /**
@@ -175,6 +117,7 @@ class PGDB {
      * Close the database connection pool
      */
     async close(): Promise<void> {
+        this.checkDb();
         if (this.pool) {
             await this.pool.end();
             this.pool = null;

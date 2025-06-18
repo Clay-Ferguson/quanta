@@ -7,6 +7,14 @@ import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
 import { pgdbTest } from "./PGDBTest.js";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import pgdb from "../../PDGB.js";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const defaultPlugin = config.get("defaultPlugin");
 
@@ -14,7 +22,14 @@ class DocsServerPlugin implements IServerPlugin {
     async init(context: any) {
         console.log('init docs plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
+        await pgdb.initDb(); // Ensure the database is initialized
         
+        // Initialize database schema
+        await this.initializeSchema();
+
+        // Initialize stored functions
+        await this.initializeFunctions();
+
         // Test PostgreSQL database functionality
         try {
             await pgdbTest(); // todo-0: temporary for development.
@@ -62,6 +77,52 @@ class DocsServerPlugin implements IServerPlugin {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     notify(server: any) {
         // not used 
+    }
+
+    /**
+         * Initialize database schema by reading and executing schema.sql
+         */
+    private async initializeSchema(): Promise<void> {
+        const client = await pgdb.getClient();
+        try {
+            // Read schema.sql file from dist directory (copied during build)
+            const schemaPath = path.join(__dirname, 'schema.sql');
+            console.log('Reading schema from:', schemaPath);
+            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+                
+            console.log('Executing database schema...');
+            await client.query(schemaSql);
+            console.log('Database schema created successfully');
+    
+        } catch (error) {
+            console.error('Error initializing database schema:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+    
+    /**
+         * Initialize PostgreSQL functions by reading and executing pg_functions.sql
+         */
+    private async initializeFunctions(): Promise<void> {
+        const client = await pgdb.getClient();
+        try {
+            // Read pg_functions.sql file from dist directory (copied during build)
+            const functionsPath = path.join(__dirname, 'pg_functions.sql');
+            console.log('Reading functions from:', functionsPath);
+            const functionsSql = fs.readFileSync(functionsPath, 'utf8');
+                
+            console.log('Creating PostgreSQL functions...');
+            await client.query(functionsSql);
+            console.log('PostgreSQL functions created successfully');
+    
+        } catch (error) {
+            console.error('Error creating PostgreSQL functions:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 }
 

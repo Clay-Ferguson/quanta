@@ -1,4 +1,4 @@
-import pgdb from './PDGB.js';
+import pgdb from '../../PDGB.js';
 
 /**
  * Test function to verify PostgreSQL database functionality
@@ -7,17 +7,11 @@ import pgdb from './PDGB.js';
 export async function pgdbTest(): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
-        
-        // Make sure database is initialized
-        if (!pgdb.isReady()) {
-            console.log('Database not ready, initializing...');
-            await pgdb.initDb();
-        }
 
         const testRootKey = 'test-root';
         const testParentPath = '/test-documents';
         const testFilename = 'test-file.md';
-        const testContent = Buffer.from('# Test Document\n\nThis is a test file created by the PGDB test function.');
+        const testContent = Buffer.from('# Test Document 2\n\nThis is a test file created by the PGDB test function.');
         const testContentType = 'text/markdown';
 
         console.log('Creating test record...');
