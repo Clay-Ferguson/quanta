@@ -31,8 +31,6 @@
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "ws": "^8.18.1"
   },
   "devDependencies": {
@@ -43,7 +41,6 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/simple-peer": "^9.11.8",
-    "@types/sqlite3": "^5.1.0",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",

@@ -53,9 +53,9 @@ services:
       # Mount database directory so data persists
       - ./data:/app/data
       # Mount document root if it exists
-      - /home/clay/ferguson/A-doc-root-dev:/home/clay/ferguson/A-doc-root-dev:ro
+      - /home/clay/ferguson/A-doc-root:/home/clay/ferguson/A-doc-root:ro
     environment:
-      - CONFIG_FILE=./config-dev.yaml
+      - CONFIG_FILE=./config-local.yaml
       - QUANTA_DEV=true
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres
