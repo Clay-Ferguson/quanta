@@ -57,7 +57,7 @@ services:
       # Mount chat database directory
       - /home/clay/ferguson/chat-db:/home/clay/ferguson/chat-db
     environment:
-      - CONFIG_FILE=./config-docker.yaml
+      - CONFIG_FILE=./config-dev.yaml
       - QUANTA_DEV=true
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres

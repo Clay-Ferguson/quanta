@@ -23,11 +23,11 @@ if [ $? -eq 0 ]; then
     fi
     
     # Stop any existing containers
-    docker-compose -f docker-compose.yaml down 
+    docker-compose -f docker-compose-dev.yaml down 
     
     # Build and start the container
     echo "Starting application with Docker Compose..."
-    docker-compose -f docker-compose.yaml up --build
+    docker-compose -f docker-compose-dev.yaml up --build
     
     echo "Quanta Chat ended."
 else
