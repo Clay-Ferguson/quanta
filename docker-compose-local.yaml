@@ -46,7 +46,9 @@ services:
       driver: "none"
 
   quanta-app:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile-local
     container_name: quanta-dev-local
     ports:
       - "8008:8000"

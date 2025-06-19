@@ -19,11 +19,14 @@ const __dirname = path.dirname(__filename);
 const defaultPlugin = config.get("defaultPlugin");
 
 class DocsServerPlugin implements IServerPlugin {
+    pgMode = false;
+
     async init(context: any) {
         console.log('init docs plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
 
         if (process.env.POSTGRES_HOST) {
+            this.pgMode = true;
             await pgdb.initDb(); // Ensure the database is initialized
         
             // Initialize database schema

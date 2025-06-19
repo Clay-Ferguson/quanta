@@ -44,7 +44,9 @@ services:
       driver: "none"
 
   quanta-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile-prod
     container_name: quanta-dev-prod
     ports:
       - "8000:8000"

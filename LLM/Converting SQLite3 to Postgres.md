@@ -6,7 +6,7 @@ Our chat plugin currently uses SQLite3.
 
 This is what we're currently doing in this project: We're converting the chat plugin SQLite code to Postres. The common Postgres database connection code is found in '/server/PDGB.ts', and will be used for all plugins, for non-plugin specific code. However we're focusing right now only on the 'chat' plugin and specifically the files in '/server/plugins/chat/db'. We will be doing this conversion one step at a time, and we won't expect the code to be able to fully run the 'chat' plugin again until all steps are complete.
 
-Here are the steps (below). Right now we are doing Step #6.
+Here are the steps (below). Right now we are doing Step #7.
 
 ## Step 1 (completed)
 
@@ -34,7 +34,7 @@ Please convert `DBRoom.ts` to Postgre. You should be able to keep almost identic
 
 Please convert `DBMessages.ts` to Postgre.
 
-## Step 6
+## Step 6 (completed)
 
 Please convert `DBUsers.ts` to Postgre.
 
@@ -42,4 +42,4 @@ Please convert `DBUsers.ts` to Postgre.
 
 Problems identified during testing:
 
-currently none.
+currently none, this entire feature set and all 6 steps are completed

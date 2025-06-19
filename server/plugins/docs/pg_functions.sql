@@ -4,6 +4,7 @@
 -- Function: pg_readdir
 -- Equivalent to fs.readdirSync() - lists directory contents
 -- Returns files/folders in ordinal order with their metadata
+-- Uses filename prefix for ordinal ordering instead of separate ordinal column
 CREATE OR REPLACE FUNCTION pg_readdir(
     dir_path TEXT,
     root_key TEXT
@@ -21,7 +22,12 @@ BEGIN
     RETURN QUERY
     SELECT 
         n.filename,
-        n.ordinal,
+        CASE 
+            WHEN n.filename ~ '^[0-9]+_' THEN 
+                substring(n.filename FROM '^([0-9]+)_')::INTEGER
+            ELSE 
+                0
+        END as ordinal,
         n.is_directory,
         n.size_bytes,
         n.content_type,
@@ -31,7 +37,14 @@ BEGIN
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
-    ORDER BY n.ordinal ASC, n.filename ASC;
+    ORDER BY 
+        CASE 
+            WHEN n.filename ~ '^[0-9]+_' THEN 
+                substring(n.filename FROM '^([0-9]+)_')::INTEGER
+            ELSE 
+                0
+        END ASC, 
+        n.filename ASC;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -51,7 +64,14 @@ BEGIN
         WHERE 
             n.doc_root_key = root_key 
             AND n.parent_path = dir_path
-        ORDER BY n.ordinal ASC, n.filename ASC
+        ORDER BY 
+            CASE 
+                WHEN n.filename ~ '^[0-9]+_' THEN 
+                    substring(n.filename FROM '^([0-9]+)_')::INTEGER
+                ELSE 
+                    0
+            END ASC, 
+            n.filename ASC
     ) INTO result;
     
     RETURN result;
@@ -77,7 +97,7 @@ BEGIN
     RETURN QUERY
     SELECT 
         n.filename,
-        n.ordinal,
+        substring(n.filename FROM '^([0-9]+)_')::INTEGER as ordinal,
         n.is_directory,
         n.size_bytes,
         n.content_type,
@@ -88,13 +108,13 @@ BEGIN
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
         AND n.filename ~ '^[0-9]+_'  -- PostgreSQL regex for ordinal prefix
-    ORDER BY n.ordinal ASC;
+    ORDER BY substring(n.filename FROM '^([0-9]+)_')::INTEGER ASC;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function: pg_shift_ordinals_down
 -- Equivalent to DocUtil.shiftOrdinalsDown() - creates space for new files by incrementing ordinals
--- This is MUCH simpler than the filesystem version since ordinal is a separate integer field!
+-- This renames files to change their ordinal prefixes, just like the filesystem version
 CREATE OR REPLACE FUNCTION pg_shift_ordinals_down(
     slots_to_add INTEGER,
     parent_path_param TEXT,
@@ -108,34 +128,69 @@ RETURNS TABLE(
     old_ordinal INTEGER,
     new_ordinal INTEGER
 ) AS $$
+DECLARE
+    file_record RECORD;
+    old_ordinal_num INTEGER;
+    new_ordinal_num INTEGER;
+    name_without_prefix TEXT;
+    new_filename_text VARCHAR(255);
+    prefix_length INTEGER;
 BEGIN
-    -- Update ordinals in descending order to avoid conflicts
-    -- Returns the old and new values for external reference tracking
-    RETURN QUERY
-    WITH updated_files AS (
+    -- Process files in descending ordinal order to avoid conflicts
+    FOR file_record IN
+        SELECT filename
+        FROM fs_nodes 
+        WHERE 
+            doc_root_key = root_key
+            AND parent_path = parent_path_param
+            AND filename ~ '^[0-9]+_'  -- Only files with ordinal prefixes
+            AND (items_to_ignore IS NULL OR filename != ALL(items_to_ignore))
+            AND substring(filename FROM '^([0-9]+)_')::INTEGER >= insert_ordinal
+        ORDER BY substring(filename FROM '^([0-9]+)_')::INTEGER DESC
+    LOOP
+        -- Extract current ordinal from filename
+        old_ordinal_num := substring(file_record.filename FROM '^([0-9]+)_')::INTEGER;
+        
+        -- Calculate new ordinal
+        new_ordinal_num := old_ordinal_num + slots_to_add;
+        
+        -- Extract the name part after the underscore
+        name_without_prefix := substring(file_record.filename FROM '^[0-9]+_(.*)$');
+        
+        -- Determine prefix length to maintain consistent padding
+        prefix_length := position('_' in file_record.filename) - 1;
+        IF prefix_length < 4 THEN
+            prefix_length := 4; -- Use minimum 4-digit padding
+        END IF;
+        
+        -- Create new filename with updated ordinal prefix
+        new_filename_text := lpad(new_ordinal_num::TEXT, prefix_length, '0') || '_' || name_without_prefix;
+        
+        -- Update the filename in the database
         UPDATE fs_nodes 
         SET 
-            ordinal = ordinal + slots_to_add,
+            filename = new_filename_text,
             modified_time = NOW()
         WHERE 
             doc_root_key = root_key
             AND parent_path = parent_path_param
-            AND ordinal >= insert_ordinal
-            AND (items_to_ignore IS NULL OR filename != ALL(items_to_ignore))
-        RETURNING filename, ordinal - slots_to_add as old_ordinal, ordinal as new_ordinal
-    )
-    SELECT 
-        u.filename,
-        u.filename,  -- filename doesn't change in DB version!
-        u.old_ordinal,
-        u.new_ordinal
-    FROM updated_files u
-    ORDER BY u.new_ordinal DESC;
+            AND filename = file_record.filename;
+            
+        -- Return the mapping for external reference tracking
+        old_filename := file_record.filename;
+        new_filename := new_filename_text;
+        old_ordinal := old_ordinal_num;
+        new_ordinal := new_ordinal_num;
+        RETURN NEXT;
+    END LOOP;
+    
+    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function: pg_get_max_ordinal
 -- Equivalent to DocUtil.getMaxOrdinal() - finds highest ordinal in a directory
+-- Extracts ordinal from filename prefix instead of using ordinal column
 CREATE OR REPLACE FUNCTION pg_get_max_ordinal(
     parent_path_param TEXT,
     root_key TEXT
@@ -144,20 +199,20 @@ RETURNS INTEGER AS $$
 DECLARE
     max_ord INTEGER;
 BEGIN
-    SELECT COALESCE(MAX(ordinal), 0)
+    SELECT COALESCE(MAX(substring(filename FROM '^([0-9]+)_')::INTEGER), 0)
     INTO max_ord
     FROM fs_nodes
     WHERE 
         doc_root_key = root_key
-        AND parent_path = parent_path_param;
+        AND parent_path = parent_path_param
+        AND filename ~ '^[0-9]+_';  -- Only consider files with ordinal prefixes
         
     RETURN max_ord;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function: pg_get_ordinal_from_name
--- Equivalent to DocUtil.getOrdinalFromName() - but in DB version we just return the ordinal field!
--- This function exists for API compatibility but is much simpler
+-- Equivalent to DocUtil.getOrdinalFromName() - extracts ordinal from filename prefix
 CREATE OR REPLACE FUNCTION pg_get_ordinal_from_name(
     filename_param TEXT,
     parent_path_param TEXT,
@@ -167,16 +222,22 @@ RETURNS INTEGER AS $$
 DECLARE
     file_ordinal INTEGER;
 BEGIN
-    SELECT ordinal
-    INTO file_ordinal
-    FROM fs_nodes
-    WHERE 
-        doc_root_key = root_key
-        AND parent_path = parent_path_param
-        AND filename = filename_param;
-        
-    IF file_ordinal IS NULL THEN
+    -- First check if file exists
+    IF NOT EXISTS (
+        SELECT 1 FROM fs_nodes
+        WHERE 
+            doc_root_key = root_key
+            AND parent_path = parent_path_param
+            AND filename = filename_param
+    ) THEN
         RAISE EXCEPTION 'File not found: %', filename_param;
+    END IF;
+    
+    -- Extract ordinal from filename prefix - filename MUST have ordinal prefix
+    IF filename_param ~ '^[0-9]+_' THEN
+        file_ordinal := substring(filename_param FROM '^([0-9]+)_')::INTEGER;
+    ELSE
+        RAISE EXCEPTION 'Invalid file name format: %. All filenames must have ordinal prefix format "NNNN_filename" where N is a digit.', filename_param;
     END IF;
     
     RETURN file_ordinal;
@@ -185,7 +246,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: pg_insert_file_at_ordinal
 -- Helper function to insert a new file at a specific ordinal position
--- Automatically shifts existing files down if needed
+-- Automatically shifts existing files down if needed and creates proper ordinal filename
 CREATE OR REPLACE FUNCTION pg_insert_file_at_ordinal(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -199,19 +260,29 @@ RETURNS INTEGER AS $$
 DECLARE
     new_file_id INTEGER;
     existing_file_count INTEGER;
+    final_filename TEXT;
+    ordinal_prefix TEXT;
 BEGIN
-    -- Check if there's already a file at this ordinal position
+    -- Check if there's already a file at this ordinal position or higher
     SELECT COUNT(*)
     INTO existing_file_count
     FROM fs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
-        AND ordinal >= insert_ordinal;
+        AND filename ~ '^[0-9]+_'
+        AND substring(filename FROM '^([0-9]+)_')::INTEGER >= insert_ordinal;
     
     -- If files exist at or after this ordinal, shift them down
     IF existing_file_count > 0 THEN
         PERFORM pg_shift_ordinals_down(1, parent_path_param, insert_ordinal, root_key);
+    END IF;
+    
+    -- Filename MUST already have ordinal prefix - no automatic addition
+    IF filename_param ~ '^[0-9]+_' THEN
+        final_filename := filename_param;
+    ELSE
+        RAISE EXCEPTION 'Invalid filename: %. All filenames must have ordinal prefix format "NNNN_filename".', filename_param;
     END IF;
     
     -- Insert the new file at the desired ordinal position
@@ -219,7 +290,6 @@ BEGIN
         doc_root_key,
         parent_path,
         filename,
-        ordinal,
         is_directory,
         content,
         content_type,
@@ -229,8 +299,7 @@ BEGIN
     ) VALUES (
         root_key,
         parent_path_param,
-        filename_param,
-        insert_ordinal,
+        final_filename,
         is_directory_param,
         content_param,
         content_type_param,
@@ -277,6 +346,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: pg_write_file
 -- Equivalent to fs.writeFileSync() - writes file content
+-- Uses filename prefixes for ordinal management instead of ordinal column
 CREATE OR REPLACE FUNCTION pg_write_file(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -288,14 +358,23 @@ RETURNS INTEGER AS $$
 DECLARE
     file_id INTEGER;
     file_size BIGINT;
+    final_filename TEXT;
+    max_ordinal INTEGER;
+    ordinal_prefix TEXT;
 BEGIN
     file_size := LENGTH(content_data);
+    
+    -- Filename MUST already have ordinal prefix - no automatic addition
+    IF filename_param ~ '^[0-9]+_' THEN
+        final_filename := filename_param;
+    ELSE
+        RAISE EXCEPTION 'Invalid filename: %. All filenames must have ordinal prefix format "NNNN_filename".', filename_param;
+    END IF;
     
     INSERT INTO fs_nodes (
         doc_root_key,
         parent_path,
         filename,
-        ordinal,
         is_directory,
         content,
         content_type,
@@ -305,8 +384,7 @@ BEGIN
     ) VALUES (
         root_key,
         parent_path_param,
-        filename_param,
-        COALESCE((SELECT MAX(ordinal) + 1 FROM fs_nodes WHERE doc_root_key = root_key AND parent_path = parent_path_param), 1),
+        final_filename,
         FALSE,
         content_data,
         content_type_param,
@@ -351,6 +429,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: pg_stat
 -- Equivalent to fs.statSync() - gets file/directory metadata
+-- Extracts ordinal from filename prefix instead of using ordinal column
 CREATE OR REPLACE FUNCTION pg_stat(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -372,7 +451,12 @@ BEGIN
         n.created_time,
         n.modified_time,
         n.content_type,
-        n.ordinal
+        CASE 
+            WHEN n.filename ~ '^[0-9]+_' THEN 
+                substring(n.filename FROM '^([0-9]+)_')::INTEGER
+            ELSE 
+                0
+        END as ordinal
     FROM fs_nodes n
     WHERE 
         n.doc_root_key = root_key
@@ -454,6 +538,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: pg_mkdir
 -- Equivalent to fs.mkdirSync() - creates a directory
+-- Uses filename prefixes for ordinal management instead of ordinal column
 CREATE OR REPLACE FUNCTION pg_mkdir(
     parent_path_param TEXT,
     dirname_param TEXT,
@@ -464,24 +549,25 @@ RETURNS INTEGER AS $$
 DECLARE
     dir_id INTEGER;
     next_ordinal INTEGER;
+    final_dirname TEXT;
+    ordinal_prefix TEXT;
 BEGIN
-    -- Check if directory already exists
-    IF pg_exists(parent_path_param, dirname_param, root_key) THEN
-        RAISE EXCEPTION 'Directory already exists: %/%', parent_path_param, dirname_param;
+    -- Directory name MUST already have ordinal prefix - no automatic addition
+    IF dirname_param ~ '^[0-9]+_' THEN
+        final_dirname := dirname_param;
+        -- Check if directory already exists
+        IF pg_exists(parent_path_param, dirname_param, root_key) THEN
+            RAISE EXCEPTION 'Directory already exists: %/%', parent_path_param, dirname_param;
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'Invalid directory name: %. All directory names must have ordinal prefix format "NNNN_dirname".', dirname_param;
     END IF;
-    
-    -- Get next ordinal for this directory
-    SELECT COALESCE(MAX(ordinal) + 1, 1)
-    INTO next_ordinal
-    FROM fs_nodes
-    WHERE doc_root_key = root_key AND parent_path = parent_path_param;
     
     -- Create the directory
     INSERT INTO fs_nodes (
         doc_root_key,
         parent_path,
         filename,
-        ordinal,
         is_directory,
         content,
         content_type,
@@ -491,8 +577,7 @@ BEGIN
     ) VALUES (
         root_key,
         parent_path_param,
-        dirname_param,
-        next_ordinal,
+        final_dirname,
         TRUE,
         NULL,
         'directory',

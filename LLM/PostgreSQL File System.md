@@ -1,31 +1,34 @@
-# IMPORTANT: This file On Hold!
+# Notes to Copilot AI Agent about the `PostgreSQL-based File System Implementation`
 
-This work, for the PostgreSQL File System is currently on hold in it's current state until we first switch SQLite3 over to PostgreSQL. Instructions to AI for this can be found in file 'Converting SQLite3 to Postgres.md' file in this same folder.
-
-# Notes to Copilot AI Agent about the `PostgreSQL-based File System Implementation` 
+Note: This file contains information and instructions for the Github Copilot Agent to use to perform the below refactorings on this project, to enable the PostgreSQL-based File System Implementation.
 
 Note: In this document 'FS' refers to 'File System'. 'PGFS' means Postgres File System, which is what we'll be creating. 
 
-* We will be creating a PostgreSQL-based partial implementation of a FS, entirely made up of only PostgreSQL functions. 
+## Plan Bullet Points
 
-* We will be creating a Pluggable API which allows the existing document-manager plugin (i.e. the 'plugins/docs' folder files) to be able to use a PostgreSQL database to hold file content rather than holding content in an actual FS. We'll create an abstraction layer around all FS access so that we can choose to either interact with a real Linux FS, or a 'virtual' Postgres-backed FS where all file content is stored in the DB.
+* For a general overview of the 'Tree Viewer' feature itself (i.e. The File System Browser/Editor, you can see `/LLM/Tree Viewer Feature.md`, which is fully completed work)
 
-* This will let us turn the Quanta FS Plugin into an online cloud-based Document Manager. We will be keeping the "path" concept the same. That is, in the PGFS design we'll have both files and folders and they will have slash-delimited names (just like a FS), and modification timestamps just like a real FS does.
+* We will be creating a PostgreSQL-based partial implementation of a FS, entirely made up of only PostgreSQL functions. By 'functions' we do mean actual literal Postgre functions as created by sql 'CREATE OR REPLACE FUNCTION...`. The goal is that we will support all FS operations that we need by implementing them directly in Postgre functions! 
 
-* The main thing the PGFS will do differnently than the real Linux FS impelmentation (which we already have in the code), is that instead of having file/folder ordinals as prefixes on the file/folder names, we'll simply use an integer field in the database instead.
+* We will be creating a Pluggable API which allows the existing document-manager plugin (i.e. the 'plugins/docs' folder files) to optionally be able to use a PostgreSQL database to hold file content rather than holding file content in an actual Linux FS. We'll create an abstraction layer around all FS access so that we can choose to either interact with a real Linux FS, or a 'virtual' Postgres-backed FS.
 
-* The PGFS will not need to be a complete implemention of everything Fils Systems can do. Instead the PGDB will only be a FS that supports what we need supported to port this 'doc' folder files over into a SQL-based system, to replace all file-system access. 
+* When the docs plugin loads, the DocServerPlugin (in `/server/plugins/docs/init.ts`) will detect if `process.env.POSTGRES_HOST` is set, and if so it sets it's `pgMode` (Postgres Mode) variable to 'true' indicating we're using the Postres-backed FS rather than a normal Linux FS. This is how we will determine which version of our FS abstraction layer to use.
+
+* This will let us optionally turn the Quanta FS Plugin into an online cloud-based Document Manager. We will be keeping the "path" concept the same. That is, in the PGFS design we'll have both files and folders and they will have slash-delimited folder paths (just like any FS), and modification timestamps just like a real FS does. The `schema.sql` for this is alreacy created and is in `/server/plugins/docs/schema.sql`. We will continue to use ordinal prefixes on all filenames. We also have a first-pass rough draft if what the functions might look like in `server/plugins/docs/pg_functions.sql`
+
+* The PGFS will not need to be a complete implemention of everything Fils Systems can do. Instead, the PGDB will only be a FS that supports what we need supported to enable our  'docs' plugin to run using PostgreSQL tables, in place of file-system access. 
 
 * For now we can ignore all the 'grep' based searching stuff in the 'search' function in 'DocsService.ts', because we'll be relying on the PostgreSQL database search capability, for searching capability in the PGFS. 
 
-# Current Status
+## Current Status
 
-Notice the 'DATABASE.md' file in the project root, which describes how we're setting up our Postgre Database, to run inside a Docker Compose container along with our app.
+Notice the 'DATABASE.md' file in the project root, which describes how we're setting up our Postgre Database, to run inside a Docker Compose container along with our app. You can see the `docker-compose-dev.yaml`, which is what you can also assume we're using during this work. You will eventually find a series of "Steps" (Step 1, Step 2, etc), below where we'll tackle this Virtual File System Implemenation one step at a time, but keep reading, because the rest of this is to give you more context about where we're headed.
 
+## PostgreSQL File System Abstraction Layer Requirements
 
-# PostgreSQL File System Abstraction Layer Requirements
+### Core File System Operations Required:
 
-Core File System Operations Required:
+This list is not known to be comprehensive and correct, but is a first rough-draft:
 
 1. Directory Operations
 * List directory contents: fs.readdirSync() - Get all files/folders in a path
@@ -48,123 +51,10 @@ Core File System Operations Required:
 * File size: For display and sorting
 * File type detection: Based on extensions (.md, .txt, .png, .jpg, etc.)
 
-# Database Tables
-
-```sql
-CREATE TABLE fs_nodes (
-    id SERIAL PRIMARY KEY,
-    doc_root_key VARCHAR(255) NOT NULL,
-    parent_path TEXT NOT NULL,
-    filename VARCHAR(255) NOT NULL,
-    ordinal INTEGER NOT NULL,
-    is_directory BOOLEAN NOT NULL DEFAULT FALSE,
-    content BYTEA,
-    content_type VARCHAR(100),
-    size_bytes BIGINT DEFAULT 0,
-    created_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    modified_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    UNIQUE(doc_root_key, parent_path, filename)
-);
-
-CREATE INDEX idx_fs_nodes_parent ON fs_nodes(doc_root_key, parent_path);
-CREATE INDEX idx_fs_nodes_ordinal ON fs_nodes(doc_root_key, parent_path, ordinal);
-```
-
-# Rough Draft Guesses at some Postgres Functions
-
-```sql
--- Equivalent to fs.readdirSync()
-CREATE OR REPLACE FUNCTION pg_readdir(path_param TEXT, root_key TEXT)
-RETURNS TABLE(name TEXT, type TEXT, ordinal INTEGER) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        filename,
-        CASE WHEN is_directory THEN 'folder' ELSE 'file' END,
-        CAST(SUBSTRING(filename FROM '^(\d+)_') AS INTEGER)
-    FROM fs_nodes 
-    WHERE parent_path = path_param AND doc_root_key = root_key
-    ORDER BY ordinal;
-END;
-$$ LANGUAGE plpgsql;
-
--- Equivalent to fs.readFileSync()
-CREATE OR REPLACE FUNCTION pg_read_file(file_path TEXT, root_key TEXT)
-RETURNS BYTEA AS $$
-BEGIN
-    RETURN (SELECT content FROM fs_nodes WHERE full_path = file_path AND doc_root_key = root_key);
-END;
-$$ LANGUAGE plpgsql;
-
--- Equivalent to fs.writeFileSync()
-CREATE OR REPLACE FUNCTION pg_write_file(file_path TEXT, content_data BYTEA, root_key TEXT)
-RETURNS BOOLEAN AS $$
-BEGIN
-    INSERT INTO fs_nodes (full_path, content, doc_root_key, modified_time)
-    VALUES (file_path, content_data, root_key, NOW())
-    ON CONFLICT (full_path, doc_root_key) 
-    DO UPDATE SET content = content_data, modified_time = NOW();
-    RETURN TRUE;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-# Example calls to PGFS from NodeJS
-
-Using Postgre functions defined in `server/plugins/docs/pg_functions.sql`
-
-
-## Reading Files/Folders
-
-```ts
-// Get all files in a directory
-const files = await db.query('SELECT * FROM pg_readdir($1, $2)', ['/some/path', 'rootKey']);
-
-// Get just filenames as array
-const filenames = await db.query('SELECT pg_readdir_names($1, $2)', ['/some/path', 'rootKey']);
-
-// Get only ordinal-prefixed files (your current use case)
-const numberedFiles = await db.query('SELECT * FROM pg_readdir_numbered($1, $2)', ['/some/path', 'rootKey']);
-```
-
-## Shifting Ordinals
-
-```ts
-// Instead of your current complex shiftOrdinalsDown method:
-async shiftOrdinalsDown(slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, itemsToIgnore: string[] | null): Promise<Map<string, string>> {
-    const result = await this.db.query(
-        'SELECT * FROM pg_shift_ordinals_down($1, $2, $3, $4, $5)', 
-        [slotsToAdd, absoluteParentPath, insertOrdinal, root, itemsToIgnore]
-    );
-    
-    // Convert to Map for compatibility with existing code
-    const pathMapping = new Map<string, string>();
-    result.rows.forEach(row => {
-        // In DB version, paths don't actually change since filenames stay the same
-        // But we maintain the API for compatibility
-        pathMapping.set(row.old_filename, row.new_filename);
-    });
-    return pathMapping;
-}
-
-// Get max ordinal becomes trivial:
-async getMaxOrdinal(absolutePath: string, root: string): Promise<number> {
-    const result = await this.db.query('SELECT pg_get_max_ordinal($1, $2)', [absolutePath, root]);
-    return result.rows[0].pg_get_max_ordinal;
-}
-
-// Insert a new file with automatic ordinal management:
-async insertFileAtOrdinal(parentPath: string, filename: string, ordinal: number, rootKey: string, content: Buffer) {
-    const fileId = await this.db.query(
-        'SELECT pg_insert_file_at_ordinal($1, $2, $3, $4, FALSE, $5, $6)',
-        [parentPath, filename, ordinal, rootKey, content, 'text/markdown']
-    );
-    return fileId.rows[0];
-}
-```
 
 ## Basic File Operations
+
+The following is also just a rough-draft of what some of the Postgres calls can be like. None of this is complete, but just to get you prepared for the steps below.
 
 ```ts
 // Read file content (equivalent to fs.readFileSync())
@@ -193,6 +83,8 @@ await db.query('SELECT pg_rename($1, $2, $3, $4, $5)',
 
 ## Directory Operations
 
+Rough draft of functions...
+
 ```ts
 // Create directory (equivalent to fs.mkdirSync())
 const dirId = await db.query('SELECT pg_mkdir($1, $2, $3)', ['/documents', 'new-folder', 'rootKey']);
@@ -210,6 +102,8 @@ await db.query('SELECT pg_ensure_path($1, $2)', ['/documents/deep/nested/path', 
 ```
 
 ## Complete Node.js Wrapper Class
+
+Rough draft of a wrapper class...
 
 ```ts
 class PostgreSQLFileSystem {
@@ -285,3 +179,22 @@ class PostgreSQLFileSystem {
 }
 ```
 
+## Steps
+
+The following steps are the actual steps I need you (The AI Agent), to take as we tackle implementing all of what was described above. We are picking up at a point where I think the `schema.sql` is probably perfect as is, but the `pg_functions.sql` is definitely not correct yet. This functions sql file will be where most of the non-trivial work is done too. So let's get started, and do it step by step.
+
+Current Status: We are doing Step 1.
+
+### Step 1 (completed)
+
+When we originally created the `pg_functions.sql` we were working under the assumption that the `fs_nodes` table would have an ordinal, which would be used instead of having an `NNNN_` prefix on file/folder names. However I decided to be consistent, and keep the code uniform across both 'Virtual' and 'Real' File Systems, it's best to just let the Postgre version of the FS also use `NNNN_` ordinals on the file/folder names as well. So in Step 1, please look at the ordinals-related functions in `pg_functions.sql` and rewrite all of those to be using the file/folder name prefix-based ordinals. Note: Remember, you can refer to the existing File System-based code inside `server/plugins/docs` for any hints you might need to understand ordinals, but they're very simple, of course, because they're just for maintaining positional ordering. Feel free to correct anything else you see wrong in `pg_functions.sql`. Note: We don't have a way to test this code yet. That's the next step I'll tell you abuot. So don't try to look around and figure out how to run any of this code you're working on. Don't try to test it yet. Please just do your best to write the code.
+
+#### Final Outcome of Step 1
+
+We've successfully updated `pg_functions.sql` to work with ordinals in file/folder name prefixes rather than an ordinal column.
+
+### Step 2 (current step)
+
+We will be writing a test for testing some of our `pg_functions.sql` functions.
+
+We run the app (and tests) using `docker-run-dev.sh` which uses `docker-compose-dev.yaml` to start our app inside a docker conatiner alonside the Postgre DB. Inside `/server/plugins/docs/init.ts` we have a line  `await pgdbTest()` which runs the test inside `PGDBTest.ts`. I've partially created a `createFolderStructureTest` function for you in there, which I'd like for you to implement in this step. Please add the code to create a little folder structure with 5 folders in the root, named (0001_one.md, 0002_two.md, etc). Then inside each of those root level folders, create five files and five folders. So we'll have a little folder structure, that's two levels deep. That's all this test function will do. It will simply create that folder structure. By of calling the Postgres functions. 
