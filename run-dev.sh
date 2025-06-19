@@ -1,5 +1,7 @@
 #!/bin/bash 
 
+# NOTE: Ends up with app running at http://localhost:8000/
+
 # WARNING: You need to 'yarn install' before running this script!
 
 # remove package-lock.json if anything ever creates it. This app uses Yarn instead.
@@ -44,4 +46,3 @@ else
     echo "Build failed. Terminating script."
     exit 1
 fi
-
