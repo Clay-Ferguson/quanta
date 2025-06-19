@@ -215,8 +215,9 @@ So let's start by working first only in `DocService.ts` `treeRender` method. So 
 
 #### Step 5 outcome:
 
-We now have a factory method on `DocService.ts` having this signature: `private getFileSystem(docRootKey: string): IVFS`. So any method having a docRootKey can use it to get the proper IVFS instance to use. This is fully functional already in `treeRender` from Step 4.
+We put the factory method in `DocUtil.ts` and it has this signature: `getFileSystem(docRootKey: string): IVFS`. So any method having a docRootKey can use it to get the proper IVFS instance to use. This is fully functional already in `treeRender` from Step 4.
 
-### Step 6 (current step)
+### Step 6 (completed)
 
-For this step please make the `createFile` method (inside `DocService.ts`) use the `getFileSystem` to get the IVFS instance to use, and use it in `createFile` and pass it down to any methods called, like `treeRender` does. This will make `createFile` be using our new abstraction layer.
+For this step please make the `createFile` method (inside `DocService.ts`) use the `getFileSystem` factory method to get the IVFS instance to use, and use it in `createFile` and pass it down to any methods called, like `treeRender` does. This will make `createFile` be using our new abstraction layer.
+

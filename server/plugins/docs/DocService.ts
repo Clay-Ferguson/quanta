@@ -7,8 +7,6 @@ import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IVFS } from "./IVFS.js";
-import lfs from "./LFS.js";
-import vfs from "./VFS.js";
 const { exec } = await import('child_process');
 
 /**
@@ -54,28 +52,6 @@ const { exec } = await import('child_process');
  * files and folders, enabling precise ordering and insertion capabilities.
  */
 class DocService {
-
-    /**
-     * Factory method to create the appropriate file system implementation based on root configuration.
-     * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.
-     * 
-     * @param docRootKey - Key identifier for the document root
-     * @returns IVFS implementation (LFS or VFS)
-     */
-    private getFileSystem(docRootKey: string): IVFS {
-        const rootConfig = config.getPublicFolderByKey(docRootKey);
-        if (!rootConfig) {
-            throw new Error(`Invalid document root key: ${docRootKey}`);
-        }
-        
-        const rootType = rootConfig.type || 'lfs'; // Default to lfs if type not specified
-        
-        if (rootType === 'vfs') {
-            return vfs;
-        } else {
-            return lfs; // Default to Linux File System
-        }
-    }
 
     /**
      * Resolves a non-ordinal path to its corresponding ordinal-based path in the file system.
@@ -221,7 +197,7 @@ class DocService {
             const pullup = req.query.pullup as string; 
             
             // Get the appropriate file system implementation
-            const ifs = this.getFileSystem(req.params.docRootKey);
+            const ifs = docUtil.getFileSystem(req.params.docRootKey);
             
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
@@ -438,6 +414,9 @@ class DocService {
             // Extract parameters from request body
             const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Resolve and validate document root
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -456,7 +435,7 @@ class DocService {
 
             // Verify parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteParentPath, root); 
-            if (!fs.existsSync(absoluteParentPath)) {
+            if (!ifs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -479,7 +458,7 @@ class DocService {
 
             // Shift existing files down to make room for the new file
             // This ensures proper ordinal sequence is maintained
-            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null);
+            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
 
             // Create filename with ordinal prefix
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
@@ -494,13 +473,13 @@ class DocService {
             const newFilePath = path.join(absoluteParentPath, finalFileName);
 
             // Safety check: prevent overwriting existing files
-            if (fs.existsSync(newFilePath)) {
+            if (ifs.existsSync(newFilePath)) {
                 res.status(409).json({ error: 'A file with this name already exists at the target location' });
                 return;
             }
 
             // Create the new file with empty content
-            fs.writeFileSync(newFilePath, '', 'utf8');
+            ifs.writeFileSync(newFilePath, '', 'utf8');
 
             console.log(`File created successfully: ${newFilePath}`);
             
@@ -549,6 +528,9 @@ class DocService {
             // Extract parameters from request body
             const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Resolve and validate document root
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -567,7 +549,7 @@ class DocService {
 
             // Verify parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteParentPath, root);
-            if (!fs.existsSync(absoluteParentPath)) {
+            if (!ifs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -590,7 +572,7 @@ class DocService {
 
             // Shift existing files/folders down to make room for the new folder
             // This ensures proper ordinal sequence is maintained
-            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null);
+            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
 
             // Create folder name with ordinal prefix
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
@@ -599,7 +581,7 @@ class DocService {
             const newFolderPath = path.join(absoluteParentPath, newFolderName);
 
             // Create the directory (recursive option ensures parent directories exist)
-            fs.mkdirSync(newFolderPath, { recursive: true });
+            ifs.mkdirSync(newFolderPath, { recursive: true });
 
             console.log(`Folder created successfully: ${newFolderPath}`);
             

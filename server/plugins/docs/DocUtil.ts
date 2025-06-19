@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
+import { IVFS } from './IVFS.js';
+import vfs from './VFS.js';
+import lfs from './LFS.js';
 const { exec } = await import('child_process');
 
 /**
@@ -19,6 +22,28 @@ const { exec } = await import('child_process');
  * operations are restricted to allowed root directories.
  */
 class DocUtil {
+    /**
+     * Factory method to create the appropriate file system implementation based on root configuration.
+     * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.
+     * 
+     * @param docRootKey - Key identifier for the document root
+     * @returns IVFS implementation (LFS or VFS)
+     */
+    getFileSystem(docRootKey: string): IVFS {
+        const rootConfig = config.getPublicFolderByKey(docRootKey);
+        if (!rootConfig) {
+            throw new Error(`Invalid document root key: ${docRootKey}`);
+        }
+        
+        const rootType = rootConfig.type || 'lfs'; // Default to lfs if type not specified
+        
+        if (rootType === 'vfs') {
+            return vfs;
+        } else {
+            return lfs; // Default to Linux File System
+        }
+    }
+
     /**
      * Extracts the numeric ordinal from a filename with format "NNNN_filename"
      * 
@@ -91,9 +116,14 @@ class DocUtil {
      * @returns Map of old relative paths to new relative paths for renamed items
      */
     shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
-        itemsToIgnore: string[] | null): Map<string, string> => {
+        itemsToIgnore: string[] | null, ifs: IVFS | null = null): Map<string, string> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
+
+        // todo-0: this is temporary, fallback to 'fs' if arg not provided
+        if (!ifs) {
+            ifs = fs;
+        }
         
         // Map to track old relative paths to new relative paths for external reference updates
         const pathMapping = new Map<string, string>();
@@ -102,7 +132,7 @@ class DocUtil {
         const relativeFolderPath = path.relative(root, absoluteParentPath);
         
         // Read directory contents and filter for files/folders with numeric prefixes
-        const allFiles = fs.readdirSync(absoluteParentPath);
+        const allFiles = ifs.readdirSync(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
         // Sort files by name (which will sort by numeric prefix for proper ordering)
@@ -149,7 +179,7 @@ class DocUtil {
             }
             
             // console.log(`Shifting file: ${file} -> ${newFileName}`);
-            fs.renameSync(oldPath, newPath);
+            ifs.renameSync(oldPath, newPath);
             
             // Track the path mapping for relative paths (used by external systems)
             const oldRelativePath = relativeFolderPath ? path.join(relativeFolderPath, file) : file;
