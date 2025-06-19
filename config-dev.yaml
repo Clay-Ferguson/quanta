@@ -14,5 +14,6 @@ public-folders:
   - name: "Doc Root"
     key: "root"
     path: "/home/clay/ferguson/A-doc-root-dev"
+    type: "lfs"  # Type can be 'lfs' for Linux file system or 'vfs' for virtual PostregreSQL file system
     # Accessable at: http://localhost:8000/doc/root
   

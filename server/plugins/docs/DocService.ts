@@ -6,6 +6,9 @@ import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
+import { IVFS } from "./IVFS.js";
+import lfs from "./LFS.js";
+import vfs from "./VFS.js";
 const { exec } = await import('child_process');
 
 /**
@@ -51,6 +54,28 @@ const { exec } = await import('child_process');
  * files and folders, enabling precise ordering and insertion capabilities.
  */
 class DocService {
+
+    /**
+     * Factory method to create the appropriate file system implementation based on root configuration.
+     * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.
+     * 
+     * @param docRootKey - Key identifier for the document root
+     * @returns IVFS implementation (LFS or VFS)
+     */
+    private getFileSystem(docRootKey: string): IVFS {
+        const rootConfig = config.getPublicFolderByKey(docRootKey);
+        if (!rootConfig) {
+            throw new Error(`Invalid document root key: ${docRootKey}`);
+        }
+        
+        const rootType = rootConfig.type || 'lfs'; // Default to lfs if type not specified
+        
+        if (rootType === 'vfs') {
+            return vfs;
+        } else {
+            return lfs; // Default to Linux File System
+        }
+    }
 
     /**
      * Resolves a non-ordinal path to its corresponding ordinal-based path in the file system.
@@ -195,6 +220,9 @@ class DocService {
             // Extract the pullup parameter from query string
             const pullup = req.query.pullup as string; 
             
+            // Get the appropriate file system implementation
+            const ifs = this.getFileSystem(req.params.docRootKey);
+            
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
@@ -212,7 +240,7 @@ class DocService {
             const absolutePath = path.join(root, treeFolder);
 
             // Verify the target directory exists
-            if (!fs.existsSync(absolutePath)) {
+            if (!ifs.existsSync(absolutePath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
             }
@@ -221,14 +249,14 @@ class DocService {
             docUtil.checkFileAccess(absolutePath, root);
             
             // Verify the target is actually a directory (not a file)
-            const stat = fs.statSync(absolutePath);
+            const stat = ifs.statSync(absolutePath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
             }
 
             // Generate the tree structure
-            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", root);
+            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
             const response: TreeRender_Response = { treeNodes };
@@ -270,12 +298,12 @@ class DocService {
      * @param root - The document root path for security validation
      * @returns Array of TreeNode objects representing directory contents, sorted alphabetically
      */
-    getTreeNodes = (absolutePath: string, pullup: boolean, root: string): TreeNode[] => {
+    getTreeNodes = (absolutePath: string, pullup: boolean, root: string, ifs: IVFS): TreeNode[] => {
         // Security check: ensure the path is within the allowed root directory
         docUtil.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        const files = fs.readdirSync(absolutePath);
+        const files = ifs.readdirSync(absolutePath);
         const treeNodes: TreeNode[] = [];
         
         // Get the next available ordinal number for files without ordinal prefixes
@@ -300,7 +328,7 @@ class DocService {
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
             docUtil.checkFileAccess(filePath, root); 
-            const fileStat = fs.statSync(filePath);
+            const fileStat = ifs.statSync(filePath);
                 
             // Initialize node properties
             let content = '';
@@ -315,7 +343,7 @@ class DocService {
                 // Handle pullup folders: folders ending with '_' get their contents inlined
                 if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
-                    children = this.getTreeNodes(filePath, true, root);
+                    children = this.getTreeNodes(filePath, true, root, ifs);
                     
                     // Set children to null if empty (cleaner JSON output)
                     if (children.length === 0) {
@@ -324,7 +352,7 @@ class DocService {
                 }
                 
                 // Check if folder has any children in the filesystem
-                fsChildren = fs.readdirSync(filePath).length > 0;
+                fsChildren = ifs.readdirSync(filePath).length > 0;
             } 
             // FILE
             else {
@@ -343,7 +371,7 @@ class DocService {
                     // Text files: read and store content
                     type = 'text';
                     try {
-                        content = fs.readFileSync(filePath, 'utf8');
+                        content = ifs.readFileSync(filePath, 'utf8') as string;
                     } catch (error) {
                         console.warn(`Could not read file ${filePath} as text:`, error);
                         content = '';
@@ -1225,4 +1253,3 @@ class DocService {
 }
 
 export const docSvc = new DocService();
-                         

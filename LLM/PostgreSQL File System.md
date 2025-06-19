@@ -193,8 +193,30 @@ When we originally created the `pg_functions.sql` we were working under the assu
 
 We've successfully updated `pg_functions.sql` to work with ordinals in file/folder name prefixes rather than an ordinal column.
 
-### Step 2 (current step)
+### Step 2 (completed)
 
 We will be writing a test for testing some of our `pg_functions.sql` functions.
 
 We run the app (and tests) using `docker-run-dev.sh` which uses `docker-compose-dev.yaml` to start our app inside a docker conatiner alonside the Postgre DB. Inside `/server/plugins/docs/init.ts` we have a line  `await pgdbTest()` which runs the test inside `PGDBTest.ts`. I've partially created a `createFolderStructureTest` function for you in there, which I'd like for you to implement in this step. Please add the code to create a little folder structure with 5 folders in the root, named (0001_one.md, 0002_two.md, etc). Then inside each of those root level folders, create five files and five folders. So we'll have a little folder structure, that's two levels deep. That's all this test function will do. It will simply create that folder structure. By of calling the Postgres functions. 
+
+### Step 3 (completed)
+
+Note: The content for Step 3 is omitteded for the sake of brevity, but to summarize all that happened as Step 3 (a big step!) was that we iteratively collaborated to create a fairly comprehensive set of functions for testing our `pg_functions.sql` virtual File System implementation, and it's all in `PGDBTest.ts` right now. So with our tests proving that we have some confidence that `pg_functions.sql` is on decent shape we can move in to implementing the abstraction layer.
+
+### Step 4 (completed)
+
+Please implement the abstraction layer interface in the existing `IVFS.ts`, and then implement an actual `fs` (as in NodeJS `fs` package) wrapper in `LFS.ts`. I've already created both of those files. Note that there will not be any Postgres-related calls or calls to `pg_functions.sql` functions in this, because we're just creating the abstraction layer around the `fs` file system. Also please don't try to actually start using the LFS instance anywhere in the code yet. Just implement the LFS for now. We'll be integrating the code to use it in a future step, but not in Step 4. So you can just read thru `DocBinary.ts`, `DocMod.ts`, `DocService.ts`, and `DocUtils.ts` to come up with the list if which parts of `fs` we need coverage for. Eventually we will of course also be implementing the `VFS` which will hold the abstraction layer wrapper that will call `pg_functions.sql` but again, we do not want to do that yet in Step 4. 
+
+### Step 5 (completed)
+
+Our system already has the ability to define multiple file system `roots` as you can see in `config-dev.yaml`. Each entry in the array under the `public-folders` variable of that config yaml represents a `root`. That config file has only one root right now. We will treat any `root` having a `type` entry equal to "lfs" as a Linux File System, in terms of our abstractionl layer, and "vfs" will indicate the PostgreSQL abstraction layer. So we'll have a factory method that uses this 'type' value to determine which abstraction to use in any function where were's accessing a real or virtual file system.
+
+So let's start by working first only in `DocService.ts` `treeRender` method. So inside `DocService.ts` you can implement a factory pattern method to return either the imported `lfs` instance or `vfs` instance modules based on the `type` of the `root`. Then for now make use of this factory method only in the `treeRender` method and let's see if we can get that working where I can pull it up in the GUI! So for now it will be a trivial case of just mapping to the same functions it's already calling (in 'fs' module) but doing it thru the abstraction layer.
+
+#### Step 5 outcome:
+
+We now have a factory method on `DocService.ts` having this signature: `private getFileSystem(docRootKey: string): IVFS`. So any method having a docRootKey can use it to get the proper IVFS instance to use. This is fully functional already in `treeRender` from Step 4.
+
+### Step 6 (current step)
+
+For this step please make the `createFile` method (inside `DocService.ts`) use the `getFileSystem` to get the IVFS instance to use, and use it in `createFile` and pass it down to any methods called, like `treeRender` does. This will make `createFile` be using our new abstraction layer.
