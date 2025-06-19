@@ -1,48 +1,25 @@
-#!/bin/bash 
+#!/bin/bash
 
-# NOTE: Ends up with app running at http://localhost:8008/
+export CONFIG_FILE="./config-local.yaml"
 
-# WARNING: You need to 'yarn install' before running this script!
+./kill.sh
 
-# remove package-lock.json if anything ever creates it. This app uses Yarn instead.
-rm -f package-lock.json
-rm -rf ./dist
+# Start the Node.js app in a new session (completely detached)
+echo "Starting new AppServer.js process..."
+# Note: The settid and nohup is to ensure the process runs independently of the terminal session
+setsid nohup /home/clay/.nvm/versions/node/v22.2.0/bin/node dist/server/AppServer.js > quanta.log 2>&1 &
 
-echo "Building application..."
-QUANTA_DEV=true yarn build
+# Get the process ID of the last background process
+PID=$!
 
-# Check if yarn build succeeded
-if [ $? -eq 0 ]; then
-    echo "Build successful. Preparing Docker environment..."
+echo "Quanta Chat server started with PID: $PID"
+echo "Log output is being written to: quanta.log"
+echo "To stop the server later, run: kill $PID"
+echo "Process has been started in a new session - it will continue running after terminal closes."
 
-    mkdir -p ../quanta-volumes/local/pgadmin-data
+# Give a moment for the process to start
+sleep 3
 
-    # If that folder create didn't work, exit with an error
-    if [ $? -ne 0 ]; then
-        echo "Error: Could not create ../quanta-volumes/local directory. Please check permissions."
-        exit 1
-    fi
+# Exit the script (and shell if run directly)
+exit 0
 
-    # if ../.env-quanta does not exist, display error and exit
-    if [ ! -f ../.env-quanta ]; then
-        echo "Error: ../.env-quanta file does not exist. Please create it before running this script."
-        exit 1
-    fi
-
-    # Ensure pgAdmin data directory has correct permissions
-    echo "Setting pgAdmin directory permissions..."
-    sudo chown -R 5050:5050 ../quanta-volumes/local/pgadmin-data
-    sudo chmod -R 755 ../quanta-volumes/local/pgadmin-data
-    
-    # Stop any existing containers
-    docker-compose -f docker-compose-local.yaml --env-file ../.env-quanta down 
-    
-    # Build and start the container
-    echo "Starting application with Docker Compose..."
-    docker-compose -f docker-compose-local.yaml  --env-file ../.env-quanta up --build
-    
-    echo "Quanta ended."
-else
-    echo "Build failed. Terminating script."
-    exit 1
-fi

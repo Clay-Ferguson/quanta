@@ -52,7 +52,7 @@ services:
       # Mount document root if it exists
       - /home/clay/ferguson/A-doc-root:/home/clay/ferguson/A-doc-root:ro
     environment:
-      - CONFIG_FILE=./config-local.yaml
+      - CONFIG_FILE=./docker-config-local.yaml
       - QUANTA_DEV=true
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres

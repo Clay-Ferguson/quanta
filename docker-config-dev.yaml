@@ -1,11 +1,14 @@
-host: "localhost"
-port: "8008"
+host: "0.0.0.0" 
+# NOTE: This is an internal port number, not the external as mapped in docker-compose-dev.yaml
+port: "8000"
 secure: "n"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
 desktopMode: "y"
-defaultPlugin: "docs"
+defaultPlugin: "chat"
 
 plugins:
+  - name: "Callisto"
+    key: "chat"
   - name: "Quanta"
     key: "docs"
 
@@ -13,5 +16,5 @@ plugins:
 public-folders:
   - name: "Doc Root"
     key: "root"
-    path: "/home/clay/ferguson/A-doc-root"
-    
+    path: "/home/clay/ferguson/A-doc-root-dev"
+  

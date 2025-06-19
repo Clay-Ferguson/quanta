@@ -22,19 +22,25 @@ class DocsServerPlugin implements IServerPlugin {
     async init(context: any) {
         console.log('init docs plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
-        await pgdb.initDb(); // Ensure the database is initialized
+
+        if (process.env.POSTGRES_HOST) {
+            await pgdb.initDb(); // Ensure the database is initialized
         
-        // Initialize database schema
-        await this.initializeSchema();
+            // Initialize database schema
+            await this.initializeSchema();
 
-        // Initialize stored functions
-        await this.initializeFunctions();
+            // Initialize stored functions
+            await this.initializeFunctions();
 
-        // Test PostgreSQL database functionality
-        try {
-            await pgdbTest(); // todo-0: temporary for development.
-        } catch (error) {
-            console.error('PGDB test failed during plugin initialization:', error);
+            // Test PostgreSQL database functionality
+            try {
+                await pgdbTest(); // todo-0: temporary for development.
+            } catch (error) {
+                console.error('PGDB test failed during plugin initialization:', error);
+            }
+        }
+        else {
+            console.warn('POSTGRES_HOST environment variable is not set. Skipping database initialization.');
         }
     }
 

@@ -16,6 +16,10 @@ export class DBManager implements DBManagerIntf {
     }
 
     private async initialize(): Promise<void> {
+        if (!process.env.POSTGRES_HOST) {
+            throw new Error('POSTGRES_HOST environment variable is not set');
+        }
+
         await pgdb.initDb();
         const client = await pgdb.getClient();
         try {

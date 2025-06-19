@@ -18,6 +18,9 @@ class PGDB {
      * Initialize the PostgreSQL database connection and create tables/functions
      */
     async initDb(): Promise<void> {
+        if (!process.env.POSTGRES_HOST) {
+            throw new Error('POSTGRES_HOST environment variable is not set');
+        }
         if (this.isInitialized) {
             return;
         }

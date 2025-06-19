@@ -1,5 +1,3 @@
-# WARNING: This file is now deprecated/unused. All Prod runs are done thru docker 
-
 host: "chat.quanta.wiki"
 port: "443"
 secure: "y"
@@ -11,6 +9,5 @@ defaultPlugin: "chat"
 plugins:
   - name: "Callisto"
     key: "chat"
-  - name: "Quanta"
-    key: "docs"
+ 
 
