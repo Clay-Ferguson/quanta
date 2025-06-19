@@ -3,30 +3,31 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: quanta-postgres
+    container_name: quanta-postgres-dev
     environment:
       - POSTGRES_DB=quanta
-      - POSTGRES_USER=quanta_user
-      - POSTGRES_PASSWORD=quanta_password
+      - POSTGRES_USER=quanta
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data/pgdata
+      # NOTE: Quanta volumes are stored one level up from the current directory
+      - ../quanta-volumes/dev/postgres-data:/var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U quanta_user -d quanta"]
+      test: ["CMD-SHELL", "pg_isready -U quanta -d quanta"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: quanta-pgadmin
+    container_name: quanta-pgadmin-dev
     user: "5050:5050"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@quanta.dev
-      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=False
       # Disable pgAdmin logging completely
       - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=60
@@ -35,7 +36,8 @@ services:
       - GUNICORN_ACCESS_LOGFILE=/dev/null
       - PGADMIN_DISABLE_POSTFIX=True
     volumes:
-      - ./pgadmin-data:/var/lib/pgadmin
+      # NOTE: Quanta volumes are stored one level up from the current directory
+      - ../quanta-volumes/dev/pgadmin-data:/var/lib/pgadmin
     ports:
       - "5050:80"
     depends_on:
@@ -46,12 +48,10 @@ services:
 
   quanta-app:
     build: .
-    container_name: quanta-dev
+    container_name: quanta-dev-dev
     ports:
       - "8000:8000"
     volumes:
-      # Mount database directory so data persists
-      - ./data:/app/data
       # Mount document root if it exists
       - /home/clay/ferguson/A-doc-root-dev:/home/clay/ferguson/A-doc-root-dev:ro
     environment:
@@ -61,8 +61,8 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=quanta
-      - POSTGRES_USER=quanta_user
-      - POSTGRES_PASSWORD=quanta_password
+      - POSTGRES_USER=quanta
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy

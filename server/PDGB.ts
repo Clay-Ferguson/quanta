@@ -59,8 +59,8 @@ class PGDB {
             host: process.env.POSTGRES_HOST || 'localhost',
             port: parseInt(process.env.POSTGRES_PORT || '5432'),
             database: process.env.POSTGRES_DB || 'quanta',
-            user: process.env.POSTGRES_USER || 'quanta_user',
-            password: process.env.POSTGRES_PASSWORD || 'quanta_password'
+            user: process.env.POSTGRES_USER || 'quanta',
+            password: process.env.POSTGRES_PASSWORD || 'pwd'
         };
     }
 

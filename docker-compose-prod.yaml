@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: quanta-postgres-local
+    container_name: quanta-postgres-prod
     environment:
       - POSTGRES_DB=quanta
       - POSTGRES_USER=quanta
@@ -22,7 +22,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: quanta-pgadmin-local
+    container_name: quanta-pgadmin-prod
     user: "5050:5050"
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
@@ -46,7 +46,7 @@ services:
 
   quanta-app:
     build: .
-    container_name: quanta-dev-local
+    container_name: quanta-dev-prod
     ports:
       - "8000:8000"
     volumes:
