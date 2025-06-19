@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import fs from 'fs';
 import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
@@ -46,6 +45,9 @@ class DocBinary {
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
             const imagePath = decodeURIComponent(rawImagePath);
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(req.params.docRootKey);
+            
             // Resolve the document root path using the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
@@ -65,13 +67,13 @@ class DocBinary {
             // Perform security check to ensure file is within allowed directory
             // and verify file exists
             docUtil.checkFileAccess(absoluteImagePath, root);
-            if (!fs.existsSync(absoluteImagePath)) {
+            if (!ifs.existsSync(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
             }
 
             // Verify the path points to a file, not a directory
-            const stat = fs.statSync(absoluteImagePath);
+            const stat = ifs.statSync(absoluteImagePath);
             if (!stat.isFile()) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;
@@ -111,7 +113,7 @@ class DocBinary {
             res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
             
             // Read the image file and send it as the response
-            const imageBuffer = fs.readFileSync(absoluteImagePath);
+            const imageBuffer = ifs.readFileSync(absoluteImagePath);
             res.send(imageBuffer);
             
         } catch (error) {
@@ -246,6 +248,9 @@ class DocBinary {
                         res.status(500).json({ error: 'Invalid docRootKey' });
                         return;
                     }
+
+                    // Get the appropriate file system implementation
+                    const ifs = docUtil.getFileSystem(docRootKey);
     
                     // Construct target folder path and validate permissions
                     const absoluteFolderPath = path.join(root, treeFolder);
@@ -264,7 +269,7 @@ class DocBinary {
     
                     // Shift existing files down to make room for new uploads
                     // This maintains the ordinal sequence without gaps
-                    docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null);
+                    docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
     
                     // Save each uploaded file with proper ordinal prefix
                     let savedCount = 0;
@@ -282,13 +287,13 @@ class DocBinary {
                             docUtil.checkFileAccess(finalFilePath, root);
                             
                             // Prevent overwriting existing files
-                            if (fs.existsSync(finalFilePath)) {
+                            if (ifs.existsSync(finalFilePath)) {
                                 console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                                 continue;
                             }
                             
                             // Write the file data to disk
-                            fs.writeFileSync(finalFilePath, file.data);
+                            ifs.writeFileSync(finalFilePath, file.data);
                             savedCount++;
                             console.log(`Uploaded file saved: ${finalFilePath}`);
                         } catch {
