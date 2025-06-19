@@ -59,6 +59,9 @@ class DocMod {
             const { filename, content, treeFolder, docRootKey, split } = req.body;
             let { newFileName } = req.body;
     
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey!);
+    
             // Ensure new filenames have proper .md extension if not specified
             if (newFileName && !path.extname(newFileName)) {
                 newFileName += '.md';
@@ -83,13 +86,13 @@ class DocMod {
     
             // Verify target directory exists and is accessible
             docUtil.checkFileAccess(absoluteFolderPath, root); 
-            if (!fs.existsSync(absoluteFolderPath)) {
+            if (!ifs.existsSync(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
             }
     
             // Ensure the target path is actually a directory
-            const stat = fs.statSync(absoluteFolderPath);
+            const stat = ifs.statSync(absoluteFolderPath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -102,16 +105,16 @@ class DocMod {
                 const newAbsoluteFilePath = path.join(absoluteFolderPath, newFileName);
                     
                 // Verify the original file exists before attempting rename
-                if (fs.existsSync(absoluteFilePath)) {
+                if (ifs.existsSync(absoluteFilePath)) {
                     // Prevent overwriting existing files
-                    if (fs.existsSync(newAbsoluteFilePath)) {
+                    if (ifs.existsSync(newAbsoluteFilePath)) {
                         res.status(409).json({ error: 'A file with the new name already exists' });
                         return;
                     }
                         
                     // Perform the file rename operation with security check
                     docUtil.checkFileAccess(absoluteFilePath, root);
-                    fs.renameSync(absoluteFilePath, newAbsoluteFilePath);
+                    ifs.renameSync(absoluteFilePath, newAbsoluteFilePath);
                     console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                 }
                     
@@ -133,7 +136,7 @@ class DocMod {
                     // Make room for new files by shifting existing ordinals down
                     // Subtract 1 because the original file keeps its position
                     const numberOfNewFiles = parts.length - 1;
-                    docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null);
+                    docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
                         
                     // Create a separate file for each content part
                     for (let i = 0; i < parts.length; i++) {
@@ -159,7 +162,7 @@ class DocMod {
                             
                         // Write the content part to its designated file
                         docUtil.checkFileAccess(partFilePath, root);
-                        fs.writeFileSync(partFilePath, partContent, 'utf8');
+                        ifs.writeFileSync(partFilePath, partContent, 'utf8');
                         console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
                     }
                         
@@ -168,13 +171,13 @@ class DocMod {
                     res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
                 } else {
                     // No split delimiter found - save as single file
-                    fs.writeFileSync(finalFilePath, content, 'utf8');
+                    ifs.writeFileSync(finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
                     res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
                 }
             } else {
                 // Standard save operation without content splitting
-                fs.writeFileSync(finalFilePath, content, 'utf8');
+                ifs.writeFileSync(finalFilePath, content, 'utf8');
                 console.log(`File saved successfully: ${finalFilePath}`);
                 res.json({ success: true, message: 'File saved successfully' });
             }
@@ -211,6 +214,9 @@ class DocMod {
             // Extract request parameters
             const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Validate document root configuration
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -230,19 +236,19 @@ class DocMod {
             const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
 
             // Verify the parent directory exists
-            if (!fs.existsSync(absoluteParentPath)) {
+            if (!ifs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
 
             // Verify the folder to be renamed exists
-            if (!fs.existsSync(oldAbsolutePath)) {
+            if (!ifs.existsSync(oldAbsolutePath)) {
                 res.status(404).json({ error: 'Old folder not found' });
                 return;
             }
 
             // Ensure the target is actually a directory, not a file
-            const stat = fs.statSync(oldAbsolutePath);
+            const stat = ifs.statSync(oldAbsolutePath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -255,7 +261,7 @@ class DocMod {
             }
 
             // Prevent naming conflicts with existing folders
-            if (fs.existsSync(newAbsolutePath)) {
+            if (ifs.existsSync(newAbsolutePath)) {
                 res.status(409).json({ error: 'A folder with the new name already exists' });
                 return;
             }
@@ -263,7 +269,7 @@ class DocMod {
             // Perform the folder rename operation with security validation
             docUtil.checkFileAccess(oldAbsolutePath, root);
             docUtil.checkFileAccess(newAbsolutePath, root);
-            fs.renameSync(oldAbsolutePath, newAbsolutePath);
+            ifs.renameSync(oldAbsolutePath, newAbsolutePath);
             
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
             res.json({ success: true, message: 'Folder renamed successfully' });
@@ -301,6 +307,9 @@ class DocMod {
             // Extract request parameters
             const { fileOrFolderName, fileNames, treeFolder, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Validate document root configuration
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -330,7 +339,7 @@ class DocMod {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
-            if (!fs.existsSync(absoluteParentPath)) {
+            if (!ifs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -344,22 +353,22 @@ class DocMod {
                     const absoluteTargetPath = path.join(absoluteParentPath, fileName);
 
                     // Check if the target exists
-                    if (!fs.existsSync(absoluteTargetPath)) {
+                    if (!ifs.existsSync(absoluteTargetPath)) {
                         errors.push(`File or folder not found: ${fileName}`);
                         continue;
                     }
 
                     // Get stats to determine if it's a file or directory
-                    const stat = fs.statSync(absoluteTargetPath);
+                    const stat = ifs.statSync(absoluteTargetPath);
                     
                     docUtil.checkFileAccess(absoluteTargetPath, root);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
-                        fs.rmSync(absoluteTargetPath, { recursive: true, force: true });
+                        ifs.rmSync(absoluteTargetPath, { recursive: true, force: true });
                         console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                     } else {
                         // Remove file
-                        fs.unlinkSync(absoluteTargetPath);
+                        ifs.unlinkSync(absoluteTargetPath);
                         console.log(`File deleted successfully: ${absoluteTargetPath}`);
                     }
                     
@@ -427,6 +436,9 @@ class DocMod {
             // Extract request parameters
             const { direction, filename, treeFolder, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Validate document root configuration
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -444,7 +456,7 @@ class DocMod {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Verify the parent directory exists
-            if (!fs.existsSync(absoluteParentPath)) {
+            if (!ifs.existsSync(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -452,7 +464,7 @@ class DocMod {
             // Read directory contents and filter for items with numeric ordinal prefixes
             // Only files/folders matching the pattern "NNNN_*" are considered for ordering
             docUtil.checkFileAccess(absoluteParentPath, root);
-            const allFiles = fs.readdirSync(absoluteParentPath);
+            const allFiles = ifs.readdirSync(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
             // Sort by filename which naturally sorts by numeric prefix due to zero-padding
@@ -511,11 +523,11 @@ class DocMod {
 
             // Perform atomic rename operation using temporary file to avoid conflicts
             // Step 1: Move current file to temporary location
-            fs.renameSync(currentPath, tempPath);
+            ifs.renameSync(currentPath, tempPath);
             // Step 2: Rename target file to current file's new name
-            fs.renameSync(targetPath, path.join(absoluteParentPath, newTargetName));
+            ifs.renameSync(targetPath, path.join(absoluteParentPath, newTargetName));
             // Step 3: Move temporary file to target file's new name
-            fs.renameSync(tempPath, path.join(absoluteParentPath, newCurrentName));
+            ifs.renameSync(tempPath, path.join(absoluteParentPath, newCurrentName));
 
             console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
             
