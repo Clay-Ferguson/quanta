@@ -41,7 +41,8 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 * Vite Builder
 * Yarn Package Manager
 * Browser persistence thru JS IndexedDB
-* Server-side DB is SQLite3
+* Server-side DB PostgreSQL
+* Deployed via Docker Compose
 
 ## How to Build+Run
 

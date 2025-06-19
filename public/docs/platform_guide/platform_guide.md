@@ -25,7 +25,7 @@ The platform currently includes two main applications:
 ### Backend Stack
 - **Node.js + Express**: RESTful API server with middleware support
 - **TypeScript**: Consistent language across frontend and backend
-- **SQLite3**: Lightweight relational database for server-side persistence
+- **PostgreSQL**: Database for server-side persistence
 - **WebSocket (ws)**: Real-time communication for WebRTC signaling
 - **js-yaml**: Configuration management via YAML files
 - **Multer**: File upload handling
@@ -37,22 +37,6 @@ The platform currently includes two main applications:
 - **HTTPS/HTTP**: Production-ready SSL support
 
 ## System Architecture
-
-### High-Level Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Browser   │    │  Express Server │    │   File System   │
-│                 │    │                 │    │                 │
-│  React Client   │◄──►│  Plugin Router  │◄──►│  SQLite + Docs  │
-│  + IndexedDB    │    │  + HTTP APIs    │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │
-         │              ┌─────────────────┐
-         └─────────────►│  WebSocket      │
-                        │  (WebRTC)       │
-                        └─────────────────┘
-```
 
 ### Core Components
 
@@ -225,7 +209,7 @@ enum DBKeys {
 }
 ```
 
-**Server-Side Storage (SQLite3)**:
+**Server-Side Storage (PostgreSQL)**:
 ```typescript
 // Plugin-specific database managers
 class DBManager implements DBManagerIntf {
@@ -406,11 +390,6 @@ quanta/
 - **Image Optimization**: Base64 encoding with size limits
 
 ### Server-Side Efficiency
-
-**Database Performance**:
-- **SQLite Optimization**: Indexed queries and efficient schemas
-- **Connection Pooling**: Managed database connections
-- **Query Optimization**: Prepared statements and query planning
 
 **Network Efficiency**:
 - **WebRTC P2P**: Reduced server load through peer-to-peer communication
