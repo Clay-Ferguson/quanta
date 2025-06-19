@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import fs from 'fs';
 import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
@@ -580,6 +579,9 @@ class DocMod {
         try {
             const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
     
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+    
             // sort the pasteItems string[] to ensure they are in the correct order
             pasteItems.sort((a, b) => a.localeCompare(b));
     
@@ -599,7 +601,7 @@ class DocMod {
     
             // Check if the target directory exists
             docUtil.checkFileAccess(absoluteTargetPath, root);
-            if (!fs.existsSync(absoluteTargetPath)) {
+            if (!ifs.existsSync(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
             }
@@ -648,13 +650,13 @@ class DocMod {
                         const itemName = path.basename(itemFullPath);
                         const sourceFilePath = path.join(root, itemFullPath);
                         
-                        if (fs.existsSync(sourceFilePath)) {
+                        if (ifs.existsSync(sourceFilePath)) {
                             // Create temporary filename
                             const tempName = `temp_paste_${Date.now()}_${i}_${itemName}`;
                             const tempPath = path.join(absoluteTargetPath, tempName);
                             
                             // Move to temporary location
-                            fs.renameSync(sourceFilePath, tempPath);
+                            ifs.renameSync(sourceFilePath, tempPath);
                             
                             // Calculate final name with new ordinal
                             const currentOrdinal = insertOrdinal + i;
@@ -676,7 +678,7 @@ class DocMod {
                 itemsToIgnore = null;
             }
             
-            const pathMapping = docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore);
+            const pathMapping = docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
             
             // Update pasteItems with new paths after ordinal shifting
             for (let i = 0; i < pasteItems.length; i++) {
@@ -725,7 +727,7 @@ class DocMod {
                         if (tempMove) {
                             const finalFilePath = path.join(absoluteTargetPath, tempMove.finalName);
                             // Move from temp location to final location
-                            fs.renameSync(tempMove.tempPath, finalFilePath);
+                            ifs.renameSync(tempMove.tempPath, finalFilePath);
                             pastedCount++;
                         } else {
                             errors.push(`Temporary file not found for ${itemFullPath}`);
@@ -736,7 +738,7 @@ class DocMod {
                         const sourceFilePath = path.join(root, itemFullPath);
                         
                         // Check if source file exists
-                        if (!fs.existsSync(sourceFilePath)) {
+                        if (!ifs.existsSync(sourceFilePath)) {
                             console.error(`Source file not found: ${itemFullPath}`);
                             errors.push(`Source file not found: ${itemFullPath}`);
                             continue;
@@ -753,18 +755,17 @@ class DocMod {
                         const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
                         targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
                             
-        
                         const targetFilePath = path.join(absoluteTargetPath, targetFileName);
 
                         // Safety check: ensure target doesn't already exist to prevent overwriting
-                        if (fs.existsSync(targetFilePath)) {
+                        if (ifs.existsSync(targetFilePath)) {
                             console.error(`Target file already exists, skipping: ${targetFilePath}`);
                             errors.push(`Target file already exists: ${targetFileName}`);
                             continue;
                         }
 
                         // Move the file/folder
-                        fs.renameSync(sourceFilePath, targetFilePath);                    
+                        ifs.renameSync(sourceFilePath, targetFilePath);                    
                         pastedCount++;
                     }
                 } catch (error) {
@@ -826,6 +827,9 @@ class DocMod {
             // Extract request parameters
             const { filenames, treeFolder, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Validate document root configuration
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -858,7 +862,7 @@ class DocMod {
                 docUtil.checkFileAccess(absoluteFilePath, root);
                         
                 // Verify file exists before attempting to read
-                if (!fs.existsSync(absoluteFilePath)) {
+                if (!ifs.existsSync(absoluteFilePath)) {
                     res.status(404).json({ error: `File not found: ${filename}` });
                     return;
                 }
@@ -869,7 +873,7 @@ class DocMod {
                 // Read file content with error handling for unreadable files
                 let content = '';
                 try {
-                    content = fs.readFileSync(absoluteFilePath, 'utf8');
+                    content = ifs.readFileSync(absoluteFilePath, 'utf8') as string;
                 } catch (error) {
                     console.warn(`Could not read file ${filename} as text:`, error);
                     // Continue with empty content rather than failing the entire operation
@@ -891,7 +895,7 @@ class DocMod {
                     
             // Write the joined content with security validation
             docUtil.checkFileAccess(firstFilePath, root);
-            fs.writeFileSync(firstFilePath, joinedContent, 'utf8');
+            ifs.writeFileSync(firstFilePath, joinedContent, 'utf8');
             console.log(`Joined content saved to: ${firstFile.filename}`);
         
             // Clean up by deleting all files except the first one
@@ -903,7 +907,7 @@ class DocMod {
                 try {
                     // Validate access and delete the file
                     docUtil.checkFileAccess(deleteFilePath, root);
-                    fs.unlinkSync(deleteFilePath);
+                    ifs.unlinkSync(deleteFilePath);
                     deletedFiles.push(fileToDelete.filename);
                     console.log(`Deleted file: ${fileToDelete.filename}`);
                 } catch (error) {
@@ -973,6 +977,9 @@ class DocMod {
             // Extract request parameters
             const { filename, folderName, remainingContent, treeFolder, docRootKey } = req.body;
             
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+            
             // Validate document root configuration
             const root = config.getPublicFolderByKey(docRootKey).path;
             if (!root) {
@@ -998,19 +1005,19 @@ class DocMod {
 
             // Verify the parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteFolderPath, root);
-            if (!fs.existsSync(absoluteFolderPath)) {
+            if (!ifs.existsSync(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
 
             // Verify the target file exists
-            if (!fs.existsSync(absoluteFilePath)) {
+            if (!ifs.existsSync(absoluteFilePath)) {
                 res.status(404).json({ error: 'File not found' });
                 return;
             }
 
             // Ensure the target is actually a file, not a directory
-            const fileStat = fs.statSync(absoluteFilePath);
+            const fileStat = ifs.statSync(absoluteFilePath);
             if (!fileStat.isFile()) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;
@@ -1026,7 +1033,7 @@ class DocMod {
             const absoluteNewFolderPath = path.join(absoluteFolderPath, newFolderName);
 
             // Prevent naming conflicts with existing folders
-            if (fs.existsSync(absoluteNewFolderPath)) {
+            if (ifs.existsSync(absoluteNewFolderPath)) {
                 res.status(409).json({ error: 'A folder with this name already exists' });
                 return;
             }
@@ -1034,12 +1041,12 @@ class DocMod {
             // Perform the conversion: delete original file and create folder
             // Step 1: Remove the original file with security validation
             docUtil.checkFileAccess(absoluteFilePath, root);
-            fs.unlinkSync(absoluteFilePath);
+            ifs.unlinkSync(absoluteFilePath);
             console.log(`File deleted: ${absoluteFilePath}`);
 
             // Step 2: Create the new folder structure
             docUtil.checkFileAccess(absoluteNewFolderPath, root);
-            fs.mkdirSync(absoluteNewFolderPath, { recursive: true });
+            ifs.mkdirSync(absoluteNewFolderPath, { recursive: true });
             console.log(`Folder created: ${absoluteNewFolderPath}`);
 
             // Step 3: Optionally preserve content in a new file inside the folder
@@ -1050,7 +1057,7 @@ class DocMod {
                 
                 // Write the preserved content with security validation
                 docUtil.checkFileAccess(newFilePath, root);
-                fs.writeFileSync(newFilePath, remainingContent, 'utf8');
+                ifs.writeFileSync(newFilePath, remainingContent, 'utf8');
                 console.log(`New file created with remaining content: ${newFilePath}`);
             }
 
