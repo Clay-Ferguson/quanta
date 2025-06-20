@@ -22,11 +22,11 @@ class LFS implements IFS {
     }
 
     // File content operations
-    readFileSync(path: string, encoding?: BufferEncoding): string | Buffer {
+    async readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer> {
         if (encoding) {
-            return fs.readFileSync(path, encoding);
+            return await fs.promises.readFile(path, encoding);
         }
-        return fs.readFileSync(path);
+        return await fs.promises.readFile(path);
     }
 
     writeFileSync(path: string, data: string | Buffer, encoding?: BufferEncoding): void {

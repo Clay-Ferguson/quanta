@@ -349,7 +349,7 @@ class DocService {
                     // Text files: read and store content
                     type = 'text';
                     try {
-                        content = ifs.readFileSync(filePath, 'utf8') as string;
+                        content = await ifs.readFile(filePath, 'utf8') as string;
                     } catch (error) {
                         console.warn(`Could not read file ${filePath} as text:`, error);
                         content = '';

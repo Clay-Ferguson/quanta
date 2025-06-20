@@ -873,7 +873,7 @@ class DocMod {
                 // Read file content with error handling for unreadable files
                 let content = '';
                 try {
-                    content = ifs.readFileSync(absoluteFilePath, 'utf8') as string;
+                    content = await ifs.readFile(absoluteFilePath, 'utf8') as string;
                 } catch (error) {
                     console.warn(`Could not read file ${filename} as text:`, error);
                     // Continue with empty content rather than failing the entire operation

@@ -13,7 +13,7 @@ export interface IFS {
     stat(path: string): Promise<fs.Stats>;
 
     // File content operations
-    readFileSync(path: string, encoding?: BufferEncoding): string | Buffer;
+    readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
     writeFileSync(path: string, data: string | Buffer, encoding?: BufferEncoding): void;
 
     // Directory operations
