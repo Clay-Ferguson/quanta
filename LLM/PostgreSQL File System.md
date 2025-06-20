@@ -233,7 +233,23 @@ Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, so if y
 
 Let's start with `DocService.ts#treeRender` method. Just so you don't have to do the entire VFS implementatin all at once. Please first determine what IFS methods are called from that method (`treeRender`), and methods it indirectly calls, and figure out which of our `VFS.ts` methods need to be implemented, to get `treeRender` working, and then implement them. Remember the `getFileSystem` factory method will activate the VFS as the 'ifs' variable everywhere we have it. 
 
-### Step 8 (current step)
+### Step 8 (completed)
 
 Do the same for `DocMod.ts#saveFile` that we just did for `treeRender` in Step 7. 
 
+### Step 9 (completed)
+
+All that is remaining for you to implement in `VFS.ts` is `mkdir`, `unlink`, and `rm`. The Postgre equivalent of those file system calls should be fairly straightforward so please implemlent those three methods now.
+
+### Step 10 (current step)
+
+Currently we have a lot of tests in `PGDBTest.ts` which directly test the VFS postgres functions (in `functions.sql` file). Please create a new test file named `PGDBTestFileMoves.ts` for testing file move operations. In this new file we want to have a test that calls `DocMod.ts#moveUpOrDown` method which is an HTTP endpoint, to test the endpoint. In this file create a method named `pgdbTestMoveUp` to test moves. Make this test method first call `wipeTable`, to get us back to a clean slate. Then after that it should run `createFolderStructureTest` to create a folder structure. See the docs above `createFolderStructureTest` to know what exact folder structure it creates. There's a folder listing in the comment above that method. After that please make the function do a call to `DocMod.ts#moveUpOrDown`, using the following arguments:
+
+Move Up/Down Request: arguments = {
+"direction": "up",
+"filename": "0005_file6.md",
+"treeFolder": "/0001_test-structure/0003_two",
+"docRootKey": "pgroot"
+}
+
+Then after that verify the results of the move operation by getting a listing and checking the listing. Refer to `PGDBTest.ts' for ideas on how to get that listing, but you should probably already know.

@@ -430,7 +430,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Move Up/Down Request");
+        // Console log a pretty print of test request parameters
+        console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
+        
         try {
             // Extract request parameters
             const { direction, filename, treeFolder, docRootKey } = req.body;
