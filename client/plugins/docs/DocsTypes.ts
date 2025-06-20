@@ -20,6 +20,7 @@ export interface DocsGlobalState extends GlobalState {
     docsSelItems?: Set<TreeNode>;
     docsCutItems?: Set<string>;
     docsRootKey?: string | null;
+    docsRootType?: 'vfs' | 'lfs' | null;
     docsViewWidth?: 'narrow' | 'medium' | 'wide' | 'full';
     docsSearch?: string;
     docsSearchResults?: Array<{file: string, line: number, content: string}>;

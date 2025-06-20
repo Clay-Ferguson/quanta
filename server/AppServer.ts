@@ -7,6 +7,7 @@ import { config } from './Config.js';
 import { svrUtil } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import { docSvc } from './plugins/docs/DocService.js';
+import { docUtil } from './plugins/docs/DocUtil.js';
 
 logInit();
 
@@ -56,6 +57,9 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             console.log(`Resolved docPath: ${docPath}`);
         }
 
+        // use the docRootKey to get the file system type (vfs or lfs), by calling getFileSystemType
+        const docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
+
         // Replace the placeholders with actual values
         const result = data
             .replace('{{HOST}}', HOST)
@@ -64,6 +68,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
             .replace(`{{PAGE}}`, page)
             .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
+            .replace('{{DOC_ROOT_TYPE}}', docRootType)
             .replace('{{DOC_PATH}}', docPath)
             .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
             .replace('{{PLUGINS}}', pluginKeys)

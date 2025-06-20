@@ -30,6 +30,9 @@ class DocUtil {
      * @returns IFS implementation (LFS or VFS)
      */
     getFileSystem(docRootKey: string): IFS {
+        if (!docRootKey) {
+            throw new Error('Document root key is required to determine file system type');
+        }
         const rootConfig = config.getPublicFolderByKey(docRootKey);
         if (!rootConfig) {
             throw new Error(`Invalid document root key: ${docRootKey}`);
@@ -42,6 +45,15 @@ class DocUtil {
         } else {
             return lfs; // Default to Linux File System
         }
+    }
+
+    getFileSystemType(docRootKey: string): string {
+        const rootConfig = config.getPublicFolderByKey(docRootKey);
+        if (!rootConfig) {
+            throw new Error(`Invalid document root key: ${docRootKey}`);
+        }
+        
+        return rootConfig.type || 'vfs'; // Default to vfs if type not specified
     }
 
     /**

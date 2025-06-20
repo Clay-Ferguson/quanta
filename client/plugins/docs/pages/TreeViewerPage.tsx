@@ -501,7 +501,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 </div>
             }
             
-            {DESKTOP_MODE=="y" && <button 
+            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
                 onClick={() => openItemInFileSystem(gs, "explore")}
                 className="btn-icon"
                 title="Open folder in file system"
@@ -510,13 +510,13 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 <FontAwesomeIcon icon={faFolderOpen} className="h-5 w-5" />
             </button>}
 
-            <button 
+            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
                 onClick={() => openItemInFileSystem(gs, "edit")}
                 className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                 title="Open File system Editor"
             >
                 <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
-            </button>
+            </button>}
 
             <button 
                 onClick={reRenderTree}
@@ -535,7 +535,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
             </button>
 
-            <button 
+            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
                 onClick={async () => {
                     try {
                         const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
@@ -555,7 +555,7 @@ function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, set
                 disabled={isLoading}
             >
                 <FontAwesomeIcon icon={faCubes} className="h-5 w-5" />
-            </button>
+            </button>}
 
             <button 
                 onClick={() => app.goToPage(DocsPageNames.docsUserGuide)}

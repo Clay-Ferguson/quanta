@@ -11,6 +11,7 @@ import DocViewerPage from '../../pages/DocViewerPage';
 
 declare const DOC_PATH: string;
 declare const DOC_ROOT_KEY: string | undefined;
+declare const DOC_ROOT_TYPE: 'vfs' | 'lfs' | undefined;
 
 class DocsClientPlugin implements IClientPlugin {
 
@@ -31,6 +32,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsSelItems = new Set<TreeNode>();
         gs.docsCutItems = new Set<string>();
         gs.docsRootKey = DOC_ROOT_KEY || 'root'; // defined in config.yaml
+        gs.docsRootType = DOC_ROOT_TYPE || 'vfs'; // default to 'vfs' if not defined
         gs.docsViewWidth = 'medium';
         gs.docsSearch = '';
         gs.docsSearchResults = [];
