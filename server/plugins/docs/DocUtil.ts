@@ -172,7 +172,7 @@ class DocUtil {
             const newPath = path.join(absoluteParentPath, newFileName);
             
             // Safety check: ensure target doesn't already exist to prevent overwriting
-            if (fs.existsSync(newPath)) {
+            if (ifs.existsSync(newPath)) {
                 console.error(`Target file already exists during ordinal shift, skipping: ${newPath}`);
                 console.error(`This indicates a problem with ordinal sequencing that needs to be resolved.`);
                 continue;
@@ -207,7 +207,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
-    ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string): string => {
+    ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string, ifs: IVFS): string => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
         const ordinalPrefix = fileName.substring(0, underscoreIndex);
@@ -222,7 +222,7 @@ class DocUtil {
             
             try {
                 // Safety check: ensure target doesn't already exist to prevent overwriting
-                if (fs.existsSync(newFilePath)) {
+                if (ifs.existsSync(newFilePath)) {
                     console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                     return fileName; // Return original name if target exists
                 }
@@ -230,7 +230,7 @@ class DocUtil {
                 // Rename the file/folder to have 4-digit ordinal prefix
                 this.checkFileAccess(oldFilePath, root);
                 this.checkFileAccess(newFilePath, root);
-                fs.renameSync(oldFilePath, newFilePath);
+                ifs.renameSync(oldFilePath, newFilePath);
                 console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(a)`);
                 
                 // Return the new filename for further processing
@@ -255,7 +255,7 @@ class DocUtil {
                 
                 try {
                     // Safety check: ensure target doesn't already exist to prevent overwriting
-                    if (fs.existsSync(newFilePath)) {
+                    if (ifs.existsSync(newFilePath)) {
                         console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                         return fileName; // Return original name if target exists
                     }
@@ -263,7 +263,7 @@ class DocUtil {
                     // Rename the file/folder to have 4-digit ordinal prefix
                     this.checkFileAccess(oldFilePath, root);
                     this.checkFileAccess(newFilePath, root);
-                    fs.renameSync(oldFilePath, newFilePath);
+                    ifs.renameSync(oldFilePath, newFilePath);
                     console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(b)`);
                     
                     // Return the new filename for further processing
@@ -294,11 +294,11 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
-    getMaxOrdinal = (absolutePath: string, root: string): number => {
+    getMaxOrdinal = (absolutePath: string, root: string, ifs: IVFS): number => {
         this.checkFileAccess(absolutePath, root);
                 
         // Read directory contents and filter for files/folders with numeric prefixes
-        const allFiles = fs.readdirSync(absolutePath);
+        const allFiles = ifs.readdirSync(absolutePath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
                 
         // Return 0 if no numbered files exist
@@ -334,7 +334,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
-    ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string): string => {
+    ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IVFS): string => {
     
         // Special case: content.md files are always given ordinal 0 by convention
         // TODO: This is a temporary hack for better Quanta export ingestion and will be removed later
@@ -350,7 +350,7 @@ class DocUtil {
             
         try {
             // Safety check: ensure target doesn't already exist to prevent overwriting
-            if (fs.existsSync(newFilePath)) {
+            if (ifs.existsSync(newFilePath)) {
                 console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                 return fileName; // Return original name if target exists
             }
@@ -358,7 +358,7 @@ class DocUtil {
             // Rename the file/folder to have 4-digit ordinal prefix
             this.checkFileAccess(oldFilePath, root);
             this.checkFileAccess(newFilePath, root);
-            fs.renameSync(oldFilePath, newFilePath);
+            ifs.renameSync(oldFilePath, newFilePath);
             console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix (b)`);
                 
             // Return the new filename

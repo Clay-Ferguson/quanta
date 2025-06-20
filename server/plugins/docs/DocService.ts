@@ -80,6 +80,9 @@ class DocService {
             throw new Error('Invalid document root key');
         }
         
+        // Get the appropriate file system implementation
+        const ifs = docUtil.getFileSystem(docRootKey);
+        
         // Decode URL encoding and sanitize the tree folder path
         const decodedTreeFolder = decodeURIComponent(treeFolder);
         
@@ -100,7 +103,7 @@ class DocService {
             const folderName = folderComponents[i];
             
             // Verify current directory exists before attempting to read it
-            if (!fs.existsSync(currentPath)) {
+            if (!ifs.existsSync(currentPath)) {
                 throw new Error(`Directory not found: ${currentPath}`);
             }
             
@@ -108,7 +111,7 @@ class DocService {
             docUtil.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
-            const entries = fs.readdirSync(currentPath);
+            const entries = ifs.readdirSync(currentPath);
             
             // Search for folder that matches the non-ordinal name
             let matchedFolder: string | null = null;
@@ -121,7 +124,7 @@ class DocService {
                 
                 // Check if entry is a directory and follows ordinal naming convention
                 const entryPath = path.join(currentPath, entry);
-                const stat = fs.statSync(entryPath);
+                const stat = ifs.statSync(entryPath);
                 
                 if (stat.isDirectory() && /^\d+_/.test(entry)) {
                     // Extract the folder name without the ordinal prefix
@@ -143,7 +146,7 @@ class DocService {
                 // Log available options for debugging
                 for (const entry of entries) {
                     const entryPath = path.join(currentPath, entry);
-                    const stat = fs.statSync(entryPath);
+                    const stat = ifs.statSync(entryPath);
                     if (stat.isDirectory() && /^\d+_/.test(entry)) {
                         const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
                         console.log(`  - "${entry}" -> "${nameWithoutOrdinal}"`);
@@ -283,7 +286,7 @@ class DocService {
         const treeNodes: TreeNode[] = [];
         
         // Get the next available ordinal number for files without ordinal prefixes
-        let nextOrdinal = docUtil.getMaxOrdinal(absolutePath, root);
+        let nextOrdinal = docUtil.getMaxOrdinal(absolutePath, root, ifs);
 
         // Process each file/folder in the directory
         for (let file of files) {
@@ -295,11 +298,11 @@ class DocService {
             // Ensure file has ordinal prefix - files must follow "NNNNN_" naming convention
             if (!/^\d+_/.test(file)) {
                 // Assign next ordinal to files without numeric prefix
-                file = docUtil.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root);
+                file = docUtil.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root, ifs);
             }
 
             // Standardize to 4-digit ordinal prefix format
-            const currentFileName = docUtil.ensureFourDigitOrdinal(absolutePath, file, root);
+            const currentFileName = docUtil.ensureFourDigitOrdinal(absolutePath, file, root, ifs);
                 
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
