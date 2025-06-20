@@ -22,6 +22,6 @@ export interface IFS {
 
     // File/directory manipulation
     rename(oldPath: string, newPath: string): Promise<void>;
-    unlinkSync(path: string): void;
+    unlink(path: string): Promise<void>;
     rmSync(path: string, options?: { recursive?: boolean, force?: boolean }): void;
 }

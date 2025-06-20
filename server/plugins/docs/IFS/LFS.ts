@@ -51,8 +51,8 @@ class LFS implements IFS {
         await fs.promises.rename(oldPath, newPath);
     }
 
-    unlinkSync(path: string): void {
-        fs.unlinkSync(path);
+    async unlink(path: string): Promise<void> {
+        await fs.promises.unlink(path);
     }
 
     rmSync(path: string, options?: { recursive?: boolean, force?: boolean }): void {

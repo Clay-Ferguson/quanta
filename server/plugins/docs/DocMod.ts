@@ -367,7 +367,7 @@ class DocMod {
                         console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                     } else {
                         // Remove file
-                        ifs.unlinkSync(absoluteTargetPath);
+                        await ifs.unlink(absoluteTargetPath);
                         console.log(`File deleted successfully: ${absoluteTargetPath}`);
                     }
                     
@@ -907,7 +907,7 @@ class DocMod {
                 try {
                     // Validate access and delete the file
                     docUtil.checkFileAccess(deleteFilePath, root);
-                    ifs.unlinkSync(deleteFilePath);
+                    await ifs.unlink(deleteFilePath);
                     deletedFiles.push(fileToDelete.filename);
                     console.log(`Deleted file: ${fileToDelete.filename}`);
                 } catch (error) {
@@ -1041,7 +1041,7 @@ class DocMod {
             // Perform the conversion: delete original file and create folder
             // Step 1: Remove the original file with security validation
             docUtil.checkFileAccess(absoluteFilePath, root);
-            ifs.unlinkSync(absoluteFilePath);
+            await ifs.unlink(absoluteFilePath);
             console.log(`File deleted: ${absoluteFilePath}`);
 
             // Step 2: Create the new folder structure

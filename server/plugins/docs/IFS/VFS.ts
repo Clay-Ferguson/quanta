@@ -40,7 +40,7 @@ class VFS implements IFS {
         throw new Error('VFS.renameSync not implemented yet');
     }
 
-    unlinkSync(_path: string): void {
+    async unlink(_path: string): Promise<void> {
         throw new Error('VFS.unlinkSync not implemented yet');
     }
 
