@@ -17,14 +17,11 @@ export interface IFS {
     writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
 
     // Directory operations
-    readdirSync(path: string): string[];
+    readdir(path: string): Promise<string[]>;
     mkdirSync(path: string, options?: { recursive?: boolean }): void;
 
     // File/directory manipulation
     renameSync(oldPath: string, newPath: string): void;
     unlinkSync(path: string): void;
     rmSync(path: string, options?: { recursive?: boolean, force?: boolean }): void;
-
-    // Async operations (callback-based for compatibility)
-    readdir(path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
 }

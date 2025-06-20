@@ -27,7 +27,7 @@ class VFS implements IFS {
     }
 
     // Directory operations
-    readdirSync(_path: string): string[] {
+    async readdir(_path: string): Promise<string[]> {
         throw new Error('VFS.readdirSync not implemented yet');
     }
 
@@ -46,11 +46,6 @@ class VFS implements IFS {
 
     rmSync(_path: string, _options?: { recursive?: boolean, force?: boolean }): void {
         throw new Error('VFS.rmSync not implemented yet');
-    }
-
-    // Async operations (callback-based for compatibility)
-    readdir(_path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void {
-        callback(new Error('VFS.readdir not implemented yet'), []);
     }
 }
 

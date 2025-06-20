@@ -38,8 +38,8 @@ class LFS implements IFS {
     }
 
     // Directory operations
-    readdirSync(path: string): string[] {
-        return fs.readdirSync(path);
+    async readdir(path: string): Promise<string[]> {
+        return await fs.promises.readdir(path);
     }
 
     mkdirSync(path: string, options?: { recursive?: boolean }): void {
@@ -57,11 +57,6 @@ class LFS implements IFS {
 
     rmSync(path: string, options?: { recursive?: boolean, force?: boolean }): void {
         fs.rmSync(path, options);
-    }
-
-    // Async operations (callback-based for compatibility)
-    readdir(path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void {
-        fs.readdir(path, callback);
     }
 }
 

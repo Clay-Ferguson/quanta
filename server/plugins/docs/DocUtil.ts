@@ -127,7 +127,7 @@ class DocUtil {
         const relativeFolderPath = path.relative(root, absoluteParentPath);
         
         // Read directory contents and filter for files/folders with numeric prefixes
-        const allFiles = ifs.readdirSync(absoluteParentPath);
+        const allFiles = await ifs.readdir(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
         // Sort files by name (which will sort by numeric prefix for proper ordering)
@@ -289,11 +289,11 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
-    getMaxOrdinal = (absolutePath: string, root: string, ifs: IFS): number => {
+    getMaxOrdinal = async (absolutePath: string, root: string, ifs: IFS): Promise<number> => {
         this.checkFileAccess(absolutePath, root);
                 
         // Read directory contents and filter for files/folders with numeric prefixes
-        const allFiles = ifs.readdirSync(absolutePath);
+        const allFiles = await ifs.readdir(absolutePath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
                 
         // Return 0 if no numbered files exist

@@ -110,7 +110,7 @@ class DocService {
             docUtil.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
-            const entries = ifs.readdirSync(currentPath);
+            const entries = await ifs.readdir(currentPath);
             
             // Search for folder that matches the non-ordinal name
             let matchedFolder: string | null = null;
@@ -281,11 +281,11 @@ class DocService {
         docUtil.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        const files = ifs.readdirSync(absolutePath);
+        const files = await ifs.readdir(absolutePath);
         const treeNodes: TreeNode[] = [];
         
         // Get the next available ordinal number for files without ordinal prefixes
-        let nextOrdinal = docUtil.getMaxOrdinal(absolutePath, root, ifs);
+        let nextOrdinal = await docUtil.getMaxOrdinal(absolutePath, root, ifs);
 
         // Process each file/folder in the directory
         for (let file of files) {
@@ -330,7 +330,7 @@ class DocService {
                 }
                 
                 // Check if folder has any children in the filesystem
-                fsChildren = ifs.readdirSync(filePath).length > 0;
+                fsChildren = (await ifs.readdir(filePath)).length > 0;
             } 
             // FILE
             else {

@@ -463,7 +463,7 @@ class DocMod {
             // Read directory contents and filter for items with numeric ordinal prefixes
             // Only files/folders matching the pattern "NNNN_*" are considered for ordering
             docUtil.checkFileAccess(absoluteParentPath, root);
-            const allFiles = ifs.readdirSync(absoluteParentPath);
+            const allFiles = await ifs.readdir(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
             // Sort by filename which naturally sorts by numeric prefix due to zero-padding
