@@ -254,7 +254,8 @@ CREATE OR REPLACE FUNCTION pg_insert_file_at_ordinal(
     root_key TEXT,
     is_directory_param BOOLEAN DEFAULT FALSE,
     content_param BYTEA DEFAULT NULL,
-    content_type_param TEXT DEFAULT NULL
+    content_type_param TEXT DEFAULT NULL,
+    is_binary_param BOOLEAN DEFAULT TRUE
 ) 
 RETURNS INTEGER AS $$
 DECLARE
@@ -291,7 +292,9 @@ BEGIN
         parent_path,
         filename,
         is_directory,
-        content,
+        content_text,
+        content_binary,
+        is_binary,
         content_type,
         size_bytes,
         created_time,
@@ -301,7 +304,20 @@ BEGIN
         parent_path_param,
         final_filename,
         is_directory_param,
-        content_param,
+        CASE 
+            WHEN is_directory_param OR content_param IS NULL THEN NULL
+            WHEN is_binary_param THEN NULL
+            ELSE convert_from(content_param, 'UTF8')
+        END,
+        CASE 
+            WHEN is_directory_param OR content_param IS NULL THEN NULL
+            WHEN is_binary_param THEN content_param
+            ELSE NULL
+        END,
+        CASE 
+            WHEN is_directory_param THEN FALSE
+            ELSE COALESCE(is_binary_param, TRUE)
+        END,
         content_type_param,
         COALESCE(LENGTH(content_param), 0),
         NOW(),
@@ -317,7 +333,8 @@ $$ LANGUAGE plpgsql;
 -- ==============================================================================
 
 -- Function: pg_read_file
--- Equivalent to fs.readFileSync() - reads file content
+-- Equivalent to fs.readFileSync() - reads file content (both text and binary)
+-- Returns BYTEA for compatibility, but content comes from appropriate column
 CREATE OR REPLACE FUNCTION pg_read_file(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -326,9 +343,11 @@ CREATE OR REPLACE FUNCTION pg_read_file(
 RETURNS BYTEA AS $$
 DECLARE
     file_content BYTEA;
+    text_content TEXT;
+    is_binary_file BOOLEAN;
 BEGIN
-    SELECT content
-    INTO file_content
+    SELECT is_binary, content_text, content_binary
+    INTO is_binary_file, text_content, file_content
     FROM fs_nodes
     WHERE 
         doc_root_key = root_key
@@ -336,31 +355,36 @@ BEGIN
         AND filename = filename_param
         AND is_directory = FALSE;
         
-    IF file_content IS NULL THEN
+    -- Check if file was found
+    IF is_binary_file IS NULL THEN
         RAISE EXCEPTION 'File not found: %/%', parent_path_param, filename_param;
     END IF;
     
-    RETURN file_content;
+    -- Return appropriate content based on file type
+    IF is_binary_file THEN
+        RETURN file_content;
+    ELSE
+        -- Convert text to BYTEA for return
+        RETURN convert_to(text_content, 'UTF8');
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_write_file
--- Equivalent to fs.writeFileSync() - writes file content
+-- Function: pg_write_text_file
+-- Equivalent to fs.writeFileSync() for text files - writes text file content
 -- Uses filename prefixes for ordinal management instead of ordinal column
-CREATE OR REPLACE FUNCTION pg_write_file(
+CREATE OR REPLACE FUNCTION pg_write_text_file(
     parent_path_param TEXT,
     filename_param TEXT,
-    content_data BYTEA,
+    content_data TEXT,
     root_key TEXT,
-    content_type_param TEXT DEFAULT 'application/octet-stream'
+    content_type_param TEXT DEFAULT 'text/plain'
 ) 
 RETURNS INTEGER AS $$
 DECLARE
     file_id INTEGER;
     file_size BIGINT;
     final_filename TEXT;
-    max_ordinal INTEGER;
-    ordinal_prefix TEXT;
 BEGIN
     file_size := LENGTH(content_data);
     
@@ -376,7 +400,9 @@ BEGIN
         parent_path,
         filename,
         is_directory,
-        content,
+        content_text,
+        content_binary,
+        is_binary,
         content_type,
         size_bytes,
         created_time,
@@ -387,6 +413,8 @@ BEGIN
         final_filename,
         FALSE,
         content_data,
+        NULL,
+        FALSE,
         content_type_param,
         file_size,
         NOW(),
@@ -394,7 +422,73 @@ BEGIN
     )
     ON CONFLICT (doc_root_key, parent_path, filename)
     DO UPDATE SET 
-        content = content_data,
+        content_text = content_data,
+        content_binary = NULL,
+        is_binary = FALSE,
+        content_type = content_type_param,
+        size_bytes = file_size,
+        modified_time = NOW()
+    RETURNING id INTO file_id;
+    
+    RETURN file_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: pg_write_binary_file
+-- Equivalent to fs.writeFileSync() for binary files - writes binary file content
+-- Uses filename prefixes for ordinal management instead of ordinal column
+CREATE OR REPLACE FUNCTION pg_write_binary_file(
+    parent_path_param TEXT,
+    filename_param TEXT,
+    content_data BYTEA,
+    root_key TEXT,
+    content_type_param TEXT DEFAULT 'application/octet-stream'
+) 
+RETURNS INTEGER AS $$
+DECLARE
+    file_id INTEGER;
+    file_size BIGINT;
+    final_filename TEXT;
+BEGIN
+    file_size := LENGTH(content_data);
+    
+    -- Filename MUST already have ordinal prefix - no automatic addition
+    IF filename_param ~ '^[0-9]+_' THEN
+        final_filename := filename_param;
+    ELSE
+        RAISE EXCEPTION 'Invalid filename: %. All filenames must have ordinal prefix format "NNNN_filename".', filename_param;
+    END IF;
+    
+    INSERT INTO fs_nodes (
+        doc_root_key,
+        parent_path,
+        filename,
+        is_directory,
+        content_text,
+        content_binary,
+        is_binary,
+        content_type,
+        size_bytes,
+        created_time,
+        modified_time
+    ) VALUES (
+        root_key,
+        parent_path_param,
+        final_filename,
+        FALSE,
+        NULL,
+        content_data,
+        TRUE,
+        content_type_param,
+        file_size,
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (doc_root_key, parent_path, filename)
+    DO UPDATE SET 
+        content_text = NULL,
+        content_binary = content_data,
+        is_binary = TRUE,
         content_type = content_type_param,
         size_bytes = file_size,
         modified_time = NOW()
@@ -495,6 +589,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: pg_rename
 -- Equivalent to fs.renameSync() - renames/moves a file or directory
+-- For directories, also updates the parent_path of all nested children
 CREATE OR REPLACE FUNCTION pg_rename(
     old_parent_path TEXT,
     old_filename TEXT,
@@ -505,13 +600,28 @@ CREATE OR REPLACE FUNCTION pg_rename(
 RETURNS BOOLEAN AS $$
 DECLARE
     updated_count INTEGER;
+    is_dir BOOLEAN;
+    old_full_path TEXT;
+    new_full_path TEXT;
 BEGIN
     -- Check if target already exists
     IF pg_exists(new_parent_path, new_filename, root_key) THEN
         RAISE EXCEPTION 'Target already exists: %/%', new_parent_path, new_filename;
     END IF;
     
-    -- Update the record
+    -- Check if the item being renamed is a directory
+    SELECT is_directory INTO is_dir
+    FROM fs_nodes
+    WHERE 
+        doc_root_key = root_key
+        AND parent_path = old_parent_path
+        AND filename = old_filename;
+    
+    IF is_dir IS NULL THEN
+        RAISE EXCEPTION 'Source file not found: %/%', old_parent_path, old_filename;
+    END IF;
+    
+    -- Update the main record
     UPDATE fs_nodes
     SET 
         parent_path = new_parent_path,
@@ -526,6 +636,33 @@ BEGIN
     
     IF updated_count = 0 THEN
         RAISE EXCEPTION 'Source file not found: %/%', old_parent_path, old_filename;
+    END IF;
+    
+    -- If it's a directory, update all children's parent_path
+    IF is_dir THEN
+        -- Construct old and new full paths
+        old_full_path := CASE 
+            WHEN old_parent_path = '' THEN old_filename
+            ELSE old_parent_path || '/' || old_filename
+        END;
+        
+        new_full_path := CASE 
+            WHEN new_parent_path = '' THEN new_filename
+            ELSE new_parent_path || '/' || new_filename
+        END;
+        
+        -- Update all children (files and subdirectories) whose parent_path starts with the old path
+        UPDATE fs_nodes
+        SET 
+            parent_path = new_full_path || SUBSTRING(parent_path FROM LENGTH(old_full_path) + 1),
+            modified_time = NOW()
+        WHERE 
+            doc_root_key = root_key
+            AND parent_path LIKE old_full_path || '%';
+            
+        -- Log how many children were updated
+        GET DIAGNOSTICS updated_count = ROW_COUNT;
+        RAISE NOTICE 'Updated % children for directory rename', updated_count;
     END IF;
     
     RETURN TRUE;
@@ -569,7 +706,9 @@ BEGIN
         parent_path,
         filename,
         is_directory,
-        content,
+        content_text,
+        content_binary,
+        is_binary,
         content_type,
         size_bytes,
         created_time,
@@ -580,6 +719,8 @@ BEGIN
         final_dirname,
         TRUE,
         NULL,
+        NULL,
+        FALSE,
         'directory',
         0,
         NOW(),

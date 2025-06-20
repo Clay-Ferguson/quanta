@@ -11,6 +11,7 @@ interface PostgresConfig {
 class PGDB {
     private pool: Pool | null = null;
     private isInitialized: boolean = false;
+    public logEnabled: boolean = false; // Enable logging by default
 
     constructor() {}
 
@@ -107,26 +108,30 @@ class PGDB {
     async query(sql: string, params?: any[]): Promise<any> {
         this.checkDb();
         
+        if (this.logEnabled) {
         // Log the SQL query and parameters
-        console.log('Executing SQL query:');
-        console.log(sql);
-        if (params && params.length > 0) {
-            console.log('  Parameters:');
-            params.forEach((param, index) => {
-                console.log(`    [${index}]: ${param}`);
-            });
+            console.log('Executing SQL query:');
+            console.log(sql);
+            if (params && params.length > 0) {
+                console.log('  Parameters:');
+                params.forEach((param, index) => {
+                    console.log(`    [${index}]: ${param}`);
+                });
+            }
         }
         
         const result: QueryResult<any> = await this.pool!.query(sql, params);
 
+        if (this.logEnabled) {
         // Log the query results
-        console.log('  Query result:');
-        console.log(`    Rows returned: ${result.rows.length}`);
-        if (result.rows.length > 0) {
-            console.log('    Data:');
-            result.rows.forEach((row, index) => {
-                console.log(`      Row ${index}:`, JSON.stringify(row, null, 2).split('\n').map((line, i) => i === 0 ? line : `        ${line}`).join('\n'));
-            });
+            console.log('  Query result:');
+            console.log(`    Rows returned: ${result.rows.length}`);
+            if (result.rows.length > 0) {
+                console.log('    Data:');
+                result.rows.forEach((row, index) => {
+                    console.log(`      Row ${index}:`, JSON.stringify(row, null, 2).split('\n').map((line, i) => i === 0 ? line : `        ${line}`).join('\n'));
+                });
+            }
         }
         
         return result;

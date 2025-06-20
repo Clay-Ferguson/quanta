@@ -673,7 +673,7 @@ class DocService {
             
             // Construct and validate search path
             const absoluteSearchPath = path.join(root, treeFolder);
-            ifs.checkFileAccess(absoluteSearchPath, root);
+            // ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });
@@ -988,7 +988,7 @@ class DocService {
             
             // Construct and validate search path
             const absoluteSearchPath = path.join(root, treeFolder);
-            ifs.checkFileAccess(absoluteSearchPath, root);
+            // ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });

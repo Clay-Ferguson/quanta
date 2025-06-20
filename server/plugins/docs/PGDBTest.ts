@@ -5,7 +5,7 @@ const testRootKey = 'pgroot';
 /**
  * Wipes all records from the fs_nodes table
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function wipeTable(): Promise<void> {
     try {
         console.log('=== WIPING fs_nodes TABLE ===');
@@ -28,7 +28,7 @@ async function wipeTable(): Promise<void> {
  * Creates a test file record and reads it back to verify everything is working
  */
 export async function pgdbTest(): Promise<void> {
-    // await wipeTable();
+    await wipeTable();
     await simpleReadWriteTest();
     await deleteFolder("0001_test-structure");
     await createFolderStructureTest();
@@ -36,6 +36,9 @@ export async function pgdbTest(): Promise<void> {
     await testFileOperations();
     await testPathOperations();
     await testErrorHandling();
+    await printFolderStructure();
+    await testFolderRenamePreservesChildren();
+    await createNewFileAtTopOfRoot();
     await printFolderStructure();
 }
 
@@ -163,8 +166,8 @@ async function createFolderStructureTest(): Promise<void> {
                 const fileContent = Buffer.from(`# File ${j} in ${folderName}\n\nThis is test file ${j} inside folder ${folderName}.`);
                 
                 await pgdb.query(
-                    'SELECT pg_write_file($1, $2, $3, $4, $5) as file_id',
-                    [currentFolderPath, fileName, fileContent, testRootKey, 'text/markdown']
+                    'SELECT pg_write_text_file($1, $2, $3, $4, $5) as file_id',
+                    [currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown']
                 );
             }
             
@@ -246,8 +249,8 @@ async function simpleReadWriteTest(): Promise<void> {
         
         // Insert a test file record using our PostgreSQL function
         const result = await pgdb.query(
-            'SELECT pg_write_file($1, $2, $3, $4, $5) as file_id',
-            [testParentPath, testFilename, testContent, testRootKey, testContentType]
+            'SELECT pg_write_text_file($1, $2, $3, $4, $5) as file_id',
+            [testParentPath, testFilename, testContent.toString('utf8'), testRootKey, testContentType]
         );
         
         const fileId = result.rows[0].file_id;
@@ -356,8 +359,8 @@ async function testOrdinalOperations(): Promise<void> {
         console.log('5. Testing manual ordinal shifting...');
         // Create a test file to shift
         await pgdb.query(
-            'SELECT pg_write_file($1, $2, $3, $4, $5)',
-            [testPath, '0020_temp-file.md', Buffer.from('Temporary file'), testRootKey, 'text/markdown']
+            'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+            [testPath, '0020_temp-file.md', 'Temporary file', testRootKey, 'text/markdown']
         );
         
         // Now shift ordinals down from position 8
@@ -501,8 +504,8 @@ async function testPathOperations(): Promise<void> {
         console.log('3. Testing file creation in deep path...');
         const finalDeepPath = deepPath2 + '/0001_final';
         await pgdb.query(
-            'SELECT pg_write_file($1, $2, $3, $4, $5)',
-            [finalDeepPath, '0001_deep-file.txt', Buffer.from('File in deep nested path'), testRootKey, 'text/plain']
+            'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+            [finalDeepPath, '0001_deep-file.txt', 'File in deep nested path', testRootKey, 'text/plain']
         );
         console.log('   Created file in deep nested path');
         
@@ -531,8 +534,8 @@ async function testErrorHandling(): Promise<void> {
         console.log('1. Testing invalid filename format (missing ordinal)...');
         try {
             await pgdb.query(
-                'SELECT pg_write_file($1, $2, $3, $4, $5)',
-                [testPath, 'invalid-filename.md', Buffer.from('test'), testRootKey, 'text/markdown']
+                'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+                [testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown']
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
         } catch (error: any) {
@@ -616,6 +619,145 @@ async function testErrorHandling(): Promise<void> {
     } catch (error) {
         console.error('=== ERROR HANDLING TEST FAILED ===');
         console.error('Unexpected error during error handling test:', error);
+        throw error;
+    }
+}
+
+/**
+ * Test creating a new file at the top of root using actual DocService.createFile method
+ * This will help debug the issue where folder children disappear after createFile
+ */
+async function createNewFileAtTopOfRoot(): Promise<void> {
+    try {
+        console.log('\n=== TESTING CREATE NEW FILE AT TOP OF ROOT ===');
+        
+        // Import DocService instance
+        const { docSvc } = await import('./DocService.js');
+        
+        // Set up parameters for the createFile request
+        const docRootKey = testRootKey; // 'pgroot'
+        const treeFolder = '/0001_test-structure'; // Root folder where files exist
+        const fileName = 'new-test-file'; // Without extension, should get .md added
+        const insertAfterNode = ''; // Empty means insert at top (ordinal 0)
+        
+        console.log(`Calling DocService.createFile with:`);
+        console.log(`  fileName: "${fileName}"`);
+        console.log(`  treeFolder: "${treeFolder}"`);
+        console.log(`  insertAfterNode: "${insertAfterNode}"`);
+        console.log(`  docRootKey: "${docRootKey}"`);
+        
+        // Create mock request and response objects
+        const mockReq = {
+            body: {
+                fileName,
+                treeFolder,
+                insertAfterNode,
+                docRootKey
+            }
+        } as any;
+        
+        const mockRes = {
+            status: (code: number) => ({
+                json: (data: any) => {
+                    console.log(`Response status ${code}:`, data);
+                    return mockRes;
+                }
+            }),
+            json: (data: any) => {
+                console.log('Response:', data);
+                return mockRes;
+            }
+        } as any;
+        
+        console.log('Calling DocService.createFile...');
+        
+        // Call the actual createFile method
+        await docSvc.createFile(mockReq, mockRes);
+        
+        console.log('DocService.createFile completed!');
+        console.log('=== CREATE NEW FILE TEST COMPLETED ===\n');
+        
+    } catch (error) {
+        console.error('=== CREATE NEW FILE TEST FAILED ===');
+        console.error('Error during create new file test:', error);
+        throw error;
+    }
+}
+
+/**
+ * Test to verify that renaming folders preserves their children
+ */
+async function testFolderRenamePreservesChildren(): Promise<void> {
+    try {
+        console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
+        
+        // Debug: Show some sample records to understand the data structure
+        console.log('Sample database records:');
+        const sampleRecords = await pgdb.query(
+            'SELECT parent_path, filename, is_directory FROM fs_nodes WHERE doc_root_key = $1 ORDER BY parent_path, filename LIMIT 10',
+            [testRootKey]
+        );
+        sampleRecords.rows.forEach((row: any) => {
+            const type = row.is_directory ? '📁' : '📄';
+            console.log(`  ${type} parent_path:"${row.parent_path}" filename:"${row.filename}"`);
+        });
+        
+        // Test renaming 0001_one to 0099_renamed-one and verify children are preserved
+        const oldParentPath = '/0001_test-structure';
+        const oldFilename = '0001_one'; // Use the correct existing folder name
+        const newFilename = '0099_renamed-one';
+        
+        console.log(`Renaming folder ${oldFilename} to ${newFilename}...`);
+        
+        // First verify the folder exists
+        const folderExists = await pgdb.query(
+            'SELECT pg_exists($1, $2, $3) as exists',
+            [oldParentPath, oldFilename, testRootKey]
+        );
+        console.log(`Folder ${oldFilename} exists: ${folderExists.rows[0].exists}`);
+        
+        // Count children before rename
+        const expectedChildPath = `${oldParentPath}/${oldFilename}`;
+        console.log(`Looking for children with parent_path: "${expectedChildPath}"`);
+        
+        const beforeChildren = await pgdb.query(
+            'SELECT COUNT(*) as count FROM fs_nodes WHERE doc_root_key = $1 AND parent_path = $2',
+            [testRootKey, expectedChildPath]
+        );
+        console.log(`Children before rename: ${beforeChildren.rows[0].count}`);
+        
+        // List some actual children for debugging
+        const sampleChildren = await pgdb.query(
+            'SELECT filename, parent_path FROM fs_nodes WHERE doc_root_key = $1 AND parent_path = $2 LIMIT 5',
+            [testRootKey, expectedChildPath]
+        );
+        console.log(`Sample children found:`, sampleChildren.rows);
+        
+        // Perform the rename
+        await pgdb.query(
+            'SELECT pg_rename($1, $2, $3, $4, $5)',
+            [oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey]
+        );
+        
+        // Count children after rename
+        const afterChildren = await pgdb.query(
+            'SELECT COUNT(*) as count FROM fs_nodes WHERE doc_root_key = $1 AND parent_path = $2',
+            [testRootKey, `${oldParentPath}/${newFilename}`]
+        );
+        console.log(`Children after rename: ${afterChildren.rows[0].count}`);
+        
+        // Verify children count is preserved
+        if (beforeChildren.rows[0].count === afterChildren.rows[0].count) {
+            console.log('✅ SUCCESS: Children count preserved during folder rename');
+        } else {
+            console.log('❌ FAILED: Children count changed during folder rename');
+        }
+        
+        console.log('=== FOLDER RENAME TEST COMPLETED ===\n');
+        
+    } catch (error) {
+        console.error('=== FOLDER RENAME TEST FAILED ===');
+        console.error('Error during folder rename test:', error);
         throw error;
     }
 }

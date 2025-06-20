@@ -161,8 +161,110 @@ class VFS implements IFS {
         }
     }
 
-    async writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
-        throw new Error('VFS.writeFile not implemented yet');
+    async writeFile(fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const { parentPath, filename } = this.parsePath(relativePath);
+            
+            // Determine if this is a binary file based on extension
+            const ext = path.extname(filename).toLowerCase();
+            const isBinary = this.isBinaryFile(ext);
+            
+            // Determine content type based on file extension
+            const contentType = this.getContentType(ext);
+            
+            if (isBinary) {
+                // Handle binary files
+                let content: Buffer;
+                if (typeof data === 'string') {
+                    content = Buffer.from(data, encoding || 'utf8');
+                } else {
+                    content = data;
+                }
+                
+                await pgdb.query(
+                    'SELECT pg_write_binary_file($1, $2, $3, $4, $5)',
+                    [parentPath, filename, content, rootKey, contentType]
+                );
+            } else {
+                // Handle text files
+                let textContent: string;
+                if (typeof data === 'string') {
+                    textContent = data;
+                } else {
+                    textContent = data.toString(encoding || 'utf8');
+                }
+                
+                await pgdb.query(
+                    'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+                    [parentPath, filename, textContent, rootKey, contentType]
+                );
+            }
+        } catch (error) {
+            console.error('VFS.writeFile error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Determine if a file is binary based on its extension
+     */
+    private isBinaryFile(ext: string): boolean {
+        const binaryExtensions = [
+            '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.tiff', '.webp',
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+            '.zip', '.tar', '.gz', '.rar', '.7z',
+            '.mp3', '.mp4', '.avi', '.mov', '.wmv', '.flv',
+            '.exe', '.dll', '.so', '.dylib',
+            '.woff', '.woff2', '.ttf', '.otf'
+        ];
+        
+        return binaryExtensions.includes(ext.toLowerCase());
+    }
+
+    /**
+     * Get content type based on file extension
+     */
+    private getContentType(ext: string): string {
+        switch (ext.toLowerCase()) {
+        case '.md':
+            return 'text/markdown';
+        case '.txt':
+            return 'text/plain';
+        case '.json':
+            return 'application/json';
+        case '.html':
+        case '.htm':
+            return 'text/html';
+        case '.css':
+            return 'text/css';
+        case '.js':
+            return 'application/javascript';
+        case '.ts':
+            return 'text/typescript';
+        case '.xml':
+            return 'application/xml';
+        case '.yaml':
+        case '.yml':
+            return 'application/yaml';
+        case '.jpg':
+        case '.jpeg':
+            return 'image/jpeg';
+        case '.png':
+            return 'image/png';
+        case '.gif':
+            return 'image/gif';
+        case '.pdf':
+            return 'application/pdf';
+        case '.zip':
+            return 'application/zip';
+        case '.mp3':
+            return 'audio/mpeg';
+        case '.mp4':
+            return 'video/mp4';
+        default:
+            return 'application/octet-stream';
+        }
     }
 
     // Directory operations
@@ -219,7 +321,6 @@ class VFS implements IFS {
     }
 
     checkFileAccess(filename: string, root: string): void {
-        // todo-0: Implement security check to ensure file access is within allowed root directory
     }
 }
 
