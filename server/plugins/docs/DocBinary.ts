@@ -293,7 +293,7 @@ class DocBinary {
                             }
                             
                             // Write the file data to disk
-                            ifs.writeFileSync(finalFilePath, file.data);
+                            await ifs.writeFile(finalFilePath, file.data);
                             savedCount++;
                             console.log(`Uploaded file saved: ${finalFilePath}`);
                         } catch {

@@ -161,7 +161,7 @@ class DocMod {
                             
                         // Write the content part to its designated file
                         docUtil.checkFileAccess(partFilePath, root);
-                        ifs.writeFileSync(partFilePath, partContent, 'utf8');
+                        await ifs.writeFile(partFilePath, partContent, 'utf8');
                         console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
                     }
                         
@@ -170,13 +170,13 @@ class DocMod {
                     res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
                 } else {
                     // No split delimiter found - save as single file
-                    ifs.writeFileSync(finalFilePath, content, 'utf8');
+                    await ifs.writeFile(finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
                     res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
                 }
             } else {
                 // Standard save operation without content splitting
-                ifs.writeFileSync(finalFilePath, content, 'utf8');
+                await ifs.writeFile(finalFilePath, content, 'utf8');
                 console.log(`File saved successfully: ${finalFilePath}`);
                 res.json({ success: true, message: 'File saved successfully' });
             }
@@ -895,7 +895,7 @@ class DocMod {
                     
             // Write the joined content with security validation
             docUtil.checkFileAccess(firstFilePath, root);
-            ifs.writeFileSync(firstFilePath, joinedContent, 'utf8');
+            await ifs.writeFile(firstFilePath, joinedContent, 'utf8');
             console.log(`Joined content saved to: ${firstFile.filename}`);
         
             // Clean up by deleting all files except the first one
@@ -1057,7 +1057,7 @@ class DocMod {
                 
                 // Write the preserved content with security validation
                 docUtil.checkFileAccess(newFilePath, root);
-                ifs.writeFileSync(newFilePath, remainingContent, 'utf8');
+                await ifs.writeFile(newFilePath, remainingContent, 'utf8');
                 console.log(`New file created with remaining content: ${newFilePath}`);
             }
 

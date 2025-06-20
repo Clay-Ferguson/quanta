@@ -29,11 +29,11 @@ class LFS implements IFS {
         return await fs.promises.readFile(path);
     }
 
-    writeFileSync(path: string, data: string | Buffer, encoding?: BufferEncoding): void {
+    async writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         if (encoding && typeof data === 'string') {
-            fs.writeFileSync(path, data, encoding);
+            await fs.promises.writeFile(path, data, encoding);
         } else {
-            fs.writeFileSync(path, data);
+            await fs.promises.writeFile(path, data);
         }
     }
 
@@ -62,10 +62,6 @@ class LFS implements IFS {
     // Async operations (callback-based for compatibility)
     readdir(path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void {
         fs.readdir(path, callback);
-    }
-
-    writeFile(path: string, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void {
-        fs.writeFile(path, data, callback);
     }
 }
 

@@ -481,7 +481,7 @@ class DocService {
             }
 
             // Create the new file with empty content
-            ifs.writeFileSync(newFilePath, '', 'utf8');
+            await ifs.writeFile(newFilePath, '', 'utf8');
 
             console.log(`File created successfully: ${newFilePath}`);
             

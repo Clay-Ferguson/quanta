@@ -18,11 +18,11 @@ class VFS implements IFS {
     }
 
     // File content operations
-    readFileSync(_path: string, _encoding?: BufferEncoding): string | Buffer {
+    async readFile(_path: string, _encoding?: BufferEncoding):Promise<string | Buffer> {
         throw new Error('VFS.readFileSync not implemented yet');
     }
 
-    writeFileSync(_path: string, _data: string | Buffer, _encoding?: BufferEncoding): void {
+    async writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         throw new Error('VFS.writeFileSync not implemented yet');
     }
 
@@ -51,10 +51,6 @@ class VFS implements IFS {
     // Async operations (callback-based for compatibility)
     readdir(_path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void {
         callback(new Error('VFS.readdir not implemented yet'), []);
-    }
-
-    writeFile(_path: string, _data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void {
-        callback(new Error('VFS.writeFile not implemented yet'));
     }
 }
 

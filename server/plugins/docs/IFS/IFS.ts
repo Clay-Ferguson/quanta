@@ -14,7 +14,7 @@ export interface IFS {
 
     // File content operations
     readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
-    writeFileSync(path: string, data: string | Buffer, encoding?: BufferEncoding): void;
+    writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
 
     // Directory operations
     readdirSync(path: string): string[];
@@ -27,5 +27,4 @@ export interface IFS {
 
     // Async operations (callback-based for compatibility)
     readdir(path: string, callback: (err: NodeJS.ErrnoException | null, files: string[]) => void): void;
-    writeFile(path: string, data: string | Buffer, callback: (err: NodeJS.ErrnoException | null) => void): void;
 }
