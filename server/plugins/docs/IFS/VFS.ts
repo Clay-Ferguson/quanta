@@ -217,6 +217,10 @@ class VFS implements IFS {
     async rm(_path: string, _options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         throw new Error('VFS.rm not implemented yet');
     }
+
+    checkFileAccess(filename: string, root: string): void {
+        // todo-0: Implement security check to ensure file access is within allowed root directory
+    }
 }
 
 const vfs = new VFS();

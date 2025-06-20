@@ -64,40 +64,6 @@ class DocUtil {
     }
     
     /**
-     * Security check to ensure file access is within allowed root directory
-     * 
-     * Prevents directory traversal attacks by validating that the canonical (resolved)
-     * path of the requested file is within the allowed root directory. This is crucial
-     * for preventing malicious access to files outside the intended document root.
-     * 
-     * The method resolves both paths to their canonical forms to handle:
-     * - Relative path components (../, ./)
-     * - Symbolic links
-     * - Path normalization
-     * 
-     * @param filename - The filename/path to check (can be relative or absolute)
-     * @param root - The allowed root directory (absolute path)
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    checkFileAccess = (_filename: string, _root: string) => {
-        // todo-0: This needs to be come part of the IFS interface, so it's different for each IFS implementation.
-
-        // if (!filename) {
-        //     throw new Error('Invalid file access: '+filename);
-        // }
-            
-        // // Get the canonical (resolved) paths to prevent directory traversal attacks
-        // const canonicalFilename = path.resolve(filename);
-        // const canonicalRoot = path.resolve(root);
-            
-        // // Check if the canonical path is within the allowed root directory
-        // // Must either start with root + path separator OR be exactly the root
-        // if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
-        //     throw new Error('Invalid file access: '+filename);
-        // }
-    }
-    
-    /**
      * Shifts ordinals down for all files/folders at or below a given ordinal position
      * 
      * This method creates space for new files to be inserted at specific positions by
@@ -121,7 +87,7 @@ class DocUtil {
     shiftOrdinalsDown = async (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
         itemsToIgnore: string[] | null, ifs: IFS): Promise<Map<string, string>> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
-        this.checkFileAccess(absoluteParentPath, root);
+        ifs.checkFileAccess(absoluteParentPath, root);
         
         // Map to track old relative paths to new relative paths for external reference updates
         const pathMapping = new Map<string, string>();
@@ -226,8 +192,8 @@ class DocUtil {
                 }
                 
                 // Rename the file/folder to have 4-digit ordinal prefix
-                this.checkFileAccess(oldFilePath, root);
-                this.checkFileAccess(newFilePath, root);
+                ifs.checkFileAccess(oldFilePath, root);
+                ifs.checkFileAccess(newFilePath, root);
                 await ifs.rename(oldFilePath, newFilePath);
                 console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(a)`);
                 
@@ -259,8 +225,8 @@ class DocUtil {
                     }
                     
                     // Rename the file/folder to have 4-digit ordinal prefix
-                    this.checkFileAccess(oldFilePath, root);
-                    this.checkFileAccess(newFilePath, root);
+                    ifs.checkFileAccess(oldFilePath, root);
+                    ifs.checkFileAccess(newFilePath, root);
                     await ifs.rename(oldFilePath, newFilePath);
                     console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(b)`);
                     
@@ -293,7 +259,7 @@ class DocUtil {
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
     getMaxOrdinal = async (absolutePath: string, root: string, ifs: IFS): Promise<number> => {
-        this.checkFileAccess(absolutePath, root);
+        ifs.checkFileAccess(absolutePath, root);
                 
         // Read directory contents and filter for files/folders with numeric prefixes
         const allFiles = await ifs.readdir(absolutePath);
@@ -354,8 +320,8 @@ class DocUtil {
             }
             
             // Rename the file/folder to have 4-digit ordinal prefix
-            this.checkFileAccess(oldFilePath, root);
-            this.checkFileAccess(newFilePath, root);
+            ifs.checkFileAccess(oldFilePath, root);
+            ifs.checkFileAccess(newFilePath, root);
             await ifs.rename(oldFilePath, newFilePath);
             console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix (b)`);
                 
@@ -414,7 +380,8 @@ class DocUtil {
             const absoluteItemPath = path.join(root, treeItem);
     
             // Security check - ensure the path is within the allowed root
-            this.checkFileAccess(absoluteItemPath, root);
+            // Won't need this security check, because in this mode of the app, we're giving full access to the file system, and it's by an admin user
+            // ifs.checkFileAccess(absoluteItemPath, root);
     
             // Verify the item exists in the file system
             if (!fs.existsSync(absoluteItemPath)) {

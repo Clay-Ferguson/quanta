@@ -225,7 +225,7 @@ For this step please make the `createFile` method (inside `DocService.ts`) use t
 
 We ended up going through the entire `server/plugins/docs` source folder and converted everything we need to convert from direct use of 'fs' package into the abstraction layer IFS. So that completes the `IFS.ts` implementation and next we'll move to implementing `VFS.ts`, the Posgres-based File System implementation.
 
-### Step 7 (current step)
+### Step 7 (completed)
 
 In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config-dev.yaml` you can see we now have a `pgroot` root key. I only run this feature thru a docker deployment which you cannot do, so please don't try to run the code yourself to test it.
 
@@ -233,5 +233,7 @@ Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, so if y
 
 Let's start with `DocService.ts#treeRender` method. Just so you don't have to do the entire VFS implementatin all at once. Please first determine what IFS methods are called from that method (`treeRender`), and methods it indirectly calls, and figure out which of our `VFS.ts` methods need to be implemented, to get `treeRender` working, and then implement them. Remember the `getFileSystem` factory method will activate the VFS as the 'ifs' variable everywhere we have it. 
 
+### Step 8 (current step)
 
+Do the same for `DocMod.ts#saveFile` that we just did for `treeRender` in Step 7. 
 

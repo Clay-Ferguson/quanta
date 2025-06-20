@@ -107,7 +107,7 @@ class DocService {
             }
             
             // Security check: ensure we're still within the allowed root
-            docUtil.checkFileAccess(currentPath, root);
+            ifs.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
             const entries = await ifs.readdir(currentPath);
@@ -225,7 +225,7 @@ class DocService {
             }
 
             // Security validation: ensure path is within allowed root
-            docUtil.checkFileAccess(absolutePath, root);
+            ifs.checkFileAccess(absolutePath, root);
             
             // Verify the target is actually a directory (not a file)
             const stat = await ifs.stat(absolutePath);
@@ -280,7 +280,7 @@ class DocService {
      */
     getTreeNodes = async (absolutePath: string, pullup: boolean, root: string, ifs: IFS): Promise<TreeNode[]> => {
         // Security check: ensure the path is within the allowed root directory
-        docUtil.checkFileAccess(absolutePath, root); 
+        ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
         const files = await ifs.readdir(absolutePath);
@@ -307,7 +307,7 @@ class DocService {
                 
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
-            docUtil.checkFileAccess(filePath, root); 
+            ifs.checkFileAccess(filePath, root); 
             const fileStat = await ifs.stat(filePath);
                 
             // Initialize node properties
@@ -438,7 +438,7 @@ class DocService {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Verify parent directory exists and is accessible
-            docUtil.checkFileAccess(absoluteParentPath, root); 
+            ifs.checkFileAccess(absoluteParentPath, root); 
             if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -552,7 +552,7 @@ class DocService {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Verify parent directory exists and is accessible
-            docUtil.checkFileAccess(absoluteParentPath, root);
+            ifs.checkFileAccess(absoluteParentPath, root);
             if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -673,7 +673,7 @@ class DocService {
             
             // Construct and validate search path
             const absoluteSearchPath = path.join(root, treeFolder);
-            docUtil.checkFileAccess(absoluteSearchPath, root);
+            ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });
@@ -988,7 +988,7 @@ class DocService {
             
             // Construct and validate search path
             const absoluteSearchPath = path.join(root, treeFolder);
-            docUtil.checkFileAccess(absoluteSearchPath, root);
+            ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });

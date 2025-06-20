@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { IFS } from './IFS.js';
+import path from 'path';
 
 /**
  * Linux File System. This is a wrapper around the standard NodeJS 'fs' module, as an abstraction layer for file operations.
@@ -57,6 +58,37 @@ class LFS implements IFS {
 
     async rm(path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         await fs.promises.rm(path, options);
+    }
+
+    /**
+     * Security check to ensure file access is within allowed root directory
+     * 
+     * Prevents directory traversal attacks by validating that the canonical (resolved)
+     * path of the requested file is within the allowed root directory. This is crucial
+     * for preventing malicious access to files outside the intended document root.
+     * 
+     * The method resolves both paths to their canonical forms to handle:
+     * - Relative path components (../, ./)
+     * - Symbolic links
+     * - Path normalization
+     * 
+     * @param filename - The filename/path to check (can be relative or absolute)
+     * @param root - The allowed root directory (absolute path)
+     */     
+    checkFileAccess = (filename: string, root: string) => {
+        if (!filename) {
+            throw new Error('Invalid file access: '+filename);
+        }
+            
+        // Get the canonical (resolved) paths to prevent directory traversal attacks
+        const canonicalFilename = path.resolve(filename);
+        const canonicalRoot = path.resolve(root);
+            
+        // Check if the canonical path is within the allowed root directory
+        // Must either start with root + path separator OR be exactly the root
+        if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
+            throw new Error('Invalid file access: '+filename);
+        }
     }
 }
 

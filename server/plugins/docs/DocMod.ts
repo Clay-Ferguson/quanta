@@ -19,7 +19,7 @@ import { docUtil } from "./DocUtil.js";
  * 
  * Security:
  * - All file operations are validated against the configured document root
- * - Path traversal attacks are prevented through docUtil.checkFileAccess()
+ * - Path traversal attacks are prevented through ifs.checkFileAccess()
  * - Operations are limited to configured public folders only
  * 
  * File Naming Convention:
@@ -84,7 +84,7 @@ class DocMod {
             const absoluteFilePath = path.join(absoluteFolderPath, filename);
     
             // Verify target directory exists and is accessible
-            docUtil.checkFileAccess(absoluteFolderPath, root); 
+            ifs.checkFileAccess(absoluteFolderPath, root); 
             if (!await ifs.exists(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
@@ -112,7 +112,7 @@ class DocMod {
                     }
                         
                     // Perform the file rename operation with security check
-                    docUtil.checkFileAccess(absoluteFilePath, root);
+                    ifs.checkFileAccess(absoluteFilePath, root);
                     await ifs.rename(absoluteFilePath, newAbsoluteFilePath);
                     console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                 }
@@ -122,7 +122,7 @@ class DocMod {
             }
     
             // Main content writing logic - supports both simple save and content splitting
-            docUtil.checkFileAccess(finalFilePath, root);
+            ifs.checkFileAccess(finalFilePath, root);
                 
             if (split) {
                 // Content splitting mode: divide content on '\n~\n' delimiter
@@ -160,7 +160,7 @@ class DocMod {
                         }
                             
                         // Write the content part to its designated file
-                        docUtil.checkFileAccess(partFilePath, root);
+                        ifs.checkFileAccess(partFilePath, root);
                         await ifs.writeFile(partFilePath, partContent, 'utf8');
                         console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
                     }
@@ -197,7 +197,7 @@ class DocMod {
      * - Prevents naming conflicts with existing folders
      * - Maintains filesystem consistency
      * - Supports nested folder structures
-     * - Security validation through docUtil.checkFileAccess()
+     * - Security validation through ifs.checkFileAccess()
      * 
      * @param req - Express request object containing:
      *   - oldFolderName: string - Current name of the folder to rename
@@ -266,8 +266,8 @@ class DocMod {
             }
 
             // Perform the folder rename operation with security validation
-            docUtil.checkFileAccess(oldAbsolutePath, root);
-            docUtil.checkFileAccess(newAbsolutePath, root);
+            ifs.checkFileAccess(oldAbsolutePath, root);
+            ifs.checkFileAccess(newAbsolutePath, root);
             await ifs.rename(oldAbsolutePath, newAbsolutePath);
             
             console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
@@ -360,7 +360,7 @@ class DocMod {
                     // Get stats to determine if it's a file or directory
                     const stat = await ifs.stat(absoluteTargetPath);
                     
-                    docUtil.checkFileAccess(absoluteTargetPath, root);
+                    ifs.checkFileAccess(absoluteTargetPath, root);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
                         await ifs.rm(absoluteTargetPath, { recursive: true, force: true });
@@ -462,7 +462,7 @@ class DocMod {
 
             // Read directory contents and filter for items with numeric ordinal prefixes
             // Only files/folders matching the pattern "NNNN_*" are considered for ordering
-            docUtil.checkFileAccess(absoluteParentPath, root);
+            ifs.checkFileAccess(absoluteParentPath, root);
             const allFiles = await ifs.readdir(absoluteParentPath);
             const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
@@ -516,9 +516,9 @@ class DocMod {
             const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
 
             // Validate all paths for security before proceeding
-            docUtil.checkFileAccess(currentPath, root);
-            docUtil.checkFileAccess(targetPath, root);
-            docUtil.checkFileAccess(tempPath, root);
+            ifs.checkFileAccess(currentPath, root);
+            ifs.checkFileAccess(targetPath, root);
+            ifs.checkFileAccess(tempPath, root);
 
             // Perform atomic rename operation using temporary file to avoid conflicts
             // Step 1: Move current file to temporary location
@@ -600,7 +600,7 @@ class DocMod {
             const absoluteTargetPath = path.join(root, targetFolder);
     
             // Check if the target directory exists
-            docUtil.checkFileAccess(absoluteTargetPath, root);
+            ifs.checkFileAccess(absoluteTargetPath, root);
             if (!await ifs.exists(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
@@ -851,7 +851,7 @@ class DocMod {
         
             // Construct absolute path and validate security access
             const absoluteFolderPath = path.join(root, treeFolder);
-            docUtil.checkFileAccess(absoluteFolderPath, root);
+            ifs.checkFileAccess(absoluteFolderPath, root);
         
             // Read content from all files and collect metadata for sorting
             const fileData: { filename: string; ordinal: number; content: string }[] = [];
@@ -859,7 +859,7 @@ class DocMod {
             for (const filename of filenames) {
                 // Construct path and validate file access permissions
                 const absoluteFilePath = path.join(absoluteFolderPath, filename);
-                docUtil.checkFileAccess(absoluteFilePath, root);
+                ifs.checkFileAccess(absoluteFilePath, root);
                         
                 // Verify file exists before attempting to read
                 if (!await ifs.exists(absoluteFilePath)) {
@@ -894,7 +894,7 @@ class DocMod {
             const firstFilePath = path.join(absoluteFolderPath, firstFile.filename);
                     
             // Write the joined content with security validation
-            docUtil.checkFileAccess(firstFilePath, root);
+            ifs.checkFileAccess(firstFilePath, root);
             await ifs.writeFile(firstFilePath, joinedContent, 'utf8');
             console.log(`Joined content saved to: ${firstFile.filename}`);
         
@@ -906,7 +906,7 @@ class DocMod {
                         
                 try {
                     // Validate access and delete the file
-                    docUtil.checkFileAccess(deleteFilePath, root);
+                    ifs.checkFileAccess(deleteFilePath, root);
                     await ifs.unlink(deleteFilePath);
                     deletedFiles.push(fileToDelete.filename);
                     console.log(`Deleted file: ${fileToDelete.filename}`);
@@ -1004,7 +1004,7 @@ class DocMod {
             const absoluteFilePath = path.join(absoluteFolderPath, filename);
 
             // Verify the parent directory exists and is accessible
-            docUtil.checkFileAccess(absoluteFolderPath, root);
+            ifs.checkFileAccess(absoluteFolderPath, root);
             if (!await ifs.exists(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
@@ -1040,12 +1040,12 @@ class DocMod {
 
             // Perform the conversion: delete original file and create folder
             // Step 1: Remove the original file with security validation
-            docUtil.checkFileAccess(absoluteFilePath, root);
+            ifs.checkFileAccess(absoluteFilePath, root);
             await ifs.unlink(absoluteFilePath);
             console.log(`File deleted: ${absoluteFilePath}`);
 
             // Step 2: Create the new folder structure
-            docUtil.checkFileAccess(absoluteNewFolderPath, root);
+            ifs.checkFileAccess(absoluteNewFolderPath, root);
             await ifs.mkdir(absoluteNewFolderPath, { recursive: true });
             console.log(`Folder created: ${absoluteNewFolderPath}`);
 
@@ -1056,7 +1056,7 @@ class DocMod {
                 const newFilePath = path.join(absoluteNewFolderPath, newFileName);
                 
                 // Write the preserved content with security validation
-                docUtil.checkFileAccess(newFilePath, root);
+                ifs.checkFileAccess(newFilePath, root);
                 await ifs.writeFile(newFilePath, remainingContent, 'utf8');
                 console.log(`New file created with remaining content: ${newFilePath}`);
             }
