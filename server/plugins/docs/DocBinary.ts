@@ -73,7 +73,7 @@ class DocBinary {
             }
 
             // Verify the path points to a file, not a directory
-            const stat = ifs.statSync(absoluteImagePath);
+            const stat = await ifs.stat(absoluteImagePath);
             if (!stat.isFile()) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;

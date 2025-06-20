@@ -91,7 +91,7 @@ class DocMod {
             }
     
             // Ensure the target path is actually a directory
-            const stat = ifs.statSync(absoluteFolderPath);
+            const stat = await ifs.stat(absoluteFolderPath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -247,7 +247,7 @@ class DocMod {
             }
 
             // Ensure the target is actually a directory, not a file
-            const stat = ifs.statSync(oldAbsolutePath);
+            const stat = await ifs.stat(oldAbsolutePath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -358,7 +358,7 @@ class DocMod {
                     }
 
                     // Get stats to determine if it's a file or directory
-                    const stat = ifs.statSync(absoluteTargetPath);
+                    const stat = await ifs.stat(absoluteTargetPath);
                     
                     docUtil.checkFileAccess(absoluteTargetPath, root);
                     if (stat.isDirectory()) {
@@ -1017,7 +1017,7 @@ class DocMod {
             }
 
             // Ensure the target is actually a file, not a directory
-            const fileStat = ifs.statSync(absoluteFilePath);
+            const fileStat = await ifs.stat(absoluteFilePath);
             if (!fileStat.isFile()) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;

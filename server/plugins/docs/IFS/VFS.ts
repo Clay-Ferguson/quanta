@@ -13,7 +13,7 @@ class VFS implements IFS {
         throw new Error('VFS.existsSync not implemented yet');
     }
 
-    statSync(_path: string): fs.Stats {
+    async stat(_path: string): Promise<fs.Stats> {
         throw new Error('VFS.statSync not implemented yet');
     }
 

@@ -123,7 +123,7 @@ class DocService {
                 
                 // Check if entry is a directory and follows ordinal naming convention
                 const entryPath = path.join(currentPath, entry);
-                const stat = ifs.statSync(entryPath);
+                const stat = await ifs.stat(entryPath);
                 
                 if (stat.isDirectory() && /^\d+_/.test(entry)) {
                     // Extract the folder name without the ordinal prefix
@@ -145,7 +145,7 @@ class DocService {
                 // Log available options for debugging
                 for (const entry of entries) {
                     const entryPath = path.join(currentPath, entry);
-                    const stat = ifs.statSync(entryPath);
+                    const stat = await ifs.stat(entryPath);
                     if (stat.isDirectory() && /^\d+_/.test(entry)) {
                         const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
                         console.log(`  - "${entry}" -> "${nameWithoutOrdinal}"`);
@@ -227,7 +227,7 @@ class DocService {
             docUtil.checkFileAccess(absolutePath, root);
             
             // Verify the target is actually a directory (not a file)
-            const stat = ifs.statSync(absolutePath);
+            const stat = await ifs.stat(absolutePath);
             if (!stat.isDirectory()) {
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -306,7 +306,7 @@ class DocService {
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
             docUtil.checkFileAccess(filePath, root); 
-            const fileStat = ifs.statSync(filePath);
+            const fileStat = await ifs.stat(filePath);
                 
             // Initialize node properties
             let content = '';

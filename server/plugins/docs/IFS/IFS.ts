@@ -10,7 +10,7 @@ import * as fs from 'fs';
 export interface IFS {
     // File existence and metadata
     exists(path: string): Promise<boolean>;
-    statSync(path: string): fs.Stats;
+    stat(path: string): Promise<fs.Stats>;
 
     // File content operations
     readFileSync(path: string, encoding?: BufferEncoding): string | Buffer;

@@ -17,8 +17,8 @@ class LFS implements IFS {
         }
     }
 
-    statSync(path: string): fs.Stats {
-        return fs.statSync(path);
+    async stat(path: string): Promise<fs.Stats> {
+        return await fs.promises.stat(path);
     }
 
     // File content operations
