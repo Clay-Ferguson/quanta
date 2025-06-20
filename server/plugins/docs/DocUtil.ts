@@ -27,7 +27,7 @@ class DocUtil {
      * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.
      * 
      * @param docRootKey - Key identifier for the document root
-     * @returns IVFS implementation (LFS or VFS)
+     * @returns IFS implementation (LFS or VFS)
      */
     getFileSystem(docRootKey: string): IFS {
         const rootConfig = config.getPublicFolderByKey(docRootKey);

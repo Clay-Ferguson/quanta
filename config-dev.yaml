@@ -11,9 +11,14 @@ plugins:
 
 # Public folders configuration - array of folder objects with name and path
 public-folders:
-  - name: "Doc Root"
+  - name: "LFS Root"
     key: "root"
     path: "/home/clay/ferguson/A-doc-root-dev"
     type: "lfs"  # Type can be 'lfs' for Linux file system or 'vfs' for virtual PostregreSQL file system
     # Accessable at: http://localhost:8000/doc/root
+  - name: "VFS Root"
+    key: "pgroot"
+    path: ""
+    type: "vfs"  # Type can be 'lfs' for Linux file system or 'vfs' for virtual PostregreSQL file system
+    # Accessable at: http://localhost:8000/doc/pgroot
   

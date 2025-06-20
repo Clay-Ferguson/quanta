@@ -52,7 +52,6 @@ const { exec } = await import('child_process');
  * files and folders, enabling precise ordering and insertion capabilities.
  */
 class DocService {
-
     /**
      * Resolves a non-ordinal path to its corresponding ordinal-based path in the file system.
      * 

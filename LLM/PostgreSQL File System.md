@@ -205,7 +205,7 @@ Note: The content for Step 3 is omitteded for the sake of brevity, but to summar
 
 ### Step 4 (completed)
 
-Please implement the abstraction layer interface in the existing `IVFS.ts`, and then implement an actual `fs` (as in NodeJS `fs` package) wrapper in `LFS.ts`. I've already created both of those files. Note that there will not be any Postgres-related calls or calls to `functions.sql` functions in this, because we're just creating the abstraction layer around the `fs` file system. Also please don't try to actually start using the LFS instance anywhere in the code yet. Just implement the LFS for now. We'll be integrating the code to use it in a future step, but not in Step 4. So you can just read thru `DocBinary.ts`, `DocMod.ts`, `DocService.ts`, and `DocUtils.ts` to come up with the list if which parts of `fs` we need coverage for. Eventually we will of course also be implementing the `VFS` which will hold the abstraction layer wrapper that will call `functions.sql` but again, we do not want to do that yet in Step 4. 
+Please implement the abstraction layer interface in the existing `IFS.ts`, and then implement an actual `fs` (as in NodeJS `fs` package) wrapper in `LFS.ts`. I've already created both of those files. Note that there will not be any Postgres-related calls or calls to `functions.sql` functions in this, because we're just creating the abstraction layer around the `fs` file system. Also please don't try to actually start using the LFS instance anywhere in the code yet. Just implement the LFS for now. We'll be integrating the code to use it in a future step, but not in Step 4. So you can just read thru `DocBinary.ts`, `DocMod.ts`, `DocService.ts`, and `DocUtils.ts` to come up with the list if which parts of `fs` we need coverage for. Eventually we will of course also be implementing the `VFS` which will hold the abstraction layer wrapper that will call `functions.sql` but again, we do not want to do that yet in Step 4. 
 
 ### Step 5 (completed)
 
@@ -215,9 +215,31 @@ So let's start by working first only in `DocService.ts` `treeRender` method. So 
 
 #### Step 5 outcome:
 
-We put the factory method in `DocUtil.ts` and it has this signature: `getFileSystem(docRootKey: string): IVFS`. So any method having a docRootKey can use it to get the proper IVFS instance to use. This is fully functional already in `treeRender` from Step 4.
+We put the factory method in `DocUtil.ts` and it has this signature: `getFileSystem(docRootKey: string): IFS`. So any method having a docRootKey can use it to get the proper IFS instance to use. This is fully functional already in `treeRender` from Step 4.
 
 ### Step 6 (completed)
 
-For this step please make the `createFile` method (inside `DocService.ts`) use the `getFileSystem` factory method to get the IVFS instance to use, and use it in `createFile` and pass it down to any methods called, like `treeRender` does. This will make `createFile` be using our new abstraction layer.
+For this step please make the `createFile` method (inside `DocService.ts`) use the `getFileSystem` factory method to get the IFS instance to use, and use it in `createFile` and pass it down to any methods called, like `treeRender` does. This will make `createFile` be using our new abstraction layer.
+
+#### Step 6 outcome:
+
+We ended up going through the entire `server/plugins/docs` source folder and converted everything we need to convert from direct use of 'fs' package into the abstraction layer IFS.
+
+
+######################################################
+
+AI Agent please ignore the below, and consider this old Step 7 a future task for a future time.
+
+### Step 7 (inactive, AI Agent please ignore)
+
+In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config-dev.yaml` you can see we now have a `pgroot` root key, and we'll be testing our work directly in the GUI now by going to `http://localhost:8000/doc/pgroot`. We also have PostgreSQL only usable in our docker-based way of running the code so I'll be running the app with `docker-run-dev.sh`, just so you'll know. I'd rather you not try to run that file yourself. Just please do your best, to do things without running the actual app. 
+
+Let's start with `DocService.ts#treeRender` method. Just so you don't have to do the entire VFS implementatin all at once, please look at what IFS methods are called from that method (`treeRender`), and methods it indirectly calls, and figure out which of our `VFS.ts` methods need to be implemented and just implement them. I think everything else will "just work" when I true to browse to the URL, because the `getFileSystem` factory method will activate the VFS as the 'ifs' variable everywhere we have it. So that should be all you need. Please do that now. Do some work in `VFS.ts`.
+
+Oh, one more thing. Before you start, notice that the 'path' for VFS is blank, because a full VFS path is not really relative to some Operating System base path. I'm not sure if it needs to be "/" or just blank string. Eventually we probably will want to have various base paths for root folders in use in VFS, but for now it's just a path with no 'base' path. And one final note. Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, and you of course remember that `functions.sql` is where the real meat of the implementation is. 
+
+#### Step 7 outcome...
+
+The attempt to do Step 7 as aborted by me due to a structural problem in the code across the board. We need to address first. The issue is that ALL of IFS API needs to be asynchronous, because PostgreSQL calls are asynchronous. We will do this first and then come back to this step later.
+
 
