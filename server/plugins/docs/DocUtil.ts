@@ -115,15 +115,10 @@ class DocUtil {
      * @param itemsToIgnore - Array of filenames to skip during shifting (optional, useful for newly created items)
      * @returns Map of old relative paths to new relative paths for renamed items
      */
-    shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
-        itemsToIgnore: string[] | null, ifs: IFS | null = null): Map<string, string> => {
+    shiftOrdinalsDown = async (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
+        itemsToIgnore: string[] | null, ifs: IFS): Promise<Map<string, string>> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
-
-        // todo-0: this is temporary, fallback to 'fs' if arg not provided
-        if (!ifs) {
-            ifs = fs;
-        }
         
         // Map to track old relative paths to new relative paths for external reference updates
         const pathMapping = new Map<string, string>();
@@ -172,7 +167,7 @@ class DocUtil {
             const newPath = path.join(absoluteParentPath, newFileName);
             
             // Safety check: ensure target doesn't already exist to prevent overwriting
-            if (ifs.existsSync(newPath)) {
+            if (await ifs.exists(newPath)) {
                 console.error(`Target file already exists during ordinal shift, skipping: ${newPath}`);
                 console.error(`This indicates a problem with ordinal sequencing that needs to be resolved.`);
                 continue;
@@ -207,7 +202,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
-    ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string, ifs: IFS): string => {
+    ensureFourDigitOrdinal = async (absolutePath: string, fileName: string, root: string, ifs: IFS): Promise<string> => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
         const ordinalPrefix = fileName.substring(0, underscoreIndex);
@@ -222,7 +217,7 @@ class DocUtil {
             
             try {
                 // Safety check: ensure target doesn't already exist to prevent overwriting
-                if (ifs.existsSync(newFilePath)) {
+                if (await ifs.exists(newFilePath)) {
                     console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                     return fileName; // Return original name if target exists
                 }
@@ -255,7 +250,7 @@ class DocUtil {
                 
                 try {
                     // Safety check: ensure target doesn't already exist to prevent overwriting
-                    if (ifs.existsSync(newFilePath)) {
+                    if (await ifs.exists(newFilePath)) {
                         console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                         return fileName; // Return original name if target exists
                     }
@@ -334,7 +329,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
-    ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IFS): string => {
+    ensureOrdinalPrefix = async (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IFS): Promise<string> => {
     
         // Special case: content.md files are always given ordinal 0 by convention
         // TODO: This is a temporary hack for better Quanta export ingestion and will be removed later
@@ -350,7 +345,7 @@ class DocUtil {
             
         try {
             // Safety check: ensure target doesn't already exist to prevent overwriting
-            if (ifs.existsSync(newFilePath)) {
+            if (await ifs.exists(newFilePath)) {
                 console.warn(`Target file already exists, skipping rename: ${newFileName}`);
                 return fileName; // Return original name if target exists
             }

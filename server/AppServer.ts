@@ -43,7 +43,7 @@ const plugins = config.get("plugins");
 const pluginKeys = plugins.map((plugin: any) => plugin.key).join(','); 
 
 const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
-    fs.readFile("./dist/index.html", 'utf8', (err, data) => {
+    fs.readFile("./dist/index.html", 'utf8', async (err, data) => {
         if (err) {
             console.error('Error reading index.html:', err);
             return res.status(500).send('Error loading page');
@@ -52,7 +52,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
         let docPath = req.query.path as string || "";
         if (docPath) {
-            docPath = docSvc.resolveNonOrdinalPath(req.params.docRootKey, docPath);
+            docPath = await docSvc.resolveNonOrdinalPath(req.params.docRootKey, docPath);
             console.log(`Resolved docPath: ${docPath}`);
         }
 

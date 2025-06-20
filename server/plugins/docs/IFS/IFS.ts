@@ -9,7 +9,7 @@ import * as fs from 'fs';
  */
 export interface IFS {
     // File existence and metadata
-    existsSync(path: string): boolean;
+    exists(path: string): Promise<boolean>;
     statSync(path: string): fs.Stats;
 
     // File content operations

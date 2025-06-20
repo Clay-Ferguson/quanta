@@ -85,7 +85,7 @@ class DocMod {
     
             // Verify target directory exists and is accessible
             docUtil.checkFileAccess(absoluteFolderPath, root); 
-            if (!ifs.existsSync(absoluteFolderPath)) {
+            if (!await ifs.exists(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
             }
@@ -104,9 +104,9 @@ class DocMod {
                 const newAbsoluteFilePath = path.join(absoluteFolderPath, newFileName);
                     
                 // Verify the original file exists before attempting rename
-                if (ifs.existsSync(absoluteFilePath)) {
+                if (await ifs.exists(absoluteFilePath)) {
                     // Prevent overwriting existing files
-                    if (ifs.existsSync(newAbsoluteFilePath)) {
+                    if (await ifs.exists(newAbsoluteFilePath)) {
                         res.status(409).json({ error: 'A file with the new name already exists' });
                         return;
                     }
@@ -135,7 +135,7 @@ class DocMod {
                     // Make room for new files by shifting existing ordinals down
                     // Subtract 1 because the original file keeps its position
                     const numberOfNewFiles = parts.length - 1;
-                    docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
+                    await docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
                         
                     // Create a separate file for each content part
                     for (let i = 0; i < parts.length; i++) {
@@ -235,13 +235,13 @@ class DocMod {
             const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
 
             // Verify the parent directory exists
-            if (!ifs.existsSync(absoluteParentPath)) {
+            if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
 
             // Verify the folder to be renamed exists
-            if (!ifs.existsSync(oldAbsolutePath)) {
+            if (!await ifs.exists(oldAbsolutePath)) {
                 res.status(404).json({ error: 'Old folder not found' });
                 return;
             }
@@ -260,7 +260,7 @@ class DocMod {
             }
 
             // Prevent naming conflicts with existing folders
-            if (ifs.existsSync(newAbsolutePath)) {
+            if (await ifs.exists(newAbsolutePath)) {
                 res.status(409).json({ error: 'A folder with the new name already exists' });
                 return;
             }
@@ -338,7 +338,7 @@ class DocMod {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Check if the parent directory exists
-            if (!ifs.existsSync(absoluteParentPath)) {
+            if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -352,7 +352,7 @@ class DocMod {
                     const absoluteTargetPath = path.join(absoluteParentPath, fileName);
 
                     // Check if the target exists
-                    if (!ifs.existsSync(absoluteTargetPath)) {
+                    if (!await ifs.exists(absoluteTargetPath)) {
                         errors.push(`File or folder not found: ${fileName}`);
                         continue;
                     }
@@ -455,7 +455,7 @@ class DocMod {
             const absoluteParentPath = path.join(root, treeFolder);
 
             // Verify the parent directory exists
-            if (!ifs.existsSync(absoluteParentPath)) {
+            if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -601,7 +601,7 @@ class DocMod {
     
             // Check if the target directory exists
             docUtil.checkFileAccess(absoluteTargetPath, root);
-            if (!ifs.existsSync(absoluteTargetPath)) {
+            if (!await ifs.exists(absoluteTargetPath)) {
                 res.status(404).json({ error: 'Target directory not found' });
                 return;
             }
@@ -650,7 +650,7 @@ class DocMod {
                         const itemName = path.basename(itemFullPath);
                         const sourceFilePath = path.join(root, itemFullPath);
                         
-                        if (ifs.existsSync(sourceFilePath)) {
+                        if (await ifs.exists(sourceFilePath)) {
                             // Create temporary filename
                             const tempName = `temp_paste_${Date.now()}_${i}_${itemName}`;
                             const tempPath = path.join(absoluteTargetPath, tempName);
@@ -678,7 +678,7 @@ class DocMod {
                 itemsToIgnore = null;
             }
             
-            const pathMapping = docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
+            const pathMapping = await docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
             
             // Update pasteItems with new paths after ordinal shifting
             for (let i = 0; i < pasteItems.length; i++) {
@@ -738,7 +738,7 @@ class DocMod {
                         const sourceFilePath = path.join(root, itemFullPath);
                         
                         // Check if source file exists
-                        if (!ifs.existsSync(sourceFilePath)) {
+                        if (!await ifs.exists(sourceFilePath)) {
                             console.error(`Source file not found: ${itemFullPath}`);
                             errors.push(`Source file not found: ${itemFullPath}`);
                             continue;
@@ -758,7 +758,7 @@ class DocMod {
                         const targetFilePath = path.join(absoluteTargetPath, targetFileName);
 
                         // Safety check: ensure target doesn't already exist to prevent overwriting
-                        if (ifs.existsSync(targetFilePath)) {
+                        if (await ifs.exists(targetFilePath)) {
                             console.error(`Target file already exists, skipping: ${targetFilePath}`);
                             errors.push(`Target file already exists: ${targetFileName}`);
                             continue;
@@ -822,7 +822,7 @@ class DocMod {
      * @param res - Express response object for sending results
      * @returns void - Synchronous operation, no Promise needed
      */
-    joinFiles = (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): void => {
+    joinFiles = async (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
         try {
             // Extract request parameters
             const { filenames, treeFolder, docRootKey } = req.body;
@@ -862,7 +862,7 @@ class DocMod {
                 docUtil.checkFileAccess(absoluteFilePath, root);
                         
                 // Verify file exists before attempting to read
-                if (!ifs.existsSync(absoluteFilePath)) {
+                if (!await ifs.exists(absoluteFilePath)) {
                     res.status(404).json({ error: `File not found: ${filename}` });
                     return;
                 }
@@ -1005,13 +1005,13 @@ class DocMod {
 
             // Verify the parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteFolderPath, root);
-            if (!ifs.existsSync(absoluteFolderPath)) {
+            if (!await ifs.exists(absoluteFolderPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
 
             // Verify the target file exists
-            if (!ifs.existsSync(absoluteFilePath)) {
+            if (!await ifs.exists(absoluteFilePath)) {
                 res.status(404).json({ error: 'File not found' });
                 return;
             }
@@ -1033,7 +1033,7 @@ class DocMod {
             const absoluteNewFolderPath = path.join(absoluteFolderPath, newFolderName);
 
             // Prevent naming conflicts with existing folders
-            if (ifs.existsSync(absoluteNewFolderPath)) {
+            if (await ifs.exists(absoluteNewFolderPath)) {
                 res.status(409).json({ error: 'A folder with this name already exists' });
                 return;
             }

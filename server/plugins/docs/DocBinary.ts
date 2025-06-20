@@ -67,7 +67,7 @@ class DocBinary {
             // Perform security check to ensure file is within allowed directory
             // and verify file exists
             docUtil.checkFileAccess(absoluteImagePath, root);
-            if (!ifs.existsSync(absoluteImagePath)) {
+            if (!await ifs.exists(absoluteImagePath)) {
                 res.status(404).json({ error: 'Image file not found' });
                 return;
             }
@@ -269,7 +269,7 @@ class DocBinary {
     
                     // Shift existing files down to make room for new uploads
                     // This maintains the ordinal sequence without gaps
-                    docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
+                    await docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
     
                     // Save each uploaded file with proper ordinal prefix
                     let savedCount = 0;
@@ -287,7 +287,7 @@ class DocBinary {
                             docUtil.checkFileAccess(finalFilePath, root);
                             
                             // Prevent overwriting existing files
-                            if (ifs.existsSync(finalFilePath)) {
+                            if (await ifs.exists(finalFilePath)) {
                                 console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                                 continue;
                             }

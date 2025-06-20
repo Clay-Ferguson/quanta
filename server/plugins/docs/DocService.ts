@@ -72,7 +72,7 @@ class DocService {
      * @param treeFolder - Non-ordinal path to resolve (e.g., "FolderName/SubFolderName")
      * @returns The resolved path with ordinals (e.g., "/1234_FolderName/5678_SubFolderName")
      */
-    resolveNonOrdinalPath = (docRootKey: string, treeFolder: string): string => {        
+    resolveNonOrdinalPath = async (docRootKey: string, treeFolder: string): Promise<string> => {        
         // Resolve the document root path using the provided key
         const root = config.getPublicFolderByKey(docRootKey).path;
         if (!root) {
@@ -102,7 +102,7 @@ class DocService {
             const folderName = folderComponents[i];
             
             // Verify current directory exists before attempting to read it
-            if (!ifs.existsSync(currentPath)) {
+            if (!await ifs.exists(currentPath)) {
                 throw new Error(`Directory not found: ${currentPath}`);
             }
             
@@ -218,7 +218,7 @@ class DocService {
             const absolutePath = path.join(root, treeFolder);
 
             // Verify the target directory exists
-            if (!ifs.existsSync(absolutePath)) {
+            if (!await ifs.exists(absolutePath)) {
                 res.status(404).json({ error: 'Directory not found' });
                 return;
             }
@@ -234,7 +234,7 @@ class DocService {
             }
 
             // Generate the tree structure
-            const treeNodes: TreeNode[] = this.getTreeNodes(absolutePath, pullup==="true", root, ifs);
+            const treeNodes: TreeNode[] = await this.getTreeNodes(absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
             const response: TreeRender_Response = { treeNodes };
@@ -276,7 +276,7 @@ class DocService {
      * @param root - The document root path for security validation
      * @returns Array of TreeNode objects representing directory contents, sorted alphabetically
      */
-    getTreeNodes = (absolutePath: string, pullup: boolean, root: string, ifs: IFS): TreeNode[] => {
+    getTreeNodes = async (absolutePath: string, pullup: boolean, root: string, ifs: IFS): Promise<TreeNode[]> => {
         // Security check: ensure the path is within the allowed root directory
         docUtil.checkFileAccess(absolutePath, root); 
         
@@ -297,11 +297,11 @@ class DocService {
             // Ensure file has ordinal prefix - files must follow "NNNNN_" naming convention
             if (!/^\d+_/.test(file)) {
                 // Assign next ordinal to files without numeric prefix
-                file = docUtil.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root, ifs);
+                file = await docUtil.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root, ifs);
             }
 
             // Standardize to 4-digit ordinal prefix format
-            const currentFileName = docUtil.ensureFourDigitOrdinal(absolutePath, file, root, ifs);
+            const currentFileName = await docUtil.ensureFourDigitOrdinal(absolutePath, file, root, ifs);
                 
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
@@ -321,7 +321,7 @@ class DocService {
                 // Handle pullup folders: folders ending with '_' get their contents inlined
                 if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
-                    children = this.getTreeNodes(filePath, true, root, ifs);
+                    children = await this.getTreeNodes(filePath, true, root, ifs);
                     
                     // Set children to null if empty (cleaner JSON output)
                     if (children.length === 0) {
@@ -437,7 +437,7 @@ class DocService {
 
             // Verify parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteParentPath, root); 
-            if (!ifs.existsSync(absoluteParentPath)) {
+            if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -460,7 +460,7 @@ class DocService {
 
             // Shift existing files down to make room for the new file
             // This ensures proper ordinal sequence is maintained
-            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+            await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
 
             // Create filename with ordinal prefix
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
@@ -475,7 +475,7 @@ class DocService {
             const newFilePath = path.join(absoluteParentPath, finalFileName);
 
             // Safety check: prevent overwriting existing files
-            if (ifs.existsSync(newFilePath)) {
+            if (await ifs.exists(newFilePath)) {
                 res.status(409).json({ error: 'A file with this name already exists at the target location' });
                 return;
             }
@@ -551,7 +551,7 @@ class DocService {
 
             // Verify parent directory exists and is accessible
             docUtil.checkFileAccess(absoluteParentPath, root);
-            if (!ifs.existsSync(absoluteParentPath)) {
+            if (!await ifs.exists(absoluteParentPath)) {
                 res.status(404).json({ error: 'Parent directory not found' });
                 return;
             }
@@ -574,7 +574,7 @@ class DocService {
 
             // Shift existing files/folders down to make room for the new folder
             // This ensures proper ordinal sequence is maintained
-            docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+            await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
 
             // Create folder name with ordinal prefix
             const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded

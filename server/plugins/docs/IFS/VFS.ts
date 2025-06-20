@@ -9,7 +9,7 @@ class VFS implements IFS {
     // Note to AI Agent. Do not try to implement this yet.
     
     // File existence and metadata
-    existsSync(_path: string): boolean {
+    async exists(_path: string): Promise<boolean> {
         throw new Error('VFS.existsSync not implemented yet');
     }
 
