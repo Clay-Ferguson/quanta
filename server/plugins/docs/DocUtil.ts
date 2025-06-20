@@ -78,20 +78,23 @@ class DocUtil {
      * @param filename - The filename/path to check (can be relative or absolute)
      * @param root - The allowed root directory (absolute path)
      */
-    checkFileAccess = (filename: string, root: string) => {        
-        if (!filename) {
-            throw new Error('Invalid file access: '+filename);
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    checkFileAccess = (_filename: string, _root: string) => {
+        // todo-0: This needs to be come part of the IFS interface, so it's different for each IFS implementation.
+
+        // if (!filename) {
+        //     throw new Error('Invalid file access: '+filename);
+        // }
             
-        // Get the canonical (resolved) paths to prevent directory traversal attacks
-        const canonicalFilename = path.resolve(filename);
-        const canonicalRoot = path.resolve(root);
+        // // Get the canonical (resolved) paths to prevent directory traversal attacks
+        // const canonicalFilename = path.resolve(filename);
+        // const canonicalRoot = path.resolve(root);
             
-        // Check if the canonical path is within the allowed root directory
-        // Must either start with root + path separator OR be exactly the root
-        if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
-            throw new Error('Invalid file access: '+filename);
-        }
+        // // Check if the canonical path is within the allowed root directory
+        // // Must either start with root + path separator OR be exactly the root
+        // if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
+        //     throw new Error('Invalid file access: '+filename);
+        // }
     }
     
     /**

@@ -10,6 +10,7 @@ import { app } from '../../AppService';
 import DocViewerPage from '../../pages/DocViewerPage';
 
 declare const DOC_PATH: string;
+declare const DOC_ROOT_KEY: string | undefined;
 
 class DocsClientPlugin implements IClientPlugin {
 
@@ -29,7 +30,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsNewFileName = null;
         gs.docsSelItems = new Set<TreeNode>();
         gs.docsCutItems = new Set<string>();
-        gs.docsRootKey = 'root'; // defined in config.yaml
+        gs.docsRootKey = DOC_ROOT_KEY || 'root'; // defined in config.yaml
         gs.docsViewWidth = 'medium';
         gs.docsSearch = '';
         gs.docsSearchResults = [];
@@ -40,6 +41,10 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsSearchTextOnly = false;
         gs.docsSearchOrder = 'MOD_TIME';
         gs.docsHighlightedFolderName = null;
+
+        if (!DOC_ROOT_KEY) {
+            console.warn('DOC_ROOT_KEY is not defined in HTML rendered template. Using default "root" key for docs.');
+        }
     }
 
     async notify(): Promise<void> {

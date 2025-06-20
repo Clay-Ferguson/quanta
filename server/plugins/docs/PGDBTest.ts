@@ -1,10 +1,34 @@
 import pgdb from '../../PDGB.js';
 
+const testRootKey = 'pgroot';
+
+/**
+ * Wipes all records from the fs_nodes table
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function wipeTable(): Promise<void> {
+    try {
+        console.log('=== WIPING fs_nodes TABLE ===');
+        
+        // Delete all records from the fs_nodes table
+        const result = await pgdb.query('DELETE FROM fs_nodes');
+        
+        console.log(`Successfully wiped fs_nodes table. ${result.rowCount || 0} rows deleted.`);
+        console.log('=== TABLE WIPE COMPLETED ===');
+        
+    } catch (error) {
+        console.error('=== TABLE WIPE FAILED ===');
+        console.error('Error wiping fs_nodes table:', error);
+        throw error;
+    }
+}
+
 /**
  * Test function to verify PostgreSQL database functionality
  * Creates a test file record and reads it back to verify everything is working
  */
 export async function pgdbTest(): Promise<void> {
+    // await wipeTable();
     await simpleReadWriteTest();
     await deleteFolder("0001_test-structure");
     await createFolderStructureTest();
@@ -19,7 +43,6 @@ async function deleteFolder(folderName: string): Promise<void> {
     try {
         console.log(`=== DELETING FOLDER: ${folderName} ===`);
         
-        const testRootKey = 'test-structure';
         const rootPath = '';  // Empty string for root directory
         
         // Debug: List what's in the root directory first
@@ -72,12 +95,8 @@ async function deleteFolder(folderName: string): Promise<void> {
 async function printFolderStructure(): Promise<void> {
     try {
         console.log('\n=== FOLDER STRUCTURE VISUALIZATION ===');
-        
-        const testRootKey = 'test-structure';
         const rootPath = '/0001_test-structure';
-        
         await printDirectoryContents(rootPath, testRootKey, 0);
-        
         console.log('=== END FOLDER STRUCTURE ===\n');
         
     } catch (error) {
@@ -112,8 +131,6 @@ async function printDirectoryContents(dirPath: string, rootKey: string, indentLe
 async function createFolderStructureTest(): Promise<void> {
     try {
         console.log('=== PGDB Folder Structure Test Starting ===');
-
-        const testRootKey = 'test-structure';
         const rootPath = '/0001_test-structure';
         
         // First, ensure the root directory structure exists
@@ -220,7 +237,6 @@ async function simpleReadWriteTest(): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
 
-        const testRootKey = 'test-root';
         const testParentPath = '/test-documents';
         const testFilename = '0001_test-file.md';  // Use ordinal-prefixed filename from the start
         const testContent = Buffer.from('# Test Document 2\n\nThis is a test file created by the PGDB test function.');
@@ -291,9 +307,7 @@ async function simpleReadWriteTest(): Promise<void> {
 
 async function testOrdinalOperations(): Promise<void> {
     try {
-        console.log('\n=== TESTING ORDINAL OPERATIONS ===');
-        
-        const testRootKey = 'test-structure';
+        console.log('\n=== TESTING ORDINAL OPERATIONS ===');        
         const testPath = '/0001_test-structure/0001_one';  // Test inside one of our existing folders
         
         console.log('1. Testing pg_get_max_ordinal...');
@@ -375,9 +389,7 @@ async function testOrdinalOperations(): Promise<void> {
 
 async function testFileOperations(): Promise<void> {
     try {
-        console.log('\n=== TESTING FILE OPERATIONS ===');
-        
-        const testRootKey = 'test-structure';
+        console.log('\n=== TESTING FILE OPERATIONS ===');        
         const testPath = '/0001_test-structure/0002_two';  // Test in the 'two' folder
         
         console.log('1. Testing pg_stat function...');
@@ -446,9 +458,7 @@ async function testFileOperations(): Promise<void> {
 async function testPathOperations(): Promise<void> {
     try {
         console.log('\n=== TESTING PATH OPERATIONS ===');
-        
-        const testRootKey = 'test-structure';
-        
+                
         console.log('1. Testing manual deep path creation...');
         // Create nested directories manually since pg_ensure_path may not handle ordinal prefixes correctly
         const basePath = '/0001_test-structure/0003_three';
@@ -515,9 +525,7 @@ async function testPathOperations(): Promise<void> {
 
 async function testErrorHandling(): Promise<void> {
     try {
-        console.log('\n=== TESTING ERROR HANDLING ===');
-        
-        const testRootKey = 'test-structure';
+        console.log('\n=== TESTING ERROR HANDLING ===');        
         const testPath = '/0001_test-structure/0001_one';
         
         console.log('1. Testing invalid filename format (missing ordinal)...');

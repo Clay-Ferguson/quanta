@@ -204,6 +204,7 @@ class DocService {
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
+                // todo-0: this kind of error is not having something displayed to user and just results in a blank page
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -229,6 +230,7 @@ class DocService {
             // Verify the target is actually a directory (not a file)
             const stat = await ifs.stat(absolutePath);
             if (!stat.isDirectory()) {
+                console.warn(`Path is not a directory: ${absolutePath}`);
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
             }

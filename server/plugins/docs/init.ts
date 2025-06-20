@@ -6,7 +6,7 @@ import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
-import { pgdbTest } from "./PGDBTest.js";
+// import { pgdbTest } from "./PGDBTest.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -36,11 +36,11 @@ class DocsServerPlugin implements IServerPlugin {
             await this.initializeFunctions();
 
             // Test PostgreSQL database functionality
-            try {
-                await pgdbTest(); // todo-0: temporary for development.
-            } catch (error) {
-                console.error('PGDB test failed during plugin initialization:', error);
-            }
+            // try {
+            //     await pgdbTest(); // todo-0: temporary for development.
+            // } catch (error) {
+            //     console.error('PGDB test failed during plugin initialization:', error);
+            // }
         }
         else {
             console.warn('POSTGRES_HOST environment variable is not set. Skipping database initialization.');

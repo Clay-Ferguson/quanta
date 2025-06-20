@@ -223,23 +223,15 @@ For this step please make the `createFile` method (inside `DocService.ts`) use t
 
 #### Step 6 outcome:
 
-We ended up going through the entire `server/plugins/docs` source folder and converted everything we need to convert from direct use of 'fs' package into the abstraction layer IFS.
+We ended up going through the entire `server/plugins/docs` source folder and converted everything we need to convert from direct use of 'fs' package into the abstraction layer IFS. So that completes the `IFS.ts` implementation and next we'll move to implementing `VFS.ts`, the Posgres-based File System implementation.
 
+### Step 7 (current step)
 
-######################################################
+In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config-dev.yaml` you can see we now have a `pgroot` root key. I only run this feature thru a docker deployment which you cannot do, so please don't try to run the code yourself to test it.
 
-AI Agent please ignore the below, and consider this old Step 7 a future task for a future time.
+Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, so if you need to you can open those files just for more general knowledge about VFS (Virtual File System, Postgres)
 
-### Step 7 (inactive, AI Agent please ignore)
+Let's start with `DocService.ts#treeRender` method. Just so you don't have to do the entire VFS implementatin all at once. Please first determine what IFS methods are called from that method (`treeRender`), and methods it indirectly calls, and figure out which of our `VFS.ts` methods need to be implemented, to get `treeRender` working, and then implement them. Remember the `getFileSystem` factory method will activate the VFS as the 'ifs' variable everywhere we have it. 
 
-In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config-dev.yaml` you can see we now have a `pgroot` root key, and we'll be testing our work directly in the GUI now by going to `http://localhost:8000/doc/pgroot`. We also have PostgreSQL only usable in our docker-based way of running the code so I'll be running the app with `docker-run-dev.sh`, just so you'll know. I'd rather you not try to run that file yourself. Just please do your best, to do things without running the actual app. 
-
-Let's start with `DocService.ts#treeRender` method. Just so you don't have to do the entire VFS implementatin all at once, please look at what IFS methods are called from that method (`treeRender`), and methods it indirectly calls, and figure out which of our `VFS.ts` methods need to be implemented and just implement them. I think everything else will "just work" when I true to browse to the URL, because the `getFileSystem` factory method will activate the VFS as the 'ifs' variable everywhere we have it. So that should be all you need. Please do that now. Do some work in `VFS.ts`.
-
-Oh, one more thing. Before you start, notice that the 'path' for VFS is blank, because a full VFS path is not really relative to some Operating System base path. I'm not sure if it needs to be "/" or just blank string. Eventually we probably will want to have various base paths for root folders in use in VFS, but for now it's just a path with no 'base' path. And one final note. Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, and you of course remember that `functions.sql` is where the real meat of the implementation is. 
-
-#### Step 7 outcome...
-
-The attempt to do Step 7 as aborted by me due to a structural problem in the code across the board. We need to address first. The issue is that ALL of IFS API needs to be asynchronous, because PostgreSQL calls are asynchronous. We will do this first and then come back to this step later.
 
 
