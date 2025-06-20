@@ -583,7 +583,7 @@ class DocService {
             const newFolderPath = path.join(absoluteParentPath, newFolderName);
 
             // Create the directory (recursive option ensures parent directories exist)
-            ifs.mkdirSync(newFolderPath, { recursive: true });
+            await ifs.mkdir(newFolderPath, { recursive: true });
 
             console.log(`Folder created successfully: ${newFolderPath}`);
             

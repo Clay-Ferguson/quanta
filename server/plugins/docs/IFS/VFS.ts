@@ -31,7 +31,7 @@ class VFS implements IFS {
         throw new Error('VFS.readdirSync not implemented yet');
     }
 
-    mkdirSync(_path: string, _options?: { recursive?: boolean }): void {
+    async mkdir(_path: string, _options?: { recursive?: boolean }): Promise<void> {
         throw new Error('VFS.mkdirSync not implemented yet');
     }
 

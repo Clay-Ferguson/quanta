@@ -42,8 +42,8 @@ class LFS implements IFS {
         return await fs.promises.readdir(path);
     }
 
-    mkdirSync(path: string, options?: { recursive?: boolean }): void {
-        fs.mkdirSync(path, options);
+    async mkdir(path: string, options?: { recursive?: boolean }): Promise<void> {
+        await fs.promises.mkdir(path, options);
     }
 
     // File/directory manipulation

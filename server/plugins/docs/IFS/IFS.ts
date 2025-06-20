@@ -18,7 +18,7 @@ export interface IFS {
 
     // Directory operations
     readdir(path: string): Promise<string[]>;
-    mkdirSync(path: string, options?: { recursive?: boolean }): void;
+    mkdir(path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation
     renameSync(oldPath: string, newPath: string): void;

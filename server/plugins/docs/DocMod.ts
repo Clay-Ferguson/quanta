@@ -1046,7 +1046,7 @@ class DocMod {
 
             // Step 2: Create the new folder structure
             docUtil.checkFileAccess(absoluteNewFolderPath, root);
-            ifs.mkdirSync(absoluteNewFolderPath, { recursive: true });
+            await ifs.mkdir(absoluteNewFolderPath, { recursive: true });
             console.log(`Folder created: ${absoluteNewFolderPath}`);
 
             // Step 3: Optionally preserve content in a new file inside the folder
