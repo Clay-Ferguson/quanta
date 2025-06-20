@@ -44,7 +44,7 @@ class VFS implements IFS {
         throw new Error('VFS.unlinkSync not implemented yet');
     }
 
-    rmSync(_path: string, _options?: { recursive?: boolean, force?: boolean }): void {
+    async rm(_path: string, _options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         throw new Error('VFS.rmSync not implemented yet');
     }
 }

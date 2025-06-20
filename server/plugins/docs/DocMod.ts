@@ -363,7 +363,7 @@ class DocMod {
                     docUtil.checkFileAccess(absoluteTargetPath, root);
                     if (stat.isDirectory()) {
                         // Remove directory recursively
-                        ifs.rmSync(absoluteTargetPath, { recursive: true, force: true });
+                        await ifs.rm(absoluteTargetPath, { recursive: true, force: true });
                         console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                     } else {
                         // Remove file
