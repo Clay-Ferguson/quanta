@@ -3,10 +3,11 @@ import * as fs from 'fs';
 
 /**
  * Virtual File System Interface
+ * 
  * This interface defines all file system operations needed by the docs plugin.
  * Implementations can provide either real file system access (LFS) or PostgreSQL-based virtual file system (VFS).
  */
-export interface IVFS {
+export interface IFS {
     // File existence and metadata
     existsSync(path: string): boolean;
     statSync(path: string): fs.Stats;

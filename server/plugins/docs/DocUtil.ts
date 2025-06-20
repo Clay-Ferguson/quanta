@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
-import { IVFS } from './IVFS.js';
-import vfs from './VFS.js';
-import lfs from './LFS.js';
+import { IFS } from './IFS/IFS.js';
+import vfs from './IFS/VFS.js';
+import lfs from './IFS/LFS.js';
 const { exec } = await import('child_process');
 
 /**
@@ -29,7 +29,7 @@ class DocUtil {
      * @param docRootKey - Key identifier for the document root
      * @returns IVFS implementation (LFS or VFS)
      */
-    getFileSystem(docRootKey: string): IVFS {
+    getFileSystem(docRootKey: string): IFS {
         const rootConfig = config.getPublicFolderByKey(docRootKey);
         if (!rootConfig) {
             throw new Error(`Invalid document root key: ${docRootKey}`);
@@ -116,7 +116,7 @@ class DocUtil {
      * @returns Map of old relative paths to new relative paths for renamed items
      */
     shiftOrdinalsDown = (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
-        itemsToIgnore: string[] | null, ifs: IVFS | null = null): Map<string, string> => {
+        itemsToIgnore: string[] | null, ifs: IFS | null = null): Map<string, string> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         this.checkFileAccess(absoluteParentPath, root);
 
@@ -207,7 +207,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
-    ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string, ifs: IVFS): string => {
+    ensureFourDigitOrdinal = (absolutePath: string, fileName: string, root: string, ifs: IFS): string => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
         const ordinalPrefix = fileName.substring(0, underscoreIndex);
@@ -294,7 +294,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
-    getMaxOrdinal = (absolutePath: string, root: string, ifs: IVFS): number => {
+    getMaxOrdinal = (absolutePath: string, root: string, ifs: IFS): number => {
         this.checkFileAccess(absolutePath, root);
                 
         // Read directory contents and filter for files/folders with numeric prefixes
@@ -334,7 +334,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
-    ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IVFS): string => {
+    ensureOrdinalPrefix = (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IFS): string => {
     
         // Special case: content.md files are always given ordinal 0 by convention
         // TODO: This is a temporary hack for better Quanta export ingestion and will be removed later

@@ -14,7 +14,7 @@ Note: In this document 'FS' refers to 'File System'. 'PGFS' means Postgres File 
 
 * When the docs plugin loads, the DocServerPlugin (in `/server/plugins/docs/init.ts`) will detect if `process.env.POSTGRES_HOST` is set, and if so it sets it's `pgMode` (Postgres Mode) variable to 'true' indicating we're using the Postres-backed FS rather than a normal Linux FS. This is how we will determine which version of our FS abstraction layer to use.
 
-* This will let us optionally turn the Quanta FS Plugin into an online cloud-based Document Manager. We will be keeping the "path" concept the same. That is, in the PGFS design we'll have both files and folders and they will have slash-delimited folder paths (just like any FS), and modification timestamps just like a real FS does. The `schema.sql` for this is alreacy created and is in `/server/plugins/docs/schema.sql`. We will continue to use ordinal prefixes on all filenames. We also have a first-pass rough draft if what the functions might look like in `server/plugins/docs/pg_functions.sql`
+* This will let us optionally turn the Quanta FS Plugin into an online cloud-based Document Manager. We will be keeping the "path" concept the same. That is, in the PGFS design we'll have both files and folders and they will have slash-delimited folder paths (just like any FS), and modification timestamps just like a real FS does. The `schema.sql` for this is alreacy created and is in `/server/plugins/docs/schema.sql`. We will continue to use ordinal prefixes on all filenames. We also have a first-pass rough draft if what the functions might look like in `server/plugins/docs/functions.sql`
 
 * The PGFS will not need to be a complete implemention of everything Fils Systems can do. Instead, the PGDB will only be a FS that supports what we need supported to enable our  'docs' plugin to run using PostgreSQL tables, in place of file-system access. 
 
@@ -181,31 +181,31 @@ class PostgreSQLFileSystem {
 
 ## Steps
 
-The following steps are the actual steps I need you (The AI Agent), to take as we tackle implementing all of what was described above. We are picking up at a point where I think the `schema.sql` is probably perfect as is, but the `pg_functions.sql` is definitely not correct yet. This functions sql file will be where most of the non-trivial work is done too. So let's get started, and do it step by step.
+The following steps are the actual steps I need you (The AI Agent), to take as we tackle implementing all of what was described above. We are picking up at a point where I think the `schema.sql` is probably perfect as is, but the `functions.sql` is definitely not correct yet. This functions sql file will be where most of the non-trivial work is done too. So let's get started, and do it step by step.
 
 Current Status: We are doing Step 1.
 
 ### Step 1 (completed)
 
-When we originally created the `pg_functions.sql` we were working under the assumption that the `fs_nodes` table would have an ordinal, which would be used instead of having an `NNNN_` prefix on file/folder names. However I decided to be consistent, and keep the code uniform across both 'Virtual' and 'Real' File Systems, it's best to just let the Postgre version of the FS also use `NNNN_` ordinals on the file/folder names as well. So in Step 1, please look at the ordinals-related functions in `pg_functions.sql` and rewrite all of those to be using the file/folder name prefix-based ordinals. Note: Remember, you can refer to the existing File System-based code inside `server/plugins/docs` for any hints you might need to understand ordinals, but they're very simple, of course, because they're just for maintaining positional ordering. Feel free to correct anything else you see wrong in `pg_functions.sql`. Note: We don't have a way to test this code yet. That's the next step I'll tell you abuot. So don't try to look around and figure out how to run any of this code you're working on. Don't try to test it yet. Please just do your best to write the code.
+When we originally created the `functions.sql` we were working under the assumption that the `fs_nodes` table would have an ordinal, which would be used instead of having an `NNNN_` prefix on file/folder names. However I decided to be consistent, and keep the code uniform across both 'Virtual' and 'Real' File Systems, it's best to just let the Postgre version of the FS also use `NNNN_` ordinals on the file/folder names as well. So in Step 1, please look at the ordinals-related functions in `functions.sql` and rewrite all of those to be using the file/folder name prefix-based ordinals. Note: Remember, you can refer to the existing File System-based code inside `server/plugins/docs` for any hints you might need to understand ordinals, but they're very simple, of course, because they're just for maintaining positional ordering. Feel free to correct anything else you see wrong in `functions.sql`. Note: We don't have a way to test this code yet. That's the next step I'll tell you abuot. So don't try to look around and figure out how to run any of this code you're working on. Don't try to test it yet. Please just do your best to write the code.
 
 #### Final Outcome of Step 1
 
-We've successfully updated `pg_functions.sql` to work with ordinals in file/folder name prefixes rather than an ordinal column.
+We've successfully updated `functions.sql` to work with ordinals in file/folder name prefixes rather than an ordinal column.
 
 ### Step 2 (completed)
 
-We will be writing a test for testing some of our `pg_functions.sql` functions.
+We will be writing a test for testing some of our `functions.sql` functions.
 
 We run the app (and tests) using `docker-run-dev.sh` which uses `docker-compose-dev.yaml` to start our app inside a docker conatiner alonside the Postgre DB. Inside `/server/plugins/docs/init.ts` we have a line  `await pgdbTest()` which runs the test inside `PGDBTest.ts`. I've partially created a `createFolderStructureTest` function for you in there, which I'd like for you to implement in this step. Please add the code to create a little folder structure with 5 folders in the root, named (0001_one.md, 0002_two.md, etc). Then inside each of those root level folders, create five files and five folders. So we'll have a little folder structure, that's two levels deep. That's all this test function will do. It will simply create that folder structure. By of calling the Postgres functions. 
 
 ### Step 3 (completed)
 
-Note: The content for Step 3 is omitteded for the sake of brevity, but to summarize all that happened as Step 3 (a big step!) was that we iteratively collaborated to create a fairly comprehensive set of functions for testing our `pg_functions.sql` virtual File System implementation, and it's all in `PGDBTest.ts` right now. So with our tests proving that we have some confidence that `pg_functions.sql` is on decent shape we can move in to implementing the abstraction layer.
+Note: The content for Step 3 is omitteded for the sake of brevity, but to summarize all that happened as Step 3 (a big step!) was that we iteratively collaborated to create a fairly comprehensive set of functions for testing our `functions.sql` virtual File System implementation, and it's all in `PGDBTest.ts` right now. So with our tests proving that we have some confidence that `functions.sql` is on decent shape we can move in to implementing the abstraction layer.
 
 ### Step 4 (completed)
 
-Please implement the abstraction layer interface in the existing `IVFS.ts`, and then implement an actual `fs` (as in NodeJS `fs` package) wrapper in `LFS.ts`. I've already created both of those files. Note that there will not be any Postgres-related calls or calls to `pg_functions.sql` functions in this, because we're just creating the abstraction layer around the `fs` file system. Also please don't try to actually start using the LFS instance anywhere in the code yet. Just implement the LFS for now. We'll be integrating the code to use it in a future step, but not in Step 4. So you can just read thru `DocBinary.ts`, `DocMod.ts`, `DocService.ts`, and `DocUtils.ts` to come up with the list if which parts of `fs` we need coverage for. Eventually we will of course also be implementing the `VFS` which will hold the abstraction layer wrapper that will call `pg_functions.sql` but again, we do not want to do that yet in Step 4. 
+Please implement the abstraction layer interface in the existing `IVFS.ts`, and then implement an actual `fs` (as in NodeJS `fs` package) wrapper in `LFS.ts`. I've already created both of those files. Note that there will not be any Postgres-related calls or calls to `functions.sql` functions in this, because we're just creating the abstraction layer around the `fs` file system. Also please don't try to actually start using the LFS instance anywhere in the code yet. Just implement the LFS for now. We'll be integrating the code to use it in a future step, but not in Step 4. So you can just read thru `DocBinary.ts`, `DocMod.ts`, `DocService.ts`, and `DocUtils.ts` to come up with the list if which parts of `fs` we need coverage for. Eventually we will of course also be implementing the `VFS` which will hold the abstraction layer wrapper that will call `functions.sql` but again, we do not want to do that yet in Step 4. 
 
 ### Step 5 (completed)
 

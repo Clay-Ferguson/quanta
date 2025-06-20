@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as fs from 'fs';
-import { IVFS } from './IVFS.js';
+import { IFS } from './IFS.js';
 
 /**
  * Virtual File System (VFS) for handling file operations in a server environment, by using PostgreSQL as a backend for storage of files and folders.
  */
-class VFS implements IVFS {
+class VFS implements IFS {
     // Note to AI Agent. Do not try to implement this yet.
     
     // File existence and metadata

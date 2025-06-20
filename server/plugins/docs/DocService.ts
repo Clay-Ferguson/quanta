@@ -6,7 +6,7 @@ import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
-import { IVFS } from "./IVFS.js";
+import { IFS } from "./IFS/IFS.js";
 const { exec } = await import('child_process');
 
 /**
@@ -277,7 +277,7 @@ class DocService {
      * @param root - The document root path for security validation
      * @returns Array of TreeNode objects representing directory contents, sorted alphabetically
      */
-    getTreeNodes = (absolutePath: string, pullup: boolean, root: string, ifs: IVFS): TreeNode[] => {
+    getTreeNodes = (absolutePath: string, pullup: boolean, root: string, ifs: IFS): TreeNode[] => {
         // Security check: ensure the path is within the allowed root directory
         docUtil.checkFileAccess(absolutePath, root); 
         

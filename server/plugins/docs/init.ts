@@ -112,13 +112,13 @@ class DocsServerPlugin implements IServerPlugin {
     }
     
     /**
-         * Initialize PostgreSQL functions by reading and executing pg_functions.sql
-         */
+     * Initialize PostgreSQL functions by reading and executing functions.sql
+     */
     private async initializeFunctions(): Promise<void> {
         const client = await pgdb.getClient();
         try {
-            // Read pg_functions.sql file from dist directory (copied during build)
-            const functionsPath = path.join(__dirname, 'pg_functions.sql');
+            // Read functions.sql file from dist directory (copied during build)
+            const functionsPath = path.join(__dirname, 'functions.sql');
             console.log('Reading functions from:', functionsPath);
             const functionsSql = fs.readFileSync(functionsPath, 'utf8');
                 

@@ -1,11 +1,11 @@
 import * as fs from 'fs';
-import { IVFS } from './IVFS.js';
+import { IFS } from './IFS.js';
 
 /**
  * Linux File System. This is a wrapper around the standard NodeJS 'fs' module, as an abstraction layer for file operations.
  * This implementation provides direct access to the real file system through the Node.js fs module.
  */
-class LFS implements IVFS {
+class LFS implements IFS {
     
     // File existence and metadata
     existsSync(path: string): boolean {
