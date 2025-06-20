@@ -36,7 +36,7 @@ class VFS implements IFS {
     }
 
     // File/directory manipulation
-    renameSync(_oldPath: string, _newPath: string): void {
+    async rename(_oldPath: string, _newPath: string): Promise<void> {
         throw new Error('VFS.renameSync not implemented yet');
     }
 

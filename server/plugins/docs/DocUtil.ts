@@ -174,7 +174,7 @@ class DocUtil {
             }
             
             // console.log(`Shifting file: ${file} -> ${newFileName}`);
-            ifs.renameSync(oldPath, newPath);
+            await ifs.rename(oldPath, newPath);
             
             // Track the path mapping for relative paths (used by external systems)
             const oldRelativePath = relativeFolderPath ? path.join(relativeFolderPath, file) : file;
@@ -225,7 +225,7 @@ class DocUtil {
                 // Rename the file/folder to have 4-digit ordinal prefix
                 this.checkFileAccess(oldFilePath, root);
                 this.checkFileAccess(newFilePath, root);
-                ifs.renameSync(oldFilePath, newFilePath);
+                await ifs.rename(oldFilePath, newFilePath);
                 console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(a)`);
                 
                 // Return the new filename for further processing
@@ -258,7 +258,7 @@ class DocUtil {
                     // Rename the file/folder to have 4-digit ordinal prefix
                     this.checkFileAccess(oldFilePath, root);
                     this.checkFileAccess(newFilePath, root);
-                    ifs.renameSync(oldFilePath, newFilePath);
+                    await ifs.rename(oldFilePath, newFilePath);
                     console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(b)`);
                     
                     // Return the new filename for further processing
@@ -353,7 +353,7 @@ class DocUtil {
             // Rename the file/folder to have 4-digit ordinal prefix
             this.checkFileAccess(oldFilePath, root);
             this.checkFileAccess(newFilePath, root);
-            ifs.renameSync(oldFilePath, newFilePath);
+            await ifs.rename(oldFilePath, newFilePath);
             console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix (b)`);
                 
             // Return the new filename

@@ -47,8 +47,8 @@ class LFS implements IFS {
     }
 
     // File/directory manipulation
-    renameSync(oldPath: string, newPath: string): void {
-        fs.renameSync(oldPath, newPath);
+    async rename(oldPath: string, newPath: string): Promise<void> {
+        await fs.promises.rename(oldPath, newPath);
     }
 
     unlinkSync(path: string): void {

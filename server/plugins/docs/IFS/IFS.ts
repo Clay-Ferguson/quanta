@@ -21,7 +21,7 @@ export interface IFS {
     mkdir(path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation
-    renameSync(oldPath: string, newPath: string): void;
+    rename(oldPath: string, newPath: string): Promise<void>;
     unlinkSync(path: string): void;
     rmSync(path: string, options?: { recursive?: boolean, force?: boolean }): void;
 }
