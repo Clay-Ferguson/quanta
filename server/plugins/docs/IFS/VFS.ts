@@ -284,8 +284,34 @@ class VFS implements IFS {
         }
     }
 
-    async mkdir(_path: string, _options?: { recursive?: boolean }): Promise<void> {
-        throw new Error('VFS.mkdir not implemented yet');
+    async mkdir(fullPath: string, options?: { recursive?: boolean }): Promise<void> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const { parentPath, filename } = this.parsePath(relativePath);
+            
+            // The PostgreSQL function expects directories to have ordinal prefixes
+            // If the filename doesn't have one, we need to generate it
+            let finalFilename = filename;
+            if (!filename.match(/^[0-9]+_/)) {
+                // Get the next ordinal for this directory
+                const maxOrdinalResult = await pgdb.query(
+                    'SELECT pg_get_max_ordinal($1, $2)',
+                    [parentPath, rootKey]
+                );
+                const maxOrdinal = maxOrdinalResult.rows[0].pg_get_max_ordinal || 0;
+                const nextOrdinal = maxOrdinal + 1;
+                const ordinalPrefix = nextOrdinal.toString().padStart(4, '0');
+                finalFilename = `${ordinalPrefix}_${filename}`;
+            }
+            
+            await pgdb.query(
+                'SELECT pg_mkdir($1, $2, $3, $4)',
+                [parentPath, finalFilename, rootKey, options?.recursive || false]
+            );
+        } catch (error) {
+            console.error('VFS.mkdir error:', error);
+            throw error;
+        }
     }
 
     // File/directory manipulation
@@ -312,15 +338,54 @@ class VFS implements IFS {
         }
     }
 
-    async unlink(_path: string): Promise<void> {
-        throw new Error('VFS.unlink not implemented yet');
+    async unlink(fullPath: string): Promise<void> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const { parentPath, filename } = this.parsePath(relativePath);
+            
+            await pgdb.query(
+                'SELECT pg_unlink($1, $2, $3)',
+                [parentPath, filename, rootKey]
+            );
+        } catch (error) {
+            console.error('VFS.unlink error:', error);
+            throw error;
+        }
     }
 
-    async rm(_path: string, _options?: { recursive?: boolean, force?: boolean }): Promise<void> {
-        throw new Error('VFS.rm not implemented yet');
+    async rm(fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const { parentPath, filename } = this.parsePath(relativePath);
+            
+            // Check if this is a directory or file
+            const stats = await this.stat(fullPath);
+            
+            if (stats.isDirectory()) {
+                // Use pg_rmdir for directories
+                await pgdb.query(
+                    'SELECT pg_rmdir($1, $2, $3, $4, $5)',
+                    [parentPath, filename, rootKey, options?.recursive || false, options?.force || false]
+                );
+            } else {
+                // Use pg_unlink for files
+                await pgdb.query(
+                    'SELECT pg_unlink($1, $2, $3)',
+                    [parentPath, filename, rootKey]
+                );
+            }
+        } catch (error) {
+            // If force option is enabled, don't throw errors for non-existent files/directories
+            if (options?.force && error instanceof Error && error.message.includes('not found')) {
+                return;
+            }
+            console.error('VFS.rm error:', error);
+            throw error;
+        }
     }
 
     checkFileAccess(filename: string, root: string): void {
+        // NOTE to AI: Do not try to implement this method, it is not needed for VFS. It needs to remain a no-op.
     }
 }
 
