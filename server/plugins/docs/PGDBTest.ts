@@ -1,5 +1,6 @@
 import pgdb from '../../PDGB.js';
 import { wipeTable, printFolderStructure, testOrdinalOperations, createFolderStructureTest } from './PGDBTestCore.js';
+import { pgdbTestMoveUp } from './PGDBTestFileMoves.js';
 
 const testRootKey = 'pgroot';
 

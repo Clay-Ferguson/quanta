@@ -241,15 +241,26 @@ Do the same for `DocMod.ts#saveFile` that we just did for `treeRender` in Step 7
 
 All that is remaining for you to implement in `VFS.ts` is `mkdir`, `unlink`, and `rm`. The Postgre equivalent of those file system calls should be fairly straightforward so please implemlent those three methods now.
 
-### Step 10 (current step)
+### Step 10 (completed)
 
 Currently we have a lot of tests in `PGDBTest.ts` which directly test the VFS postgres functions (in `functions.sql` file). Please create a new test file named `PGDBTestFileMoves.ts` for testing file move operations. In this new file we want to have a test that calls `DocMod.ts#moveUpOrDown` method which is an HTTP endpoint, to test the endpoint. In this file create a method named `pgdbTestMoveUp` to test moves. Make this test method first call `wipeTable`, to get us back to a clean slate. Then after that it should run `createFolderStructureTest` to create a folder structure. See the docs above `createFolderStructureTest` to know what exact folder structure it creates. There's a folder listing in the comment above that method. After that please make the function do a call to `DocMod.ts#moveUpOrDown`, using the following arguments:
 
 Move Up/Down Request: arguments = {
 "direction": "up",
-"filename": "0005_file6.md",
-"treeFolder": "/0001_test-structure/0003_two",
+"filename": "0005_file5.md",
+"treeFolder": "/0001_test-structure/0002_two",
 "docRootKey": "pgroot"
 }
 
 Then after that verify the results of the move operation by getting a listing and checking the listing. Refer to `PGDBTest.ts' for ideas on how to get that listing, but you should probably already know.
+
+#### Step 10 outcome:
+
+We successfully created `PGDBTestFileMoves.ts` with a `pgdbTestMoveUp` function that:
+1. Wipes the database table for a clean slate
+2. Creates the folder structure using `createFolderStructureTest`
+3. Tests moving "0005_file5.md" up one position in the "/0001_test-structure/0002_two" folder
+4. Verifies that the file swapped ordinals correctly with "0004_file4.md"
+5. Uses mock request/response objects to call `DocMod.moveUpOrDown` directly
+
+The test properly handles the HTTP endpoint testing by creating mock req/res objects and validates that the ordinal swapping functionality works correctly through the abstraction layer.
