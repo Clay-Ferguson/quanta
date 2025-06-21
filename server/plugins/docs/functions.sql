@@ -873,3 +873,250 @@ BEGIN
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function: pg_search_text
+-- PostgreSQL-based text search function for VFS
+-- Searches through text content in non-binary files
+-- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
+-- Optionally filters by timestamp requirements
+CREATE OR REPLACE FUNCTION pg_search_text(
+    search_query TEXT,
+    search_path TEXT,
+    root_key TEXT,
+    search_mode TEXT DEFAULT 'MATCH_ANY',
+    require_date BOOLEAN DEFAULT FALSE,
+    search_order TEXT DEFAULT 'MOD_TIME'
+) 
+RETURNS TABLE(
+    file VARCHAR(255),
+    full_path TEXT,
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    modified_time TIMESTAMP WITH TIME ZONE,
+    created_time TIMESTAMP WITH TIME ZONE
+) AS $$
+DECLARE
+    date_regex TEXT := '^\[[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM)\]';
+    search_terms TEXT[];
+    term TEXT;
+    where_clause TEXT := '';
+    order_clause TEXT := '';
+BEGIN
+    -- Build the base WHERE clause
+    -- Handle root path search specially
+    IF search_path = '/' THEN
+        -- Search all files when path is root
+        where_clause := format('doc_root_key = %L AND is_binary = FALSE AND content_text IS NOT NULL',
+                              root_key);
+    ELSE
+        -- Search within specific path
+        where_clause := format('doc_root_key = %L AND parent_path LIKE %L AND is_binary = FALSE AND content_text IS NOT NULL',
+                              root_key, search_path || '%');
+    END IF;
+    
+    -- Add timestamp filter if required
+    IF require_date THEN
+        where_clause := where_clause || format(' AND content_text ~* %L', date_regex);
+    END IF;
+    
+    -- Build search condition based on mode
+    IF search_mode = 'REGEX' THEN
+        -- REGEX mode: use the query as-is as a regex pattern
+        where_clause := where_clause || format(' AND content_text ~* %L', search_query);
+        
+    ELSIF search_mode = 'MATCH_ANY' THEN
+        -- MATCH_ANY mode: split query into terms and search for any term (OR logic)
+        -- Simple word splitting on whitespace, handling quoted phrases
+        SELECT string_to_array(
+            regexp_replace(
+                regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
+                '\s+', ' ', 'g'
+            ), 
+            ' '
+        ) INTO search_terms;
+        
+        -- Remove empty terms
+        search_terms := array_remove(search_terms, '');
+        
+        IF array_length(search_terms, 1) > 0 THEN
+            -- Build OR condition for any term match
+            where_clause := where_clause || ' AND (';
+            FOR i IN 1..array_length(search_terms, 1) LOOP
+                IF i > 1 THEN
+                    where_clause := where_clause || ' OR ';
+                END IF;
+                where_clause := where_clause || format('content_text ILIKE %L', '%' || search_terms[i] || '%');
+            END LOOP;
+            where_clause := where_clause || ')';
+        END IF;
+        
+    ELSIF search_mode = 'MATCH_ALL' THEN
+        -- MATCH_ALL mode: split query into terms and search for all terms (AND logic)
+        SELECT string_to_array(
+            regexp_replace(
+                regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
+                '\s+', ' ', 'g'
+            ), 
+            ' '
+        ) INTO search_terms;
+        
+        -- Remove empty terms
+        search_terms := array_remove(search_terms, '');
+        
+        IF array_length(search_terms, 1) > 0 THEN
+            -- Build AND condition for all terms match
+            FOR i IN 1..array_length(search_terms, 1) LOOP
+                where_clause := where_clause || format(' AND content_text ILIKE %L', '%' || search_terms[i] || '%');
+            END LOOP;
+        END IF;
+    END IF;
+    
+    -- Build ORDER BY clause
+    IF search_order = 'MOD_TIME' THEN
+        order_clause := 'ORDER BY modified_time DESC, filename ASC';
+    ELSIF search_order = 'DATE' THEN
+        -- For DATE ordering, we need to extract the timestamp from content
+        -- This is complex, so for now we'll fall back to modification time
+        order_clause := 'ORDER BY modified_time DESC, filename ASC';
+    ELSE
+        order_clause := 'ORDER BY filename ASC';
+    END IF;
+    
+    -- Execute the dynamic query
+    RETURN QUERY EXECUTE format('
+        SELECT 
+            n.filename as file,
+            n.parent_path || ''/'' || n.filename as full_path,
+            n.content_type,
+            n.size_bytes,
+            n.modified_time,
+            n.created_time
+        FROM fs_nodes n 
+        WHERE %s
+        %s', 
+        where_clause, 
+        order_clause
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: pg_search_text_with_content
+-- Extended search function that also returns matching content snippets
+-- This provides more detailed results similar to the grep-based search
+CREATE OR REPLACE FUNCTION pg_search_text_with_content(
+    search_query TEXT,
+    search_path TEXT,
+    root_key TEXT,
+    search_mode TEXT DEFAULT 'MATCH_ANY',
+    require_date BOOLEAN DEFAULT FALSE,
+    search_order TEXT DEFAULT 'MOD_TIME'
+) 
+RETURNS TABLE(
+    file VARCHAR(255),
+    full_path TEXT,
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    modified_time TIMESTAMP WITH TIME ZONE,
+    created_time TIMESTAMP WITH TIME ZONE,
+    matching_content TEXT
+) AS $$
+DECLARE
+    date_regex TEXT := '^\[[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM)\]';
+    search_terms TEXT[];
+    where_clause TEXT := '';
+    order_clause TEXT := '';
+BEGIN
+    -- Build the base WHERE clause
+    -- Handle root path search specially
+    IF search_path = '/' THEN
+        -- Search all files when path is root
+        where_clause := format('doc_root_key = %L AND is_binary = FALSE AND content_text IS NOT NULL',
+                              root_key);
+    ELSE
+        -- Search within specific path
+        where_clause := format('doc_root_key = %L AND parent_path LIKE %L AND is_binary = FALSE AND content_text IS NOT NULL',
+                              root_key, search_path || '%');
+    END IF;
+                          root_key, search_path || '%');
+    
+    -- Add timestamp filter if required
+    IF require_date THEN
+        where_clause := where_clause || format(' AND content_text ~* %L', date_regex);
+    END IF;
+    
+    -- Build search condition based on mode
+    IF search_mode = 'REGEX' THEN
+        where_clause := where_clause || format(' AND content_text ~* %L', search_query);
+        
+    ELSIF search_mode = 'MATCH_ANY' THEN
+        SELECT string_to_array(
+            regexp_replace(
+                regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
+                '\s+', ' ', 'g'
+            ), 
+            ' '
+        ) INTO search_terms;
+        
+        search_terms := array_remove(search_terms, '');
+        
+        IF array_length(search_terms, 1) > 0 THEN
+            where_clause := where_clause || ' AND (';
+            FOR i IN 1..array_length(search_terms, 1) LOOP
+                IF i > 1 THEN
+                    where_clause := where_clause || ' OR ';
+                END IF;
+                where_clause := where_clause || format('content_text ILIKE %L', '%' || search_terms[i] || '%');
+            END LOOP;
+            where_clause := where_clause || ')';
+        END IF;
+        
+    ELSIF search_mode = 'MATCH_ALL' THEN
+        SELECT string_to_array(
+            regexp_replace(
+                regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
+                '\s+', ' ', 'g'
+            ), 
+            ' '
+        ) INTO search_terms;
+        
+        search_terms := array_remove(search_terms, '');
+        
+        IF array_length(search_terms, 1) > 0 THEN
+            FOR i IN 1..array_length(search_terms, 1) LOOP
+                where_clause := where_clause || format(' AND content_text ILIKE %L', '%' || search_terms[i] || '%');
+            END LOOP;
+        END IF;
+    END IF;
+    
+    -- Build ORDER BY clause
+    IF search_order = 'MOD_TIME' THEN
+        order_clause := 'ORDER BY modified_time DESC, filename ASC';
+    ELSIF search_order = 'DATE' THEN
+        order_clause := 'ORDER BY modified_time DESC, filename ASC';
+    ELSE
+        order_clause := 'ORDER BY filename ASC';
+    END IF;
+    
+    -- Execute the dynamic query with content extraction
+    RETURN QUERY EXECUTE format('
+        SELECT 
+            n.filename as file,
+            n.parent_path || ''/'' || n.filename as full_path,
+            n.content_type,
+            n.size_bytes,
+            n.modified_time,
+            n.created_time,
+            CASE 
+                WHEN length(n.content_text) > 500 THEN 
+                    left(n.content_text, 250) || ''...'' || right(n.content_text, 250)
+                ELSE 
+                    n.content_text 
+            END as matching_content
+        FROM fs_nodes n 
+        WHERE %s
+        %s', 
+        where_clause, 
+        order_clause
+    );
+END;
+$$ LANGUAGE plpgsql;

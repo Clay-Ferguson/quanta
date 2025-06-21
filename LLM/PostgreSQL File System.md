@@ -264,3 +264,40 @@ We successfully created `PGDBTestFileMoves.ts` with a `pgdbTestMoveUp` function 
 5. Uses mock request/response objects to call `DocMod.moveUpOrDown` directly
 
 The test properly handles the HTTP endpoint testing by creating mock req/res objects and validates that the ordinal swapping functionality works correctly through the abstraction layer.
+
+
+### Step 11 (completed)
+
+Implementing a Search Function.
+
+At this point we've completely implemented and tested the Postgres-based VFS, but have not started on a search capability for VFS yet. Let's tackle searching only text filed first. And let's discuss it before you write any code. Obviously in table `fs_nodes` we do have an `is_binary` column so for our text-based search we will of course have the query criteria of `is_binary=false`. So that limits the rows to search. Also so you can get an idea how our Web app does searching you can look at `DocService.ts#searchTextFiles`. We'll be doing kind of an SQL version of that, but obviously we won't be using `grep` or any command line tools, and we won't be trying to populate any line numbers or line content in the search results. We'll just send back the list of files that matched.
+
+However before we start, I wanted to see if you think searching is best done as another Postgre function (in `functions.sql`) or not? We don't necessarily need to do a function. But one argument in favor of making it a function is that it means our entire VFS can then be self-contained in the database itself. I mean if you think a function for searching is a good idea you can go ahead and implement the function in `functions.sql`, but pleaes don't alter any other files yet, or try to integrate the search function into the rest of the code, because I'd like to see it first. But go ahead, and let me know what you think and/or write a search function.
+
+#### Step 11 Outcome
+
+We have now implemented a function named `pg_search_text` in `functions.sql`. 
+
+### Step 12 (completed)
+
+Now we need to create a test method to exercise `pg_search-text` function. If you look again at the `createFolderStructureTest` TypeScript function you can see we're adding files there which you can count on being there. So please go into `PGDBTest.ts` in method `pgdbTest` and make a call to some test method you'll write which does a test search. Feel free to use a write function to write to one or more of those file (since that's implemented in VFS postgres functions) if you need something special to search for. For now do a basic search, not a 'full converage' of the entire seasrch function. Just do the most basic substring search.
+
+#### Step 12 Outcome
+
+We now have an `pgdbTestSearch` which successfully runs and tests our Postgres Search function.
+
+### Step 13 (completed)
+
+Implement HTTP Endpoint Handler function now, for searching.
+
+In our docs plugin `init.ts`, I've already added this line:
+
+```
+app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);
+```
+
+Don't worry about making the GUI call that endpoint. I've handled that. I just need you to please implement the `searchVFSFiles` method using your knowledge of how it works, from what we just did. The arguments should be clear, but if you are in doubt you can reference `docSvc.searchTextFiles` to see how the HTTP request is formatted and what the returned JSON fomrat should be. Again, remember we're not sending back any line numbers, just the filenames.
+
+#### Step 13 Outcome
+
+Searching is now working in the GUI (except clicking the search isn't taking us to the exact file yet)

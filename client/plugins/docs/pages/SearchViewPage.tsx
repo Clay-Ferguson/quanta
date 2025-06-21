@@ -88,7 +88,9 @@ export default function SearchViewPage() {
         const search = gs.docsSearch.trim();
         try {
             const searchFolder = gs.docsFolder || '/';
-            const endpoint = gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries';
+            // todo-0: implement binary search ? some day.
+            const endpoint = gs.docsRootType === 'vfs' ? '/api/docs/search-vfs' : 
+                (gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries');
 
             const response = await httpClientUtil.secureHttpPost(endpoint, {
                 query: search,
@@ -101,7 +103,7 @@ export default function SearchViewPage() {
             
             if (response && response.success) {
                 // pretty print the search results using formatted JSON
-                // console.log('Search results:', JSON.stringify(response.results, null, 2));
+                console.log('Search results:', JSON.stringify(response.results, null, 2));
                 gd({ type: 'setSearchResults', payload: { 
                     docsSearchResults: response.results || [],
                     docsSearchOriginFolder: searchFolder,

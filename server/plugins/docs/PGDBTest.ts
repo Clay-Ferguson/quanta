@@ -24,6 +24,9 @@ export async function pgdbTest(): Promise<void> {
 
     await pgdbTestMoveUp();
 
+    // Test search functionality
+    await pgdbTestSearch();
+
     // now reset for gui to have a clean slate
     await wipeTable();
     await createFolderStructureTest();
@@ -524,6 +527,117 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
     } catch (error) {
         console.error('=== FOLDER RENAME TEST FAILED ===');
         console.error('Error during folder rename test:', error);
+        throw error;
+    }
+}
+
+/**
+ * Test function to verify PostgreSQL search functionality
+ * Tests the pg_search_text function with basic substring search
+ */
+async function pgdbTestSearch(): Promise<void> {
+    try {
+        console.log('=== PGDB SEARCH TEST STARTING ===');
+        
+        // First, let's add some specific content to search for
+        const testPath = '/0001_test-structure/0002_two';
+        const testFileName = '0003_search-test.md';
+        const searchContent = `# Search Test File
+
+This is a special test file for searching functionality.
+It contains the keyword SEARCHME for testing purposes.
+Also includes some other content like database and postgresql.
+
+Another line with SEARCHME keyword to test multiple matches.
+And some unique content: UNIQUESTRING123 for exact matching.
+`;
+
+        console.log('Writing test file with searchable content...');
+        await pgdb.query(
+            'SELECT pg_write_text_file($1, $2, $3, $4, $5) as file_id',
+            [testPath, testFileName, searchContent, testRootKey, 'text/markdown']
+        );
+
+        // Test 1: Basic substring search (MATCH_ANY mode)
+        console.log('Test 1: Basic substring search for "SEARCHME"...');
+        const searchResult1 = await pgdb.query(
+            'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+            ['SEARCHME', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+        );
+        
+        console.log(`Found ${searchResult1.rows.length} files containing "SEARCHME"`);
+        searchResult1.rows.forEach((row: any) => {
+            console.log(`  - ${row.file} (${row.content_type}, ${row.size_bytes} bytes)`);
+        });
+
+        // Verify we found our test file
+        const foundTestFile = searchResult1.rows.some((row: any) => row.file === testFileName);
+        if (foundTestFile) {
+            console.log('✅ SUCCESS: Found the test file with SEARCHME content');
+        } else {
+            console.log('❌ FAILED: Did not find the test file with SEARCHME content');
+        }
+
+        // Test 2: Search for content that should match existing files
+        console.log('Test 2: Search for "test file" (should match multiple files)...');
+        const searchResult2 = await pgdb.query(
+            'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+            ['test file', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+        );
+        
+        console.log(`Found ${searchResult2.rows.length} files containing "test file"`);
+        console.log('Files found:');
+        searchResult2.rows.forEach((row: any) => {
+            console.log(`  - ${row.file} in ${row.full_path}`);
+        });
+
+        // Test 3: Search for something unique that should only match our test file
+        console.log('Test 3: Search for unique string "UNIQUESTRING123"...');
+        const searchResult3 = await pgdb.query(
+            'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+            ['UNIQUESTRING123', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+        );
+        
+        console.log(`Found ${searchResult3.rows.length} files containing "UNIQUESTRING123"`);
+        if (searchResult3.rows.length === 1 && searchResult3.rows[0].file === testFileName) {
+            console.log('✅ SUCCESS: Unique search found exactly one matching file');
+        } else {
+            console.log('❌ FAILED: Unique search did not return expected single result');
+        }
+
+        // Test 4: Search for something that should not be found
+        console.log('Test 4: Search for non-existent string "NOTFOUND12345"...');
+        const searchResult4 = await pgdb.query(
+            'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+            ['NOTFOUND12345', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+        );
+        
+        console.log(`Found ${searchResult4.rows.length} files containing "NOTFOUND12345"`);
+        if (searchResult4.rows.length === 0) {
+            console.log('✅ SUCCESS: Search for non-existent content returned no results as expected');
+        } else {
+            console.log('❌ FAILED: Search for non-existent content unexpectedly found results');
+        }
+
+        // Test 5: Test MATCH_ALL mode
+        console.log('Test 5: MATCH_ALL search for "database postgresql" (both words must be present)...');
+        const searchResult5 = await pgdb.query(
+            'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+            ['database postgresql', '/0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME']
+        );
+        
+        console.log(`Found ${searchResult5.rows.length} files containing both "database" and "postgresql"`);
+        if (searchResult5.rows.length >= 1) {
+            console.log('✅ SUCCESS: MATCH_ALL search found files with both terms');
+        } else {
+            console.log('❌ FAILED: MATCH_ALL search did not find expected results');
+        }
+
+        console.log('=== PGDB SEARCH TEST COMPLETED SUCCESSFULLY ===\n');
+        
+    } catch (error) {
+        console.error('=== PGDB SEARCH TEST FAILED ===');
+        console.error('Error during search test:', error);
         throw error;
     }
 }

@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import pgdb from "../../PDGB.js";
-
+import docVFS from "./DocVFS.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,6 +65,7 @@ class DocsServerPlugin implements IServerPlugin {
         app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
         app.post('/api/docs/search-binaries', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchBinaries);
         app.post('/api/docs/search-text', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchTextFiles);
+        app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);
         app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
 
         app.get('/doc/:docRootKey', serveIndexHtml("TreeViewerPage"));
