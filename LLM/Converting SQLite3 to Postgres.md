@@ -1,4 +1,4 @@
-# Notes to Copilot AI Agent about the `Converting SQLite3 to Postgres` 
+# Notes to Copilot AI Agent about Converting SQLite3 to Postgres
 
 Note: This file contains information and instructions for the Github Copilot Agent to use to perform the below refactorings on this project:
 
