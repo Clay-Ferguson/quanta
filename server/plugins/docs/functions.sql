@@ -1000,6 +1000,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- todo-0: AI proactively generated this version that supposedly has line numbers. I could try it eventually.
 -- Function: pg_search_text_with_content
 -- Extended search function that also returns matching content snippets
 -- This provides more detailed results similar to the grep-based search

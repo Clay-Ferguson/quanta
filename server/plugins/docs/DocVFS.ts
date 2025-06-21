@@ -74,12 +74,8 @@ class DocVFS {
             
             // Transform results to match the expected format (file-level results without line numbers)
             const results = searchResult.rows.map((row: any) => ({
-                file: row.file,
-                path: row.full_path,
-                contentType: row.content_type,
-                size: row.size_bytes,
-                modifiedTime: row.modified_time,
-                createdTime: row.created_time
+                // remove "/" prefix if it exists, to ensure full path is consistent
+                file: row.full_path.startsWith("/") ? row.full_path.substring(1) : row.full_path,
             }));
             
             // Send successful response in the same format as searchTextFiles
