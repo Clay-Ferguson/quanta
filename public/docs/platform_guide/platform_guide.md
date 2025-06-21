@@ -28,13 +28,19 @@ The platform currently includes two main applications:
 - **PostgreSQL**: Database for server-side persistence
 - **WebSocket (ws)**: Real-time communication for WebRTC signaling
 - **js-yaml**: Configuration management via YAML files
-- **Multer**: File upload handling
 
 ### Build & Development Tools
 - **Yarn**: Package manager and build orchestration
 - **ESLint**: Code linting with TypeScript support
 - **PostCSS + Autoprefixer**: CSS processing pipeline
-- **HTTPS/HTTP**: Production-ready SSL support
+
+## How to Run
+
+We can run the app using either Docker or non-Docker deployments. We have the shell scripts named `run-*.sh` and `docker-run-*sh` in the project root which are somewhat self-explanatory. They end in `dev` for (development), `local` for a local deployment (non-server install), and `prod` for production servers which activate HTTPS support.
+
+Any configuration that uses PostgreSQL requires the Docker version becuause we're only setup to access PostgreSQL as a docker service.
+
+The platform consists entirely of one or more activated 'plugins' which make up the 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta FS`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always required Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres.
 
 ## System Architecture
 
