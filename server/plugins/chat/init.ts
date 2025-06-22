@@ -3,7 +3,6 @@ import { httpServerUtil } from "../../HttpServerUtil.js";
 import { chatSvc } from "./ChatService.js";
 import { rtc } from "./WebRTCServer.js";
 import { IServerPlugin } from "../../ServerUtil.js";
-import pgdb from "../../PDGB.js";
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = config.get("host"); 
@@ -14,7 +13,6 @@ class ChatServerPlugin implements IServerPlugin {
     async init(context: any) {
         console.log('init chat plugin...');
         this.initRoutes(context.app, context.serveIndexHtml);
-        await pgdb.initDb(); // Ensure the database is initialized
     }
 
     private initRoutes(app: any, serveIndexHtml: any) {

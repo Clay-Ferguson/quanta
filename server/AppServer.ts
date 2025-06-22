@@ -8,6 +8,7 @@ import { svrUtil } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import { docSvc } from './plugins/docs/DocService.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
+import pgdb from './PDGB.js';
 
 logInit();
 
@@ -18,6 +19,11 @@ const PORT = config.get("port");
 // This is the port for the web app. It will be 'https' for prod, or 'http' for dev on localho
 const SECURE = config.get("secure");
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
+
+if (process.env.POSTGRES_HOST) {
+    // todo-0: make sure this is the only place we call initDb
+    await pgdb.initDb();
+}
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));

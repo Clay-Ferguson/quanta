@@ -1,4 +1,10 @@
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Pool, PoolClient, QueryResult } from 'pg';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface PostgresConfig {
     host: string;
@@ -52,6 +58,28 @@ class PGDB {
         } catch (error) {
             console.error('Failed to initialize PostgreSQL Database:', error);
             throw error;
+        }
+
+        this.initSchema();
+    }
+
+    private async initSchema(): Promise<void> {
+        const client = await pgdb.getClient();
+        try {
+            // Read schema.sql file relative to this script
+            const schemaPath = path.join(__dirname, 'schema.sql');
+            console.log('Reading schema from:', schemaPath);
+            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+                
+            console.log('Executing database schema...');
+            await client.query(schemaSql);
+            console.log('Database schema created successfully');
+    
+        } catch (error) {
+            console.error('Error initializing database schema:', error);
+            throw error;
+        } finally {
+            client.release();
         }
     }
     

@@ -27,7 +27,6 @@ class DocsServerPlugin implements IServerPlugin {
 
         if (process.env.POSTGRES_HOST) {
             this.pgMode = true;
-            await pgdb.initDb(); // Ensure the database is initialized
         
             // Initialize database schema
             await this.initializeSchema();

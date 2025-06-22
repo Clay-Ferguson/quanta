@@ -29,18 +29,7 @@ CREATE TABLE IF NOT EXISTS blocked_keys (
     pub_key TEXT PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS user_info (
-    id SERIAL PRIMARY KEY,
-    pub_key TEXT UNIQUE NOT NULL,
-    user_name TEXT,
-    user_desc TEXT,
-    avatar_name TEXT,
-    avatar_type TEXT,
-    avatar_size INTEGER,
-    avatar_data BYTEA
-);
-
 CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages (room_id);
 CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages (timestamp);
 CREATE INDEX IF NOT EXISTS idx_attachments_message_id ON attachments (message_id);
-CREATE INDEX IF NOT EXISTS idx_user_info_pub_key ON user_info (pub_key);
+

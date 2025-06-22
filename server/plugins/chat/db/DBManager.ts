@@ -20,10 +20,9 @@ export class DBManager implements DBManagerIntf {
             throw new Error('POSTGRES_HOST environment variable is not set');
         }
 
-        await pgdb.initDb();
         const client = await pgdb.getClient();
         try {
-            // Read schema.sql file from the same directory as this plugin
+            // Read schema.sql file relative to this script
             const schemaPath = path.join(__dirname, '..', 'schema.sql');
             console.log('Reading schema from:', schemaPath);
             const schemaSql = fs.readFileSync(schemaPath, 'utf8');
@@ -40,6 +39,7 @@ export class DBManager implements DBManagerIntf {
         }
     }
 
+    // todo-0: remove this 
     checkDb = (): void => {
         // PostgreSQL connection is managed by pgdb pool, no need to check individual db instance
     }
