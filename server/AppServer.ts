@@ -48,6 +48,7 @@ if (SECURE === 'y') {
 const plugins = config.get("plugins");
 // get commma delimited list of plugin 'key' values into a string
 const pluginKeys = plugins.map((plugin: any) => plugin.key).join(','); 
+console.log(`Plugins loaded: ${pluginKeys}`);
 
 const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
     fs.readFile("./dist/index.html", 'utf8', async (err, data) => {

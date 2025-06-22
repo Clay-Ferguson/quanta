@@ -21,7 +21,7 @@ RUN mkdir -p /app/data
 EXPOSE 8000
 
 # Set default environment variables
-ENV CONFIG_FILE="./config-dev.yaml"
+ENV CONFIG_FILE="./docker-config-prod.yaml"
 ENV NODE_ENV="production"
 
 # Start the application
