@@ -5,14 +5,14 @@ This project now includes PostgreSQL and pgAdmin in the Docker Compose setup.
 ## Services
 
 ### PostgreSQL Database
-- **Container**: `quanta-postgres-dev`
+- **Container**: `postgres-dev`
 - **Port**: `5432`
 - **Database**: `quanta`
 - **Username**: `quanta`
 - **Password**: `***`
 
 ### pgAdmin Web Interface
-- **Container**: `quanta-pgadmin-dev`
+- **Container**: `pgadmin-dev`
 - **URL**: http://localhost:5050
 - **Email**: `admin@quanta.dev`
 - **Password**: `***`

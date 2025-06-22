@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: quanta-postgres-local
+    container_name: postgres-local
     environment:
       - POSTGRES_DB=quanta
       - POSTGRES_USER=quanta
@@ -23,7 +23,7 @@ services:
     # Example: Use `docker-compose --profile pgadmin ...` to enable this service
     profiles: ["pgadmin"]
     image: dpage/pgadmin4:latest
-    container_name: quanta-pgadmin-local
+    container_name: pgadmin-local
     # Note: This is linux UserId:GroupID, and NOT related to port numbers
     user: "5050:5050"
     environment:
@@ -51,7 +51,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile-local
-    container_name: quanta-dev-local
+    container_name: quanta-local
     ports:
       - "8008:8000"
     volumes:
