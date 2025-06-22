@@ -3,21 +3,21 @@ import pgdb from '../../../../PDGB.js';
 const testRootKey = 'pgroot';
 
 /**
- * Wipes all records from the fs_nodes table
+ * Wipes all records from the vfs_nodes table
  */
 export async function wipeTable(): Promise<void> {
     try {
-        console.log('=== WIPING fs_nodes TABLE ===');
+        console.log('=== WIPING vfs_nodes TABLE ===');
         
-        // Delete all records from the fs_nodes table
-        const result = await pgdb.query('DELETE FROM fs_nodes');
+        // Delete all records from the vfs_nodes table
+        const result = await pgdb.query('DELETE FROM vfs_nodes');
         
-        console.log(`Successfully wiped fs_nodes table. ${result.rowCount || 0} rows deleted.`);
+        console.log(`Successfully wiped vfs_nodes table. ${result.rowCount || 0} rows deleted.`);
         console.log('=== TABLE WIPE COMPLETED ===');
         
     } catch (error) {
         console.error('=== TABLE WIPE FAILED ===');
-        console.error('Error wiping fs_nodes table:', error);
+        console.error('Error wiping vfs_nodes table:', error);
         throw error;
     }
 }
@@ -48,7 +48,7 @@ async function buildDirectoryContents(dirPath: string, rootKey: string, indentLe
     
     // Get directory contents
     const dirResult = await pgdb.query(
-        'SELECT * FROM pg_readdir($1, $2)',
+        'SELECT * FROM vfs_readdir($1, $2)',
         [dirPath, rootKey]
     );
     
@@ -78,17 +78,17 @@ export async function testOrdinalOperations(): Promise<void> {
         console.log('\n=== TESTING ORDINAL OPERATIONS ===');        
         const testPath = '/0001_test-structure/0001_one';  // Test inside one of our existing folders
         
-        console.log('1. Testing pg_get_max_ordinal...');
+        console.log('1. Testing vfs_get_max_ordinal...');
         const maxOrdinalResult = await pgdb.query(
-            'SELECT pg_get_max_ordinal($1, $2) as max_ordinal',
+            'SELECT vfs_get_max_ordinal($1, $2) as max_ordinal',
             [testPath, testRootKey]
         );
         const currentMaxOrdinal = maxOrdinalResult.rows[0].max_ordinal;
         console.log(`   Current max ordinal in ${testPath}: ${currentMaxOrdinal}`);
         
-        console.log('2. Testing pg_get_ordinal_from_name...');
+        console.log('2. Testing vfs_get_ordinal_from_name...');
         const ordinalFromNameResult = await pgdb.query(
-            'SELECT pg_get_ordinal_from_name($1, $2, $3) as ordinal',
+            'SELECT vfs_get_ordinal_from_name($1, $2, $3) as ordinal',
             ['0003_file3.md', testPath, testRootKey]
         );
         console.log(`   Ordinal of '0003_file3.md': ${ordinalFromNameResult.rows[0].ordinal}`);
@@ -96,7 +96,7 @@ export async function testOrdinalOperations(): Promise<void> {
         console.log('3. Testing file insertion at specific ordinal (position 3)...');
         // This should shift files 0003_file3.md and above down by one position
         const insertResult = await pgdb.query(
-            'SELECT pg_insert_file_at_ordinal($1, $2, $3, $4, $5, $6, $7) as file_id',
+            'SELECT vfs_insert_file_at_ordinal($1, $2, $3, $4, $5, $6, $7) as file_id',
             [
                 testPath, 
                 '0003_inserted-file.md', 
@@ -111,7 +111,7 @@ export async function testOrdinalOperations(): Promise<void> {
         
         console.log('4. Verifying ordinal shifting occurred...');
         const afterInsertContents = await pgdb.query(
-            'SELECT * FROM pg_readdir($1, $2)',
+            'SELECT * FROM vfs_readdir($1, $2)',
             [testPath, testRootKey]
         );
         
@@ -124,13 +124,13 @@ export async function testOrdinalOperations(): Promise<void> {
         console.log('5. Testing manual ordinal shifting...');
         // Create a test file to shift
         await pgdb.query(
-            'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+            'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
             [testPath, '0020_temp-file.md', 'Temporary file', testRootKey, 'text/markdown']
         );
         
         // Now shift ordinals down from position 8
         const shiftResult = await pgdb.query(
-            'SELECT * FROM pg_shift_ordinals_down($1, $2, $3, $4)',
+            'SELECT * FROM vfs_shift_ordinals_down($1, $2, $3, $4)',
             [2, testPath, 8, testRootKey]  // Add 2 slots starting at ordinal 8
         );
         
@@ -141,7 +141,7 @@ export async function testOrdinalOperations(): Promise<void> {
         
         console.log('6. Testing final max ordinal after operations...');
         const finalMaxResult = await pgdb.query(
-            'SELECT pg_get_max_ordinal($1, $2) as max_ordinal',
+            'SELECT vfs_get_max_ordinal($1, $2) as max_ordinal',
             [testPath, testRootKey]
         );
         console.log(`   Final max ordinal: ${finalMaxResult.rows[0].max_ordinal}`);
@@ -220,7 +220,7 @@ export async function createFolderStructureTest(): Promise<void> {
         
         // First, ensure the root directory structure exists
         console.log('Creating root path...');
-        await pgdb.query('SELECT pg_ensure_path($1, $2)', [rootPath, testRootKey]);
+        await pgdb.query('SELECT vfs_ensure_path($1, $2)', [rootPath, testRootKey]);
 
         // Create 5 root-level folders
         console.log('Creating 5 root-level folders...');
@@ -233,7 +233,7 @@ export async function createFolderStructureTest(): Promise<void> {
             
             console.log(`Creating root folder: ${fullFolderName}`);
             await pgdb.query(
-                'SELECT pg_mkdir($1, $2, $3, $4) as folder_id',
+                'SELECT vfs_mkdir($1, $2, $3, $4) as folder_id',
                 [rootPath, fullFolderName, testRootKey, false]
             );
             
@@ -248,7 +248,7 @@ export async function createFolderStructureTest(): Promise<void> {
                 const fileContent = Buffer.from(`# File ${j} in ${folderName}\n\nThis is test file ${j} inside folder ${folderName}.`);
                 
                 await pgdb.query(
-                    'SELECT pg_write_text_file($1, $2, $3, $4, $5) as file_id',
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5) as file_id',
                     [currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown']
                 );
             }
@@ -260,7 +260,7 @@ export async function createFolderStructureTest(): Promise<void> {
                 const subfolderName = `${subfolderOrdinal}_subfolder${k - 5}`;
                 
                 await pgdb.query(
-                    'SELECT pg_mkdir($1, $2, $3, $4) as subfolder_id',
+                    'SELECT vfs_mkdir($1, $2, $3, $4) as subfolder_id',
                     [currentFolderPath, subfolderName, testRootKey, false]
                 );
             }
@@ -271,7 +271,7 @@ export async function createFolderStructureTest(): Promise<void> {
         
         // List root directory
         const rootDirResult = await pgdb.query(
-            'SELECT * FROM pg_readdir($1, $2)',
+            'SELECT * FROM vfs_readdir($1, $2)',
             [rootPath, testRootKey]
         );
         
@@ -283,7 +283,7 @@ export async function createFolderStructureTest(): Promise<void> {
             if (row.is_directory) {
                 const subDirPath = `${rootPath}/${row.filename}`;
                 const subDirResult = await pgdb.query(
-                    'SELECT * FROM pg_readdir($1, $2)',
+                    'SELECT * FROM vfs_readdir($1, $2)',
                     [subDirPath, testRootKey]
                 );
                 
@@ -297,14 +297,14 @@ export async function createFolderStructureTest(): Promise<void> {
         // Test ordinal functions
         console.log('Testing ordinal functions...');
         const maxOrdinal = await pgdb.query(
-            'SELECT pg_get_max_ordinal($1, $2) as max_ordinal',
+            'SELECT vfs_get_max_ordinal($1, $2) as max_ordinal',
             [rootPath, testRootKey]
         );
         console.log(`Maximum ordinal in root: ${maxOrdinal.rows[0].max_ordinal}`);
 
         // Test getting ordinal from a specific filename
         const ordinalResult = await pgdb.query(
-            'SELECT pg_get_ordinal_from_name($1, $2, $3) as ordinal',
+            'SELECT vfs_get_ordinal_from_name($1, $2, $3) as ordinal',
             ['0003_three', rootPath, testRootKey]
         );
         console.log(`Ordinal of '0003_three': ${ordinalResult.rows[0].ordinal}`);

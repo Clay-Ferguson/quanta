@@ -79,11 +79,11 @@ class VFS implements IFS {
             const { parentPath, filename } = this.parsePath(relativePath);
             
             const result = await pgdb.query(
-                'SELECT pg_exists($1, $2, $3)',
+                'SELECT vfs_exists($1, $2, $3)',
                 [parentPath, filename, rootKey]
             );
             
-            return result.rows[0].pg_exists;
+            return result.rows[0].vfs_exists;
         } catch (error) {
             console.error('VFS.exists error:', error);
             return false;
@@ -109,7 +109,7 @@ class VFS implements IFS {
             const { parentPath, filename } = this.parsePath(relativePath);
             
             const result = await pgdb.query(
-                'SELECT * FROM pg_stat($1, $2, $3)',
+                'SELECT * FROM vfs_stat($1, $2, $3)',
                 [parentPath, filename, rootKey]
             );
             
@@ -140,7 +140,7 @@ class VFS implements IFS {
             const { parentPath, filename } = this.parsePath(relativePath);
             
             const result = await pgdb.query(
-                'SELECT pg_read_file($1, $2, $3)',
+                'SELECT vfs_read_file($1, $2, $3)',
                 [parentPath, filename, rootKey]
             );
             
@@ -148,7 +148,7 @@ class VFS implements IFS {
                 throw new Error(`File not found: ${fullPath}`);
             }
             
-            const content = result.rows[0].pg_read_file;
+            const content = result.rows[0].vfs_read_file;
             
             if (encoding) {
                 return content.toString(encoding);
@@ -183,7 +183,7 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT pg_write_binary_file($1, $2, $3, $4, $5)',
+                    'SELECT vfs_write_binary_file($1, $2, $3, $4, $5)',
                     [parentPath, filename, content, rootKey, contentType]
                 );
             } else {
@@ -196,7 +196,7 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT pg_write_text_file($1, $2, $3, $4, $5)',
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
                     [parentPath, filename, textContent, rootKey, contentType]
                 );
             }
@@ -273,11 +273,11 @@ class VFS implements IFS {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             
             const result = await pgdb.query(
-                'SELECT pg_readdir_names($1, $2)',
+                'SELECT vfs_readdir_names($1, $2)',
                 [relativePath, rootKey]
             );
             
-            return result.rows[0].pg_readdir_names || [];
+            return result.rows[0].vfs_readdir_names || [];
         } catch (error) {
             console.error('VFS.readdir error:', error);
             throw error;
@@ -295,17 +295,17 @@ class VFS implements IFS {
             if (!filename.match(/^[0-9]+_/)) {
                 // Get the next ordinal for this directory
                 const maxOrdinalResult = await pgdb.query(
-                    'SELECT pg_get_max_ordinal($1, $2)',
+                    'SELECT vfs_get_max_ordinal($1, $2)',
                     [parentPath, rootKey]
                 );
-                const maxOrdinal = maxOrdinalResult.rows[0].pg_get_max_ordinal || 0;
+                const maxOrdinal = maxOrdinalResult.rows[0].vfs_get_max_ordinal || 0;
                 const nextOrdinal = maxOrdinal + 1;
                 const ordinalPrefix = nextOrdinal.toString().padStart(4, '0');
                 finalFilename = `${ordinalPrefix}_${filename}`;
             }
             
             await pgdb.query(
-                'SELECT pg_mkdir($1, $2, $3, $4)',
+                'SELECT vfs_mkdir($1, $2, $3, $4)',
                 [parentPath, finalFilename, rootKey, options?.recursive || false]
             );
         } catch (error) {
@@ -329,7 +329,7 @@ class VFS implements IFS {
             const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newRelativePath);
             
             await pgdb.query(
-                'SELECT pg_rename($1, $2, $3, $4, $5)',
+                'SELECT vfs_rename($1, $2, $3, $4, $5)',
                 [oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey]
             );
         } catch (error) {
@@ -344,7 +344,7 @@ class VFS implements IFS {
             const { parentPath, filename } = this.parsePath(relativePath);
             
             await pgdb.query(
-                'SELECT pg_unlink($1, $2, $3)',
+                'SELECT vfs_unlink($1, $2, $3)',
                 [parentPath, filename, rootKey]
             );
         } catch (error) {
@@ -362,15 +362,15 @@ class VFS implements IFS {
             const stats = await this.stat(fullPath);
             
             if (stats.isDirectory()) {
-                // Use pg_rmdir for directories
+                // Use vfs_rmdir for directories
                 await pgdb.query(
-                    'SELECT pg_rmdir($1, $2, $3, $4, $5)',
+                    'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
                     [parentPath, filename, rootKey, options?.recursive || false, options?.force || false]
                 );
             } else {
-                // Use pg_unlink for files
+                // Use vfs_unlink for files
                 await pgdb.query(
-                    'SELECT pg_unlink($1, $2, $3)',
+                    'SELECT vfs_unlink($1, $2, $3)',
                     [parentPath, filename, rootKey]
                 );
             }

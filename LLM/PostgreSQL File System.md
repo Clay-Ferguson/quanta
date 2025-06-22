@@ -58,26 +58,26 @@ The following is also just a rough-draft of what some of the Postgres calls can 
 
 ```ts
 // Read file content (equivalent to fs.readFileSync())
-const content = await db.query('SELECT pg_read_file($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
-const fileData = content.rows[0].pg_read_file;
+const content = await db.query('SELECT vfs_read_file($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
+const fileData = content.rows[0].vfs_read_file;
 
 // Write file content (equivalent to fs.writeFileSync())
 const fileId = await db.query('SELECT pg_write_file($1, $2, $3, $4, $5)', 
     ['/documents', 'new-file.md', Buffer.from('# Hello World'), 'rootKey', 'text/markdown']);
 
 // Check if file exists (equivalent to fs.existsSync())
-const exists = await db.query('SELECT pg_exists($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
-const fileExists = exists.rows[0].pg_exists;
+const exists = await db.query('SELECT vfs_exists($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
+const fileExists = exists.rows[0].vfs_exists;
 
 // Get file metadata (equivalent to fs.statSync())
-const stat = await db.query('SELECT * FROM pg_stat($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
+const stat = await db.query('SELECT * FROM vfs_stat($1, $2, $3)', ['/documents', 'readme.md', 'rootKey']);
 const fileStats = stat.rows[0]; // { is_directory, size_bytes, created_time, modified_time, content_type, ordinal }
 
 // Delete file (equivalent to fs.unlinkSync())
-await db.query('SELECT pg_unlink($1, $2, $3)', ['/documents', 'old-file.md', 'rootKey']);
+await db.query('SELECT vfs_unlink($1, $2, $3)', ['/documents', 'old-file.md', 'rootKey']);
 
 // Rename/move file (equivalent to fs.renameSync())
-await db.query('SELECT pg_rename($1, $2, $3, $4, $5)', 
+await db.query('SELECT vfs_rename($1, $2, $3, $4, $5)', 
     ['/documents', 'old-name.md', '/documents', 'new-name.md', 'rootKey']);
 ```
 
@@ -87,18 +87,18 @@ Rough draft of functions...
 
 ```ts
 // Create directory (equivalent to fs.mkdirSync())
-const dirId = await db.query('SELECT pg_mkdir($1, $2, $3)', ['/documents', 'new-folder', 'rootKey']);
+const dirId = await db.query('SELECT vfs_mkdir($1, $2, $3)', ['/documents', 'new-folder', 'rootKey']);
 
 // Remove directory (equivalent to fs.rmSync())
-await db.query('SELECT pg_rmdir($1, $2, $3, $4, $5)', 
+await db.query('SELECT vfs_rmdir($1, $2, $3, $4, $5)', 
     ['/documents', 'old-folder', 'rootKey', true, false]); // recursive=true, force=false
 
 // Check if path is directory
-const isDir = await db.query('SELECT pg_is_directory($1, $2, $3)', ['/documents', 'folder-name', 'rootKey']);
-const isDirectory = isDir.rows[0].pg_is_directory;
+const isDir = await db.query('SELECT vfs_is_directory($1, $2, $3)', ['/documents', 'folder-name', 'rootKey']);
+const isDirectory = isDir.rows[0].vfs_is_directory;
 
 // Create directory path recursively (like mkdir -p)
-await db.query('SELECT pg_ensure_path($1, $2)', ['/documents/deep/nested/path', 'rootKey']);
+await db.query('SELECT vfs_ensure_path($1, $2)', ['/documents/deep/nested/path', 'rootKey']);
 ```
 
 ## Complete Node.js Wrapper Class
@@ -111,14 +111,14 @@ class PostgreSQLFileSystem {
 
     // Directory listing
     async readdirSync(path: string, rootKey: string): Promise<string[]> {
-        const result = await this.db.query('SELECT pg_readdir_names($1, $2)', [path, rootKey]);
-        return result.rows[0].pg_readdir_names || [];
+        const result = await this.db.query('SELECT vfs_readdir_names($1, $2)', [path, rootKey]);
+        return result.rows[0].vfs_readdir_names || [];
     }
 
     // File operations
     async readFileSync(path: string, filename: string, rootKey: string): Promise<Buffer> {
-        const result = await this.db.query('SELECT pg_read_file($1, $2, $3)', [path, filename, rootKey]);
-        return result.rows[0].pg_read_file;
+        const result = await this.db.query('SELECT vfs_read_file($1, $2, $3)', [path, filename, rootKey]);
+        return result.rows[0].vfs_read_file;
     }
 
     async writeFileSync(path: string, filename: string, content: Buffer, rootKey: string, contentType?: string): Promise<void> {
@@ -127,37 +127,37 @@ class PostgreSQLFileSystem {
     }
 
     async existsSync(path: string, filename: string, rootKey: string): Promise<boolean> {
-        const result = await this.db.query('SELECT pg_exists($1, $2, $3)', [path, filename, rootKey]);
-        return result.rows[0].pg_exists;
+        const result = await this.db.query('SELECT vfs_exists($1, $2, $3)', [path, filename, rootKey]);
+        return result.rows[0].vfs_exists;
     }
 
     async statSync(path: string, filename: string, rootKey: string): Promise<any> {
-        const result = await this.db.query('SELECT * FROM pg_stat($1, $2, $3)', [path, filename, rootKey]);
+        const result = await this.db.query('SELECT * FROM vfs_stat($1, $2, $3)', [path, filename, rootKey]);
         return result.rows[0];
     }
 
     async unlinkSync(path: string, filename: string, rootKey: string): Promise<void> {
-        await this.db.query('SELECT pg_unlink($1, $2, $3)', [path, filename, rootKey]);
+        await this.db.query('SELECT vfs_unlink($1, $2, $3)', [path, filename, rootKey]);
     }
 
     async renameSync(oldPath: string, oldName: string, newPath: string, newName: string, rootKey: string): Promise<void> {
-        await this.db.query('SELECT pg_rename($1, $2, $3, $4, $5)', [oldPath, oldName, newPath, newName, rootKey]);
+        await this.db.query('SELECT vfs_rename($1, $2, $3, $4, $5)', [oldPath, oldName, newPath, newName, rootKey]);
     }
 
     // Directory operations
     async mkdirSync(path: string, dirname: string, rootKey: string, options?: { recursive?: boolean }): Promise<void> {
-        await this.db.query('SELECT pg_mkdir($1, $2, $3, $4)', 
+        await this.db.query('SELECT vfs_mkdir($1, $2, $3, $4)', 
             [path, dirname, rootKey, options?.recursive || false]);
     }
 
     async rmSync(path: string, dirname: string, rootKey: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
-        await this.db.query('SELECT pg_rmdir($1, $2, $3, $4, $5)', 
+        await this.db.query('SELECT vfs_rmdir($1, $2, $3, $4, $5)', 
             [path, dirname, rootKey, options?.recursive || false, options?.force || false]);
     }
 
     // Ordinal operations (your special sauce!)
     async shiftOrdinalsDown(slotsToAdd: number, parentPath: string, insertOrdinal: number, rootKey: string, itemsToIgnore?: string[]): Promise<Map<string, string>> {
-        const result = await this.db.query('SELECT * FROM pg_shift_ordinals_down($1, $2, $3, $4, $5)', 
+        const result = await this.db.query('SELECT * FROM vfs_shift_ordinals_down($1, $2, $3, $4, $5)', 
             [slotsToAdd, parentPath, insertOrdinal, rootKey, itemsToIgnore]);
         
         const pathMapping = new Map<string, string>();
@@ -166,15 +166,15 @@ class PostgreSQLFileSystem {
     }
 
     async getMaxOrdinal(parentPath: string, rootKey: string): Promise<number> {
-        const result = await this.db.query('SELECT pg_get_max_ordinal($1, $2)', [parentPath, rootKey]);
-        return result.rows[0].pg_get_max_ordinal;
+        const result = await this.db.query('SELECT vfs_get_max_ordinal($1, $2)', [parentPath, rootKey]);
+        return result.rows[0].vfs_get_max_ordinal;
     }
 
     async insertFileAtOrdinal(parentPath: string, filename: string, ordinal: number, rootKey: string, 
                             content?: Buffer, contentType?: string): Promise<number> {
-        const result = await this.db.query('SELECT pg_insert_file_at_ordinal($1, $2, $3, $4, $5, $6, $7)', 
+        const result = await this.db.query('SELECT vfs_insert_file_at_ordinal($1, $2, $3, $4, $5, $6, $7)', 
             [parentPath, filename, ordinal, rootKey, false, content, contentType]);
-        return result.rows[0].pg_insert_file_at_ordinal;
+        return result.rows[0].vfs_insert_file_at_ordinal;
     }
 }
 ```
@@ -187,7 +187,7 @@ Current Status: We are doing Step 1.
 
 ### Step 1 (completed)
 
-When we originally created the `functions.sql` we were working under the assumption that the `fs_nodes` table would have an ordinal, which would be used instead of having an `NNNN_` prefix on file/folder names. However I decided to be consistent, and keep the code uniform across both 'Virtual' and 'Real' File Systems, it's best to just let the Postgre version of the FS also use `NNNN_` ordinals on the file/folder names as well. So in Step 1, please look at the ordinals-related functions in `functions.sql` and rewrite all of those to be using the file/folder name prefix-based ordinals. Note: Remember, you can refer to the existing File System-based code inside `server/plugins/docs` for any hints you might need to understand ordinals, but they're very simple, of course, because they're just for maintaining positional ordering. Feel free to correct anything else you see wrong in `functions.sql`. Note: We don't have a way to test this code yet. That's the next step I'll tell you abuot. So don't try to look around and figure out how to run any of this code you're working on. Don't try to test it yet. Please just do your best to write the code.
+When we originally created the `functions.sql` we were working under the assumption that the `vfs_nodes` table would have an ordinal, which would be used instead of having an `NNNN_` prefix on file/folder names. However I decided to be consistent, and keep the code uniform across both 'Virtual' and 'Real' File Systems, it's best to just let the Postgre version of the FS also use `NNNN_` ordinals on the file/folder names as well. So in Step 1, please look at the ordinals-related functions in `functions.sql` and rewrite all of those to be using the file/folder name prefix-based ordinals. Note: Remember, you can refer to the existing File System-based code inside `server/plugins/docs` for any hints you might need to understand ordinals, but they're very simple, of course, because they're just for maintaining positional ordering. Feel free to correct anything else you see wrong in `functions.sql`. Note: We don't have a way to test this code yet. That's the next step I'll tell you abuot. So don't try to look around and figure out how to run any of this code you're working on. Don't try to test it yet. Please just do your best to write the code.
 
 #### Final Outcome of Step 1
 
@@ -270,17 +270,17 @@ The test properly handles the HTTP endpoint testing by creating mock req/res obj
 
 Implementing a Search Function.
 
-At this point we've completely implemented and tested the Postgres-based VFS, but have not started on a search capability for VFS yet. Let's tackle searching only text filed first. And let's discuss it before you write any code. Obviously in table `fs_nodes` we do have an `is_binary` column so for our text-based search we will of course have the query criteria of `is_binary=false`. So that limits the rows to search. Also so you can get an idea how our Web app does searching you can look at `DocService.ts#searchTextFiles`. We'll be doing kind of an SQL version of that, but obviously we won't be using `grep` or any command line tools, and we won't be trying to populate any line numbers or line content in the search results. We'll just send back the list of files that matched.
+At this point we've completely implemented and tested the Postgres-based VFS, but have not started on a search capability for VFS yet. Let's tackle searching only text filed first. And let's discuss it before you write any code. Obviously in table `vfs_nodes` we do have an `is_binary` column so for our text-based search we will of course have the query criteria of `is_binary=false`. So that limits the rows to search. Also so you can get an idea how our Web app does searching you can look at `DocService.ts#searchTextFiles`. We'll be doing kind of an SQL version of that, but obviously we won't be using `grep` or any command line tools, and we won't be trying to populate any line numbers or line content in the search results. We'll just send back the list of files that matched.
 
 However before we start, I wanted to see if you think searching is best done as another Postgre function (in `functions.sql`) or not? We don't necessarily need to do a function. But one argument in favor of making it a function is that it means our entire VFS can then be self-contained in the database itself. I mean if you think a function for searching is a good idea you can go ahead and implement the function in `functions.sql`, but pleaes don't alter any other files yet, or try to integrate the search function into the rest of the code, because I'd like to see it first. But go ahead, and let me know what you think and/or write a search function.
 
 #### Step 11 Outcome
 
-We have now implemented a function named `pg_search_text` in `functions.sql`. 
+We have now implemented a function named `vfs_search_text` in `functions.sql`. 
 
 ### Step 12 (completed)
 
-Now we need to create a test method to exercise `pg_search-text` function. If you look again at the `createFolderStructureTest` TypeScript function you can see we're adding files there which you can count on being there. So please go into `PGDBTest.ts` in method `pgdbTest` and make a call to some test method you'll write which does a test search. Feel free to use a write function to write to one or more of those file (since that's implemented in VFS postgres functions) if you need something special to search for. For now do a basic search, not a 'full converage' of the entire seasrch function. Just do the most basic substring search.
+Now we need to create a test method to exercise `vfs_search_text` function. If you look again at the `createFolderStructureTest` TypeScript function you can see we're adding files there which you can count on being there. So please go into `PGDBTest.ts` in method `pgdbTest` and make a call to some test method you'll write which does a test search. Feel free to use a write function to write to one or more of those file (since that's implemented in VFS postgres functions) if you need something special to search for. For now do a basic search, not a 'full converage' of the entire seasrch function. Just do the most basic substring search.
 
 #### Step 12 Outcome
 

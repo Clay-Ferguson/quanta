@@ -58,7 +58,7 @@ export async function pgdbTestMoveUp(): Promise<void> {
         console.log(`\nListing contents of ${targetFolderPath} before move:`);
         
         const beforeResult = await pgdb.query(
-            'SELECT * FROM pg_readdir($1, $2) ORDER BY filename',
+            'SELECT * FROM vfs_readdir($1, $2) ORDER BY filename',
             [targetFolderPath, testRootKey]
         );
         
@@ -119,7 +119,7 @@ export async function pgdbTestMoveUp(): Promise<void> {
         console.log('\nVerifying results after move...');
         
         const afterResult = await pgdb.query(
-            'SELECT * FROM pg_readdir($1, $2) ORDER BY filename',
+            'SELECT * FROM vfs_readdir($1, $2) ORDER BY filename',
             [targetFolderPath, testRootKey]
         );
         

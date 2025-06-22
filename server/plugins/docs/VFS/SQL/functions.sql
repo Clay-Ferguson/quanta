@@ -1,11 +1,11 @@
 -- PostgreSQL Functions for Document Filesystem
 -- This file contains all PostgreSQL stored procedures for the filesystem abstraction
 
--- Function: pg_readdir
+-- Function: vfs_readdir
 -- Equivalent to fs.readdirSync() - lists directory contents
 -- Returns files/folders in ordinal order with their metadata
 -- Uses filename prefix for ordinal ordering instead of separate ordinal column
-CREATE OR REPLACE FUNCTION pg_readdir(
+CREATE OR REPLACE FUNCTION vfs_readdir(
     dir_path TEXT,
     root_key TEXT
 ) 
@@ -33,7 +33,7 @@ BEGIN
         n.content_type,
         n.created_time,
         n.modified_time
-    FROM fs_nodes n
+    FROM vfs_nodes n
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
@@ -48,9 +48,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_readdir_names
+-- Function: vfs_readdir_names
 -- Simple version that just returns filenames (like fs.readdirSync() with no options)
-CREATE OR REPLACE FUNCTION pg_readdir_names(
+CREATE OR REPLACE FUNCTION vfs_readdir_names(
     dir_path TEXT,
     root_key TEXT
 ) 
@@ -60,7 +60,7 @@ DECLARE
 BEGIN
     SELECT ARRAY(
         SELECT n.filename
-        FROM fs_nodes n
+        FROM vfs_nodes n
         WHERE 
             n.doc_root_key = root_key 
             AND n.parent_path = dir_path
@@ -78,9 +78,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_readdir_numbered
+-- todo-0: This method is unused.
+-- Function: vfs_readdir_numbered
 -- Returns only files/folders with ordinal prefixes (matching your current regex filter)
-CREATE OR REPLACE FUNCTION pg_readdir_numbered(
+CREATE OR REPLACE FUNCTION vfs_readdir_numbered(
     dir_path TEXT,
     root_key TEXT
 ) 
@@ -103,7 +104,7 @@ BEGIN
         n.content_type,
         n.created_time,
         n.modified_time
-    FROM fs_nodes n
+    FROM vfs_nodes n
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
@@ -112,10 +113,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_shift_ordinals_down
+-- Function: vfs_shift_ordinals_down
 -- Equivalent to DocUtil.shiftOrdinalsDown() - creates space for new files by incrementing ordinals
 -- This renames files to change their ordinal prefixes, just like the filesystem version
-CREATE OR REPLACE FUNCTION pg_shift_ordinals_down(
+CREATE OR REPLACE FUNCTION vfs_shift_ordinals_down(
     slots_to_add INTEGER,
     parent_path_param TEXT,
     insert_ordinal INTEGER,
@@ -139,7 +140,7 @@ BEGIN
     -- Process files in descending ordinal order to avoid conflicts
     FOR file_record IN
         SELECT filename
-        FROM fs_nodes 
+        FROM vfs_nodes 
         WHERE 
             doc_root_key = root_key
             AND parent_path = parent_path_param
@@ -167,7 +168,7 @@ BEGIN
         new_filename_text := lpad(new_ordinal_num::TEXT, prefix_length, '0') || '_' || name_without_prefix;
         
         -- Update the filename in the database
-        UPDATE fs_nodes 
+        UPDATE vfs_nodes 
         SET 
             filename = new_filename_text,
             modified_time = NOW()
@@ -188,10 +189,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_get_max_ordinal
+-- Function: vfs_get_max_ordinal
 -- Equivalent to DocUtil.getMaxOrdinal() - finds highest ordinal in a directory
 -- Extracts ordinal from filename prefix instead of using ordinal column
-CREATE OR REPLACE FUNCTION pg_get_max_ordinal(
+CREATE OR REPLACE FUNCTION vfs_get_max_ordinal(
     parent_path_param TEXT,
     root_key TEXT
 ) 
@@ -201,7 +202,7 @@ DECLARE
 BEGIN
     SELECT COALESCE(MAX(substring(filename FROM '^([0-9]+)_')::INTEGER), 0)
     INTO max_ord
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -211,9 +212,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_get_ordinal_from_name
+-- Function: vfs_get_ordinal_from_name
 -- Equivalent to DocUtil.getOrdinalFromName() - extracts ordinal from filename prefix
-CREATE OR REPLACE FUNCTION pg_get_ordinal_from_name(
+CREATE OR REPLACE FUNCTION vfs_get_ordinal_from_name(
     filename_param TEXT,
     parent_path_param TEXT,
     root_key TEXT
@@ -224,7 +225,7 @@ DECLARE
 BEGIN
     -- First check if file exists
     IF NOT EXISTS (
-        SELECT 1 FROM fs_nodes
+        SELECT 1 FROM vfs_nodes
         WHERE 
             doc_root_key = root_key
             AND parent_path = parent_path_param
@@ -244,10 +245,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_insert_file_at_ordinal
+-- Function: vfs_insert_file_at_ordinal
 -- Helper function to insert a new file at a specific ordinal position
 -- Automatically shifts existing files down if needed and creates proper ordinal filename
-CREATE OR REPLACE FUNCTION pg_insert_file_at_ordinal(
+CREATE OR REPLACE FUNCTION vfs_insert_file_at_ordinal(
     parent_path_param TEXT,
     filename_param TEXT,
     insert_ordinal INTEGER,
@@ -267,7 +268,7 @@ BEGIN
     -- Check if there's already a file at this ordinal position or higher
     SELECT COUNT(*)
     INTO existing_file_count
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -276,7 +277,7 @@ BEGIN
     
     -- If files exist at or after this ordinal, shift them down
     IF existing_file_count > 0 THEN
-        PERFORM pg_shift_ordinals_down(1, parent_path_param, insert_ordinal, root_key);
+        PERFORM vfs_shift_ordinals_down(1, parent_path_param, insert_ordinal, root_key);
     END IF;
     
     -- Filename MUST already have ordinal prefix - no automatic addition
@@ -287,7 +288,7 @@ BEGIN
     END IF;
     
     -- Insert the new file at the desired ordinal position
-    INSERT INTO fs_nodes (
+    INSERT INTO vfs_nodes (
         doc_root_key,
         parent_path,
         filename,
@@ -332,10 +333,10 @@ $$ LANGUAGE plpgsql;
 -- BASIC FILE OPERATIONS
 -- ==============================================================================
 
--- Function: pg_read_file
+-- Function: vfs_read_file
 -- Equivalent to fs.readFileSync() - reads file content (both text and binary)
 -- Returns BYTEA for compatibility, but content comes from appropriate column
-CREATE OR REPLACE FUNCTION pg_read_file(
+CREATE OR REPLACE FUNCTION vfs_read_file(
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -348,7 +349,7 @@ DECLARE
 BEGIN
     SELECT is_binary, content_text, content_binary
     INTO is_binary_file, text_content, file_content
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -370,10 +371,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_write_text_file
+-- Function: vfs_write_text_file
 -- Equivalent to fs.writeFileSync() for text files - writes text file content
 -- Uses filename prefixes for ordinal management instead of ordinal column
-CREATE OR REPLACE FUNCTION pg_write_text_file(
+CREATE OR REPLACE FUNCTION vfs_write_text_file(
     parent_path_param TEXT,
     filename_param TEXT,
     content_data TEXT,
@@ -395,7 +396,7 @@ BEGIN
         RAISE EXCEPTION 'Invalid filename: %. All filenames must have ordinal prefix format "NNNN_filename".', filename_param;
     END IF;
     
-    INSERT INTO fs_nodes (
+    INSERT INTO vfs_nodes (
         doc_root_key,
         parent_path,
         filename,
@@ -434,10 +435,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_write_binary_file
+-- Function: vfs_write_binary_file
 -- Equivalent to fs.writeFileSync() for binary files - writes binary file content
 -- Uses filename prefixes for ordinal management instead of ordinal column
-CREATE OR REPLACE FUNCTION pg_write_binary_file(
+CREATE OR REPLACE FUNCTION vfs_write_binary_file(
     parent_path_param TEXT,
     filename_param TEXT,
     content_data BYTEA,
@@ -459,7 +460,7 @@ BEGIN
         RAISE EXCEPTION 'Invalid filename: %. All filenames must have ordinal prefix format "NNNN_filename".', filename_param;
     END IF;
     
-    INSERT INTO fs_nodes (
+    INSERT INTO vfs_nodes (
         doc_root_key,
         parent_path,
         filename,
@@ -498,9 +499,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_exists
+-- Function: vfs_exists
 -- Equivalent to fs.existsSync() - checks if file or directory exists
-CREATE OR REPLACE FUNCTION pg_exists(
+CREATE OR REPLACE FUNCTION vfs_exists(
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -511,7 +512,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) > 0
     INTO exists_flag
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -521,10 +522,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_stat
+-- Function: vfs_stat
 -- Equivalent to fs.statSync() - gets file/directory metadata
 -- Extracts ordinal from filename prefix instead of using ordinal column
-CREATE OR REPLACE FUNCTION pg_stat(
+CREATE OR REPLACE FUNCTION vfs_stat(
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -551,7 +552,7 @@ BEGIN
             ELSE 
                 0
         END as ordinal
-    FROM fs_nodes n
+    FROM vfs_nodes n
     WHERE 
         n.doc_root_key = root_key
         AND n.parent_path = parent_path_param
@@ -559,9 +560,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_unlink
+-- Function: vfs_unlink
 -- Equivalent to fs.unlinkSync() - deletes a file
-CREATE OR REPLACE FUNCTION pg_unlink(
+CREATE OR REPLACE FUNCTION vfs_unlink(
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -570,7 +571,7 @@ RETURNS BOOLEAN AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
-    DELETE FROM fs_nodes
+    DELETE FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -587,10 +588,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_rename
+-- Function: vfs_rename
 -- Equivalent to fs.renameSync() - renames/moves a file or directory
 -- For directories, also updates the parent_path of all nested children
-CREATE OR REPLACE FUNCTION pg_rename(
+CREATE OR REPLACE FUNCTION vfs_rename(
     old_parent_path TEXT,
     old_filename TEXT,
     new_parent_path TEXT,
@@ -605,13 +606,13 @@ DECLARE
     new_full_path TEXT;
 BEGIN
     -- Check if target already exists
-    IF pg_exists(new_parent_path, new_filename, root_key) THEN
+    IF vfs_exists(new_parent_path, new_filename, root_key) THEN
         RAISE EXCEPTION 'Target already exists: %/%', new_parent_path, new_filename;
     END IF;
     
     -- Check if the item being renamed is a directory
     SELECT is_directory INTO is_dir
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = old_parent_path
@@ -622,7 +623,7 @@ BEGIN
     END IF;
     
     -- Update the main record
-    UPDATE fs_nodes
+    UPDATE vfs_nodes
     SET 
         parent_path = new_parent_path,
         filename = new_filename,
@@ -652,7 +653,7 @@ BEGIN
         END;
         
         -- Update all children (files and subdirectories) whose parent_path starts with the old path
-        UPDATE fs_nodes
+        UPDATE vfs_nodes
         SET 
             parent_path = new_full_path || SUBSTRING(parent_path FROM LENGTH(old_full_path) + 1),
             modified_time = NOW()
@@ -673,10 +674,10 @@ $$ LANGUAGE plpgsql;
 -- DIRECTORY OPERATIONS
 -- ==============================================================================
 
--- Function: pg_mkdir
+-- Function: vfs_mkdir
 -- Equivalent to fs.mkdirSync() - creates a directory
 -- Uses filename prefixes for ordinal management instead of ordinal column
-CREATE OR REPLACE FUNCTION pg_mkdir(
+CREATE OR REPLACE FUNCTION vfs_mkdir(
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
@@ -693,7 +694,7 @@ BEGIN
     IF dirname_param ~ '^[0-9]+_' THEN
         final_dirname := dirname_param;
         -- Check if directory already exists
-        IF pg_exists(parent_path_param, dirname_param, root_key) THEN
+        IF vfs_exists(parent_path_param, dirname_param, root_key) THEN
             RAISE EXCEPTION 'Directory already exists: %/%', parent_path_param, dirname_param;
         END IF;
     ELSE
@@ -701,7 +702,7 @@ BEGIN
     END IF;
     
     -- Create the directory
-    INSERT INTO fs_nodes (
+    INSERT INTO vfs_nodes (
         doc_root_key,
         parent_path,
         filename,
@@ -731,9 +732,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_rmdir
+-- Function: vfs_rmdir
 -- Equivalent to fs.rmSync() - removes a directory (with recursive option)
-CREATE OR REPLACE FUNCTION pg_rmdir(
+CREATE OR REPLACE FUNCTION vfs_rmdir(
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
@@ -755,7 +756,7 @@ BEGIN
     END IF;
     
     -- Check if directory exists
-    IF NOT pg_exists(parent_path_param, dirname_param, root_key) THEN
+    IF NOT vfs_exists(parent_path_param, dirname_param, root_key) THEN
         IF NOT force_flag THEN
             RAISE EXCEPTION 'Directory not found: %/%', parent_path_param, dirname_param;
         END IF;
@@ -765,7 +766,7 @@ BEGIN
     -- Check if directory has children
     SELECT COUNT(*)
     INTO child_count
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE doc_root_key = root_key AND parent_path = dir_path;
     
     -- If directory has children and recursive is false, error
@@ -779,23 +780,23 @@ BEGIN
         WITH RECURSIVE dir_tree AS (
             -- Base case: direct children
             SELECT id, parent_path, filename, is_directory
-            FROM fs_nodes
+            FROM vfs_nodes
             WHERE doc_root_key = root_key AND parent_path = dir_path
             
             UNION ALL
             
             -- Recursive case: children of subdirectories
             SELECT n.id, n.parent_path, n.filename, n.is_directory
-            FROM fs_nodes n
+            FROM vfs_nodes n
             INNER JOIN dir_tree dt ON n.parent_path = dt.parent_path || '/' || dt.filename
             WHERE n.doc_root_key = root_key AND dt.is_directory = TRUE
         )
-        DELETE FROM fs_nodes
+        DELETE FROM vfs_nodes
         WHERE id IN (SELECT id FROM dir_tree);
     END IF;
     
     -- Delete the directory itself
-    DELETE FROM fs_nodes
+    DELETE FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -808,9 +809,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_is_directory
+-- Function: vfs_is_directory
 -- Helper function to check if a path is a directory
-CREATE OR REPLACE FUNCTION pg_is_directory(
+CREATE OR REPLACE FUNCTION vfs_is_directory(
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -821,7 +822,7 @@ DECLARE
 BEGIN
     SELECT is_directory
     INTO is_dir
-    FROM fs_nodes
+    FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
@@ -831,9 +832,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_ensure_path
+-- Function: vfs_ensure_path
 -- Helper function to create directory path recursively (like mkdir -p)
-CREATE OR REPLACE FUNCTION pg_ensure_path(
+CREATE OR REPLACE FUNCTION vfs_ensure_path(
     full_path TEXT,
     root_key TEXT
 ) 
@@ -858,8 +859,8 @@ BEGIN
         END IF;
         
         -- Check if this directory exists
-        IF NOT pg_exists(current_path, part, root_key) THEN
-            PERFORM pg_mkdir(current_path, part, root_key, TRUE);
+        IF NOT vfs_exists(current_path, part, root_key) THEN
+            PERFORM vfs_mkdir(current_path, part, root_key, TRUE);
         END IF;
         
         -- Update current path
@@ -874,12 +875,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function: pg_search_text
+-- Function: vfs_search_text
 -- PostgreSQL-based text search function for VFS
 -- Searches through text content in non-binary files
 -- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
 -- Optionally filters by timestamp requirements
-CREATE OR REPLACE FUNCTION pg_search_text(
+CREATE OR REPLACE FUNCTION vfs_search_text(
     search_query TEXT,
     search_path TEXT,
     root_key TEXT,
@@ -991,7 +992,7 @@ BEGIN
             n.size_bytes,
             n.modified_time,
             n.created_time
-        FROM fs_nodes n 
+        FROM vfs_nodes n 
         WHERE %s
         %s', 
         where_clause, 

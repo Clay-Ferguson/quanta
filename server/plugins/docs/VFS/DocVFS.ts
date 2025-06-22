@@ -8,7 +8,7 @@ class DocVFS {
      * HTTP endpoint handler for VFS (PostgreSQL-based) text file search.
      * 
      * This method provides search capabilities across text files stored in the PostgreSQL VFS.
-     * It uses the pg_search_text function to perform database-level text searching,
+     * It uses the vfs_search_text function to perform database-level text searching,
      * returning file-level matches without line numbers (unlike the grep-based search).
      * 
      * Search Modes:
@@ -68,7 +68,7 @@ class DocVFS {
             
             // Call the PostgreSQL search function
             const searchResult = await pgdb.query(
-                'SELECT * FROM pg_search_text($1, $2, $3, $4, $5, $6)',
+                'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
                 [query, treeFolder, docRootKey, searchMode, requireDate, searchOrder]
             );
             
