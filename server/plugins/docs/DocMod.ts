@@ -3,7 +3,7 @@ import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
-import { Transactional } from '../../Transactional.js';
+import { runTrans } from '../../Transactional.js';
 
 /**
  * DocMod - Document Modification Service
@@ -53,145 +53,148 @@ class DocMod {
      * @param res - Express response object for sending results
      * @returns Promise<void> - Resolves when operation completes
      */
-    // todo-0: Need to add @Transactional to the rest of the HTTP endpoint methods and make sure
-    // none of them eat the error but instead rethrow it so the transaction can be rolled back
-    @Transactional()
-    async saveFile(req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void>  {
-        // console.log("running DocMod.saveFile()");
-        try {
-            // Extract request parameters
-            const { filename, content, treeFolder, docRootKey, split } = req.body;
-            let { newFileName } = req.body;
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
+        return runTrans(async () => {
+            console.log("running DocMod.saveFile()");
+            try {
+                // Extract request parameters
+                const { filename, content, treeFolder, docRootKey, split } = req.body;
+                let { newFileName } = req.body;
     
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey!);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey!);
     
-            // Ensure new filenames have proper .md extension if not specified
-            if (newFileName && !path.extname(newFileName)) {
-                newFileName += '.md';
-            }
-    
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey!).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
-    
-            // Validate required parameters
-            if (!filename || content === undefined || !treeFolder) {
-                res.status(400).json({ error: 'Filename, content, and treeFolder are required' });
-                return;
-            }
-    
-            // Construct absolute paths for file operations
-            const absoluteFolderPath = path.join(root, treeFolder);
-            const absoluteFilePath = path.join(absoluteFolderPath, filename);
-    
-            // Verify target directory exists and is accessible
-            ifs.checkFileAccess(absoluteFolderPath, root); 
-            if (!await ifs.exists(absoluteFolderPath)) {
-                res.status(404).json({ error: 'Directory not found' });
-                return;
-            }
-    
-            // Ensure the target path is actually a directory
-            const stat = await ifs.stat(absoluteFolderPath);
-            if (!stat.isDirectory()) {
-                res.status(400).json({ error: 'Path is not a directory' });
-                return;
-            }
-    
-            let finalFilePath = absoluteFilePath;
-    
-            // Handle file renaming if a new filename is provided
-            if (newFileName && newFileName !== filename) {
-                const newAbsoluteFilePath = path.join(absoluteFolderPath, newFileName);
-                    
-                // Verify the original file exists before attempting rename
-                if (await ifs.exists(absoluteFilePath)) {
-                    // Prevent overwriting existing files
-                    if (await ifs.exists(newAbsoluteFilePath)) {
-                        res.status(409).json({ error: 'A file with the new name already exists' });
-                        return;
-                    }
-                        
-                    // Perform the file rename operation with security check
-                    ifs.checkFileAccess(absoluteFilePath, root);
-                    await ifs.rename(absoluteFilePath, newAbsoluteFilePath);
-                    console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
+                // Ensure new filenames have proper .md extension if not specified
+                if (newFileName && !path.extname(newFileName)) {
+                    newFileName += '.md';
                 }
-                    
-                // Update the target file path for subsequent operations
-                finalFilePath = newAbsoluteFilePath;
-            }
     
-            // Main content writing logic - supports both simple save and content splitting
-            ifs.checkFileAccess(finalFilePath, root);
-                
-            if (split) {
-                // Content splitting mode: divide content on '\n~\n' delimiter
-                const parts = content.split('\n~\n');
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey!).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
+    
+                // Validate required parameters
+                if (!filename || content === undefined || !treeFolder) {
+                    res.status(400).json({ error: 'Filename, content, and treeFolder are required' });
+                    return;
+                }
+    
+                // Construct absolute paths for file operations
+                const absoluteFolderPath = path.join(root, treeFolder);
+                const absoluteFilePath = path.join(absoluteFolderPath, filename);
+    
+                // Verify target directory exists and is accessible
+                ifs.checkFileAccess(absoluteFolderPath, root); 
+                if (!await ifs.exists(absoluteFolderPath)) {
+                    res.status(404).json({ error: 'Directory not found' });
+                    return;
+                }
+    
+                // Ensure the target path is actually a directory
+                const stat = await ifs.stat(absoluteFolderPath);
+                if (!stat.isDirectory()) {
+                    res.status(400).json({ error: 'Path is not a directory' });
+                    return;
+                }
+    
+                let finalFilePath = absoluteFilePath;
+    
+                // Handle file renaming if a new filename is provided
+                if (newFileName && newFileName !== filename) {
+                    const newAbsoluteFilePath = path.join(absoluteFolderPath, newFileName);
                     
-                if (parts.length > 1) {
-                    // Extract the original file's ordinal for proper sequencing
-                    const originalOrdinal = docUtil.getOrdinalFromName(path.basename(finalFilePath));
-                        
-                    // Make room for new files by shifting existing ordinals down
-                    // Subtract 1 because the original file keeps its position
-                    const numberOfNewFiles = parts.length - 1;
-                    await docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
-                        
-                    // Create a separate file for each content part
-                    for (let i = 0; i < parts.length; i++) {
-                        // Clean up content by removing whitespace and delimiter artifacts
-                        const partContent = parts[i].trim();
-                        let partFilePath = finalFilePath;
-                            
-                        if (i > 0) {
-                            // Generate new filenames for additional parts with incremented ordinals
-                            const originalBaseName = path.basename(finalFilePath);
-                                
-                            // Calculate sequential ordinal for this part
-                            const newOrdinal = originalOrdinal + i;
-                            const ordinalPrefix = newOrdinal.toString().padStart(4, '0');
-                                
-                            // Construct new filename with updated ordinal
-                            const underscoreIndex = originalBaseName.indexOf('_');
-                            const nameAfterUnderscore = originalBaseName.substring(underscoreIndex);
-                            const finalBaseName = ordinalPrefix + nameAfterUnderscore;
-                                
-                            partFilePath = path.join(path.dirname(finalFilePath), finalBaseName);
+                    // Verify the original file exists before attempting rename
+                    if (await ifs.exists(absoluteFilePath)) {
+                    // Prevent overwriting existing files
+                        if (await ifs.exists(newAbsoluteFilePath)) {
+                            res.status(409).json({ error: 'A file with the new name already exists' });
+                            return;
                         }
-                            
-                        // Write the content part to its designated file
-                        ifs.checkFileAccess(partFilePath, root);
-                        await ifs.writeFile(partFilePath, partContent, 'utf8');
-                        console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
-                    }
                         
-                    // Report successful splitting operation
-                    console.log(`File split into ${parts.length} parts successfully`);
-                    res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
-                } else {
+                        // Perform the file rename operation with security check
+                        ifs.checkFileAccess(absoluteFilePath, root);
+                        await ifs.rename(absoluteFilePath, newAbsoluteFilePath);
+                        console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
+                    }
+                    
+                    // Update the target file path for subsequent operations
+                    finalFilePath = newAbsoluteFilePath;
+                }
+    
+                // Main content writing logic - supports both simple save and content splitting
+                ifs.checkFileAccess(finalFilePath, root);
+                
+                if (split) {
+                // Content splitting mode: divide content on '\n~\n' delimiter
+                    const parts = content.split('\n~\n');
+                    
+                    if (parts.length > 1) {
+                    // Extract the original file's ordinal for proper sequencing
+                        const originalOrdinal = docUtil.getOrdinalFromName(path.basename(finalFilePath));
+                        
+                        // Make room for new files by shifting existing ordinals down
+                        // Subtract 1 because the original file keeps its position
+                        const numberOfNewFiles = parts.length - 1;
+                        await docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
+                        
+                        // Create a separate file for each content part
+                        for (let i = 0; i < parts.length; i++) {
+                        // Clean up content by removing whitespace and delimiter artifacts
+                            const partContent = parts[i].trim();
+                            let partFilePath = finalFilePath;
+                            
+                            if (i > 0) {
+                            // Generate new filenames for additional parts with incremented ordinals
+                                const originalBaseName = path.basename(finalFilePath);
+                                
+                                // Calculate sequential ordinal for this part
+                                const newOrdinal = originalOrdinal + i;
+                                const ordinalPrefix = newOrdinal.toString().padStart(4, '0');
+                                
+                                // Construct new filename with updated ordinal
+                                const underscoreIndex = originalBaseName.indexOf('_');
+                                const nameAfterUnderscore = originalBaseName.substring(underscoreIndex);
+                                const finalBaseName = ordinalPrefix + nameAfterUnderscore;
+                                
+                                partFilePath = path.join(path.dirname(finalFilePath), finalBaseName);
+                            }
+                            
+                            // Write the content part to its designated file
+                            ifs.checkFileAccess(partFilePath, root);
+                            await ifs.writeFile(partFilePath, partContent, 'utf8');
+                            console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
+                        }
+                        
+                        // Report successful splitting operation
+                        console.log(`File split into ${parts.length} parts successfully`);
+                        res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
+                    } else {
                     // No split delimiter found - save as single file
+                        await ifs.writeFile(finalFilePath, content, 'utf8');
+                        console.log(`File saved successfully: ${finalFilePath}`);
+                        res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
+                    }
+                } else {
+                // Standard save operation without content splitting
                     await ifs.writeFile(finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
-                    res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
+                    res.json({ success: true, message: 'File saved successfully' });
                 }
-            } else {
-                // Standard save operation without content splitting
-                await ifs.writeFile(finalFilePath, content, 'utf8');
-                console.log(`File saved successfully: ${finalFilePath}`);
-                res.json({ success: true, message: 'File saved successfully' });
-            }
-        } catch (error) {
-            // Handle any errors that occurred during the save operation
-            svrUtil.handleError(error, res, 'Failed to save file');
 
-            // RETHROW! Or else transaction will not rollback
-            throw error; // Re-throw the error for further handling if needed
-        }
+                // todo-0: methods in a transaction should delay any setting of 'res' values until the every end when we know we've not
+                // hit any transactions.
+                // throw new Error('Testing rollback capability'); // todo-0: remove this test.
+            } catch (error) {
+                // Handle any errors that occurred during the save operation
+                svrUtil.handleError(error, res, 'Failed to save file');
+
+                // RETHROW! Or else transaction will not rollback
+                throw error; // Re-throw the error for further handling if needed
+            }
+        })
     }
     
     /**

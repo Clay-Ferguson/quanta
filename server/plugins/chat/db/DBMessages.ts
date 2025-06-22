@@ -1,6 +1,6 @@
 import { ChatMessageIntf, MessageStates } from "../../../../common/types/CommonTypes.js";
 import { dbRoom } from "./DBRoom.js";
-import { Transactional, getTransactionClient } from '../../../Transactional.js';
+import { getTransactionClient } from '../../../Transactional.js';
 import pgdb from '../../../PGDB.js';
 
 /**
@@ -8,12 +8,6 @@ import pgdb from '../../../PGDB.js';
  * Provides methods to persist, retrieve, and delete messages and their attachments.
  */
 class DBMessages {
-
-    constructor() {
-        // Bind methods that need 'this' context but can't use decorators
-        this.persistMessageToRoomName = this.persistMessageToRoomName.bind(this);
-        this.deleteMessage = this.deleteMessage.bind(this);
-    }
 
     /**
      * Execute a database query that returns a single row
@@ -80,10 +74,8 @@ class DBMessages {
      * @param message - The chat message to persist
      * @returns A Promise resolving to true if the message was saved successfully
      */
-    @Transactional()
-    // Because of @Transactional() decorator, we can't use fat-arrow function so we bind to this in constructor.
-    async persistMessageToRoomName(roomName: string, message: ChatMessageIntf): Promise<boolean> {
-        
+    persistMessageToRoomName = async (roomName: string, message: ChatMessageIntf): Promise<boolean> => {
+        // todo-0: add runTrans wrapper here.
         const existingMessage = await this.get(
             'SELECT id FROM messages WHERE id = $1',
             message.id
@@ -171,8 +163,8 @@ class DBMessages {
      * @param messages - Array of chat messages to save
      * @returns A Promise resolving to the number of successfully saved messages
      */
-    @Transactional()
-    async saveMessages(roomName: string, messages: ChatMessageIntf[]): Promise<number> {
+    saveMessages = async (roomName: string, messages: ChatMessageIntf[]): Promise<number> => {
+        // todo-0: add runTrans wrapper here.
         // Ensure room exists
         const roomId = await dbRoom.getOrCreateRoom(roomName); 
         console.log('Got Room ID:', roomId);
@@ -424,8 +416,8 @@ class DBMessages {
      * @param adminPubKey - Optional admin public key that can delete any message
      * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
-    @Transactional()
-    async deleteMessage(messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> {
+    deleteMessage = async (messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> => {
+        // todo-0: add runTrans wrapper here.
         console.log(`Deleting message: ${messageId} and all associated attachments`);
     
         try {

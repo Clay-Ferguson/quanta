@@ -122,6 +122,148 @@ class DocBinary {
         }
     }
 
+    onUploadEnd = async (chunks: any, boundary: any, res: Response): Promise<void> => {
+        try {
+            // Combine all chunks into a single buffer for parsing
+            const buffer = Buffer.concat(chunks);
+            const boundaryBuffer = Buffer.from(`--${boundary}`);
+                        
+            // Parse the multipart data into individual sections
+            const parts = this.parseMultipartData(buffer, boundaryBuffer);
+                        
+            // Initialize variables to store extracted form data
+            let docRootKey = '';
+            let treeFolder = '';
+            let insertAfterNode = '';
+            const files: { name: string; data: Buffer; type: string }[] = [];
+    
+            // Process each multipart section to extract form fields and files
+            for (const part of parts) {
+                // Find the end of headers (marked by double CRLF)
+                const headerEnd = part.indexOf('\r\n\r\n');
+                if (headerEnd === -1) continue;
+    
+                // Split headers and body content
+                const headers = part.slice(0, headerEnd).toString();
+                const body = part.slice(headerEnd + 4);
+    
+                // Parse the Content-Disposition header to determine field type
+                const dispositionMatch = headers.match(/Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/);
+                if (!dispositionMatch) continue;
+    
+                const fieldName = dispositionMatch[1];
+                const filename = dispositionMatch[2];
+    
+                if (filename) {
+                    // This section contains a file upload
+                    const typeMatch = headers.match(/Content-Type: ([^\r\n]+)/);
+                    const contentType = typeMatch ? typeMatch[1] : 'application/octet-stream';
+                                
+                    files.push({
+                        name: filename,
+                        data: body.slice(0, body.length - 2), // Remove trailing \r\n
+                        type: contentType
+                    });
+                } else {
+                    // This section contains a form field
+                    const value = body.toString().replace(/\r\n$/, ''); // Remove trailing \r\n
+                                
+                    // Store form field values based on field name
+                    switch (fieldName) {
+                    case 'docRootKey':
+                        docRootKey = value;
+                        break;
+                    case 'treeFolder':
+                        treeFolder = value;
+                        break;
+                    case 'insertAfterNode':
+                        insertAfterNode = value;
+                        break;
+                    }
+                }
+            }
+    
+            // Validate that all required fields are present
+            if (!docRootKey || !treeFolder || files.length === 0) {
+                res.status(400).json({ error: 'Missing required fields: docRootKey, treeFolder, or files' });
+                return;
+            }
+    
+            // Resolve the document root path and validate access
+            const root = config.getPublicFolderByKey(docRootKey).path;
+            if (!root) {
+                res.status(500).json({ error: 'Invalid docRootKey' });
+                return;
+            }
+
+            // Get the appropriate file system implementation
+            const ifs = docUtil.getFileSystem(docRootKey);
+    
+            // Construct target folder path and validate permissions
+            const absoluteFolderPath = path.join(root, treeFolder);
+            ifs.checkFileAccess(absoluteFolderPath, root);
+    
+            // Determine the ordinal position for inserting new files
+            let insertOrdinal = 1; // Default to beginning if no position specified
+            if (insertAfterNode) {
+                try {
+                    // Extract ordinal from the specified node and insert after it
+                    insertOrdinal = docUtil.getOrdinalFromName(insertAfterNode) + 1;
+                } catch (error) {
+                    console.warn(`Could not parse ordinal from insertAfterNode: ${insertAfterNode}, using default ordinal 1`, error);
+                    throw error;
+                }
+            }
+    
+            // Shift existing files down to make room for new uploads
+            // This maintains the ordinal sequence without gaps
+            await docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
+    
+            // Save each uploaded file with proper ordinal prefix
+            let savedCount = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const ordinal = insertOrdinal + i;
+                        
+                // Create zero-padded ordinal prefix (e.g., "0001", "0002")
+                const ordinalPrefix = ordinal.toString().padStart(4, '0');
+                const finalFileName = `${ordinalPrefix}_${file.name}`;
+                const finalFilePath = path.join(absoluteFolderPath, finalFileName);
+    
+                try {
+                    // Validate file access permissions
+                    ifs.checkFileAccess(finalFilePath, root);
+                            
+                    // Prevent overwriting existing files
+                    if (await ifs.exists(finalFilePath)) {
+                        console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
+                        continue;
+                    }
+                            
+                    // Write the file data to disk
+                    await ifs.writeFile(finalFilePath, file.data);
+                    savedCount++;
+                    console.log(`Uploaded file saved: ${finalFilePath}`);
+                } 
+                catch (error) {
+                    console.error(`Error saving uploaded file ${file.name}:`);
+                    throw error;
+                }
+            }
+    
+            // Send success response with upload statistics
+            res.json({ 
+                success: true, 
+                message: `Successfully uploaded ${savedCount} file(s)`,
+                uploadedCount: savedCount
+            });
+        } catch (error) {
+            console.error('Error processing upload:');
+            res.status(500).json({ error: 'Failed to process upload' });
+            throw error;
+        }
+    }
+
     /**
      * Handles file uploads for the docs plugin with multipart form data parsing
      * 
@@ -166,153 +308,14 @@ class DocBinary {
             if (!boundary) {
                 res.status(400).json({ error: 'No boundary found in multipart data' });
                 return;
-            }
-    
-            // Collect raw request body data as it streams in
+            }            // Collect raw request body data as it streams in
             const chunks: Buffer[] = [];
             req.on('data', (chunk: Buffer) => {
                 chunks.push(chunk);
             });
-    
+            
             // Process the complete request body when all data has been received
-            req.on('end', async () => {
-                try {
-                    // Combine all chunks into a single buffer for parsing
-                    const buffer = Buffer.concat(chunks);
-                    const boundaryBuffer = Buffer.from(`--${boundary}`);
-                        
-                    // Parse the multipart data into individual sections
-                    const parts = this.parseMultipartData(buffer, boundaryBuffer);
-                        
-                    // Initialize variables to store extracted form data
-                    let docRootKey = '';
-                    let treeFolder = '';
-                    let insertAfterNode = '';
-                    const files: { name: string; data: Buffer; type: string }[] = [];
-    
-                    // Process each multipart section to extract form fields and files
-                    for (const part of parts) {
-                        // Find the end of headers (marked by double CRLF)
-                        const headerEnd = part.indexOf('\r\n\r\n');
-                        if (headerEnd === -1) continue;
-    
-                        // Split headers and body content
-                        const headers = part.slice(0, headerEnd).toString();
-                        const body = part.slice(headerEnd + 4);
-    
-                        // Parse the Content-Disposition header to determine field type
-                        const dispositionMatch = headers.match(/Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/);
-                        if (!dispositionMatch) continue;
-    
-                        const fieldName = dispositionMatch[1];
-                        const filename = dispositionMatch[2];
-    
-                        if (filename) {
-                            // This section contains a file upload
-                            const typeMatch = headers.match(/Content-Type: ([^\r\n]+)/);
-                            const contentType = typeMatch ? typeMatch[1] : 'application/octet-stream';
-                                
-                            files.push({
-                                name: filename,
-                                data: body.slice(0, body.length - 2), // Remove trailing \r\n
-                                type: contentType
-                            });
-                        } else {
-                            // This section contains a form field
-                            const value = body.toString().replace(/\r\n$/, ''); // Remove trailing \r\n
-                                
-                            // Store form field values based on field name
-                            switch (fieldName) {
-                            case 'docRootKey':
-                                docRootKey = value;
-                                break;
-                            case 'treeFolder':
-                                treeFolder = value;
-                                break;
-                            case 'insertAfterNode':
-                                insertAfterNode = value;
-                                break;
-                            }
-                        }
-                    }
-    
-                    // Validate that all required fields are present
-                    if (!docRootKey || !treeFolder || files.length === 0) {
-                        res.status(400).json({ error: 'Missing required fields: docRootKey, treeFolder, or files' });
-                        return;
-                    }
-    
-                    // Resolve the document root path and validate access
-                    const root = config.getPublicFolderByKey(docRootKey).path;
-                    if (!root) {
-                        res.status(500).json({ error: 'Invalid docRootKey' });
-                        return;
-                    }
-
-                    // Get the appropriate file system implementation
-                    const ifs = docUtil.getFileSystem(docRootKey);
-    
-                    // Construct target folder path and validate permissions
-                    const absoluteFolderPath = path.join(root, treeFolder);
-                    ifs.checkFileAccess(absoluteFolderPath, root);
-    
-                    // Determine the ordinal position for inserting new files
-                    let insertOrdinal = 1; // Default to beginning if no position specified
-                    if (insertAfterNode) {
-                        try {
-                            // Extract ordinal from the specified node and insert after it
-                            insertOrdinal = docUtil.getOrdinalFromName(insertAfterNode) + 1;
-                        } catch (error) {
-                            console.warn(`Could not parse ordinal from insertAfterNode: ${insertAfterNode}, using default ordinal 1`, error);
-                        }
-                    }
-    
-                    // Shift existing files down to make room for new uploads
-                    // This maintains the ordinal sequence without gaps
-                    await docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
-    
-                    // Save each uploaded file with proper ordinal prefix
-                    let savedCount = 0;
-                    for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        const ordinal = insertOrdinal + i;
-                        
-                        // Create zero-padded ordinal prefix (e.g., "0001", "0002")
-                        const ordinalPrefix = ordinal.toString().padStart(4, '0');
-                        const finalFileName = `${ordinalPrefix}_${file.name}`;
-                        const finalFilePath = path.join(absoluteFolderPath, finalFileName);
-    
-                        try {
-                            // Validate file access permissions
-                            ifs.checkFileAccess(finalFilePath, root);
-                            
-                            // Prevent overwriting existing files
-                            if (await ifs.exists(finalFilePath)) {
-                                console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
-                                continue;
-                            }
-                            
-                            // Write the file data to disk
-                            await ifs.writeFile(finalFilePath, file.data);
-                            savedCount++;
-                            console.log(`Uploaded file saved: ${finalFilePath}`);
-                        } catch {
-                            console.error(`Error saving uploaded file ${file.name}:`);
-                        }
-                    }
-    
-                    // Send success response with upload statistics
-                    res.json({ 
-                        success: true, 
-                        message: `Successfully uploaded ${savedCount} file(s)`,
-                        uploadedCount: savedCount
-                    });
-    
-                } catch {
-                    console.error('Error processing upload:');
-                    res.status(500).json({ error: 'Failed to process upload' });
-                }
-            });
+            req.on('end', async () => await this.onUploadEnd(chunks, boundary, res));
     
         } catch (error) {
             // Handle any top-level errors in the upload process

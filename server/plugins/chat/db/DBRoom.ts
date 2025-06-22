@@ -1,5 +1,4 @@
 import { RoomInfo } from "../../../../common/types/CommonTypes.js";
-import { Transactional } from "../../../Transactional.js";
 import { dbMgr } from "./DBManager.js";
 
 /**
@@ -7,13 +6,6 @@ import { dbMgr } from "./DBManager.js";
  * Provides methods to create, delete, and manipulate rooms and their contents.
  */
 class DBRoom {
-    constructor() {
-        // Bind methods that need 'this' context but can't use decorators
-        this.deleteRoom = this.deleteRoom.bind(this);
-        this.wipeRoom = this.wipeRoom.bind(this);
-        this.createTestData = this.createTestData.bind(this);
-    }
-
     /**
      * Deletes a room and all associated data (messages and attachments).
      * Uses a transaction to ensure database consistency.
@@ -21,8 +13,8 @@ class DBRoom {
      * @param roomName - The name of the room to delete
      * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
-    @Transactional()
-    async deleteRoom(roomName: string): Promise<boolean> {
+    deleteRoom = async (roomName: string): Promise<boolean> => {
+        // todo-0: add runTrans here
         console.log(`Deleting room: ${roomName} and all associated data`);
         
         try {
@@ -84,8 +76,8 @@ class DBRoom {
      * @param roomName - The name of the room to clear of messages
      * @returns A Promise that resolves when the operation is complete
      */
-    @Transactional()
-    public async wipeRoom(roomName: string): Promise<void> {
+    wipeRoom = async (roomName: string): Promise<void> => {
+        // todo-0: add runTrans here
         console.log(`Wiping all messages from room: ${roomName}`);
             
         // Get the room ID
@@ -120,8 +112,8 @@ class DBRoom {
      * 
      * @returns A Promise that resolves when test data creation is complete
      */
-    @Transactional()
-    async createTestData(): Promise<void> {
+    createTestData = async (): Promise<void> => {
+        // todo-0: add runTrans here
         const roomName = 'test';
         console.log('Creating test data...');
             
