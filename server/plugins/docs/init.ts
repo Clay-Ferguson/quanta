@@ -6,12 +6,12 @@ import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
-import { pgdbTest } from "./PGDBTest.js";
+import { pgdbTest } from "./VFS/test/VFSTest.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import pgdb from "../../PDGB.js";
-import docVFS from "./DocVFS.js";
+import docVFS from "./VFS/DocVFS.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,7 +96,7 @@ class DocsServerPlugin implements IServerPlugin {
         const client = await pgdb.getClient();
         try {
             // Read schema.sql file from dist directory (copied during build)
-            const schemaPath = path.join(__dirname, 'schema.sql');
+            const schemaPath = path.join(__dirname, 'VFS/SQL', 'schema.sql');
             console.log('Reading schema from:', schemaPath);
             const schemaSql = fs.readFileSync(schemaPath, 'utf8');
                 
@@ -119,7 +119,7 @@ class DocsServerPlugin implements IServerPlugin {
         const client = await pgdb.getClient();
         try {
             // Read functions.sql file from dist directory (copied during build)
-            const functionsPath = path.join(__dirname, 'functions.sql');
+            const functionsPath = path.join(__dirname, 'VFS/SQL', 'functions.sql');
             console.log('Reading functions from:', functionsPath);
             const functionsSql = fs.readFileSync(functionsPath, 'utf8');
                 

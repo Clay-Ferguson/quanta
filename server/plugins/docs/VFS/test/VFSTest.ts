@@ -1,6 +1,6 @@
-import pgdb from '../../PDGB.js';
-import { wipeTable, printFolderStructure, testOrdinalOperations, createFolderStructureTest } from './PGDBTestCore.js';
-import { pgdbTestMoveUp } from './PGDBTestFileMoves.js';
+import pgdb from '../../../../PDGB.js';
+import { wipeTable, printFolderStructure, testOrdinalOperations, createFolderStructureTest } from './VFSTestCore.js';
+import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 
 const testRootKey = 'pgroot';
 
@@ -401,7 +401,7 @@ async function createNewFileAtTopOfRoot(): Promise<void> {
         console.log('\n=== TESTING CREATE NEW FILE AT TOP OF ROOT ===');
         
         // Import DocService instance
-        const { docSvc } = await import('./DocService.js');
+        const { docSvc } = await import('../../DocService.js');
         
         // Set up parameters for the createFile request
         const docRootKey = testRootKey; // 'pgroot'

@@ -13,7 +13,7 @@ Here are the steps (below). Right now we are doing Step #7.
 In this step we need to move the SQL DDL commands from the 'DBManager.ts' 'initialize' function into a 'schema.sql' file, and import 'pgdb' (from 'PGDB.ts') into the 'DBManager.ts' file so that we call the commands in the 'schema.sql' file using the 'pgdb' imported module, to run SQL. Please don't be tempted to go ahead and convert the rest of the file yet. I just want this first step to consist only of moving the schema into a 'schema.sql' file, inside the 'plugins/chat' folder. Importantly you'll need to alter the SQL as well to make it be PostgreSQL SQL rather than SQLite SQL. By the way, you can search the code for 'schema.sql' to see how we're doing it in the 'plugins/docs' plugin if you have any questions.
 
 ### Step Outcome Notes: 
-* You created the chat plugin schema in `/server/plugins/chat/schema.sql`
+* You created the chat plugin schema in `/server/plugins/chat/VFS/SQL/schema.sql`
 
 ## Step 2 (completed)
 

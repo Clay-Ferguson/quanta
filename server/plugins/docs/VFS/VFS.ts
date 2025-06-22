@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as fs from 'fs';
 import path from 'path';
-import { IFS } from './IFS.js';
+import { IFS } from '../IFS/IFS.js'
 import pgdb from '../../../PDGB.js';
 import { config } from '../../../Config.js';
 

@@ -1,6 +1,6 @@
-import pgdb from '../../PDGB.js';
-import { wipeTable, createFolderStructureTest } from './PGDBTestCore.js';
-import { docMod } from './DocMod.js';
+import pgdb from '../../../../PDGB.js';
+import { wipeTable, createFolderStructureTest } from './VFSTestCore.js';
+import { docMod } from '../../DocMod.js';
 
 const testRootKey = 'pgroot';
 

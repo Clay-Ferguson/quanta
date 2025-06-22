@@ -4,7 +4,7 @@ import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
-import vfs from './IFS/VFS.js';
+import vfs from './VFS/VFS.js';
 import lfs from './IFS/LFS.js';
 const { exec } = await import('child_process');
 
