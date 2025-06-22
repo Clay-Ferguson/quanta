@@ -3,6 +3,7 @@ import path from 'path';
 import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
+import { Transactional } from '../../Transactional.js';
 
 /**
  * DocMod - Document Modification Service
@@ -52,7 +53,11 @@ class DocMod {
      * @param res - Express response object for sending results
      * @returns Promise<void> - Resolves when operation completes
      */
-    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
+    // todo-0: Need to add @Transactional to the rest of the HTTP endpoint methods and make sure
+    // none of them eat the error but instead rethrow it so the transaction can be rolled back
+    @Transactional()
+    async saveFile(req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void>  {
+        // console.log("running DocMod.saveFile()");
         try {
             // Extract request parameters
             const { filename, content, treeFolder, docRootKey, split } = req.body;
@@ -183,6 +188,9 @@ class DocMod {
         } catch (error) {
             // Handle any errors that occurred during the save operation
             svrUtil.handleError(error, res, 'Failed to save file');
+
+            // RETHROW! Or else transaction will not rollback
+            throw error; // Re-throw the error for further handling if needed
         }
     }
     

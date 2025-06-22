@@ -1,4 +1,4 @@
-import pgdb from '../../../../PDGB.js';
+import pgdb from '../../../../PGDB.js';
 import { wipeTable, createFolderStructureTest } from './VFSTestCore.js';
 import { docMod } from '../../DocMod.js';
 

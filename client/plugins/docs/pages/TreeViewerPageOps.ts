@@ -457,13 +457,17 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
 const saveToServer = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
     try {
         const requestBody = {
-            filename: filename,
-            content: content,
+            filename,
+            content,
             treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
             docRootKey: gs.docsRootKey
         };
-        await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
+        const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
+        if (!response) {
+            alertModal("Error saving file to server. Please try again later.");
+            // todo-0: force a refresh of tree? so it doesn't display as if the editing was successful
+        }
     } catch (error) {
         console.error('Error saving file to server:', error);
     }
@@ -723,8 +727,8 @@ export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], se
 const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: string, newFileName: string, reRenderTree: any) => {
     try {
         const requestBody = {
-            filename: filename,
-            content: content,
+            filename,
+            content,
             treeFolder: gs.docsFolder || '/',
             newFileName: newFileName || filename,
             docRootKey: gs.docsRootKey,

@@ -1,4 +1,4 @@
-import pgdb from '../../../../PDGB.js';
+import pgdb from '../../../../PGDB.js';
 import { wipeTable, printFolderStructure, testOrdinalOperations, createFolderStructureTest } from './VFSTestCore.js';
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 

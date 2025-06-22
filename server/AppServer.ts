@@ -8,7 +8,7 @@ import { svrUtil } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import { docSvc } from './plugins/docs/DocService.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
-import pgdb from './PDGB.js';
+import pgdb from './PGDB.js';
 
 logInit();
 

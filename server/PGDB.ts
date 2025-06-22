@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Pool, PoolClient, QueryResult } from 'pg';
+import { getTransactionClient } from './Transactional.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,9 +132,20 @@ class PGDB {
     }
 
     /**
-     * Execute a query using the connection pool
+     * Execute a database query using transaction client if available, otherwise use the pool
      */
     async query(sql: string, params?: any[]): Promise<any> {
+        const transactionClient = getTransactionClient();
+        if (transactionClient) {
+            return await transactionClient.query(sql, params);
+        }
+        return await this.internal_query(sql, params);
+    }
+
+    /**
+     * Execute a query using the connection pool
+     */
+    private async internal_query(sql: string, params?: any[]): Promise<any> {
         this.checkDb();
         
         if (this.logEnabled) {

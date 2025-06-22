@@ -2,8 +2,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import {DBManagerIntf} from '../../../../common/types/CommonTypes.js';
-import pgdb from '../../../PDGB.js';
-import { getTransactionClient } from './Transactional.js';
+import pgdb from '../../../PGDB.js';
+import { getTransactionClient } from '../../../Transactional.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

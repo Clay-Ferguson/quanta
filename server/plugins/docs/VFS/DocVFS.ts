@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { svrUtil } from "../../../ServerUtil.js";
 import { config } from "../../../Config.js";
-import pgdb from '../../../PDGB.js';
+import pgdb from '../../../PGDB.js';
 
 class DocVFS {
     /**

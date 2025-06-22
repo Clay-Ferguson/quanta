@@ -6,11 +6,10 @@ import { IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
-// import { pgdbTest } from "./VFS/test/VFSTest.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import pgdb from "../../PDGB.js";
+import pgdb from "../../PGDB.js";
 import docVFS from "./VFS/DocVFS.js";
 
 const __filename = fileURLToPath(import.meta.url);

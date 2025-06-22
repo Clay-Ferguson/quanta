@@ -2,8 +2,9 @@
 import * as fs from 'fs';
 import path from 'path';
 import { IFS } from '../IFS/IFS.js'
-import pgdb from '../../../PDGB.js';
+import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
+import { getTransactionClient } from '../../../Transactional.js';
 
 /**
  * Virtual File System (VFS) for handling file operations in a server environment, by using PostgreSQL as a backend for storage of files and folders.
