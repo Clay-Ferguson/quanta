@@ -137,18 +137,9 @@ class AppRooms {
      * @param roomName The name of the room to completely remove from local storage
      */
     forgetRoom = async (roomName: string) => {
-        if (!await confirmModal("Clear all chat history for room?")) return;
-        debugger;
-        console.log("checkpoint 1"); // todo-0: remove these console logs
-        
+        if (!await confirmModal("Clear all chat history for room?")) return;        
         let _gs = gs();
-        // todo-0: This was a mistake right? We need to be able to clear rooms without being IN them at the time.
-        // if (!_gs.chatConnected) {
-        //     console.log("Not connected, cannot clear messages.");
-        //     return;
-        // }
 
-        console.log("checkpoint 2");
         // if deleting current room disconnect
         if (roomName===_gs.chatRoom) {
             await this.disconnect();
@@ -156,7 +147,6 @@ class AppRooms {
             _gs.chatMessages = []; 
         }
 
-        console.log("checkpoint 3");
         // remove room from history
         const chatRoomHistory: RoomHistoryItem[] = await idb.getItem(DBKeys.chatRoomHistory) || [];
         const roomIndex = chatRoomHistory.findIndex((item) => item.name === roomName);
@@ -165,15 +155,11 @@ class AppRooms {
             await idb.setItem(DBKeys.chatRoomHistory, chatRoomHistory);
         }
 
-        console.log("checkpoint 4");
         _gs.chatRoomHistory = chatRoomHistory;
 
-        console.log("checkpoint 5");
         // remove room from IndexedDB
         await idb.removeItem(DBKeys.roomPrefix + roomName);
         console.log("Cleared messages for room: " + roomName);
-
-        console.log("checkpoint 6");
         gd({ type: 'forgetRoom', payload: _gs });
     }
 

@@ -1,4 +1,3 @@
-import { dbMgr } from "./DBManager.js";
 import pgdb from "../../../PDGB.js";
 
 let tranCounter = 0;
@@ -19,7 +18,6 @@ export function Transactional() {
       
         descriptor.value = async function(...args: any[]) {
             // 'this' will be the class instance when the decorated method is called
-            dbMgr.checkDb();
             let ret = null;
         
             // Increment counter BEFORE starting transaction

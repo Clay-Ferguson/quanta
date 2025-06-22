@@ -11,17 +11,13 @@ const testRootKey = 'pgroot';
 export async function pgdbTest(): Promise<void> {
     await wipeTable();
     await simpleReadWriteTest();
-    // await deleteFolder("0001_test-structure"); // todo-0: bring this back eventually 
     await createFolderStructureTest();
     await testOrdinalOperations();
     await testFileOperations();
     await testPathOperations();
     await testErrorHandling();
-    // await printFolderStructure();
     await testFolderRenamePreservesChildren();
     await createNewFileAtTopOfRoot();
-    // await printFolderStructure();
-
     await pgdbTestMoveUp();
 
     // Test search functionality

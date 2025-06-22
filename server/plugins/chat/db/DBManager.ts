@@ -9,7 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class DBManager implements DBManagerIntf {
-    private tranCounter = 0;
 
     constructor() {
         this.initialize();
@@ -39,13 +38,7 @@ export class DBManager implements DBManagerIntf {
         }
     }
 
-    // todo-0: remove this 
-    checkDb = (): void => {
-        // PostgreSQL connection is managed by pgdb pool, no need to check individual db instance
-    }
-
     async get<T = any>(sql: any, ...params: any[]): Promise<T | undefined> {
-        this.checkDb();
         const transactionClient = getTransactionClient();
         if (transactionClient) {
             const result = await transactionClient.query(sql, params);
@@ -62,7 +55,6 @@ export class DBManager implements DBManagerIntf {
     }
 
     async all<T = any[]>(sql: any, ...params: any[]): Promise<T> {
-        this.checkDb();
         const transactionClient = getTransactionClient();
         if (transactionClient) {
             const result = await transactionClient.query(sql, params);
@@ -79,7 +71,6 @@ export class DBManager implements DBManagerIntf {
     }
 
     async run(sql: any, ...params: any[]): Promise<any> {
-        this.checkDb();
         const transactionClient = getTransactionClient();
         if (transactionClient) {
             const result = await transactionClient.query(sql, params);

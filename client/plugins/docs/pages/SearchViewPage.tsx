@@ -84,11 +84,16 @@ export default function SearchViewPage() {
             return;
         }
         
+        // todo-1: implement VFS binary search ? some day.
+        if (gs.docsRootType === 'vfs' && !gs.docsSearchTextOnly) {
+            await alertModal('Binary search is not supported for VFS. Please enable "Text Only" search mode.');
+            return;
+        }
+
         setIsSearching(true);
         const search = gs.docsSearch.trim();
         try {
             const searchFolder = gs.docsFolder || '/';
-            // todo-0: implement binary search ? some day.
             const endpoint = gs.docsRootType === 'vfs' ? '/api/docs/search-vfs' : 
                 (gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries');
 

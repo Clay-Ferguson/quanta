@@ -2,7 +2,6 @@ export interface DBManagerIntf {
     get: (sql: string, ...params: any[]) => Promise<any>;
     all: (sql: string, ...params: any[]) => Promise<any[]>;
     run(sql: any, ...params: any[]): Promise<any>;
-    checkDb: () => void;
 }
 
 export type KeyPairHex = {

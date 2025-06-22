@@ -36,7 +36,7 @@ class DocsServerPlugin implements IServerPlugin {
 
             // Test PostgreSQL database functionality
             // try {
-            //     await pgdbTest(); // todo-0: temporary for development.
+            //     await pgdbTest(); 
             // } catch (error) {
             //     console.error('PGDB test failed during plugin initialization:', error);
             // }

@@ -21,7 +21,6 @@ const SECURE = config.get("secure");
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
 if (process.env.POSTGRES_HOST) {
-    // todo-0: make sure this is the only place we call initDb
     await pgdb.initDb();
 }
 
