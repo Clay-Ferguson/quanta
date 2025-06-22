@@ -20,6 +20,8 @@ services:
       retries: 3
 
   pgadmin:
+    # Example: Use `docker-compose --profile pgadmin ...` to enable this service
+    profiles: ["pgadmin"]
     image: dpage/pgadmin4:latest
     container_name: quanta-pgadmin-local
     # Note: This is linux UserId:GroupID, and NOT related to port numbers

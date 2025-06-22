@@ -64,7 +64,10 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         }
 
         // use the docRootKey to get the file system type (vfs or lfs), by calling getFileSystemType
-        const docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
+        let docRootType = "";
+        if (req.params.docRootKey) {
+            docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
+        }
 
         // Replace the placeholders with actual values
         const result = data
