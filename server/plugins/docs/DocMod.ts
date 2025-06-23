@@ -175,6 +175,8 @@ class DocMod {
                     // No split delimiter found - save as single file
                         await ifs.writeFile(finalFilePath, content, 'utf8');
                         console.log(`File saved successfully: ${finalFilePath}`);
+
+                        // todo-0: we should be consistent across the HTTP endpoints and just let 200 code mean success=true, and not have 'success' property
                         res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
                     }
                 } else {
