@@ -302,3 +302,54 @@ Don't worry about making the GUI call that endpoint. I've handled that. I just n
 
 Searching is now working in the GUI (except clicking the search isn't taking us to the exact file yet)
 
+### Step 14
+
+We have a bug in the `vfs_rename` Postgres. It's not updating children, when we insert a file at the top of the root folder ("/")
+
+Here's what the `vfs_nodes` containns when we attempt to rename to make a slot for the new first file
+```
+quanta-dev    | 06-23-25 9:37:25 PM: ID     | TYPE | PARENT_PATH                     | FILENAME
+quanta-dev    | 06-23-25 9:37:25 PM: ------------------------------------------------------------------------
+quanta-dev    | 06-23-25 9:37:25 PM: 1      | 📁  | /                               | 0002_test-structure
+quanta-dev    | 06-23-25 9:37:25 PM: 2      | 📁  | /0001_test-structure            | 0001_one
+quanta-dev    | 06-23-25 9:37:25 PM: 9      | 📁  | /0001_test-structure            | 0002_two
+quanta-dev    | 06-23-25 9:37:25 PM: 16     | 📁  | /0001_test-structure            | 0003_three
+quanta-dev    | 06-23-25 9:37:25 PM: 3      | 📄  | /0001_test-structure/0001_one   | 0001_file1.md
+quanta-dev    | 06-23-25 9:37:25 PM: 4      | 📄  | /0001_test-structure/0001_one   | 0002_file2.md
+quanta-dev    | 06-23-25 9:37:25 PM: 5      | 📄  | /0001_test-structure/0001_one   | 0003_file3.md
+quanta-dev    | 06-23-25 9:37:25 PM: 6      | 📁  | /0001_test-structure/0001_one   | 0004_subfolder1
+quanta-dev    | 06-23-25 9:37:25 PM: 7      | 📁  | /0001_test-structure/0001_one   | 0005_subfolder2
+quanta-dev    | 06-23-25 9:37:25 PM: 8      | 📁  | /0001_test-structure/0001_one   | 0006_subfolder3
+quanta-dev    | 06-23-25 9:37:25 PM: 10     | 📄  | /0001_test-structure/0002_two   | 0001_file1.md
+quanta-dev    | 06-23-25 9:37:25 PM: 11     | 📄  | /0001_test-structure/0002_two   | 0002_file2.md
+quanta-dev    | 06-23-25 9:37:25 PM: 12     | 📄  | /0001_test-structure/0002_two   | 0003_file3.md
+quanta-dev    | 06-23-25 9:37:25 PM: 13     | 📁  | /0001_test-structure/0002_two   | 0004_subfolder1
+quanta-dev    | 06-23-25 9:37:25 PM: 14     | 📁  | /0001_test-structure/0002_two   | 0005_subfolder2
+quanta-dev    | 06-23-25 9:37:25 PM: 15     | 📁  | /0001_test-structure/0002_two   | 0006_subfolder3
+quanta-dev    | 06-23-25 9:37:25 PM: 17     | 📄  | /0001_test-structure/0003_three | 0001_file1.md
+quanta-dev    | 06-23-25 9:37:25 PM: 18     | 📄  | /0001_test-structure/0003_three | 0002_file2.md
+quanta-dev    | 06-23-25 9:37:25 PM: 19     | 📄  | /0001_test-structure/0003_three | 0003_file3.md
+quanta-dev    | 06-23-25 9:37:25 PM: 20     | 📁  | /0001_test-structure/0003_three | 0004_subfolder1
+quanta-dev    | 06-23-25 9:37:25 PM: 21     | 📁  | /0001_test-structure/0003_three | 0005_subfolder2
+quanta-dev    | 06-23-25 9:37:25 PM: 22     | 📁  | /0001_test-structure/0003_three | 0006_subfolder3
+quanta-dev    | 06-23-25 9:37:25 PM: ------------------------------------------------------------------------
+```
+
+Our app calls `DocService.ts#createFile` and it logs this on server:
+
+```
+quanta-dev    | 06-23-25 9:37:25 PM: Create File Request: {
+quanta-dev    |   "fileName": "file",
+quanta-dev    |   "treeFolder": "/",
+quanta-dev    |   "insertAfterNode": "",
+quanta-dev    |   "docRootKey": "pgroot"
+quanta-dev    | }
+quanta-dev    | 06-23-25 9:37:25 PM: Create new top file "file"
+quanta-dev    | 06-23-25 9:37:25 PM: Shifting ordinals down by 1 slots at / for insert ordinal 0
+quanta-dev    | 06-23-25 9:37:25 PM: Reading directory contents to prepare for shifting down: /
+quanta-dev    | 06-23-25 9:37:25 PM: Shifting file: 0001_test-structure
+quanta-dev    | 06-23-25 9:37:25 PM: Shifting file: 0001_test-structure -> 0002_test-structure
+quanta-dev    | 06-23-25 9:37:25 PM: VFS.rename: /0001_test-structure -> /0002_test-structure
+quanta-dev    | 06-23-25 9:37:25 PM: VFS rename diagnostic: Renamed directory from /0001_test-structure to /0002_test-structure. Updated 0 children.
+```
+Since it said "Updated 0 children." it failed to rename every single subfolder under "/0001_test-structure". The rename needs to update all affected subfolders.

@@ -75,7 +75,7 @@ class DBMessages {
      * @returns A Promise resolving to true if the message was saved successfully
      */
     persistMessageToRoomName = async (roomName: string, message: ChatMessageIntf): Promise<boolean> => {
-        // todo-0: add runTrans wrapper here.
+        // todo-1: add runTrans wrapper here.
         const existingMessage = await this.get(
             'SELECT id FROM messages WHERE id = $1',
             message.id
@@ -164,7 +164,7 @@ class DBMessages {
      * @returns A Promise resolving to the number of successfully saved messages
      */
     saveMessages = async (roomName: string, messages: ChatMessageIntf[]): Promise<number> => {
-        // todo-0: add runTrans wrapper here.
+        // todo-1: add runTrans wrapper here.
         // Ensure room exists
         const roomId = await dbRoom.getOrCreateRoom(roomName); 
         console.log('Got Room ID:', roomId);
@@ -417,7 +417,7 @@ class DBMessages {
      * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
     deleteMessage = async (messageId: string, publicKey: string, adminPubKey: string | null): Promise<boolean> => {
-        // todo-0: add runTrans wrapper here.
+        // todo-1: add runTrans wrapper here.
         console.log(`Deleting message: ${messageId} and all associated attachments`);
     
         try {

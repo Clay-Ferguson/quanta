@@ -14,7 +14,7 @@ class DBRoom {
      * @returns A Promise resolving to true if deletion was successful, false otherwise
      */
     deleteRoom = async (roomName: string): Promise<boolean> => {
-        // todo-0: add runTrans here
+        // todo-1: add runTrans here
         console.log(`Deleting room: ${roomName} and all associated data`);
         
         try {
@@ -77,7 +77,7 @@ class DBRoom {
      * @returns A Promise that resolves when the operation is complete
      */
     wipeRoom = async (roomName: string): Promise<void> => {
-        // todo-0: add runTrans here
+        // todo-1: add runTrans here
         console.log(`Wiping all messages from room: ${roomName}`);
             
         // Get the room ID
@@ -113,7 +113,7 @@ class DBRoom {
      * @returns A Promise that resolves when test data creation is complete
      */
     createTestData = async (): Promise<void> => {
-        // todo-0: add runTrans here
+        // todo-1: add runTrans here
         const roomName = 'test';
         console.log('Creating test data...');
             

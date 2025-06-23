@@ -6,6 +6,7 @@ import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
 import vfs from './VFS/VFS.js';
 import lfs from './IFS/LFS.js';
+import pgdb from '../../PGDB.js';
 const { exec } = await import('child_process');
 
 /**
@@ -82,6 +83,9 @@ class DocUtil {
      * incrementing the ordinal prefixes of existing files. It's essential for maintaining
      * proper sequential ordering when inserting new items.
      * 
+     * NOTE: todo-1: We do have a Postgres VFS method in a single call but it's untested, and we need to 
+     * verify that this way of doing it works anyway, so we don't use the more efficient VFS method yet for now.
+     * 
      * Process:
      * 1. Reads directory contents and filters for ordinal-prefixed items
      * 2. Identifies items that need shifting (ordinal >= insertOrdinal)
@@ -108,6 +112,7 @@ class DocUtil {
         const relativeFolderPath = path.relative(root, absoluteParentPath);
         
         // Read directory contents and filter for files/folders with numeric prefixes
+        console.log(`Reading directory contents to prepare for shifting down: ${absoluteParentPath}`);
         const allFiles = await ifs.readdir(absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
@@ -126,7 +131,7 @@ class DocUtil {
 
         // Shift each file down by incrementing its ordinal prefix
         for (const file of filesToShift) {
-            // console.log(`Shifting file: ${file}`);
+            console.log(`Shifting file: ${file}`);
             
             // Skip files that should be ignored (e.g., newly created items)
             if (itemsToIgnore && itemsToIgnore.includes(file)) {
@@ -155,7 +160,11 @@ class DocUtil {
             }
             
             // console.log(`Shifting file: ${file} -> ${newFileName}`);
+            // const logEnableSaved = pgdb.logEnabled
+            // pgdb.logEnabled = true;
             await ifs.rename(oldPath, newPath);
+            // pgdb.logEnabled = logEnableSaved;
+
             
             // Track the path mapping for relative paths (used by external systems)
             const oldRelativePath = relativeFolderPath ? path.join(relativeFolderPath, file) : file;

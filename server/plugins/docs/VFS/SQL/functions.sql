@@ -1,10 +1,12 @@
 -- PostgreSQL Functions for Document Filesystem
 -- This file contains all PostgreSQL stored procedures for the filesystem abstraction
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_readdir
 -- Equivalent to fs.readdirSync() - lists directory contents
 -- Returns files/folders in ordinal order with their metadata
 -- Uses filename prefix for ordinal ordering instead of separate ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_readdir(
     dir_path TEXT,
     root_key TEXT
@@ -48,8 +50,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_readdir_names
 -- Simple version that just returns filenames (like fs.readdirSync() with no options)
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_readdir_names(
     dir_path TEXT,
     root_key TEXT
@@ -78,9 +82,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_shift_ordinals_down
 -- Equivalent to DocUtil.shiftOrdinalsDown() - creates space for new files by incrementing ordinals
 -- This renames files to change their ordinal prefixes, just like the filesystem version
+-- todo-1: not currently used (yet)
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_shift_ordinals_down(
     slots_to_add INTEGER,
     parent_path_param TEXT,
@@ -192,9 +199,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_get_max_ordinal
 -- Equivalent to DocUtil.getMaxOrdinal() - finds highest ordinal in a directory
 -- Extracts ordinal from filename prefix instead of using ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_get_max_ordinal(
     parent_path_param TEXT,
     root_key TEXT
@@ -215,8 +224,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_get_ordinal_from_name
 -- Equivalent to DocUtil.getOrdinalFromName() - extracts ordinal from filename prefix
+-- todo-0: not currently used (yet), except for in some test cases
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_get_ordinal_from_name(
     filename_param TEXT,
     parent_path_param TEXT,
@@ -248,9 +260,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_insert_file_at_ordinal
 -- Helper function to insert a new file at a specific ordinal position
 -- Automatically shifts existing files down if needed and creates proper ordinal filename
+-- todo-1: not used yet except for in some test cases
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_insert_file_at_ordinal(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -336,9 +351,11 @@ $$ LANGUAGE plpgsql;
 -- BASIC FILE OPERATIONS
 -- ==============================================================================
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_read_file
 -- Equivalent to fs.readFileSync() - reads file content (both text and binary)
 -- Returns BYTEA for compatibility, but content comes from appropriate column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_read_file(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -374,9 +391,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_write_text_file
 -- Equivalent to fs.writeFileSync() for text files - writes text file content
 -- Uses filename prefixes for ordinal management instead of ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_text_file(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -438,9 +457,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_write_binary_file
 -- Equivalent to fs.writeFileSync() for binary files - writes binary file content
 -- Uses filename prefixes for ordinal management instead of ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_binary_file(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -502,8 +523,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_exists
 -- Equivalent to fs.existsSync() - checks if file or directory exists
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_exists(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -525,9 +548,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_stat
 -- Equivalent to fs.statSync() - gets file/directory metadata
 -- Extracts ordinal from filename prefix instead of using ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_stat(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -563,8 +588,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_unlink
 -- Equivalent to fs.unlinkSync() - deletes a file
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_unlink(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -591,9 +618,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_rename
 -- Equivalent to fs.renameSync() - renames/moves a file or directory
 -- For directories, also updates the parent_path of all nested children
+-- Returns both success status and diagnostic information
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_rename(
     old_parent_path TEXT,
     old_filename TEXT,
@@ -601,16 +631,19 @@ CREATE OR REPLACE FUNCTION vfs_rename(
     new_filename TEXT,
     root_key TEXT
 ) 
-RETURNS BOOLEAN AS $$
+RETURNS TABLE(success BOOLEAN, diagnostic TEXT) AS $$
 DECLARE
     updated_count INTEGER;
+    child_count INTEGER := 0;
     is_dir BOOLEAN;
-    old_full_path TEXT;
-    new_full_path TEXT;
+    old_path TEXT;
+    new_path TEXT;
 BEGIN
     -- Check if target already exists
     IF vfs_exists(new_parent_path, new_filename, root_key) THEN
-        RAISE EXCEPTION 'Target already exists: %/%', new_parent_path, new_filename;
+        RETURN QUERY SELECT FALSE AS success, 
+                     format('Target already exists: %s/%s', new_parent_path, new_filename) AS diagnostic;
+        RETURN;
     END IF;
     
     -- Check if the item being renamed is a directory
@@ -622,7 +655,9 @@ BEGIN
         AND filename = old_filename;
     
     IF is_dir IS NULL THEN
-        RAISE EXCEPTION 'Source file not found: %/%', old_parent_path, old_filename;
+        RETURN QUERY SELECT FALSE AS success, 
+                     format('Source file not found: %s/%s', old_parent_path, old_filename) AS diagnostic;
+        RETURN;
     END IF;
     
     -- Update the main record
@@ -635,44 +670,48 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = old_parent_path
         AND filename = old_filename;
-        
-    GET DIAGNOSTICS updated_count = ROW_COUNT;
     
-    IF updated_count = 0 THEN
-        RAISE EXCEPTION 'Source file not found: %/%', old_parent_path, old_filename;
-    END IF;
-    
-    -- If it's a directory, update all children's parent_path
+    -- If it's a directory, update all children's parent paths
     IF is_dir THEN
-        -- Construct old and new full paths
-        old_full_path := CASE 
-            WHEN old_parent_path = '' THEN old_filename
-            ELSE old_parent_path || '/' || old_filename
-        END;
+        -- Build the old and new paths for child updates
+        -- Normalize path format for consistent handling
+        IF old_parent_path = '' OR old_parent_path = '/' THEN
+            old_path := '/' || old_filename;
+        ELSE
+            old_path := old_parent_path || '/' || old_filename;
+        END IF;
         
-        new_full_path := CASE 
-            WHEN new_parent_path = '' THEN new_filename
-            ELSE new_parent_path || '/' || new_filename
-        END;
+        IF new_parent_path = '' OR new_parent_path = '/' THEN
+            new_path := '/' || new_filename;
+        ELSE
+            new_path := new_parent_path || '/' || new_filename;
+        END IF;
         
-        -- Update all children (files and subdirectories) whose parent_path starts with the old path
+        -- Simple child path update - just one statement
         UPDATE vfs_nodes
         SET 
-            parent_path = new_full_path || SUBSTRING(parent_path FROM LENGTH(old_full_path) + 1),
+            parent_path = CASE
+                -- Direct child of the renamed directory
+                WHEN parent_path = old_path THEN new_path
+                -- Deeper descendants - replace the prefix
+                ELSE regexp_replace(parent_path, '^' || old_path || '/', new_path || '/')
+            END,
             modified_time = NOW()
         WHERE 
             doc_root_key = root_key
-            AND (
-                parent_path = old_full_path OR
-                parent_path LIKE old_full_path || '/%'
-            );
-            
-        -- Log how many children were updated
-        GET DIAGNOSTICS updated_count = ROW_COUNT;
-        RAISE NOTICE 'Updated % children for directory rename', updated_count;
+            AND (parent_path = old_path OR parent_path LIKE old_path || '/%');
+        
+        GET DIAGNOSTICS child_count = ROW_COUNT;
+        
+        RETURN QUERY SELECT TRUE AS success, 
+                     format('Renamed directory from %s/%s to %s/%s. Updated %s children.', 
+                           old_parent_path, old_filename, new_parent_path, new_filename, child_count) AS diagnostic;
+    ELSE
+        -- For files, just return success
+        RETURN QUERY SELECT TRUE AS success,
+                     format('Renamed file from %s/%s to %s/%s', 
+                           old_parent_path, old_filename, new_parent_path, new_filename) AS diagnostic;
     END IF;
-    
-    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -680,9 +719,11 @@ $$ LANGUAGE plpgsql;
 -- DIRECTORY OPERATIONS
 -- ==============================================================================
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_mkdir
 -- Equivalent to fs.mkdirSync() - creates a directory
 -- Uses filename prefixes for ordinal management instead of ordinal column
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_mkdir(
     parent_path_param TEXT,
     dirname_param TEXT,
@@ -738,8 +779,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_rmdir
 -- Equivalent to fs.rmSync() - removes a directory (with recursive option)
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_rmdir(
     parent_path_param TEXT,
     dirname_param TEXT,
@@ -815,8 +858,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_is_directory
 -- Helper function to check if a path is a directory
+-- todo-1: not used yet except for in some test cases
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_is_directory(
     parent_path_param TEXT,
     filename_param TEXT,
@@ -838,8 +884,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_ensure_path
 -- Helper function to create directory path recursively (like mkdir -p)
+-- todo-0: Not yet used, except in some test cases
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_ensure_path(
     full_path TEXT,
     root_key TEXT
@@ -881,11 +930,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_search_text
 -- PostgreSQL-based text search function for VFS
 -- Searches through text content in non-binary files
 -- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
 -- Optionally filters by timestamp requirements
+-----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_search_text(
     search_query TEXT,
     search_path TEXT,

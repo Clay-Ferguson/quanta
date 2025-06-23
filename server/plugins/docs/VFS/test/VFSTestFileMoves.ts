@@ -1,5 +1,5 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, createFolderStructureTest } from './VFSTestCore.js';
+import { wipeTable, createFolderStructure } from './VFSTestCore.js';
 import { docMod } from '../../DocMod.js';
 
 const testRootKey = 'pgroot';
@@ -51,7 +51,7 @@ export async function pgdbTestMoveUp(): Promise<void> {
         
         // Step 2: Create folder structure
         console.log('Creating folder structure...');
-        await createFolderStructureTest();
+        await createFolderStructure();
         
         // Step 3: Verify the initial structure in the target folder
         const targetFolderPath = '/0001_test-structure/0002_two'; 

@@ -1,7 +1,8 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, printFolderStructure, createFolderStructureTest, listAllVfsNodes } from './VFSTestCore.js';
+import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 
 const testRootKey = 'pgroot';
@@ -13,9 +14,9 @@ const testRootKey = 'pgroot';
 export async function pgdbTest(): Promise<void> {
     await wipeTable();
     //await simpleReadWriteTest();
-    await createFolderStructureTest();
+    await createFolderStructure();
     // Test our fix for the folder rename bug
-    await testFolderRenameWithChildren();
+    // await testFolderRenameWithChildren();
     // await testOrdinalOperations();
     // await testFileOperations();
     // await testPathOperations();
@@ -184,11 +185,12 @@ async function testFileOperations(): Promise<void> {
         }
         
         console.log('2. Testing vfs_rename function...');
-        await pgdb.query(
-            'SELECT vfs_rename($1, $2, $3, $4, $5)',
+        const renameResult = await pgdb.query(
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
             [testPath, '0005_file5.md', testPath, '0005_renamed-file.md', testRootKey]
         );
-        console.log('   Successfully renamed 0005_file5.md to 0005_renamed-file.md');
+        console.log(`   Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`   Diagnostic: ${renameResult.rows[0].diagnostic}`);
         
         console.log('3. Testing file read after rename...');
         const readRenamedResult = await pgdb.query(
@@ -511,10 +513,12 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         console.log(`Sample children found:`, sampleChildren.rows);
         
         // Perform the rename
-        await pgdb.query(
-            'SELECT vfs_rename($1, $2, $3, $4, $5)',
+        const renameResult = await pgdb.query(
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
             [oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey]
         );
+        console.log(`Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`Diagnostic: ${renameResult.rows[0].diagnostic}`);
         
         // Count children after rename
         const afterChildren = await pgdb.query(

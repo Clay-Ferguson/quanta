@@ -175,7 +175,7 @@ class DocMod {
                         await ifs.writeFile(finalFilePath, content, 'utf8');
                         console.log(`File saved successfully: ${finalFilePath}`);
 
-                        // todo-0: we should be consistent across the HTTP endpoints and just let 200 code mean success=true, and not have 'success' property
+                        // todo-1: we should be consistent across the HTTP endpoints and just let 200 code mean success=true, and not have 'success' property
                         res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
                     }
                 } else {
@@ -184,10 +184,6 @@ class DocMod {
                     console.log(`File saved successfully: ${finalFilePath}`);
                     res.json({ success: true, message: 'File saved successfully' });
                 }
-
-                // todo-0: methods in a transaction should delay any setting of 'res' values until the every end when we know we've not
-                // hit any transactions.
-                // throw new Error('Testing rollback capability'); // todo-0: remove this test.
             } catch (error) {
                 // Handle any errors that occurred during the save operation
                 svrUtil.handleError(error, res, 'Failed to save file');

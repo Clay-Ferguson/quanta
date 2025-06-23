@@ -19,7 +19,7 @@ class PGDB {
     private pool: Pool | null = null;
     private isInitialized: boolean = false;
 
-    // todo-0: admin panel needs to be able to flip this on/off
+    // todo-1: admin panel needs to be able to flip this on/off
     public logEnabled: boolean = false; 
 
     constructor() {}

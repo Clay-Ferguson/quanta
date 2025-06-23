@@ -322,13 +322,17 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
             docRootKey: gs.docsRootKey
         };
         const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
+        // log a prett print JSON of the response
+        console.log('File creation response:', JSON.stringify(response, null, 2));
             
         // Refresh the tree view to show the new file
         if (response && response.success) {
-            const updatedNodes = await reRenderTree();
-                
+            console.log("Waiting a second before querying to re-render tree...");
             // Automatically start editing the newly created file
-            setTimeout(() => {
+            // todo-0: this is a pretty bad hack here to have this timeout, and it periodically fails. I don't understand however, because it seems like
+            // our database commit should've completed by now, but maybe it has to do with the NodeJS "session-like" storage.
+            setTimeout(async () => {
+                const updatedNodes = await reRenderTree();
                 const newFileNode = updatedNodes.find((n: any) => n.name ===response.fileName);
                 if (newFileNode) {
                     // DO NOT DELETE. Leave this just in case.
@@ -351,7 +355,7 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
                 else {
                     console.error('Newly created file node not found in treeNodes:', fileName);
                 }
-            }, 100);
+            }, 500);
         }
     } catch (error) {
         console.error('Error creating file:', error);
@@ -466,7 +470,7 @@ const saveToServer = async (gs: DocsGlobalState, filename: string, content: stri
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
         if (!response) {
             alertModal("Error saving file to server. Please try again later.");
-            // todo-0: force a refresh of tree? so it doesn't display as if the editing was successful
+            // todo-1: force a refresh of tree? so it doesn't display as if the editing was successful
         }
     } catch (error) {
         console.error('Error saving file to server:', error);

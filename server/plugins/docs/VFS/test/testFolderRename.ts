@@ -1,5 +1,5 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, createFolderStructureTest, printFolderStructure } from './VFSTestCore.js';
+import { wipeTable, createFolderStructure, printFolderStructure } from './VFSTestCore.js';
 
 const testRootKey = 'pgroot';
 
@@ -13,7 +13,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         // First wipe the database and create our test structure
         await wipeTable();
-        await createFolderStructureTest();
+        await createFolderStructure();
         
         // Print initial folder structure
         console.log('\nInitial folder structure:');
@@ -29,11 +29,12 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         // Execute the rename
         const renameResult = await pgdb.query(
-            'SELECT vfs_rename($1, $2, $3, $4, $5) as success',
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
             [oldParentPath, oldFolderName, newParentPath, newFolderName, testRootKey]
         );
         
         console.log(`Rename operation result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`Diagnostic information: ${renameResult.rows[0].diagnostic}`);
         
         // Print the updated folder structure
         console.log('\nUpdated folder structure after rename:');
@@ -76,11 +77,12 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         console.log(`Moving folder: ${sourcePath}/${sourceFolder} to ${destPath}/${destFolder}`);
         
         const moveResult = await pgdb.query(
-            'SELECT vfs_rename($1, $2, $3, $4, $5) as success',
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
             [sourcePath, sourceFolder, destPath, destFolder, testRootKey]
         );
         
         console.log(`Move operation result: ${moveResult.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`Diagnostic information: ${moveResult.rows[0].diagnostic}`);
         
         // Print the updated folder structure after moving
         console.log('\nUpdated folder structure after move:');

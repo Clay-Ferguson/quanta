@@ -35,7 +35,6 @@ class DocsServerPlugin implements IServerPlugin {
             await this.initializeFunctions();
 
             // Test PostgreSQL database functionality
-            // todo-0: I was working on triggering rollbacks in the 'saveFile' and bizarrely I noticed thos pdgbTest running right after the rollback.
             try {
                 await pgdbTest(); 
             } catch (error) {

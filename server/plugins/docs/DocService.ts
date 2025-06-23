@@ -8,7 +8,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
-import { printFolderStructure } from "./VFS/test/VFSTestCore.js";
+import { listAllVfsNodes, printFolderStructure } from "./VFS/test/VFSTestCore.js";
 const { exec } = await import('child_process');
 
 /**
@@ -206,7 +206,7 @@ class DocService {
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
-                // todo-0: this kind of error is not having something displayed to user and just results in a blank page
+                // todo-1: this kind of error is not having something displayed to user and just results in a blank page
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -416,6 +416,8 @@ class DocService {
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
         return runTrans(async () => {
+            // todo-0: need a real 'diagnostic' flag in this class which can optionally enable
+            // the kind checking we're doing in the 'meta' here to detect problems. 
             const meta: {count: number} = await printFolderStructure(false);
             // console.log(`Initial count before createFile: ${meta.count}`);
 
@@ -471,9 +473,9 @@ class DocService {
                 await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
                 const meta2: {count: number} = await printFolderStructure(false);
                 if (meta2.count !== meta.count) {
-                    // console.log(`files lost during ordinal shift: old count = ${meta.count}, new count = ${meta2.count}`);
-                    // await printFolderStructure(true);
-                    // await listAllVfsNodes();
+                    console.log(`files lost during ordinal shift: old count = ${meta.count}, new count = ${meta2.count}`);
+                    await printFolderStructure(true);
+                    await listAllVfsNodes();
                     throw new Error(`files lost during ordinal shift: Rolling back`);
                 }
 
@@ -508,7 +510,6 @@ class DocService {
                 });
 
                 console.log(`Current folder structure after file creation:`);
-                // todo-0: make this return a number so we can run a check before/after operations to check for file loss
                 printFolderStructure();
             } catch (error) {
             // Handle any errors during file creation

@@ -185,7 +185,7 @@ export async function testOrdinalOperations(): Promise<void> {
     📁 0005_subfolder2
     📁 0006_subfolder3
 */
-export async function createFolderStructureTest(): Promise<void> {
+export async function createFolderStructure(): Promise<void> {
     try {
         console.log('=== PGDB Folder Structure Test Starting ===');
         const rootPath = '/0001_test-structure';
