@@ -2,7 +2,7 @@ import { config } from "../../Config.js";
 import { httpServerUtil } from "../../HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
-import { IServerPlugin } from "../../ServerUtil.js";
+import { IAppContext, IServerPlugin } from "../../ServerUtil.js";
 import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
@@ -20,9 +20,9 @@ const defaultPlugin = config.get("defaultPlugin");
 class DocsServerPlugin implements IServerPlugin {
     pgMode = false;
 
-    async init(context: any) {
+    async init(context: IAppContext) {
         console.log('init docs plugin...');
-        this.initRoutes(context.app, context.serveIndexHtml);
+        this.initRoutes(context);
 
         if (process.env.POSTGRES_HOST) {
             this.pgMode = true;
@@ -46,36 +46,38 @@ class DocsServerPlugin implements IServerPlugin {
         }
     }
 
-    private initRoutes(app: any, serveIndexHtml: any) {
-        app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
-        app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage); 
+    private initRoutes(context: IAppContext) {
+        context.app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
+        context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage); 
 
+        // todo-0: research whether we can run 'runTrans' in a middleware instead of in 'saveFile' and do same for all these, in 
+        //         other words is there a middleware that can 'wrap' the rest of the chain of calls?
         // For now we only allow admin to access the docs API
-        app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docMod.saveFile); 
-        app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docBinary.uploadFiles);
-        app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docMod.renameFolder); 
-        app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docMod.deleteFileOrFolder); 
-        app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docMod.moveUpOrDown); 
-        app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
-        app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
-        app.post('/api/docs/make-folder', httpServerUtil.verifyAdminHTTPSignature, docMod.makeFolder); 
-        app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docMod.pasteItems);
-        app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docMod.joinFiles);
-        app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
-        app.post('/api/docs/search-binaries', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchBinaries);
-        app.post('/api/docs/search-text', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchTextFiles);
-        app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);
-        app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
+        context.app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docMod.saveFile); 
+        context.app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docBinary.uploadFiles);
+        context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docMod.renameFolder); 
+        context.app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docMod.deleteFileOrFolder); 
+        context.app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docMod.moveUpOrDown); 
+        context.app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
+        context.app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
+        context.app.post('/api/docs/make-folder', httpServerUtil.verifyAdminHTTPSignature, docMod.makeFolder); 
+        context.app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docMod.pasteItems);
+        context.app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docMod.joinFiles);
+        context.app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
+        context.app.post('/api/docs/search-binaries', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchBinaries);
+        context.app.post('/api/docs/search-text', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchTextFiles);
+        context.app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);
+        context.app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
 
-        app.get('/doc/:docRootKey', serveIndexHtml("TreeViewerPage"));
+        context.app.get('/doc/:docRootKey', context.serveIndexHtml("TreeViewerPage"));
 
         if (defaultPlugin === "docs") {
             console.log('Docs plugin is the default plugin, serving index.html at root path(/).');
-            app.get('/', serveIndexHtml("TreeViewerPage"));
+            context.app.get('/', context.serveIndexHtml("TreeViewerPage"));
         }
     }
 
-    finishRoute(context: any) {
+    finishRoute(context: IAppContext) {
         console.log('finishRoute docs plugin...');
         if (defaultPlugin === "docs") {
             console.log('Docs plugin is the default plugin, serving index.html at root path(*).');

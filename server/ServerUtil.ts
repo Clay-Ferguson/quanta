@@ -2,6 +2,12 @@ import { Response, Request } from 'express';
 import { spawn } from 'child_process';
 import open from 'open';
 import path from 'path';
+import { Application } from "express";
+
+export interface IAppContext {
+    app: Application; // Express application instance
+    serveIndexHtml: (page: string) => (req: Request, res: Response) => void;
+}
 
 /**
  * Interface for server plugins that can be loaded and managed by ServerUtil
@@ -11,13 +17,13 @@ export interface IServerPlugin {
      * Initialize the plugin with the given context
      * @param context - Contains app (Express app instance) and serveIndexHtml function
      */
-    init(context: any): void;
+    init(context: IAppContext): void;
 
     /**
      * Set up fallback routes after all plugins have been initialized
      * @param context - Contains app (Express app instance) and serveIndexHtml function
      */
-    finishRoute(context: any): void;
+    finishRoute(context: IAppContext): void;
 
     /**
      * Notify the plugin that server startup is complete
@@ -66,7 +72,7 @@ class ServerUtil {
      * @param plugins - Array of plugin configurations containing plugin keys
      * @param context - Context object passed to each plugin's init method (typically contains Express app instance)
      */
-    initPlugins = async (plugins: any, context: any) => {
+    initPlugins = async (plugins: any, context: IAppContext) => {
         if (this.pluginsArray.length > 0) {
             console.warn('Plugins have already been initialized. Skipping initialization.');
             return;
@@ -95,7 +101,7 @@ class ServerUtil {
      * @param plugins - Array of plugin configurations (unused, method uses cached pluginsArray)
      * @param context - Context object passed to each plugin's finishRoute method
      */
-    finishRoutes = async (plugins: any, context: any) => {
+    finishRoutes = async (plugins: any, context: IAppContext) => {
         console.log('Finishing plugin routes...');
         for (const plugin of this.pluginsArray) {
             plugin.finishRoute(context);

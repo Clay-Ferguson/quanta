@@ -55,7 +55,6 @@ class DocMod {
      */
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
         return runTrans(async () => {
-            console.log("running DocMod.saveFile()");
             try {
                 // Extract request parameters
                 const { filename, content, treeFolder, docRootKey, split } = req.body;
