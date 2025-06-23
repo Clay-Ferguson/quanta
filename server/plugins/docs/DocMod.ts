@@ -220,74 +220,77 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Rename Folder Request");
-        try {
+        return runTrans(async () => {
+            console.log("Rename Folder Request");
+            try {
             // Extract request parameters
-            const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
+                const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
 
-            // Validate required parameters
-            if (!oldFolderName || !newFolderName || !treeFolder) {
-                res.status(400).json({ error: 'Old folder name, new folder name, and treeFolder are required' });
-                return;
-            }
+                // Validate required parameters
+                if (!oldFolderName || !newFolderName || !treeFolder) {
+                    res.status(400).json({ error: 'Old folder name, new folder name, and treeFolder are required' });
+                    return;
+                }
 
-            // Construct absolute paths for the rename operation
-            const absoluteParentPath = path.join(root, treeFolder);
-            const oldAbsolutePath = path.join(absoluteParentPath, oldFolderName);
-            const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
+                // Construct absolute paths for the rename operation
+                const absoluteParentPath = path.join(root, treeFolder);
+                const oldAbsolutePath = path.join(absoluteParentPath, oldFolderName);
+                const newAbsolutePath = path.join(absoluteParentPath, newFolderName);
 
-            // Verify the parent directory exists
-            if (!await ifs.exists(absoluteParentPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
+                // Verify the parent directory exists
+                if (!await ifs.exists(absoluteParentPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
 
-            // Verify the folder to be renamed exists
-            if (!await ifs.exists(oldAbsolutePath)) {
-                res.status(404).json({ error: 'Old folder not found' });
-                return;
-            }
+                // Verify the folder to be renamed exists
+                if (!await ifs.exists(oldAbsolutePath)) {
+                    res.status(404).json({ error: 'Old folder not found' });
+                    return;
+                }
 
-            // Ensure the target is actually a directory, not a file
-            const stat = await ifs.stat(oldAbsolutePath);
-            if (!stat.isDirectory()) {
-                res.status(400).json({ error: 'Path is not a directory' });
-                return;
-            }
+                // Ensure the target is actually a directory, not a file
+                const stat = await ifs.stat(oldAbsolutePath);
+                if (!stat.isDirectory()) {
+                    res.status(400).json({ error: 'Path is not a directory' });
+                    return;
+                }
 
-            // Handle no-op case where names are identical
-            if (oldFolderName === newFolderName) {
-                res.json({ success: true, message: 'Folder name is unchanged' });
-                return;
-            }
+                // Handle no-op case where names are identical
+                if (oldFolderName === newFolderName) {
+                    res.json({ success: true, message: 'Folder name is unchanged' });
+                    return;
+                }
 
-            // Prevent naming conflicts with existing folders
-            if (await ifs.exists(newAbsolutePath)) {
-                res.status(409).json({ error: 'A folder with the new name already exists' });
-                return;
-            }
+                // Prevent naming conflicts with existing folders
+                if (await ifs.exists(newAbsolutePath)) {
+                    res.status(409).json({ error: 'A folder with the new name already exists' });
+                    return;
+                }
 
-            // Perform the folder rename operation with security validation
-            ifs.checkFileAccess(oldAbsolutePath, root);
-            ifs.checkFileAccess(newAbsolutePath, root);
-            await ifs.rename(oldAbsolutePath, newAbsolutePath);
+                // Perform the folder rename operation with security validation
+                ifs.checkFileAccess(oldAbsolutePath, root);
+                ifs.checkFileAccess(newAbsolutePath, root);
+                await ifs.rename(oldAbsolutePath, newAbsolutePath);
             
-            console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
-            res.json({ success: true, message: 'Folder renamed successfully' });
-        } catch (error) {
+                console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
+                res.json({ success: true, message: 'Folder renamed successfully' });
+            } catch (error) {
             // Handle any errors that occurred during the rename operation
-            svrUtil.handleError(error, res, 'Failed to rename folder');
-        }
+                svrUtil.handleError(error, res, 'Failed to rename folder');
+                throw error;
+            }
+        });
     }
 
     /**
@@ -313,104 +316,108 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Delete File or Folder Request");
-        try {
+        return runTrans(async () => {
+            console.log("Delete File or Folder Request");
+            try {
             // Extract request parameters
-            const { fileOrFolderName, fileNames, treeFolder, docRootKey } = req.body;
+                const { fileOrFolderName, fileNames, treeFolder, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
 
-            // Determine operation mode and build items list
-            let itemsToDelete: string[] = [];
-            if (fileNames && Array.isArray(fileNames)) {
+                // Determine operation mode and build items list
+                let itemsToDelete: string[] = [];
+                if (fileNames && Array.isArray(fileNames)) {
                 // Multiple items mode
-                itemsToDelete = fileNames;
-            } else if (fileOrFolderName) {
+                    itemsToDelete = fileNames;
+                } else if (fileOrFolderName) {
                 // Single item mode
-                itemsToDelete = [fileOrFolderName];
-            } else {
-                res.status(400).json({ error: 'Either fileOrFolderName or fileNames array and treeFolder are required' });
-                return;
-            }
-
-            if (!treeFolder || itemsToDelete.length === 0) {
-                res.status(400).json({ error: 'treeFolder and at least one item to delete are required' });
-                return;
-            }
-
-            // Construct the absolute parent path
-            const absoluteParentPath = path.join(root, treeFolder);
-
-            // Check if the parent directory exists
-            if (!await ifs.exists(absoluteParentPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
-
-            let deletedCount = 0;
-            const errors: string[] = [];
-
-            // Delete each file/folder
-            for (const fileName of itemsToDelete) {
-                try {
-                    const absoluteTargetPath = path.join(absoluteParentPath, fileName);
-
-                    // Check if the target exists
-                    if (!await ifs.exists(absoluteTargetPath)) {
-                        errors.push(`File or folder not found: ${fileName}`);
-                        continue;
-                    }
-
-                    // Get stats to determine if it's a file or directory
-                    const stat = await ifs.stat(absoluteTargetPath);
-                    
-                    ifs.checkFileAccess(absoluteTargetPath, root);
-                    if (stat.isDirectory()) {
-                        // Remove directory recursively
-                        await ifs.rm(absoluteTargetPath, { recursive: true, force: true });
-                        console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
-                    } else {
-                        // Remove file
-                        await ifs.unlink(absoluteTargetPath);
-                        console.log(`File deleted successfully: ${absoluteTargetPath}`);
-                    }
-                    
-                    deletedCount++;
-                } catch (error) {
-                    console.error(`Error deleting ${fileName}:`, error);
-                    errors.push(`Failed to delete ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
-            }
-
-            // Return appropriate response based on single vs multiple items
-            if (itemsToDelete.length === 1) {
-                // Single item mode - return simple response for backward compatibility
-                if (deletedCount === 1) {
-                    const message = itemsToDelete[0].includes('.') ? 'File deleted successfully' : 'Folder deleted successfully';
-                    res.json({ success: true, message });
+                    itemsToDelete = [fileOrFolderName];
                 } else {
-                    res.status(500).json({ error: errors[0] || 'Failed to delete item' });
+                    res.status(400).json({ error: 'Either fileOrFolderName or fileNames array and treeFolder are required' });
+                    return;
                 }
-            } else {
+
+                if (!treeFolder || itemsToDelete.length === 0) {
+                    res.status(400).json({ error: 'treeFolder and at least one item to delete are required' });
+                    return;
+                }
+
+                // Construct the absolute parent path
+                const absoluteParentPath = path.join(root, treeFolder);
+
+                // Check if the parent directory exists
+                if (!await ifs.exists(absoluteParentPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
+
+                let deletedCount = 0;
+                const errors: string[] = [];
+
+                // Delete each file/folder
+                for (const fileName of itemsToDelete) {
+                    try {
+                        const absoluteTargetPath = path.join(absoluteParentPath, fileName);
+
+                        // Check if the target exists
+                        if (!await ifs.exists(absoluteTargetPath)) {
+                            errors.push(`File or folder not found: ${fileName}`);
+                            continue;
+                        }
+
+                        // Get stats to determine if it's a file or directory
+                        const stat = await ifs.stat(absoluteTargetPath);
+                    
+                        ifs.checkFileAccess(absoluteTargetPath, root);
+                        if (stat.isDirectory()) {
+                        // Remove directory recursively
+                            await ifs.rm(absoluteTargetPath, { recursive: true, force: true });
+                            console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
+                        } else {
+                        // Remove file
+                            await ifs.unlink(absoluteTargetPath);
+                            console.log(`File deleted successfully: ${absoluteTargetPath}`);
+                        }
+                    
+                        deletedCount++;
+                    } catch (error) {
+                        console.error(`Error deleting ${fileName}:`, error);
+                        errors.push(`Failed to delete ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        throw error;
+                    }
+                }
+
+                // Return appropriate response based on single vs multiple items
+                if (itemsToDelete.length === 1) {
+                // Single item mode - return simple response for backward compatibility
+                    if (deletedCount === 1) {
+                        const message = itemsToDelete[0].includes('.') ? 'File deleted successfully' : 'Folder deleted successfully';
+                        res.json({ success: true, message });
+                    } else {
+                        res.status(500).json({ error: errors[0] || 'Failed to delete item' });
+                    }
+                } else {
                 // Multiple items mode - return detailed response
-                res.json({ 
-                    success: true, 
-                    deletedCount, 
-                    errors: errors.length > 0 ? errors : undefined,
-                    message: `Successfully deleted ${deletedCount} of ${itemsToDelete.length} items` 
-                });
+                    res.json({ 
+                        success: true, 
+                        deletedCount, 
+                        errors: errors.length > 0 ? errors : undefined,
+                        message: `Successfully deleted ${deletedCount} of ${itemsToDelete.length} items` 
+                    });
+                }
+            } catch (error) {
+                svrUtil.handleError(error, res, 'Failed to delete file or folder');
+                throw error;
             }
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to delete file or folder');
-        }
+        });
     }
 
     /**
@@ -442,121 +449,124 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
+        return runTrans(async () => {
         // Console log a pretty print of test request parameters
-        console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
+            console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
         
-        try {
+            try {
             // Extract request parameters
-            const { direction, filename, treeFolder, docRootKey } = req.body;
+                const { direction, filename, treeFolder, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
 
-            // Validate required parameters and direction values
-            if (!direction || !filename || !treeFolder || (direction !== 'up' && direction !== 'down')) {
-                res.status(400).json({ error: 'Valid direction ("up" or "down"), filename, and treeFolder are required' });
-                return;
-            }
+                // Validate required parameters and direction values
+                if (!direction || !filename || !treeFolder || (direction !== 'up' && direction !== 'down')) {
+                    res.status(400).json({ error: 'Valid direction ("up" or "down"), filename, and treeFolder are required' });
+                    return;
+                }
 
-            // Construct absolute path to the parent directory
-            const absoluteParentPath = path.join(root, treeFolder);
+                // Construct absolute path to the parent directory
+                const absoluteParentPath = path.join(root, treeFolder);
 
-            // Verify the parent directory exists
-            if (!await ifs.exists(absoluteParentPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
+                // Verify the parent directory exists
+                if (!await ifs.exists(absoluteParentPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
 
-            // Read directory contents and filter for items with numeric ordinal prefixes
-            // Only files/folders matching the pattern "NNNN_*" are considered for ordering
-            ifs.checkFileAccess(absoluteParentPath, root);
-            const allFiles = await ifs.readdir(absoluteParentPath);
-            const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
+                // Read directory contents and filter for items with numeric ordinal prefixes
+                // Only files/folders matching the pattern "NNNN_*" are considered for ordering
+                ifs.checkFileAccess(absoluteParentPath, root);
+                const allFiles = await ifs.readdir(absoluteParentPath);
+                const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
-            // Sort by filename which naturally sorts by numeric prefix due to zero-padding
-            numberedFiles.sort((a, b) => a.localeCompare(b));
+                // Sort by filename which naturally sorts by numeric prefix due to zero-padding
+                numberedFiles.sort((a, b) => a.localeCompare(b));
 
-            // Locate the target file/folder in the ordered list
-            const currentIndex = numberedFiles.findIndex(file => file === filename);
-            if (currentIndex === -1) {
-                res.status(404).json({ error: 'File not found in directory' });
-                return;
-            }
+                // Locate the target file/folder in the ordered list
+                const currentIndex = numberedFiles.findIndex(file => file === filename);
+                if (currentIndex === -1) {
+                    res.status(404).json({ error: 'File not found in directory' });
+                    return;
+                }
 
-            // Calculate the target position for the ordinal swap
-            let targetIndex: number;
-            if (direction === 'up') {
+                // Calculate the target position for the ordinal swap
+                let targetIndex: number;
+                if (direction === 'up') {
                 // Check if already at the top of the list
-                if (currentIndex === 0) {
-                    res.status(400).json({ error: 'File is already at the top' });
-                    return;
-                }
-                targetIndex = currentIndex - 1;
-            } else { // direction === 'down'
+                    if (currentIndex === 0) {
+                        res.status(400).json({ error: 'File is already at the top' });
+                        return;
+                    }
+                    targetIndex = currentIndex - 1;
+                } else { // direction === 'down'
                 // Check if already at the bottom of the list
-                if (currentIndex === numberedFiles.length - 1) {
-                    res.status(400).json({ error: 'File is already at the bottom' });
-                    return;
+                    if (currentIndex === numberedFiles.length - 1) {
+                        res.status(400).json({ error: 'File is already at the bottom' });
+                        return;
+                    }
+                    targetIndex = currentIndex + 1;
                 }
-                targetIndex = currentIndex + 1;
-            }
 
-            // Get the two files that will swap ordinals
-            const currentFile = numberedFiles[currentIndex];
-            const targetFile = numberedFiles[targetIndex];
+                // Get the two files that will swap ordinals
+                const currentFile = numberedFiles[currentIndex];
+                const targetFile = numberedFiles[targetIndex];
 
-            // Extract the numeric ordinal prefixes (including underscore)
-            const currentPrefix = currentFile.substring(0, currentFile.indexOf('_') + 1);
-            const targetPrefix = targetFile.substring(0, targetFile.indexOf('_') + 1);
+                // Extract the numeric ordinal prefixes (including underscore)
+                const currentPrefix = currentFile.substring(0, currentFile.indexOf('_') + 1);
+                const targetPrefix = targetFile.substring(0, targetFile.indexOf('_') + 1);
 
-            // Extract the actual names without the ordinal prefixes
-            const currentName = currentFile.substring(currentFile.indexOf('_') + 1);
-            const targetName = targetFile.substring(targetFile.indexOf('_') + 1);
+                // Extract the actual names without the ordinal prefixes
+                const currentName = currentFile.substring(currentFile.indexOf('_') + 1);
+                const targetName = targetFile.substring(targetFile.indexOf('_') + 1);
 
-            // Create new filenames by swapping the ordinal prefixes
-            const newCurrentName = targetPrefix + currentName;
-            const newTargetName = currentPrefix + targetName;
+                // Create new filenames by swapping the ordinal prefixes
+                const newCurrentName = targetPrefix + currentName;
+                const newTargetName = currentPrefix + targetName;
 
-            // Construct full paths for the rename operations
-            const currentPath = path.join(absoluteParentPath, currentFile);
-            const targetPath = path.join(absoluteParentPath, targetFile);
-            const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
+                // Construct full paths for the rename operations
+                const currentPath = path.join(absoluteParentPath, currentFile);
+                const targetPath = path.join(absoluteParentPath, targetFile);
+                const tempPath = path.join(absoluteParentPath, `temp_${Date.now()}_${currentFile}`);
 
-            // Validate all paths for security before proceeding
-            ifs.checkFileAccess(currentPath, root);
-            ifs.checkFileAccess(targetPath, root);
-            ifs.checkFileAccess(tempPath, root);
+                // Validate all paths for security before proceeding
+                ifs.checkFileAccess(currentPath, root);
+                ifs.checkFileAccess(targetPath, root);
+                ifs.checkFileAccess(tempPath, root);
 
-            // Perform atomic rename operation using temporary file to avoid conflicts
-            // Step 1: Move current file to temporary location
-            await ifs.rename(currentPath, tempPath);
-            // Step 2: Rename target file to current file's new name
-            await ifs.rename(targetPath, path.join(absoluteParentPath, newTargetName));
-            // Step 3: Move temporary file to target file's new name
-            await ifs.rename(tempPath, path.join(absoluteParentPath, newCurrentName));
+                // Perform atomic rename operation using temporary file to avoid conflicts
+                // Step 1: Move current file to temporary location
+                await ifs.rename(currentPath, tempPath);
+                // Step 2: Rename target file to current file's new name
+                await ifs.rename(targetPath, path.join(absoluteParentPath, newTargetName));
+                // Step 3: Move temporary file to target file's new name
+                await ifs.rename(tempPath, path.join(absoluteParentPath, newCurrentName));
 
-            console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
+                console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
             
-            // Return detailed information about the swap for UI updates
-            res.json({ 
-                success: true, 
-                message: 'Files moved successfully',
-                oldName1: currentFile,
-                newName1: newCurrentName,
-                oldName2: targetFile,
-                newName2: newTargetName
-            });
-        } catch (error) {
+                // Return detailed information about the swap for UI updates
+                res.json({ 
+                    success: true, 
+                    message: 'Files moved successfully',
+                    oldName1: currentFile,
+                    newName1: newCurrentName,
+                    oldName2: targetFile,
+                    newName2: newTargetName
+                });
+            } catch (error) {
             // Handle any errors that occurred during the move operation
-            svrUtil.handleError(error, res, 'Failed to move file or folder');
-        }
+                svrUtil.handleError(error, res, 'Failed to move file or folder');
+                throw error;
+            }
+        });
     }
 
     /**
@@ -590,215 +600,218 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */ 
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
-        try {
-            const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
+        return runTrans(async () => {
+            try {
+                const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
     
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
     
-            // sort the pasteItems string[] to ensure they are in the correct order
-            pasteItems.sort((a, b) => a.localeCompare(b));
+                // sort the pasteItems string[] to ensure they are in the correct order
+                pasteItems.sort((a, b) => a.localeCompare(b));
     
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad key' });
-                return;
-            }
-    
-            if (!targetFolder || !pasteItems || !Array.isArray(pasteItems) || pasteItems.length === 0) {
-                res.status(400).json({ error: 'targetFolder and pasteItems array are required' });
-                return;
-            }
-    
-            // Construct the absolute target path
-            const absoluteTargetPath = path.join(root, targetFolder);
-    
-            // Check if the target directory exists
-            ifs.checkFileAccess(absoluteTargetPath, root);
-            if (!await ifs.exists(absoluteTargetPath)) {
-                res.status(404).json({ error: 'Target directory not found' });
-                return;
-            }
-    
-            let pastedCount = 0;
-            const errors: string[] = [];
-    
-            // Determine insert ordinal for positional pasting
-            let insertOrdinal: number | null = null;
-            if (targetOrdinal) {
-                const underscoreIndex = targetOrdinal.indexOf('_');
-                if (underscoreIndex > 0) {
-                    const targetOrdinalNum = parseInt(targetOrdinal.substring(0, underscoreIndex));
-                    insertOrdinal = targetOrdinalNum + 1; // Insert after the target
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad key' });
+                    return;
                 }
-            }
     
-            if (!insertOrdinal) {
-                insertOrdinal = 0; // Default to inserting at the top if no ordinal is specified
-            }
+                if (!targetFolder || !pasteItems || !Array.isArray(pasteItems) || pasteItems.length === 0) {
+                    res.status(400).json({ error: 'targetFolder and pasteItems array are required' });
+                    return;
+                }
     
-            // Shift existing items down to make room for the number of items being pasted
-            // For same-folder reordering, we need to handle conflicts by temporarily moving files
-            // For cross-folder moves, we don't ignore any items since they're coming from different directories
-            let itemsToIgnore: string[] | null = null;
-            const tempMoves: { tempPath: string; originalPath: string; finalName: string }[] = [];
+                // Construct the absolute target path
+                const absoluteTargetPath = path.join(root, targetFolder);
+    
+                // Check if the target directory exists
+                ifs.checkFileAccess(absoluteTargetPath, root);
+                if (!await ifs.exists(absoluteTargetPath)) {
+                    res.status(404).json({ error: 'Target directory not found' });
+                    return;
+                }
+    
+                let pastedCount = 0;
+                const errors: string[] = [];
+    
+                // Determine insert ordinal for positional pasting
+                let insertOrdinal: number | null = null;
+                if (targetOrdinal) {
+                    const underscoreIndex = targetOrdinal.indexOf('_');
+                    if (underscoreIndex > 0) {
+                        const targetOrdinalNum = parseInt(targetOrdinal.substring(0, underscoreIndex));
+                        insertOrdinal = targetOrdinalNum + 1; // Insert after the target
+                    }
+                }
+    
+                if (!insertOrdinal) {
+                    insertOrdinal = 0; // Default to inserting at the top if no ordinal is specified
+                }
+    
+                // Shift existing items down to make room for the number of items being pasted
+                // For same-folder reordering, we need to handle conflicts by temporarily moving files
+                // For cross-folder moves, we don't ignore any items since they're coming from different directories
+                let itemsToIgnore: string[] | null = null;
+                const tempMoves: { tempPath: string; originalPath: string; finalName: string }[] = [];
             
-            // Check if any of the items being pasted are from the same target directory
-            const targetFolderNormalized = targetFolder === '/' ? '' : targetFolder;
-            const isSameFolderOperation = pasteItems.some(fullPath => {
-                const itemDir = path.dirname(fullPath);
-                const itemDirNormalized = itemDir === '.' ? '' : itemDir;
-                return itemDirNormalized === targetFolderNormalized;
-            });
+                // Check if any of the items being pasted are from the same target directory
+                const targetFolderNormalized = targetFolder === '/' ? '' : targetFolder;
+                const isSameFolderOperation = pasteItems.some(fullPath => {
+                    const itemDir = path.dirname(fullPath);
+                    const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                    return itemDirNormalized === targetFolderNormalized;
+                });
             
-            if (isSameFolderOperation) {
+                if (isSameFolderOperation) {
                 // For same-folder operations, temporarily move files out of the way first
                 // This prevents conflicts during ordinal shifting
+                    for (let i = 0; i < pasteItems.length; i++) {
+                        const itemFullPath = pasteItems[i];
+                        const itemDir = path.dirname(itemFullPath);
+                        const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                    
+                        // Only handle items from the same directory
+                        if (itemDirNormalized === targetFolderNormalized) {
+                            const itemName = path.basename(itemFullPath);
+                            const sourceFilePath = path.join(root, itemFullPath);
+                        
+                            if (await ifs.exists(sourceFilePath)) {
+                            // Create temporary filename
+                                const tempName = `temp_paste_${Date.now()}_${i}_${itemName}`;
+                                const tempPath = path.join(absoluteTargetPath, tempName);
+                            
+                                // Move to temporary location
+                                await ifs.rename(sourceFilePath, tempPath);
+                            
+                                // Calculate final name with new ordinal
+                                const currentOrdinal = insertOrdinal + i;
+                                const nameWithoutPrefix = itemName.includes('_') ? 
+                                    itemName.substring(itemName.indexOf('_') + 1) : itemName;
+                                const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
+                                const finalName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                            
+                                tempMoves.push({
+                                    tempPath,
+                                    originalPath: sourceFilePath,
+                                    finalName
+                                });
+                            }
+                        }
+                    }
+                
+                    // Now all same-folder items are out of the way, so don't ignore anything during shifting
+                    itemsToIgnore = null;
+                }
+            
+                const pathMapping = await docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
+            
+                // Update pasteItems with new paths after ordinal shifting
+                for (let i = 0; i < pasteItems.length; i++) {
+                    const originalPath = pasteItems[i];
+                    // console.log('  Checking if mapped to new name:', originalPath);
+                
+                    // Normalize the path by removing leading slash for comparison
+                    const normalizedOriginalPath = originalPath.startsWith('/') ? originalPath.substring(1) : originalPath;
+                
+                    // Check if any folder in the path hierarchy was renamed
+                    let updatedPath = originalPath;
+                    let pathChanged = false;
+                
+                    // Check each mapping to see if it affects this file's path
+                    for (const [oldFolderPath, newFolderPath] of pathMapping) {
+                    // Check if the file path starts with the old folder path
+                        if (normalizedOriginalPath.startsWith(oldFolderPath + '/') || normalizedOriginalPath === oldFolderPath) {
+                        // Replace the old folder path with the new one
+                            const relativePart = normalizedOriginalPath.substring(oldFolderPath.length);
+                            const newNormalizedPath = newFolderPath + relativePart;
+                            updatedPath = originalPath.startsWith('/') ? '/' + newNormalizedPath : newNormalizedPath;
+                            pathChanged = true;
+                            // console.log(`    Updated paste item path: ${originalPath} -> ${updatedPath}`);
+                            break;
+                        }
+                    }
+                
+                    if (pathChanged) {
+                        pasteItems[i] = updatedPath;
+                    } else {
+                    // console.log(`    No mapping needed for: ${originalPath}`);
+                    }
+                }
+                
+                // Move each file/folder
                 for (let i = 0; i < pasteItems.length; i++) {
                     const itemFullPath = pasteItems[i];
-                    const itemDir = path.dirname(itemFullPath);
-                    const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                    try {
+                        const itemDir = path.dirname(itemFullPath);
+                        const itemDirNormalized = itemDir === '.' ? '' : itemDir;
+                        const isFromSameFolder = itemDirNormalized === targetFolderNormalized;
                     
-                    // Only handle items from the same directory
-                    if (itemDirNormalized === targetFolderNormalized) {
-                        const itemName = path.basename(itemFullPath);
-                        const sourceFilePath = path.join(root, itemFullPath);
+                        if (isFromSameFolder && tempMoves.length > 0) {
+                        // Handle same-folder moves using temporary files
+                            const tempMove = tempMoves.find(tm => path.basename(tm.originalPath) === path.basename(itemFullPath));
+                            if (tempMove) {
+                                const finalFilePath = path.join(absoluteTargetPath, tempMove.finalName);
+                                // Move from temp location to final location
+                                await ifs.rename(tempMove.tempPath, finalFilePath);
+                                pastedCount++;
+                            } else {
+                                errors.push(`Temporary file not found for ${itemFullPath}`);
+                            }
+                        } else {
+                        // Handle cross-folder moves (regular logic)
+                            const itemName = path.basename(itemFullPath);
+                            const sourceFilePath = path.join(root, itemFullPath);
                         
-                        if (await ifs.exists(sourceFilePath)) {
-                            // Create temporary filename
-                            const tempName = `temp_paste_${Date.now()}_${i}_${itemName}`;
-                            const tempPath = path.join(absoluteTargetPath, tempName);
-                            
-                            // Move to temporary location
-                            await ifs.rename(sourceFilePath, tempPath);
-                            
-                            // Calculate final name with new ordinal
+                            // Check if source file exists
+                            if (!await ifs.exists(sourceFilePath)) {
+                                console.error(`Source file not found: ${itemFullPath}`);
+                                errors.push(`Source file not found: ${itemFullPath}`);
+                                continue;
+                            }
+
+                            let targetFileName = itemName;
                             const currentOrdinal = insertOrdinal + i;
+                                
+                            // Extract name without ordinal prefix if it exists
                             const nameWithoutPrefix = itemName.includes('_') ? 
                                 itemName.substring(itemName.indexOf('_') + 1) : itemName;
+                                
+                            // Create new filename with correct ordinal
                             const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
-                            const finalName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
+                            targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
                             
-                            tempMoves.push({
-                                tempPath,
-                                originalPath: sourceFilePath,
-                                finalName
-                            });
-                        }
-                    }
-                }
-                
-                // Now all same-folder items are out of the way, so don't ignore anything during shifting
-                itemsToIgnore = null;
-            }
-            
-            const pathMapping = await docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
-            
-            // Update pasteItems with new paths after ordinal shifting
-            for (let i = 0; i < pasteItems.length; i++) {
-                const originalPath = pasteItems[i];
-                // console.log('  Checking if mapped to new name:', originalPath);
-                
-                // Normalize the path by removing leading slash for comparison
-                const normalizedOriginalPath = originalPath.startsWith('/') ? originalPath.substring(1) : originalPath;
-                
-                // Check if any folder in the path hierarchy was renamed
-                let updatedPath = originalPath;
-                let pathChanged = false;
-                
-                // Check each mapping to see if it affects this file's path
-                for (const [oldFolderPath, newFolderPath] of pathMapping) {
-                    // Check if the file path starts with the old folder path
-                    if (normalizedOriginalPath.startsWith(oldFolderPath + '/') || normalizedOriginalPath === oldFolderPath) {
-                        // Replace the old folder path with the new one
-                        const relativePart = normalizedOriginalPath.substring(oldFolderPath.length);
-                        const newNormalizedPath = newFolderPath + relativePart;
-                        updatedPath = originalPath.startsWith('/') ? '/' + newNormalizedPath : newNormalizedPath;
-                        pathChanged = true;
-                        // console.log(`    Updated paste item path: ${originalPath} -> ${updatedPath}`);
-                        break;
-                    }
-                }
-                
-                if (pathChanged) {
-                    pasteItems[i] = updatedPath;
-                } else {
-                    // console.log(`    No mapping needed for: ${originalPath}`);
-                }
-            }
-                
-            // Move each file/folder
-            for (let i = 0; i < pasteItems.length; i++) {
-                const itemFullPath = pasteItems[i];
-                try {
-                    const itemDir = path.dirname(itemFullPath);
-                    const itemDirNormalized = itemDir === '.' ? '' : itemDir;
-                    const isFromSameFolder = itemDirNormalized === targetFolderNormalized;
-                    
-                    if (isFromSameFolder && tempMoves.length > 0) {
-                        // Handle same-folder moves using temporary files
-                        const tempMove = tempMoves.find(tm => path.basename(tm.originalPath) === path.basename(itemFullPath));
-                        if (tempMove) {
-                            const finalFilePath = path.join(absoluteTargetPath, tempMove.finalName);
-                            // Move from temp location to final location
-                            await ifs.rename(tempMove.tempPath, finalFilePath);
+                            const targetFilePath = path.join(absoluteTargetPath, targetFileName);
+
+                            // Safety check: ensure target doesn't already exist to prevent overwriting
+                            if (await ifs.exists(targetFilePath)) {
+                                console.error(`Target file already exists, skipping: ${targetFilePath}`);
+                                errors.push(`Target file already exists: ${targetFileName}`);
+                                continue;
+                            }
+
+                            // Move the file/folder
+                            await ifs.rename(sourceFilePath, targetFilePath);                    
                             pastedCount++;
-                        } else {
-                            errors.push(`Temporary file not found for ${itemFullPath}`);
                         }
-                    } else {
-                        // Handle cross-folder moves (regular logic)
-                        const itemName = path.basename(itemFullPath);
-                        const sourceFilePath = path.join(root, itemFullPath);
-                        
-                        // Check if source file exists
-                        if (!await ifs.exists(sourceFilePath)) {
-                            console.error(`Source file not found: ${itemFullPath}`);
-                            errors.push(`Source file not found: ${itemFullPath}`);
-                            continue;
-                        }
-
-                        let targetFileName = itemName;
-                        const currentOrdinal = insertOrdinal + i;
-                                
-                        // Extract name without ordinal prefix if it exists
-                        const nameWithoutPrefix = itemName.includes('_') ? 
-                            itemName.substring(itemName.indexOf('_') + 1) : itemName;
-                                
-                        // Create new filename with correct ordinal
-                        const newOrdinalPrefix = currentOrdinal.toString().padStart(4, '0');
-                        targetFileName = `${newOrdinalPrefix}_${nameWithoutPrefix}`;
-                            
-                        const targetFilePath = path.join(absoluteTargetPath, targetFileName);
-
-                        // Safety check: ensure target doesn't already exist to prevent overwriting
-                        if (await ifs.exists(targetFilePath)) {
-                            console.error(`Target file already exists, skipping: ${targetFilePath}`);
-                            errors.push(`Target file already exists: ${targetFileName}`);
-                            continue;
-                        }
-
-                        // Move the file/folder
-                        await ifs.rename(sourceFilePath, targetFilePath);                    
-                        pastedCount++;
+                    } catch (error) {
+                        console.error(`Error moving ${itemFullPath}:`, error);
+                        errors.push(`Failed to move ${itemFullPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
                     }
-                } catch (error) {
-                    console.error(`Error moving ${itemFullPath}:`, error);
-                    errors.push(`Failed to move ${itemFullPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
-            }
     
-            // Return response
-            res.json({
-                success: pastedCount > 0,
-                pastedCount,
-                totalItems: pasteItems.length,
-                errors: errors.length > 0 ? errors : undefined,
-                message: `Successfully pasted ${pastedCount} of ${pasteItems.length} items`
-            });
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to paste items');
-        }
+                // Return response
+                res.json({
+                    success: pastedCount > 0,
+                    pastedCount,
+                    totalItems: pasteItems.length,
+                    errors: errors.length > 0 ? errors : undefined,
+                    message: `Successfully pasted ${pastedCount} of ${pasteItems.length} items`
+                });
+            } catch (error) {
+                svrUtil.handleError(error, res, 'Failed to paste items');
+                throw error;
+            }
+        });
     }
     
     /**
@@ -837,111 +850,116 @@ class DocMod {
      * @returns void - Synchronous operation, no Promise needed
      */
     joinFiles = async (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        try {
+        return runTrans(async () => {
+            try {
             // Extract request parameters
-            const { filenames, treeFolder, docRootKey } = req.body;
+                const { filenames, treeFolder, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
-        
-            // Validate that we have enough files to perform a join operation
-            if (!filenames || !Array.isArray(filenames) || filenames.length < 2) {
-                res.status(400).json({ error: 'At least 2 filenames are required for joining' });
-                return;
-            }
-        
-            // Validate required tree folder parameter
-            if (!treeFolder) {
-                res.status(400).json({ error: 'Tree folder is required' });
-                return;
-            }
-        
-            // Construct absolute path and validate security access
-            const absoluteFolderPath = path.join(root, treeFolder);
-            ifs.checkFileAccess(absoluteFolderPath, root);
-        
-            // Read content from all files and collect metadata for sorting
-            const fileData: { filename: string; ordinal: number; content: string }[] = [];
-                    
-            for (const filename of filenames) {
-                // Construct path and validate file access permissions
-                const absoluteFilePath = path.join(absoluteFolderPath, filename);
-                ifs.checkFileAccess(absoluteFilePath, root);
-                        
-                // Verify file exists before attempting to read
-                if (!await ifs.exists(absoluteFilePath)) {
-                    res.status(404).json({ error: `File not found: ${filename}` });
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
                     return;
                 }
         
-                // Extract ordinal number for proper sorting
-                const ordinal = docUtil.getOrdinalFromName(filename);
-                        
-                // Read file content with error handling for unreadable files
-                let content = '';
-                try {
-                    content = await ifs.readFile(absoluteFilePath, 'utf8') as string;
-                } catch (error) {
-                    console.warn(`Could not read file ${filename} as text:`, error);
-                    // Continue with empty content rather than failing the entire operation
+                // Validate that we have enough files to perform a join operation
+                if (!filenames || !Array.isArray(filenames) || filenames.length < 2) {
+                    res.status(400).json({ error: 'At least 2 filenames are required for joining' });
+                    return;
                 }
         
-                // Store file data for sorting and joining
-                fileData.push({ filename, ordinal, content });
-            }
+                // Validate required tree folder parameter
+                if (!treeFolder) {
+                    res.status(400).json({ error: 'Tree folder is required' });
+                    return;
+                }
         
-            // Sort files by ordinal to maintain proper document order
-            fileData.sort((a, b) => a.ordinal - b.ordinal);
+                // Construct absolute path and validate security access
+                const absoluteFolderPath = path.join(root, treeFolder);
+                ifs.checkFileAccess(absoluteFolderPath, root);
         
-            // Concatenate content with consistent double newline separators
-            const joinedContent = fileData.map(file => file.content).join('\n\n');
-        
-            // Save combined content to the first file (lowest ordinal)
-            const firstFile = fileData[0];
-            const firstFilePath = path.join(absoluteFolderPath, firstFile.filename);
+                // Read content from all files and collect metadata for sorting
+                const fileData: { filename: string; ordinal: number; content: string }[] = [];
                     
-            // Write the joined content with security validation
-            ifs.checkFileAccess(firstFilePath, root);
-            await ifs.writeFile(firstFilePath, joinedContent, 'utf8');
-            console.log(`Joined content saved to: ${firstFile.filename}`);
-        
-            // Clean up by deleting all files except the first one
-            const deletedFiles: string[] = [];
-            for (let i = 1; i < fileData.length; i++) {
-                const fileToDelete = fileData[i];
-                const deleteFilePath = path.join(absoluteFolderPath, fileToDelete.filename);
+                for (const filename of filenames) {
+                // Construct path and validate file access permissions
+                    const absoluteFilePath = path.join(absoluteFolderPath, filename);
+                    ifs.checkFileAccess(absoluteFilePath, root);
                         
-                try {
-                    // Validate access and delete the file
-                    ifs.checkFileAccess(deleteFilePath, root);
-                    await ifs.unlink(deleteFilePath);
-                    deletedFiles.push(fileToDelete.filename);
-                    console.log(`Deleted file: ${fileToDelete.filename}`);
-                } catch (error) {
-                    console.error(`Error deleting file ${fileToDelete.filename}:`, error);
-                    // Continue with other deletions even if one fails
+                    // Verify file exists before attempting to read
+                    if (!await ifs.exists(absoluteFilePath)) {
+                        res.status(404).json({ error: `File not found: ${filename}` });
+                        return;
+                    }
+        
+                    // Extract ordinal number for proper sorting
+                    const ordinal = docUtil.getOrdinalFromName(filename);
+                        
+                    // Read file content with error handling for unreadable files
+                    let content = '';
+                    try {
+                        content = await ifs.readFile(absoluteFilePath, 'utf8') as string;
+                    } catch (error) {
+                        console.warn(`Could not read file ${filename} as text:`, error);
+                        // Continue with empty content rather than failing the entire operation
+                        throw error;
+                    }
+        
+                    // Store file data for sorting and joining
+                    fileData.push({ filename, ordinal, content });
                 }
-            }
         
-            // Return success response with operation details
-            res.json({ 
-                success: true, 
-                message: `Successfully joined ${fileData.length} files into ${firstFile.filename}`,
-                joinedFile: firstFile.filename,
-                deletedFiles: deletedFiles
-            });
+                // Sort files by ordinal to maintain proper document order
+                fileData.sort((a, b) => a.ordinal - b.ordinal);
         
-        } catch (error) {
+                // Concatenate content with consistent double newline separators
+                const joinedContent = fileData.map(file => file.content).join('\n\n');
+        
+                // Save combined content to the first file (lowest ordinal)
+                const firstFile = fileData[0];
+                const firstFilePath = path.join(absoluteFolderPath, firstFile.filename);
+                    
+                // Write the joined content with security validation
+                ifs.checkFileAccess(firstFilePath, root);
+                await ifs.writeFile(firstFilePath, joinedContent, 'utf8');
+                console.log(`Joined content saved to: ${firstFile.filename}`);
+        
+                // Clean up by deleting all files except the first one
+                const deletedFiles: string[] = [];
+                for (let i = 1; i < fileData.length; i++) {
+                    const fileToDelete = fileData[i];
+                    const deleteFilePath = path.join(absoluteFolderPath, fileToDelete.filename);
+                        
+                    try {
+                    // Validate access and delete the file
+                        ifs.checkFileAccess(deleteFilePath, root);
+                        await ifs.unlink(deleteFilePath);
+                        deletedFiles.push(fileToDelete.filename);
+                        console.log(`Deleted file: ${fileToDelete.filename}`);
+                    } catch (error) {
+                        console.error(`Error deleting file ${fileToDelete.filename}:`, error);
+                        // Continue with other deletions even if one fails
+                        throw error;
+                    }
+                }
+        
+                // Return success response with operation details
+                res.json({ 
+                    success: true, 
+                    message: `Successfully joined ${fileData.length} files into ${firstFile.filename}`,
+                    joinedFile: firstFile.filename,
+                    deletedFiles: deletedFiles
+                });
+        
+            } catch (error) {
             // Handle any errors that occurred during the join operation
-            svrUtil.handleError(error, res, 'Failed to join files');
-        }
+                svrUtil.handleError(error, res, 'Failed to join files');
+                throw error;
+            }
+        });
     }
 
     /**
@@ -986,104 +1004,107 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     makeFolder = async (req: Request<any, any, { filename: string; folderName: string; remainingContent: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Make Folder Request");
-        try {
+        return runTrans(async () => {
+            console.log("Make Folder Request");
+            try {
             // Extract request parameters
-            const { filename, folderName, remainingContent, treeFolder, docRootKey } = req.body;
+                const { filename, folderName, remainingContent, treeFolder, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Validate document root configuration
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
 
-            // Validate required parameters
-            if (!filename || !folderName || !treeFolder) {
-                res.status(400).json({ error: 'Filename, folder name, and treeFolder are required' });
-                return;
-            }
+                // Validate required parameters
+                if (!filename || !folderName || !treeFolder) {
+                    res.status(400).json({ error: 'Filename, folder name, and treeFolder are required' });
+                    return;
+                }
 
-            // Prevent excessively long folder names that could cause filesystem issues
-            if (folderName.length > 140) {
-                res.status(400).json({ error: 'Folder name is too long. Maximum 140 characters allowed.' });
-                return;
-            }
+                // Prevent excessively long folder names that could cause filesystem issues
+                if (folderName.length > 140) {
+                    res.status(400).json({ error: 'Folder name is too long. Maximum 140 characters allowed.' });
+                    return;
+                }
 
-            // Construct absolute paths for the conversion operation
-            const absoluteFolderPath = path.join(root, treeFolder);
-            const absoluteFilePath = path.join(absoluteFolderPath, filename);
+                // Construct absolute paths for the conversion operation
+                const absoluteFolderPath = path.join(root, treeFolder);
+                const absoluteFilePath = path.join(absoluteFolderPath, filename);
 
-            // Verify the parent directory exists and is accessible
-            ifs.checkFileAccess(absoluteFolderPath, root);
-            if (!await ifs.exists(absoluteFolderPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
+                // Verify the parent directory exists and is accessible
+                ifs.checkFileAccess(absoluteFolderPath, root);
+                if (!await ifs.exists(absoluteFolderPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
 
-            // Verify the target file exists
-            if (!await ifs.exists(absoluteFilePath)) {
-                res.status(404).json({ error: 'File not found' });
-                return;
-            }
+                // Verify the target file exists
+                if (!await ifs.exists(absoluteFilePath)) {
+                    res.status(404).json({ error: 'File not found' });
+                    return;
+                }
 
-            // Ensure the target is actually a file, not a directory
-            const fileStat = await ifs.stat(absoluteFilePath);
-            if (!fileStat.isFile()) {
-                res.status(400).json({ error: 'Path is not a file' });
-                return;
-            }
+                // Ensure the target is actually a file, not a directory
+                const fileStat = await ifs.stat(absoluteFilePath);
+                if (!fileStat.isFile()) {
+                    res.status(400).json({ error: 'Path is not a file' });
+                    return;
+                }
 
-            // Extract and preserve the numeric ordinal prefix from the original filename
-            // This maintains the position in the document tree after conversion
-            const underscoreIndex = filename.indexOf('_');
-            const numericPrefix = underscoreIndex !== -1 ? filename.substring(0, underscoreIndex + 1) : '';
+                // Extract and preserve the numeric ordinal prefix from the original filename
+                // This maintains the position in the document tree after conversion
+                const underscoreIndex = filename.indexOf('_');
+                const numericPrefix = underscoreIndex !== -1 ? filename.substring(0, underscoreIndex + 1) : '';
             
-            // Construct the new folder name with preserved ordinal prefix
-            const newFolderName = numericPrefix + folderName;
-            const absoluteNewFolderPath = path.join(absoluteFolderPath, newFolderName);
+                // Construct the new folder name with preserved ordinal prefix
+                const newFolderName = numericPrefix + folderName;
+                const absoluteNewFolderPath = path.join(absoluteFolderPath, newFolderName);
 
-            // Prevent naming conflicts with existing folders
-            if (await ifs.exists(absoluteNewFolderPath)) {
-                res.status(409).json({ error: 'A folder with this name already exists' });
-                return;
-            }
+                // Prevent naming conflicts with existing folders
+                if (await ifs.exists(absoluteNewFolderPath)) {
+                    res.status(409).json({ error: 'A folder with this name already exists' });
+                    return;
+                }
 
-            // Perform the conversion: delete original file and create folder
-            // Step 1: Remove the original file with security validation
-            ifs.checkFileAccess(absoluteFilePath, root);
-            await ifs.unlink(absoluteFilePath);
-            console.log(`File deleted: ${absoluteFilePath}`);
+                // Perform the conversion: delete original file and create folder
+                // Step 1: Remove the original file with security validation
+                ifs.checkFileAccess(absoluteFilePath, root);
+                await ifs.unlink(absoluteFilePath);
+                console.log(`File deleted: ${absoluteFilePath}`);
 
-            // Step 2: Create the new folder structure
-            ifs.checkFileAccess(absoluteNewFolderPath, root);
-            await ifs.mkdir(absoluteNewFolderPath, { recursive: true });
-            console.log(`Folder created: ${absoluteNewFolderPath}`);
+                // Step 2: Create the new folder structure
+                ifs.checkFileAccess(absoluteNewFolderPath, root);
+                await ifs.mkdir(absoluteNewFolderPath, { recursive: true });
+                console.log(`Folder created: ${absoluteNewFolderPath}`);
 
-            // Step 3: Optionally preserve content in a new file inside the folder
-            if (remainingContent && remainingContent.trim().length > 0) {
+                // Step 3: Optionally preserve content in a new file inside the folder
+                if (remainingContent && remainingContent.trim().length > 0) {
                 // Create a default file with ordinal "0001" to store the remaining content
-                const newFileName = '0001_file.md';
-                const newFilePath = path.join(absoluteNewFolderPath, newFileName);
+                    const newFileName = '0001_file.md';
+                    const newFilePath = path.join(absoluteNewFolderPath, newFileName);
                 
-                // Write the preserved content with security validation
-                ifs.checkFileAccess(newFilePath, root);
-                await ifs.writeFile(newFilePath, remainingContent, 'utf8');
-                console.log(`New file created with remaining content: ${newFilePath}`);
-            }
+                    // Write the preserved content with security validation
+                    ifs.checkFileAccess(newFilePath, root);
+                    await ifs.writeFile(newFilePath, remainingContent, 'utf8');
+                    console.log(`New file created with remaining content: ${newFilePath}`);
+                }
 
-            // Return success response with conversion details
-            res.json({ 
-                success: true, 
-                message: `File "${filename}" converted to folder "${newFolderName}" successfully${remainingContent && remainingContent.trim().length > 0 ? ' with remaining content saved as 0001_file.md' : ''}`,
-                folderName: newFolderName
-            });
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to convert file to folder');
-        }
+                // Return success response with conversion details
+                res.json({ 
+                    success: true, 
+                    message: `File "${filename}" converted to folder "${newFolderName}" successfully${remainingContent && remainingContent.trim().length > 0 ? ' with remaining content saved as 0001_file.md' : ''}`,
+                    folderName: newFolderName
+                });
+            } catch (error) {
+                svrUtil.handleError(error, res, 'Failed to convert file to folder');
+                throw error;
+            }
+        });
     }        
 }
 export const docMod = new DocMod();

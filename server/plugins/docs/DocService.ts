@@ -7,6 +7,7 @@ import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
+import { runTrans } from "../../Transactional.js";
 const { exec } = await import('child_process');
 
 /**
@@ -413,90 +414,93 @@ class DocService {
      * @returns Promise<void> - Sends success response with created filename or error
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Create File Request");
-        try {
+        return runTrans(async () => {
+            console.log("Create File Request");
+            try {
             // Extract parameters from request body
-            const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
+                const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Resolve and validate document root
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad root' });
-                return;
-            }
-
-            // Validate required parameters
-            if (!fileName || !treeFolder) {
-                res.status(400).json({ error: 'File name and treeFolder are required' });
-                return;
-            }
-
-            // Construct absolute path to parent directory
-            const absoluteParentPath = path.join(root, treeFolder);
-
-            // Verify parent directory exists and is accessible
-            ifs.checkFileAccess(absoluteParentPath, root); 
-            if (!await ifs.exists(absoluteParentPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
-
-            // Calculate insertion ordinal based on insertAfterNode
-            let insertOrdinal = 0; // Default: insert at top (ordinal 0)
-
-            if (insertAfterNode && insertAfterNode.trim() !== '') {
-                console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
-                
-                // Extract ordinal from the reference node name
-                const underscoreIndex = insertAfterNode.indexOf('_');
-                if (underscoreIndex !== -1) {
-                    const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
-                    insertOrdinal = afterNodeOrdinal + 1; // Insert after the reference node
+                // Resolve and validate document root
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
                 }
-            } else {
-                console.log(`Create new top file "${fileName}"`);
-            }
 
-            // Shift existing files down to make room for the new file
-            // This ensures proper ordinal sequence is maintained
-            await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+                // Validate required parameters
+                if (!fileName || !treeFolder) {
+                    res.status(400).json({ error: 'File name and treeFolder are required' });
+                    return;
+                }
 
-            // Create filename with ordinal prefix
-            const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
-            const newFileName = `${ordinalPrefix}_${fileName}`;
+                // Construct absolute path to parent directory
+                const absoluteParentPath = path.join(root, treeFolder);
+
+                // Verify parent directory exists and is accessible
+                ifs.checkFileAccess(absoluteParentPath, root); 
+                if (!await ifs.exists(absoluteParentPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
+
+                // Calculate insertion ordinal based on insertAfterNode
+                let insertOrdinal = 0; // Default: insert at top (ordinal 0)
+
+                if (insertAfterNode && insertAfterNode.trim() !== '') {
+                    console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
+                
+                    // Extract ordinal from the reference node name
+                    const underscoreIndex = insertAfterNode.indexOf('_');
+                    if (underscoreIndex !== -1) {
+                        const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
+                        insertOrdinal = afterNodeOrdinal + 1; // Insert after the reference node
+                    }
+                } else {
+                    console.log(`Create new top file "${fileName}"`);
+                }
+
+                // Shift existing files down to make room for the new file
+                // This ensures proper ordinal sequence is maintained
+                await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+
+                // Create filename with ordinal prefix
+                const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
+                const newFileName = `${ordinalPrefix}_${fileName}`;
             
-            // Auto-add .md extension if no extension is provided
-            let finalFileName = newFileName;
-            if (!path.extname(fileName)) {
-                finalFileName = `${newFileName}.md`;
-            }
+                // Auto-add .md extension if no extension is provided
+                let finalFileName = newFileName;
+                if (!path.extname(fileName)) {
+                    finalFileName = `${newFileName}.md`;
+                }
             
-            const newFilePath = path.join(absoluteParentPath, finalFileName);
+                const newFilePath = path.join(absoluteParentPath, finalFileName);
 
-            // Safety check: prevent overwriting existing files
-            if (await ifs.exists(newFilePath)) {
-                res.status(409).json({ error: 'A file with this name already exists at the target location' });
-                return;
-            }
+                // Safety check: prevent overwriting existing files
+                if (await ifs.exists(newFilePath)) {
+                    res.status(409).json({ error: 'A file with this name already exists at the target location' });
+                    return;
+                }
 
-            // Create the new file with empty content
-            await ifs.writeFile(newFilePath, '', 'utf8');
+                // Create the new file with empty content
+                await ifs.writeFile(newFilePath, '', 'utf8');
 
-            console.log(`File created successfully: ${newFilePath}`);
+                console.log(`File created successfully: ${newFilePath}`);
             
-            // Send success response with the created filename
-            res.json({ 
-                success: true, 
-                message: 'File created successfully',
-                fileName: finalFileName 
-            });
-        } catch (error) {
+                // Send success response with the created filename
+                res.json({ 
+                    success: true, 
+                    message: 'File created successfully',
+                    fileName: finalFileName 
+                });
+            } catch (error) {
             // Handle any errors during file creation
-            svrUtil.handleError(error, res, 'Failed to create file');
-        }
+                svrUtil.handleError(error, res, 'Failed to create file');
+                throw error;
+            }
+        });
     }
 
     /**
@@ -527,78 +531,81 @@ class DocService {
      * @returns Promise<void> - Sends success response with created folder name or error
      */
     createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        console.log("Create Folder Request");
-        try {
+        return runTrans(async () => {
+            console.log("Create Folder Request");
+            try {
             // Extract parameters from request body
-            const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
+                const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
-            // Get the appropriate file system implementation
-            const ifs = docUtil.getFileSystem(docRootKey);
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
             
-            // Resolve and validate document root
-            const root = config.getPublicFolderByKey(docRootKey).path;
-            if (!root) {
-                res.status(500).json({ error: 'bad key' });
-                return;
-            }
-
-            // Validate required parameters
-            if (!folderName || !treeFolder) {
-                res.status(400).json({ error: 'Folder name and treeFolder are required' });
-                return;
-            }
-
-            // Construct absolute path to parent directory
-            const absoluteParentPath = path.join(root, treeFolder);
-
-            // Verify parent directory exists and is accessible
-            ifs.checkFileAccess(absoluteParentPath, root);
-            if (!await ifs.exists(absoluteParentPath)) {
-                res.status(404).json({ error: 'Parent directory not found' });
-                return;
-            }
-
-            // Calculate insertion ordinal based on insertAfterNode
-            let insertOrdinal = 0; // Default: insert at top (ordinal 0)
-
-            if (insertAfterNode && insertAfterNode.trim() !== '') {
-                console.log(`Create folder "${folderName}" below node: ${insertAfterNode}`);
-                
-                // Extract ordinal from the reference node name
-                const underscoreIndex = insertAfterNode.indexOf('_');
-                if (underscoreIndex !== -1) {
-                    const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
-                    insertOrdinal = afterNodeOrdinal + 1; // Insert after the reference node
+                // Resolve and validate document root
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad key' });
+                    return;
                 }
-            } else {
-                console.log(`Create new top folder "${folderName}"`);
-            }
 
-            // Shift existing files/folders down to make room for the new folder
-            // This ensures proper ordinal sequence is maintained
-            await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+                // Validate required parameters
+                if (!folderName || !treeFolder) {
+                    res.status(400).json({ error: 'Folder name and treeFolder are required' });
+                    return;
+                }
 
-            // Create folder name with ordinal prefix
-            const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
-            const newFolderName = `${ordinalPrefix}_${folderName}`;
+                // Construct absolute path to parent directory
+                const absoluteParentPath = path.join(root, treeFolder);
+
+                // Verify parent directory exists and is accessible
+                ifs.checkFileAccess(absoluteParentPath, root);
+                if (!await ifs.exists(absoluteParentPath)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
+
+                // Calculate insertion ordinal based on insertAfterNode
+                let insertOrdinal = 0; // Default: insert at top (ordinal 0)
+
+                if (insertAfterNode && insertAfterNode.trim() !== '') {
+                    console.log(`Create folder "${folderName}" below node: ${insertAfterNode}`);
+                
+                    // Extract ordinal from the reference node name
+                    const underscoreIndex = insertAfterNode.indexOf('_');
+                    if (underscoreIndex !== -1) {
+                        const afterNodeOrdinal = parseInt(insertAfterNode.substring(0, underscoreIndex));
+                        insertOrdinal = afterNodeOrdinal + 1; // Insert after the reference node
+                    }
+                } else {
+                    console.log(`Create new top folder "${folderName}"`);
+                }
+
+                // Shift existing files/folders down to make room for the new folder
+                // This ensures proper ordinal sequence is maintained
+                await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+
+                // Create folder name with ordinal prefix
+                const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
+                const newFolderName = `${ordinalPrefix}_${folderName}`;
             
-            const newFolderPath = path.join(absoluteParentPath, newFolderName);
+                const newFolderPath = path.join(absoluteParentPath, newFolderName);
 
-            // Create the directory (recursive option ensures parent directories exist)
-            await ifs.mkdir(newFolderPath, { recursive: true });
+                // Create the directory (recursive option ensures parent directories exist)
+                await ifs.mkdir(newFolderPath, { recursive: true });
 
-            console.log(`Folder created successfully: ${newFolderPath}`);
+                console.log(`Folder created successfully: ${newFolderPath}`);
             
-            // Send success response with the created folder name
-            res.json({ 
-                success: true, 
-                message: 'Folder created successfully',
-                folderName: newFolderName 
-            });
-        } catch (error) {
+                // Send success response with the created folder name
+                res.json({ 
+                    success: true, 
+                    message: 'Folder created successfully',
+                    folderName: newFolderName 
+                });
+            } catch (error) {
             // Handle any errors during folder creation
-            svrUtil.handleError(error, res, 'Failed to create folder');
-        }
+                svrUtil.handleError(error, res, 'Failed to create folder');
+                throw error;
+            }
+        });
     }
 
     /**
