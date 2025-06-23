@@ -132,16 +132,54 @@ BEGIN
         -- Create new filename with updated ordinal prefix
         new_filename_text := lpad(new_ordinal_num::TEXT, prefix_length, '0') || '_' || name_without_prefix;
         
-        -- Update the filename in the database
-        UPDATE vfs_nodes 
-        SET 
-            filename = new_filename_text,
-            modified_time = NOW()
-        WHERE 
-            doc_root_key = root_key
-            AND parent_path = parent_path_param
-            AND filename = file_record.filename;
+        -- Check if this is a directory before updating
+        DECLARE
+            node_is_dir BOOLEAN := FALSE;
+            old_path TEXT;
+            new_path TEXT;
+        BEGIN
+            -- Check if node is a directory
+            SELECT is_directory INTO node_is_dir
+            FROM vfs_nodes
+            WHERE 
+                doc_root_key = root_key
+                AND parent_path = parent_path_param
+                AND filename = file_record.filename;
+                
+            -- If it's a directory, prepare paths for child updates
+            IF node_is_dir THEN
+                -- Construct paths based on parent_path format
+                IF parent_path_param = '' THEN
+                    old_path := '/' || file_record.filename;
+                    new_path := '/' || new_filename_text;
+                ELSE
+                    old_path := parent_path_param || '/' || file_record.filename;
+                    new_path := parent_path_param || '/' || new_filename_text;
+                END IF;
+            END IF;
             
+            -- Update the filename in the database
+            UPDATE vfs_nodes 
+            SET 
+                filename = new_filename_text,
+                modified_time = NOW()
+            WHERE 
+                doc_root_key = root_key
+                AND parent_path = parent_path_param
+                AND filename = file_record.filename;
+                
+            -- If it's a directory, update child paths after renaming
+            IF node_is_dir THEN
+                UPDATE vfs_nodes
+                SET 
+                    parent_path = new_path || SUBSTRING(parent_path FROM LENGTH(old_path) + 1),
+                    modified_time = NOW()
+                WHERE 
+                    doc_root_key = root_key
+                    AND parent_path LIKE old_path || '%';
+            END IF;
+        END;
+        
         -- Return the mapping for external reference tracking
         old_filename := file_record.filename;
         new_filename := new_filename_text;
@@ -624,7 +662,10 @@ BEGIN
             modified_time = NOW()
         WHERE 
             doc_root_key = root_key
-            AND parent_path LIKE old_full_path || '%';
+            AND (
+                parent_path = old_full_path OR
+                parent_path LIKE old_full_path || '/%'
+            );
             
         -- Log how many children were updated
         GET DIAGNOSTICS updated_count = ROW_COUNT;

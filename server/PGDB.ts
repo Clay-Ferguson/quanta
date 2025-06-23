@@ -18,7 +18,9 @@ interface PostgresConfig {
 class PGDB {
     private pool: Pool | null = null;
     private isInitialized: boolean = false;
-    public logEnabled: boolean = false; // Enable logging by default
+
+    // todo-0: admin panel needs to be able to flip this on/off
+    public logEnabled: boolean = false; 
 
     constructor() {}
 

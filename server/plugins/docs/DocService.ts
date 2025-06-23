@@ -8,6 +8,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
+import { printFolderStructure } from "./VFS/test/VFSTestCore.js";
 const { exec } = await import('child_process');
 
 /**
@@ -415,9 +416,12 @@ class DocService {
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
         return runTrans(async () => {
-            console.log("Create File Request");
+            const meta: {count: number} = await printFolderStructure(false);
+            // console.log(`Initial count before createFile: ${meta.count}`);
+
+            console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
-            // Extract parameters from request body
+                // Extract parameters from request body
                 const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
                 // Get the appropriate file system implementation
@@ -465,6 +469,13 @@ class DocService {
                 // Shift existing files down to make room for the new file
                 // This ensures proper ordinal sequence is maintained
                 await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+                const meta2: {count: number} = await printFolderStructure(false);
+                if (meta2.count !== meta.count) {
+                    // console.log(`files lost during ordinal shift: old count = ${meta.count}, new count = ${meta2.count}`);
+                    // await printFolderStructure(true);
+                    // await listAllVfsNodes();
+                    throw new Error(`files lost during ordinal shift: Rolling back`);
+                }
 
                 // Create filename with ordinal prefix
                 const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
@@ -495,6 +506,10 @@ class DocService {
                     message: 'File created successfully',
                     fileName: finalFileName 
                 });
+
+                console.log(`Current folder structure after file creation:`);
+                // todo-0: make this return a number so we can run a check before/after operations to check for file loss
+                printFolderStructure();
             } catch (error) {
             // Handle any errors during file creation
                 svrUtil.handleError(error, res, 'Failed to create file');

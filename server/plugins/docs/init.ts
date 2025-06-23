@@ -11,6 +11,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import pgdb from "../../PGDB.js";
 import docVFS from "./VFS/DocVFS.js";
+import { pgdbTest } from "./VFS/test/VFSTest.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,11 +36,11 @@ class DocsServerPlugin implements IServerPlugin {
 
             // Test PostgreSQL database functionality
             // todo-0: I was working on triggering rollbacks in the 'saveFile' and bizarrely I noticed thos pdgbTest running right after the rollback.
-            // try {
-            //     await pgdbTest(); 
-            // } catch (error) {
-            //     console.error('PGDB test failed during plugin initialization:', error);
-            // }
+            try {
+                await pgdbTest(); 
+            } catch (error) {
+                console.error('PGDB test failed during plugin initialization:', error);
+            }
         }
         else {
             console.warn('POSTGRES_HOST environment variable is not set. Skipping database initialization.');
@@ -50,8 +51,6 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
         context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage); 
 
-        // todo-0: research whether we can run 'runTrans' in a middleware instead of in 'saveFile' and do same for all these, in 
-        //         other words is there a middleware that can 'wrap' the rest of the chain of calls?
         // For now we only allow admin to access the docs API
         context.app.post('/api/docs/save-file/', httpServerUtil.verifyAdminHTTPSignature, docMod.saveFile); 
         context.app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docBinary.uploadFiles);

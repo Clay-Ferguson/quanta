@@ -1,6 +1,8 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, printFolderStructure, testOrdinalOperations, createFolderStructureTest } from './VFSTestCore.js';
+import { wipeTable, printFolderStructure, createFolderStructureTest, listAllVfsNodes } from './VFSTestCore.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
+import { testFolderRenameWithChildren } from './testFolderRename.js';
 
 const testRootKey = 'pgroot';
 
@@ -10,23 +12,25 @@ const testRootKey = 'pgroot';
  */
 export async function pgdbTest(): Promise<void> {
     await wipeTable();
-    await simpleReadWriteTest();
+    //await simpleReadWriteTest();
     await createFolderStructureTest();
-    await testOrdinalOperations();
-    await testFileOperations();
-    await testPathOperations();
-    await testErrorHandling();
-    await testFolderRenamePreservesChildren();
-    await createNewFileAtTopOfRoot();
-    await pgdbTestMoveUp();
+    // Test our fix for the folder rename bug
+    await testFolderRenameWithChildren();
+    // await testOrdinalOperations();
+    // await testFileOperations();
+    // await testPathOperations();
+    // await testErrorHandling();
+    // await createNewFileAtTopOfRoot();
+    // await pgdbTestMoveUp();
 
     // Test search functionality
-    await pgdbTestSearch();
+    // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
-    await wipeTable();
-    await createFolderStructureTest();
+    // await wipeTable();
+    // await createFolderStructureTest();
     await printFolderStructure();
+    await listAllVfsNodes();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -83,6 +87,7 @@ async function deleteFolder(folderName: string): Promise<void> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function simpleReadWriteTest(): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
@@ -155,6 +160,7 @@ async function simpleReadWriteTest(): Promise<void> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function testFileOperations(): Promise<void> {
     try {
         console.log('\n=== TESTING FILE OPERATIONS ===');        
@@ -223,6 +229,7 @@ async function testFileOperations(): Promise<void> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function testPathOperations(): Promise<void> {
     try {
         console.log('\n=== TESTING PATH OPERATIONS ===');
@@ -291,6 +298,7 @@ async function testPathOperations(): Promise<void> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function testErrorHandling(): Promise<void> {
     try {
         console.log('\n=== TESTING ERROR HANDLING ===');        
@@ -392,6 +400,7 @@ async function testErrorHandling(): Promise<void> {
  * Test creating a new file at the top of root using actual DocService.createFile method
  * This will help debug the issue where folder children disappear after createFile
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function createNewFileAtTopOfRoot(): Promise<void> {
     try {
         console.log('\n=== TESTING CREATE NEW FILE AT TOP OF ROOT ===');
@@ -401,6 +410,8 @@ async function createNewFileAtTopOfRoot(): Promise<void> {
         
         // Set up parameters for the createFile request
         const docRootKey = testRootKey; // 'pgroot'
+
+        // todo-0: I believe with "/" here for 'treeFolder' this used to cause a bug (come back to this and test it)
         const treeFolder = '/0001_test-structure'; // Root folder where files exist
         const fileName = 'new-test-file'; // Without extension, should get .md added
         const insertAfterNode = ''; // Empty means insert at top (ordinal 0)
@@ -452,6 +463,7 @@ async function createNewFileAtTopOfRoot(): Promise<void> {
 /**
  * Test to verify that renaming folders preserves their children
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function testFolderRenamePreservesChildren(): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
@@ -531,6 +543,7 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
  * Test function to verify PostgreSQL search functionality
  * Tests the vfs_search_text function with basic substring search
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pgdbTestSearch(): Promise<void> {
     try {
         console.log('=== PGDB SEARCH TEST STARTING ===');

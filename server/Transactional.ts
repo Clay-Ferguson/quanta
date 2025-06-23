@@ -17,6 +17,7 @@ interface SingleTransactionContext {
 
 const tranStore = new AsyncLocalStorage<TransactionContext>();
 const singleTranStore = new AsyncLocalStorage<SingleTransactionContext>();
+const enabled = true; 
 
 /**
  * Get the current transaction client. This should be used by DBManager methods
@@ -46,7 +47,7 @@ export function getTransactionClient(): PoolClient | null {
  */
 export async function runTrans__unused<T>(fn: () => Promise<T>): Promise<T> {
     // If database is not active, just run the function without transaction
-    if (!config.dbActive) {
+    if (!config.dbActive || !enabled) {
         return await fn();
     }
     
