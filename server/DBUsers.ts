@@ -1,5 +1,5 @@
-import { FileBase64Intf, UserProfile } from "../../../../common/types/CommonTypes.js";
-import { dbMgr } from "./DBManager.js";
+import { FileBase64Intf, UserProfile } from "../common/types/CommonTypes.js";
+import pgdb from "./PGDB.js";
 
 /**
  * Database operations for managing user data.
@@ -19,7 +19,7 @@ class DBUsers {
                 return false; // Can't check an empty key
             }
         
-            const result = await dbMgr.get(
+            const result = await pgdb.get(
                 'SELECT pub_key FROM blocked_keys WHERE pub_key = $1',
                 pub_key
             );
@@ -46,13 +46,13 @@ class DBUsers {
             }
 
             // First delete all attachments associated with this user's messages
-            await dbMgr.run(
+            await pgdb.query(
                 'DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE public_key = $1)',
                 pub_key
             );
 
             // Then delete all messages associated with the public key
-            await dbMgr.run(
+            await pgdb.query(
                 'DELETE FROM messages WHERE public_key = $1',
                 pub_key
             );
@@ -80,7 +80,7 @@ class DBUsers {
             }
         
             // Use INSERT ON CONFLICT DO NOTHING to avoid errors if the key is already blocked
-            await dbMgr.run(
+            await pgdb.query(
                 'INSERT INTO blocked_keys (pub_key) VALUES ($1) ON CONFLICT (pub_key) DO NOTHING',
                 pub_key
             );
@@ -114,7 +114,7 @@ class DBUsers {
             }
 
             // Use INSERT ON CONFLICT DO UPDATE to handle both insert and update cases
-            await dbMgr.run(
+            await pgdb.query(
                 `INSERT INTO user_info 
             (pub_key, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -155,7 +155,7 @@ class DBUsers {
                 return null;
             }
 
-            const userInfo = await dbMgr.get(
+            const userInfo = await pgdb.get(
                 `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
              FROM user_info 
              WHERE pub_key = $1`,

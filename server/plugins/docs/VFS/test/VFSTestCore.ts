@@ -52,7 +52,7 @@ async function buildDirectoryContents(dirPath: string, rootKey: string, indentLe
     // Get directory contents
     const dirResult = await pgdb.query(
         'SELECT * FROM vfs_readdir($1, $2)',
-        [dirPath, rootKey]
+        dirPath, rootKey
     );
     
     // Sort by ordinal to ensure proper order
@@ -106,7 +106,7 @@ export async function createFolderStructure(): Promise<void> {
         
         // First, ensure the root directory structure exists
         console.log('Creating root path...');
-        await pgdb.query('SELECT vfs_ensure_path($1, $2)', [rootPath, testRootKey]);
+        await pgdb.query('SELECT vfs_ensure_path($1, $2)', rootPath, testRootKey);
 
         // Create 3 root-level folders
         console.log('Creating 3 root-level folders...');
@@ -120,7 +120,7 @@ export async function createFolderStructure(): Promise<void> {
             console.log(`Creating root folder: ${fullFolderName}`);
             await pgdb.query(
                 'SELECT vfs_mkdir($1, $2, $3, $4) as folder_id',
-                [rootPath, fullFolderName, testRootKey, false]
+                rootPath, fullFolderName, testRootKey, false
             );
             
             // Now create contents inside this folder
@@ -135,7 +135,7 @@ export async function createFolderStructure(): Promise<void> {
                 
                 await pgdb.query(
                     'SELECT vfs_write_text_file($1, $2, $3, $4, $5) as file_id',
-                    [currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown']
+                    currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown'
                 );
             }
             
@@ -147,7 +147,7 @@ export async function createFolderStructure(): Promise<void> {
                 
                 await pgdb.query(
                     'SELECT vfs_mkdir($1, $2, $3, $4) as subfolder_id',
-                    [currentFolderPath, subfolderName, testRootKey, false]
+                    currentFolderPath, subfolderName, testRootKey, false
                 );
             }
         }
@@ -168,7 +168,7 @@ export async function checkInitialFolderStructureTest(): Promise<void> {
         // List root directory
         const rootDirResult = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2)',
-            [rootPath, testRootKey]
+            rootPath, testRootKey
         );
         
         console.log(`Root directory contains ${rootDirResult.rows.length} items:`);
@@ -180,7 +180,7 @@ export async function checkInitialFolderStructureTest(): Promise<void> {
                 const subDirPath = `${rootPath}/${row.filename}`;
                 const subDirResult = await pgdb.query(
                     'SELECT * FROM vfs_readdir($1, $2)',
-                    [subDirPath, testRootKey]
+                    subDirPath, testRootKey
                 );
                 
                 console.log(`    ${row.filename} contains ${subDirResult.rows.length} items:`);
@@ -194,14 +194,14 @@ export async function checkInitialFolderStructureTest(): Promise<void> {
         console.log('Testing ordinal functions...');
         const maxOrdinal = await pgdb.query(
             'SELECT vfs_get_max_ordinal($1, $2) as max_ordinal',
-            [rootPath, testRootKey]
+            rootPath, testRootKey
         );
         console.log(`Maximum ordinal in root: ${maxOrdinal.rows[0].max_ordinal}`);
 
         // Test getting ordinal from a specific filename
         const ordinalResult = await pgdb.query(
             'SELECT vfs_get_ordinal_from_name($1, $2, $3) as ordinal',
-            ['0003_three', rootPath, testRootKey]
+            '0003_three', rootPath, testRootKey
         );
         console.log(`Ordinal of '0003_three': ${ordinalResult.rows[0].ordinal}`);
 

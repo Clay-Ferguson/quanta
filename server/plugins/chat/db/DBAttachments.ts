@@ -1,5 +1,5 @@
 import { AttachmentInfo, FileBlob } from "../../../../common/types/CommonTypes.js";
-import { dbMgr } from "./DBManager.js";
+import pgdb from "../../../PGDB.js";
 
 /**
  * Database operations for handling file attachments.
@@ -15,7 +15,7 @@ class DBAttachments {
      */
     getAttachmentById = async (id: number): Promise<FileBlob | null> => {
         try {
-            const attachment = await dbMgr.get(
+            const attachment = await pgdb.get(
                 'SELECT data, type, name, size FROM attachments WHERE id = $1',
                 id
             );
@@ -51,14 +51,14 @@ class DBAttachments {
             }
 
             // First verify the attachment exists
-            const attachment = await dbMgr.get('SELECT id FROM attachments WHERE id = $1', id);
+            const attachment = await pgdb.get('SELECT id FROM attachments WHERE id = $1', id);
             if (!attachment) {
                 console.log(`Attachment with ID ${id} not found`);
                 return false;
             }
 
             // Delete the attachment
-            const result: any = await dbMgr.run('DELETE FROM attachments WHERE id = $1', id);
+            const result: any = await pgdb.query('DELETE FROM attachments WHERE id = $1', id);
             
             // Check if a row was affected
             const success = result.rowCount > 0;
@@ -104,7 +104,7 @@ class DBAttachments {
                     LIMIT $1
                 `;
                 
-            const rows = await dbMgr.all(query, limit);
+            const rows = await pgdb.all(query, limit);
             
             // Convert the rows to ensure proper data types and handle PostgreSQL case sensitivity
             const attachments: AttachmentInfo[] = rows.map((row: any) => ({

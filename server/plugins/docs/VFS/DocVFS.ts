@@ -69,7 +69,7 @@ class DocVFS {
             // Call the PostgreSQL search function
             const searchResult = await pgdb.query(
                 'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-                [query, treeFolder, docRootKey, searchMode, requireDate, searchOrder]
+                query, treeFolder, docRootKey, searchMode, requireDate, searchOrder
             );
             
             // Transform results to match the expected format (file-level results without line numbers)

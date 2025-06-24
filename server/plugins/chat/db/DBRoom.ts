@@ -1,5 +1,5 @@
 import { RoomInfo } from "../../../../common/types/CommonTypes.js";
-import { dbMgr } from "./DBManager.js";
+import pgdb from "../../../PGDB.js";
 
 /**
  * Database operations for managing chat rooms.
@@ -19,7 +19,7 @@ class DBRoom {
         
         try {
             // First, get the room ID
-            const room = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
+            const room = await pgdb.get('SELECT id FROM rooms WHERE name = $1', roomName);
             if (!room) {
                 console.log(`Room '${roomName}' not found, nothing to delete`);
                 return false;
@@ -29,7 +29,7 @@ class DBRoom {
             console.log(`Found room ID ${roomId} for room '${roomName}'`);
                 
             // Get all message IDs in this room to delete their attachments
-            const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = $1', roomId);
+            const messages = await pgdb.all('SELECT id FROM messages WHERE room_id = $1', roomId);
             const messageIds = messages.map(msg => msg.id);
                 
             // If there are messages, delete their attachments first
@@ -39,7 +39,7 @@ class DBRoom {
                 const placeholders = messageIds.map((_, index) => `$${index + 1}`).join(',');
                     
                 // Delete all attachments associated with these messages
-                const attachmentResult = await dbMgr.run(
+                const attachmentResult = await pgdb.query(
                     `DELETE FROM attachments WHERE message_id IN (${placeholders})`, 
                     ...messageIds
                 );
@@ -48,12 +48,12 @@ class DBRoom {
                 
             // Delete all messages in the room
             console.log(`Deleting messages in room '${roomName}'`);
-            const messageResult = await dbMgr.run('DELETE FROM messages WHERE room_id = $1', roomId);
+            const messageResult = await pgdb.query('DELETE FROM messages WHERE room_id = $1', roomId);
             console.log(`Deleted ${messageResult.rowCount} messages`);
                 
             // Finally, delete the room itself
             console.log(`Deleting room '${roomName}'`);
-            const roomResult: any = await dbMgr.run('DELETE FROM rooms WHERE id = $1', roomId);
+            const roomResult: any = await pgdb.query('DELETE FROM rooms WHERE id = $1', roomId);
                 
             const success = roomResult.rowCount > 0;
             if (success) {
@@ -81,14 +81,14 @@ class DBRoom {
         console.log(`Wiping all messages from room: ${roomName}`);
             
         // Get the room ID
-        const room = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
+        const room = await pgdb.get('SELECT id FROM rooms WHERE name = $1', roomName);
         if (!room) {
             console.log(`Room '${roomName}' not found, nothing to wipe`);
             return;
         }
             
         // Get all message IDs in this room to delete their attachments
-        const messages = await dbMgr.all('SELECT id FROM messages WHERE room_id = $1', room.id);
+        const messages = await pgdb.all('SELECT id FROM messages WHERE room_id = $1', room.id);
         const messageIds = messages.map((msg: any) => msg.id);
             
         // If there are messages, delete their attachments first
@@ -97,11 +97,11 @@ class DBRoom {
             const placeholders = messageIds.map((_, index) => `$${index + 1}`).join(',');
                 
             // Delete all attachments associated with these messages
-            await dbMgr.run(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, ...messageIds);
+            await pgdb.query(`DELETE FROM attachments WHERE message_id IN (${placeholders})`, ...messageIds);
         }
             
         // Delete all messages in the room
-        const result = await dbMgr.run('DELETE FROM messages WHERE room_id = $1', room.id);
+        const result = await pgdb.query('DELETE FROM messages WHERE room_id = $1', room.id);
         console.log(`Successfully wiped ${result.rowCount} messages from room '${roomName}'`);
     }
     
@@ -144,7 +144,7 @@ class DBRoom {
                 const messageId = `test-msg-${messageNumber}-${timestamp}`;
                         
                 // Insert the message
-                await dbMgr.run(
+                await pgdb.query(
                     `INSERT INTO messages (id, room_id, timestamp, sender, content, public_key, signature)
                              VALUES ($1, $2, $3, $4, $5, $6, $7)
                              ON CONFLICT (id) DO NOTHING`,
@@ -171,13 +171,19 @@ class DBRoom {
      */
     async getOrCreateRoom(roomName: string): Promise<number> {
         // Check if room exists
-        let result = await dbMgr.get('SELECT id FROM rooms WHERE name = $1', roomName);
+        let result = await pgdb.get('SELECT id FROM rooms WHERE name = $1', roomName);
         if (result) {
             return result.id;
         }
+        else {
+            console.log(`Room '${roomName}' not found, creating new room`);
+            // dump rooms
+            const rooms = await pgdb.all('SELECT * FROM rooms');
+            console.log('    Current rooms:', rooms);
+        }
         
         // Create new room if it doesn't exist
-        result = await dbMgr.run('INSERT INTO rooms (name) VALUES ($1) RETURNING id', roomName);
+        result = await pgdb.query('INSERT INTO rooms (name) VALUES ($1) RETURNING id', roomName);
         return result.rows[0].id;
     }
 
@@ -201,7 +207,7 @@ class DBRoom {
             ORDER BY r.name ASC
         `;
         
-            const rooms = await dbMgr.all(query);
+            const rooms = await pgdb.all(query);
             return rooms.map(room => ({
                 id: room.id,
                 name: room.name,

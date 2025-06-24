@@ -21,7 +21,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         // Execute the rename
         const renameResult = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [oldParentPath, oldFolderName, newParentPath, newFolderName, testRootKey]
+            oldParentPath, oldFolderName, newParentPath, newFolderName, testRootKey
         );
         
         console.log(`Rename operation result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
@@ -34,7 +34,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         const childPath = '/0001_test-structure/0001_one-renamed';
         const childFiles = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2)',
-            [childPath, testRootKey]
+            childPath, testRootKey
         );
         
         console.log(`Found ${childFiles.rows.length} items in renamed folder:`);
@@ -48,7 +48,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         const subfolderExists = await pgdb.query(
             'SELECT vfs_exists($1, $2, $3) as exists',
-            [childPath, '0006_subfolder1', testRootKey]
+            childPath, '0006_subfolder1', testRootKey
         );
         
         console.log(`Subfolder exists: ${subfolderExists.rows[0].exists ? 'Yes' : 'No'}`);
@@ -65,7 +65,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         const moveResult = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [sourcePath, sourceFolder, destPath, destFolder, testRootKey]
+            sourcePath, sourceFolder, destPath, destFolder, testRootKey
         );
         
         console.log(`Move operation result: ${moveResult.rows[0].success ? 'Success' : 'Failed'}`);
@@ -75,7 +75,7 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         const movedPath = `${destPath}/${destFolder}`;
         const movedFiles = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2)',
-            [movedPath, testRootKey]
+            movedPath, testRootKey
         );
         
         console.log(`\nFound ${movedFiles.rows.length} items in moved folder:`);

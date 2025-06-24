@@ -19,10 +19,6 @@ const tranStore = new AsyncLocalStorage<TransactionContext>();
 const singleTranStore = new AsyncLocalStorage<SingleTransactionContext>();
 const enabled = true; 
 
-/**
- * Get the current transaction client. This should be used by DBManager methods
- * when they are called within a transaction to ensure they use the same client.
- */
 export function getTransactionClient(): PoolClient | null {
     // First check if we're in a single transaction context
     const singleContext = singleTranStore.getStore();

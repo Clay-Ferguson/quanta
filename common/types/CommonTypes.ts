@@ -1,9 +1,3 @@
-export interface DBManagerIntf {
-    get: (sql: string, ...params: any[]) => Promise<any>;
-    all: (sql: string, ...params: any[]) => Promise<any[]>;
-    run(sql: any, ...params: any[]): Promise<any>;
-}
-
 export type KeyPairHex = {
     privateKey: string;
     publicKey: string

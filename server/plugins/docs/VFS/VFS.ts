@@ -80,7 +80,7 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT vfs_exists($1, $2, $3)',
-                [parentPath, filename, rootKey]
+                parentPath, filename, rootKey
             );
             
             return result.rows[0].vfs_exists;
@@ -110,7 +110,7 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT * FROM vfs_stat($1, $2, $3)',
-                [parentPath, filename, rootKey]
+                parentPath, filename, rootKey
             );
             
             if (result.rows.length === 0) {
@@ -141,7 +141,7 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT vfs_read_file($1, $2, $3)',
-                [parentPath, filename, rootKey]
+                parentPath, filename, rootKey
             );
             
             if (result.rows.length === 0) {
@@ -184,7 +184,7 @@ class VFS implements IFS {
                 
                 await pgdb.query(
                     'SELECT vfs_write_binary_file($1, $2, $3, $4, $5)',
-                    [parentPath, filename, content, rootKey, contentType]
+                    parentPath, filename, content, rootKey, contentType
                 );
             } else {
                 // Handle text files
@@ -197,7 +197,7 @@ class VFS implements IFS {
                 
                 await pgdb.query(
                     'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
-                    [parentPath, filename, textContent, rootKey, contentType]
+                    parentPath, filename, textContent, rootKey, contentType
                 );
             }
         } catch (error) {
@@ -274,7 +274,7 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT vfs_readdir_names($1, $2)',
-                [relativePath, rootKey]
+                relativePath, rootKey
             );
             
             return result.rows[0].vfs_readdir_names || [];
@@ -296,7 +296,7 @@ class VFS implements IFS {
                 // Get the next ordinal for this directory
                 const maxOrdinalResult = await pgdb.query(
                     'SELECT vfs_get_max_ordinal($1, $2)',
-                    [parentPath, rootKey]
+                    parentPath, rootKey
                 );
                 const maxOrdinal = maxOrdinalResult.rows[0].vfs_get_max_ordinal || 0;
                 const nextOrdinal = maxOrdinal + 1;
@@ -306,7 +306,7 @@ class VFS implements IFS {
             
             await pgdb.query(
                 'SELECT vfs_mkdir($1, $2, $3, $4)',
-                [parentPath, finalFilename, rootKey, options?.recursive || false]
+                parentPath, finalFilename, rootKey, options?.recursive || false
             );
         } catch (error) {
             console.error('VFS.mkdir error:', error);
@@ -330,7 +330,7 @@ class VFS implements IFS {
             
         const result = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey]
+            oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
         );
             
         // Log the diagnostic information
@@ -349,7 +349,7 @@ class VFS implements IFS {
             
             await pgdb.query(
                 'SELECT vfs_unlink($1, $2, $3)',
-                [parentPath, filename, rootKey]
+                parentPath, filename, rootKey
             );
         } catch (error) {
             console.error('VFS.unlink error:', error);
@@ -369,13 +369,13 @@ class VFS implements IFS {
                 // Use vfs_rmdir for directories
                 await pgdb.query(
                     'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
-                    [parentPath, filename, rootKey, options?.recursive || false, options?.force || false]
+                    parentPath, filename, rootKey, options?.recursive || false, options?.force || false
                 );
             } else {
                 // Use vfs_unlink for files
                 await pgdb.query(
                     'SELECT vfs_unlink($1, $2, $3)',
-                    [parentPath, filename, rootKey]
+                    parentPath, filename, rootKey
                 );
             }
         } catch (error) {

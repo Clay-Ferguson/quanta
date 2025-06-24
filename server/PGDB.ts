@@ -136,12 +136,13 @@ class PGDB {
     /**
      * Execute a database query using transaction client if available, otherwise use the pool
      */
-    async query(sql: string, params?: any[]): Promise<any> {
+    // todo-0: find all calls to this and make sure params is an ARRAY
+    async query(sql: string, ...params: any[]): Promise<any> {
         const transactionClient = getTransactionClient();
         if (transactionClient) {
-            return await transactionClient.query(sql, params);
+            return await transactionClient.query(sql, params.length > 0 ? params : undefined);
         }
-        return await this.internal_query(sql, params);
+        return await this.internal_query(sql, params.length > 0 ? params : undefined);
     }
 
     /**
@@ -162,7 +163,7 @@ class PGDB {
             }
         }
         
-        const result: QueryResult<any> = await this.pool!.query(sql, params);
+        const result: QueryResult<any> = await this.pool!.query(sql, params && params.length > 0 ? params : undefined);
 
         if (this.logEnabled) {
         // Log the query results
@@ -177,6 +178,18 @@ class PGDB {
         }
         
         return result;
+    }
+
+    // todo-0: find all calls to this and make sure params is an ARRAY
+    async get<T = any>(sql: any, ...params: any[]): Promise<T | undefined> {
+        const result = await this.query(sql, ...params);
+        return result.rows[0] as T;
+    }
+
+    // todo-0: find all calls to this and make sure params is an ARRAY
+    async all<T = any[]>(sql: any, ...params: any[]): Promise<T> {
+        const result = await this.query(sql, ...params);
+        return result.rows as T;
     }
 
     /**

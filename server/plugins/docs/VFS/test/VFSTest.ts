@@ -56,7 +56,7 @@ async function deleteFolder(folderName: string): Promise<void> {
         try {
             const rootContents = await pgdb.query(
                 'SELECT * FROM vfs_readdir($1, $2)',
-                [rootPath, testRootKey]
+                rootPath, testRootKey
             );
             console.log(`Found ${rootContents.rows.length} items in root:`);
             rootContents.rows.forEach((row: any) => {
@@ -69,7 +69,7 @@ async function deleteFolder(folderName: string): Promise<void> {
         // Check if the folder exists before trying to delete it
         const exists = await pgdb.query(
             'SELECT vfs_exists($1, $2, $3) as exists',
-            [rootPath, folderName, testRootKey]
+            rootPath, folderName, testRootKey
         );
         
         console.log(`Checking if ${folderName} exists in path '${rootPath}': ${exists.rows[0].exists}`);
@@ -80,7 +80,7 @@ async function deleteFolder(folderName: string): Promise<void> {
             // Delete the folder recursively (this will delete all contents too)
             const result = await pgdb.query(
                 'SELECT vfs_rmdir($1, $2, $3, $4, $5) as deleted_count',
-                [rootPath, folderName, testRootKey, true, false] // recursive=true, force=false
+                rootPath, folderName, testRootKey, true, false // recursive=true, force=false
             );
             
             console.log(`Successfully deleted folder ${folderName} and ${result.rows[0].deleted_count} items`);
@@ -113,7 +113,7 @@ async function simpleReadWriteTest(): Promise<void> {
         // Insert a test file record using our PostgreSQL function
         const result = await pgdb.query(
             'SELECT vfs_write_text_file($1, $2, $3, $4, $5) as file_id',
-            [testParentPath, testFilename, testContent.toString('utf8'), testRootKey, testContentType]
+            testParentPath, testFilename, testContent.toString('utf8'), testRootKey, testContentType
         );
         
         const fileId = result.rows[0].file_id;
@@ -124,7 +124,7 @@ async function simpleReadWriteTest(): Promise<void> {
         
         const readResult = await pgdb.query(
             'SELECT vfs_read_file($1, $2, $3) as content',
-            [testParentPath, testFilename, testRootKey]
+            testParentPath, testFilename, testRootKey
         );
         
         const retrievedContent = readResult.rows[0].content;
@@ -135,7 +135,7 @@ async function simpleReadWriteTest(): Promise<void> {
         // Also get file metadata using vfs_stat
         const statResult = await pgdb.query(
             'SELECT * FROM vfs_stat($1, $2, $3)',
-            [testParentPath, testFilename, testRootKey]
+            testParentPath, testFilename, testRootKey
         );
         
         if (statResult.rows.length > 0) {
@@ -154,7 +154,7 @@ async function simpleReadWriteTest(): Promise<void> {
         console.log('Testing directory listing...');
         const dirResult = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2)',
-            [testParentPath, testRootKey]
+            testParentPath, testRootKey
         );
         
         console.log(`Found ${dirResult.rows.length} files in directory ${testParentPath}:`);
@@ -180,7 +180,7 @@ async function testFileOperations(): Promise<void> {
         console.log('1. Testing vfs_stat function...');
         const statResult = await pgdb.query(
             'SELECT * FROM vfs_stat($1, $2, $3)',
-            [testPath, '0001_file1.md', testRootKey]
+            testPath, '0001_file1.md', testRootKey
         );
         
         if (statResult.rows.length > 0) {
@@ -197,7 +197,7 @@ async function testFileOperations(): Promise<void> {
         console.log('2. Testing vfs_rename function...');
         const renameResult = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey]
+            testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey
         );
         console.log(`   Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`   Diagnostic: ${renameResult.rows[0].diagnostic}`);
@@ -205,7 +205,7 @@ async function testFileOperations(): Promise<void> {
         console.log('3. Testing file read after rename...');
         const readRenamedResult = await pgdb.query(
             'SELECT vfs_read_file($1, $2, $3) as content',
-            [testPath, '0003_renamed-file_3.md', testRootKey]
+            testPath, '0003_renamed-file_3.md', testRootKey
         );
         const renamedContent = readRenamedResult.rows[0].content.toString('utf8');
         console.log(`   Read renamed file content: ${renamedContent.substring(0, 50)}...`);
@@ -213,14 +213,14 @@ async function testFileOperations(): Promise<void> {
         console.log('4. Testing vfs_unlink (file deletion)...');
         await pgdb.query(
             'SELECT vfs_unlink($1, $2, $3)',
-            [testPath, '0002_file2.md', testRootKey]
+            testPath, '0002_file2.md', testRootKey
         );
         console.log('   Successfully deleted 0002_file2.md');
         
         console.log('5. Verifying file no longer exists...');
         const existsAfterDelete = await pgdb.query(
             'SELECT vfs_exists($1, $2, $3) as exists',
-            [testPath, '0002_file2.md', testRootKey]
+            testPath, '0002_file2.md', testRootKey
         );
         console.log(`   File exists after deletion: ${existsAfterDelete.rows[0].exists}`);
         
@@ -245,22 +245,23 @@ async function testPathOperations(): Promise<void> {
         // Create each level manually
         await pgdb.query(
             'SELECT vfs_mkdir($1, $2, $3, $4)',
-            [basePath, '0011_deep', testRootKey, false]
+            basePath, '0011_deep', testRootKey, false
         );
         console.log('   Created 0011_deep directory');
         
         const deepPath1 = basePath + '/0011_deep';
         await pgdb.query(
             'SELECT vfs_mkdir($1, $2, $3, $4)',
-            [deepPath1, '0001_nested', testRootKey, false]
+            deepPath1, '0001_nested', testRootKey, false
         );
         console.log('   Created 0001_nested directory');
         
         const deepPath2 = deepPath1 + '/0001_nested';
         await pgdb.query(
             'SELECT vfs_mkdir($1, $2, $3, $4)',
-            [deepPath2, '0001_final', testRootKey, false]
-        );        console.log('   Created 0001_final directory');
+            deepPath2, '0001_final', testRootKey, false
+        );        
+        console.log('   Created 0001_final directory');
         
         console.log('2. Verifying each level of the nested path exists...');
         const pathChecks = [
@@ -272,7 +273,7 @@ async function testPathOperations(): Promise<void> {
         for (const check of pathChecks) {
             const exists = await pgdb.query(
                 'SELECT vfs_exists($1, $2, $3) as exists',
-                [check.path, check.folder, testRootKey]
+                check.path, check.folder, testRootKey
             );
             console.log(`   ${check.folder} exists: ${exists.rows[0].exists}`);
         }
@@ -281,7 +282,7 @@ async function testPathOperations(): Promise<void> {
         const finalDeepPath = deepPath2 + '/0001_final';
         await pgdb.query(
             'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
-            [finalDeepPath, '0001_deep-file.txt', 'File in deep nested path', testRootKey, 'text/plain']
+            finalDeepPath, '0001_deep-file.txt', 'File in deep nested path', testRootKey, 'text/plain'
         );
         console.log('   Created file in deep nested path');
         
@@ -289,7 +290,7 @@ async function testPathOperations(): Promise<void> {
         // Remove the deep nested structure
         await pgdb.query(
             'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
-            [basePath, '0011_deep', testRootKey, true, false]
+            basePath, '0011_deep', testRootKey, true, false
         );
         console.log('   Removed nested structure recursively');
         
@@ -313,7 +314,7 @@ async function testErrorHandling(): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
-                [testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown']
+                testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown'
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -325,7 +326,7 @@ async function testErrorHandling(): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_read_file($1, $2, $3)',
-                [testPath, '9999_nonexistent.md', testRootKey]
+                testPath, '9999_nonexistent.md', testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -337,7 +338,7 @@ async function testErrorHandling(): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_mkdir($1, $2, $3, $4)',
-                [testPath, 'invalid-dirname', testRootKey, false]
+                testPath, 'invalid-dirname', testRootKey, false
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -349,7 +350,7 @@ async function testErrorHandling(): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_get_ordinal_from_name($1, $2, $3)',
-                ['no-ordinal-file.md', testPath, testRootKey]
+                'no-ordinal-file.md', testPath, testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -361,7 +362,7 @@ async function testErrorHandling(): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_unlink($1, $2, $3)',
-                [testPath, '8888_does-not-exist.md', testRootKey]
+                testPath, '8888_does-not-exist.md', testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -373,7 +374,7 @@ async function testErrorHandling(): Promise<void> {
         // First, let's see what actually exists in the test directory
         const dirContents = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2)',
-            [testPath, testRootKey]
+            testPath, testRootKey
         );
         console.log(`   Current contents of ${testPath}:`);
         dirContents.rows.forEach((item: any) => {
@@ -387,7 +388,7 @@ async function testErrorHandling(): Promise<void> {
             try {
                 await pgdb.query(
                     'SELECT vfs_mkdir($1, $2, $3, $4)',
-                    [testPath, existingFolder.filename, testRootKey, false]
+                    testPath, existingFolder.filename, testRootKey, false
                 );
                 console.log('   **** ERROR ****: Should have failed but did not!');
                 failCount++;
@@ -421,7 +422,7 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         console.log('Sample database records:');
         const sampleRecords = await pgdb.query(
             'SELECT parent_path, filename, is_directory FROM vfs_nodes WHERE doc_root_key = $1 ORDER BY parent_path, filename LIMIT 10',
-            [testRootKey]
+            testRootKey
         );
         sampleRecords.rows.forEach((row: any) => {
             const type = row.is_directory ? '📁' : '📄';
@@ -438,7 +439,7 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         // First verify the folder exists
         const folderExists = await pgdb.query(
             'SELECT vfs_exists($1, $2, $3) as exists',
-            [oldParentPath, oldFilename, testRootKey]
+            oldParentPath, oldFilename, testRootKey
         );
         console.log(`Folder ${oldFilename} exists: ${folderExists.rows[0].exists}`);
         
@@ -448,21 +449,21 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         
         const beforeChildren = await pgdb.query(
             'SELECT COUNT(*) as count FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2',
-            [testRootKey, expectedChildPath]
+            testRootKey, expectedChildPath
         );
         console.log(`Children before rename: ${beforeChildren.rows[0].count}`);
         
         // List some actual children for debugging
         const sampleChildren = await pgdb.query(
             'SELECT filename, parent_path FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 LIMIT 5',
-            [testRootKey, expectedChildPath]
+            testRootKey, expectedChildPath
         );
         console.log(`Sample children found:`, sampleChildren.rows);
         
         // Perform the rename
         const renameResult = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey]
+            oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey
         );
         console.log(`Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`Diagnostic: ${renameResult.rows[0].diagnostic}`);
@@ -470,7 +471,7 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         // Count children after rename
         const afterChildren = await pgdb.query(
             'SELECT COUNT(*) as count FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2',
-            [testRootKey, `${oldParentPath}/${newFilename}`]
+            testRootKey, `${oldParentPath}/${newFilename}`
         );
         console.log(`Children after rename: ${afterChildren.rows[0].count}`);
         
@@ -515,14 +516,14 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Writing test file with searchable content...');
         await pgdb.query(
             'SELECT vfs_write_text_file($1, $2, $3, $4, $5) as file_id',
-            [testPath, testFileName, searchContent, testRootKey, 'text/markdown']
+            testPath, testFileName, searchContent, testRootKey, 'text/markdown'
         );
 
         // Test 1: Basic substring search (MATCH_ANY mode)
         console.log('Test 1: Basic substring search for "SEARCHME"...');
         const searchResult1 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            ['SEARCHME', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+            'SEARCHME', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult1.rows.length} files containing "SEARCHME"`);
@@ -542,7 +543,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 2: Search for "test file" (should match multiple files)...');
         const searchResult2 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            ['test file', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+            'test file', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult2.rows.length} files containing "test file"`);
@@ -555,7 +556,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 3: Search for unique string "UNIQUESTRING123"...');
         const searchResult3 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            ['UNIQUESTRING123', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+            'UNIQUESTRING123', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult3.rows.length} files containing "UNIQUESTRING123"`);
@@ -569,7 +570,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 4: Search for non-existent string "NOTFOUND12345"...');
         const searchResult4 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            ['NOTFOUND12345', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME']
+            'NOTFOUND12345', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult4.rows.length} files containing "NOTFOUND12345"`);
@@ -583,7 +584,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 5: MATCH_ALL search for "database postgresql" (both words must be present)...');
         const searchResult5 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            ['database postgresql', '/0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME']
+            'database postgresql', '/0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult5.rows.length} files containing both "database" and "postgresql"`);
