@@ -18,7 +18,7 @@ import { app } from '../../AppService';
 import { ChatAdminPageComp } from './ChatAdminPageComp';
 import DocViewerPage from '../../pages/DocViewerPage';
 
-declare const HOST: string;
+declare const CLIENT_HOST: string;
 declare const PORT: string;
 declare const SECURE: string;
 
@@ -43,7 +43,7 @@ class ChatClientPlugin implements IClientPlugin {
         gs.chatRoomHistory = []; 
 
         const chatSaveToServer = await context.idb.getItem(DBKeys.chatSaveToServer, true);
-        rtc.init(HOST, PORT, SECURE==='y', chatSaveToServer);
+        rtc.init(CLIENT_HOST, PORT, SECURE==='y', chatSaveToServer);
     }
 
     async notify() {

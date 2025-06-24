@@ -1,4 +1,5 @@
 host: "chat.quanta.wiki"
+clientHost: "chat.quanta.wiki"
 port: "443"
 secure: "y"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"

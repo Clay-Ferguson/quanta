@@ -15,6 +15,7 @@ logInit();
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = config.get("host"); 
 const PORT = config.get("port");
+const CLIENT_HOST = config.get("clientHost"); // This is the host for the web app, used in the client-side code
 
 // This is the port for the web app. It will be 'https' for prod, or 'http' for dev on localho
 const SECURE = config.get("secure");
@@ -72,6 +73,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         // Replace the placeholders with actual values
         const result = data
             .replace('{{HOST}}', HOST)
+            .replace('{{CLIENT_HOST}}', CLIENT_HOST)
             .replace('{{PORT}}', PORT)
             .replace('{{SECURE}}', SECURE)
             .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
