@@ -403,6 +403,7 @@ $$ LANGUAGE plpgsql;
 -- Equivalent to fs.unlinkSync() - deletes a file
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_unlink(
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -416,7 +417,8 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = parent_path_param
         AND filename = filename_param
-        AND is_directory = FALSE;
+        AND is_directory = FALSE
+        AND owner_id = owner_id_arg;
         
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     

@@ -22,8 +22,8 @@ export interface IFS {
 
     // File/directory manipulation
     rename(oldPath: string, newPath: string): Promise<void>;
-    unlink(path: string): Promise<void>;
-    rm(path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void>;
+    unlink(owner_id: number, path: string): Promise<void>;
+    rm(owner_id: number, path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void>;
 
     checkFileAccess(filename: string, root: string): void;
 }

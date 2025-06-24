@@ -342,14 +342,14 @@ class VFS implements IFS {
         }
     }
 
-    async unlink(fullPath: string): Promise<void> {
+    async unlink(owner_id: number, fullPath: string): Promise<void> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             const { parentPath, filename } = this.parsePath(relativePath);
             
             await pgdb.query(
-                'SELECT vfs_unlink($1, $2, $3)',
-                parentPath, filename, rootKey
+                'SELECT vfs_unlink($1, $2, $3, $4)',
+                owner_id, parentPath, filename, rootKey
             );
         } catch (error) {
             console.error('VFS.unlink error:', error);
@@ -357,7 +357,7 @@ class VFS implements IFS {
         }
     }
 
-    async rm(fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
+    async rm(owner_id: number, fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             const { parentPath, filename } = this.parsePath(relativePath);
@@ -374,8 +374,8 @@ class VFS implements IFS {
             } else {
                 // Use vfs_unlink for files
                 await pgdb.query(
-                    'SELECT vfs_unlink($1, $2, $3)',
-                    parentPath, filename, rootKey
+                    'SELECT vfs_unlink($1, $2, $3, $4)',
+                    owner_id, parentPath, filename, rootKey
                 );
             }
         } catch (error) {

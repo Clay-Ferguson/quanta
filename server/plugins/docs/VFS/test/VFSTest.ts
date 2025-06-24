@@ -219,8 +219,8 @@ async function testFileOperations(owner_id: number): Promise<void> {
         
         console.log('4. Testing vfs_unlink (file deletion)...');
         await pgdb.query(
-            'SELECT vfs_unlink($1, $2, $3)',
-            testPath, '0002_file2.md', testRootKey
+            'SELECT vfs_unlink($1, $2, $3, $4)',
+            owner_id, testPath, '0002_file2.md', testRootKey
         );
         console.log('   Successfully deleted 0002_file2.md');
         
@@ -370,8 +370,8 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         console.log('5. Testing deletion of non-existent file...');
         try {
             await pgdb.query(
-                'SELECT vfs_unlink($1, $2, $3)',
-                testPath, '8888_does-not-exist.md', testRootKey
+                'SELECT vfs_unlink($1, $2, $3, $4)',
+                owner_id, testPath, '8888_does-not-exist.md', testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;

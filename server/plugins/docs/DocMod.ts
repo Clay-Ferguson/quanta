@@ -317,6 +317,11 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             console.log("Delete File or Folder Request");
             try {
@@ -380,11 +385,11 @@ class DocMod {
                         ifs.checkFileAccess(absoluteTargetPath, root);
                         if (stat.isDirectory()) {
                         // Remove directory recursively
-                            await ifs.rm(absoluteTargetPath, { recursive: true, force: true });
+                            await ifs.rm(owner_id, absoluteTargetPath, { recursive: true, force: true });
                             console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                         } else {
                         // Remove file
-                            await ifs.unlink(absoluteTargetPath);
+                            await ifs.unlink(owner_id, absoluteTargetPath);
                             console.log(`File deleted successfully: ${absoluteTargetPath}`);
                         }
                     
@@ -952,7 +957,7 @@ class DocMod {
                     try {
                     // Validate access and delete the file
                         ifs.checkFileAccess(deleteFilePath, root);
-                        await ifs.unlink(deleteFilePath);
+                        await ifs.unlink(owner_id, deleteFilePath);
                         deletedFiles.push(fileToDelete.filename);
                         console.log(`Deleted file: ${fileToDelete.filename}`);
                     } catch (error) {
@@ -1095,7 +1100,7 @@ class DocMod {
                 // Perform the conversion: delete original file and create folder
                 // Step 1: Remove the original file with security validation
                 ifs.checkFileAccess(absoluteFilePath, root);
-                await ifs.unlink(absoluteFilePath);
+                await ifs.unlink(owner_id, absoluteFilePath);
                 console.log(`File deleted: ${absoluteFilePath}`);
 
                 // Step 2: Create the new folder structure
