@@ -329,8 +329,6 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
         if (response && response.success) {
             console.log("Waiting a second before querying to re-render tree...");
             // Automatically start editing the newly created file
-            // todo-0: this is a pretty bad hack here to have this timeout, and it periodically fails. I don't understand however, because it seems like
-            // our database commit should've completed by now, but maybe it has to do with the NodeJS "session-like" storage.
             setTimeout(async () => {
                 const updatedNodes = await reRenderTree();
                 const newFileNode = updatedNodes.find((n: any) => n.name ===response.fileName);
@@ -355,7 +353,7 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
                 else {
                     console.error('Newly created file node not found in treeNodes:', fileName);
                 }
-            }, 500);
+            }, 100);
         }
     } catch (error) {
         console.error('Error creating file:', error);

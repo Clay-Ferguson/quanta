@@ -6,7 +6,6 @@ import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
 import vfs from './VFS/VFS.js';
 import lfs from './IFS/LFS.js';
-import pgdb from '../../PGDB.js';
 const { exec } = await import('child_process');
 
 /**
@@ -131,7 +130,7 @@ class DocUtil {
 
         // Shift each file down by incrementing its ordinal prefix
         for (const file of filesToShift) {
-            console.log(`Shifting file: ${file}`);
+            // console.log(`Shifting file: ${file}`);
             
             // Skip files that should be ignored (e.g., newly created items)
             if (itemsToIgnore && itemsToIgnore.includes(file)) {

@@ -315,38 +315,30 @@ class VFS implements IFS {
     }
 
     // File/directory manipulation
-    // todo-0: we need a 'diagnostic' mode flag for this entire class, so we can do things like for examle in this file
-    //         we should query at least how many files are in the directory before and after the rename becuase if it's not the 
-    //         same we need to throw an error
     async rename(oldPath: string, newPath: string): Promise<void> {
-        console.log('VFS.rename:', oldPath, '->', newPath);
-        try {
-            const { rootKey: oldRootKey, relativePath: oldRelativePath } = this.getRelativePath(oldPath);
-            const { rootKey: newRootKey, relativePath: newRelativePath } = this.getRelativePath(newPath);
+        // console.log('VFS.rename:', oldPath, '->', newPath);
+        const { rootKey: oldRootKey, relativePath: oldRelativePath } = this.getRelativePath(oldPath);
+        const { rootKey: newRootKey, relativePath: newRelativePath } = this.getRelativePath(newPath);
             
-            // Ensure both paths are in the same root
-            if (oldRootKey !== newRootKey) {
-                throw new Error('Cannot rename across different VFS roots');
-            }
+        // Ensure both paths are in the same root
+        if (oldRootKey !== newRootKey) {
+            throw new Error('Cannot rename across different VFS roots');
+        }
             
-            const { parentPath: oldParentPath, filename: oldFilename } = this.parsePath(oldRelativePath);
-            const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newRelativePath);
+        const { parentPath: oldParentPath, filename: oldFilename } = this.parsePath(oldRelativePath);
+        const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newRelativePath);
             
-            const result = await pgdb.query(
-                'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-                [oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey]
-            );
+        const result = await pgdb.query(
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
+            [oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey]
+        );
             
-            // Log the diagnostic information
-            console.log(`VFS rename diagnostic: ${result.rows[0].diagnostic}`);
+        // Log the diagnostic information
+        // console.log(`VFS rename diagnostic: ${result.rows[0].diagnostic}`);
             
-            // If the operation wasn't successful, throw an error with the diagnostic message
-            if (!result.rows[0].success) {
-                throw new Error(`Failed to rename: ${result.rows[0].diagnostic}`);
-            }
-        } catch (error) {
-            console.error('VFS.rename error:', error);
-            throw error;
+        // If the operation wasn't successful, throw an error with the diagnostic message
+        if (!result.rows[0].success) {
+            throw new Error(`Failed to rename: ${result.rows[0].diagnostic}`);
         }
     }
 

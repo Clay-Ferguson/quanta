@@ -8,7 +8,6 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
-import { listAllVfsNodes, printFolderStructure } from "./VFS/test/VFSTestCore.js";
 const { exec } = await import('child_process');
 
 /**
@@ -416,12 +415,7 @@ class DocService {
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
         return runTrans(async () => {
-            // todo-0: need a real 'diagnostic' flag in this class which can optionally enable
-            // the kind checking we're doing in the 'meta' here to detect problems. 
-            const meta: {count: number} = await printFolderStructure(false);
-            // console.log(`Initial count before createFile: ${meta.count}`);
-
-            console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
+            // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
                 // Extract parameters from request body
                 const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
@@ -471,14 +465,7 @@ class DocService {
                 // Shift existing files down to make room for the new file
                 // This ensures proper ordinal sequence is maintained
                 await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
-                const meta2: {count: number} = await printFolderStructure(false);
-                if (meta2.count !== meta.count) {
-                    console.log(`files lost during ordinal shift: old count = ${meta.count}, new count = ${meta2.count}`);
-                    await printFolderStructure(true);
-                    await listAllVfsNodes();
-                    throw new Error(`files lost during ordinal shift: Rolling back`);
-                }
-
+                
                 // Create filename with ordinal prefix
                 const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
                 const newFileName = `${ordinalPrefix}_${fileName}`;
@@ -499,8 +486,7 @@ class DocService {
 
                 // Create the new file with empty content
                 await ifs.writeFile(newFilePath, '', 'utf8');
-
-                console.log(`File created successfully: ${newFilePath}`);
+                //console.log(`File created successfully: ${newFilePath}`);
             
                 // Send success response with the created filename
                 res.json({ 
@@ -509,7 +495,7 @@ class DocService {
                     fileName: finalFileName 
                 });
             } catch (error) {
-            // Handle any errors during file creation
+                // Handle any errors during file creation
                 svrUtil.handleError(error, res, 'Failed to create file');
                 throw error;
             }

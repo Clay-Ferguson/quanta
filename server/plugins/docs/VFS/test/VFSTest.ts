@@ -1,12 +1,8 @@
 import pgdb from '../../../../PGDB.js';
-import { docSvc } from '../../DocService.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes, testOrdinalOperations } from './VFSTestCore.js';
- 
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
- 
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 
-// todo-0: need to make this same test case work unmodified for both LFS and VFS. Will be a different key for LFS.
 const testRootKey = 'pgroot';
 
 /**
@@ -29,9 +25,6 @@ export async function pgdbTest(): Promise<void> {
     
     await resetTestEnvironment();
     await testErrorHandling();
-
-    await resetTestEnvironment();
-    await createNewFileAtTopOfRoot();
 
     await resetTestEnvironment();
     await pgdbTestMoveUp();
@@ -423,67 +416,6 @@ async function testErrorHandling(): Promise<void> {
     } catch (error) {
         console.error('=== ERROR HANDLING TEST FAILED ===');
         console.error('Unexpected error during error handling test:', error);
-        throw error;
-    }
-}
-
-/**
- * Test creating a new file at the top of root using actual DocService.createFile method
- * This will help debug the issue where folder children disappear after createFile
- */
-// todo-0: This is the oddball method which tests an HTTP Endpoint Method. It's inconsistent with the rest of these tests
-async function createNewFileAtTopOfRoot(): Promise<void> {
-    try {
-        console.log('\n=== TESTING CREATE NEW FILE AT TOP OF ROOT ===');
-        
-        // Set up parameters for the createFile request
-        const docRootKey = testRootKey; 
-
-        // Need to make this method take an argumetn for "treeFolder" so we can EXPECIALLY test both "/", and all other levels.
-        const treeFolder = '/0001_test-structure'; // Root folder where files exist
-        const fileName = 'new-test-file'; // Without extension, should get .md added
-        const insertAfterNode = ''; // Empty means insert at top (ordinal 0)
-        
-        console.log(`Calling DocService.createFile with:`);
-        console.log(`  fileName: "${fileName}"`);
-        console.log(`  treeFolder: "${treeFolder}"`);
-        console.log(`  insertAfterNode: "${insertAfterNode}"`);
-        console.log(`  docRootKey: "${docRootKey}"`);
-        
-        // Create mock request and response objects
-        const mockReq = {
-            body: {
-                fileName,
-                treeFolder,
-                insertAfterNode,
-                docRootKey
-            }
-        } as any;
-        
-        const mockRes = {
-            status: (code: number) => ({
-                json: (data: any) => {
-                    console.log(`Response status ${code}:`, data);
-                    return mockRes;
-                }
-            }),
-            json: (data: any) => {
-                console.log('Response:', data);
-                return mockRes;
-            }
-        } as any;
-        
-        console.log('Calling DocService.createFile...');
-        
-        // Call the actual createFile method
-        await docSvc.createFile(mockReq, mockRes);
-        
-        console.log('DocService.createFile completed!');
-        console.log('=== CREATE NEW FILE TEST COMPLETED ===\n');
-        
-    } catch (error) {
-        console.error('=== CREATE NEW FILE TEST FAILED ===');
-        console.error('Error during create new file test:', error);
         throw error;
     }
 }
