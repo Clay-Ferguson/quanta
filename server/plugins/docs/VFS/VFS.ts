@@ -134,14 +134,14 @@ class VFS implements IFS {
     }
 
     // File content operations
-    async readFile(fullPath: string, encoding?: BufferEncoding): Promise<string | Buffer> {
+    async readFile(owner_id: number, fullPath: string, encoding?: BufferEncoding): Promise<string | Buffer> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             const { parentPath, filename } = this.parsePath(relativePath);
             
             const result = await pgdb.query(
-                'SELECT vfs_read_file($1, $2, $3)',
-                parentPath, filename, rootKey
+                'SELECT vfs_read_file($1, $2, $3, $4)',
+                owner_id, parentPath, filename, rootKey
             );
             
             if (result.rows.length === 0) {

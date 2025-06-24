@@ -21,7 +21,7 @@ export async function pgdbTest(): Promise<void> {
     await simpleReadWriteTest(owner_id);
 
     await resetTestEnvironment();
-    await testFileOperations();
+    await testFileOperations(owner_id);
 
     await resetTestEnvironment();
     await testPathOperations();
@@ -129,8 +129,8 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         console.log('Reading test record back...');
         
         const readResult = await pgdb.query(
-            'SELECT vfs_read_file($1, $2, $3) as content',
-            testParentPath, testFilename, testRootKey
+            'SELECT vfs_read_file($1, $2, $3, $4) as content',
+            owner_id, testParentPath, testFilename, testRootKey
         );
         
         const retrievedContent = readResult.rows[0].content;
@@ -179,7 +179,7 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
 
 
  
-async function testFileOperations(): Promise<void> {
+async function testFileOperations(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FILE OPERATIONS ===');        
         const testPath = '/0001_test-structure/0002_two';  // Test in the 'two' folder
@@ -211,8 +211,8 @@ async function testFileOperations(): Promise<void> {
         
         console.log('3. Testing file read after rename...');
         const readRenamedResult = await pgdb.query(
-            'SELECT vfs_read_file($1, $2, $3) as content',
-            testPath, '0003_renamed-file_3.md', testRootKey
+            'SELECT vfs_read_file($1, $2, $3, $4) as content',
+            owner_id, testPath, '0003_renamed-file_3.md', testRootKey
         );
         const renamedContent = readRenamedResult.rows[0].content.toString('utf8');
         console.log(`   Read renamed file content: ${renamedContent.substring(0, 50)}...`);
@@ -334,8 +334,8 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         console.log('2. Testing file not found error...');
         try {
             await pgdb.query(
-                'SELECT vfs_read_file($1, $2, $3)',
-                testPath, '9999_nonexistent.md', testRootKey
+                'SELECT vfs_read_file($1, $2, $3, $4)',
+                owner_id, testPath, '9999_nonexistent.md', testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;

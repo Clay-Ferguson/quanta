@@ -121,7 +121,7 @@ class DocBinary {
             res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
             
             // Read the image file and send it as the response
-            const imageBuffer = await ifs.readFile(absoluteImagePath);
+            const imageBuffer = await ifs.readFile(owner_id, absoluteImagePath);
             res.send(imageBuffer);
             
         } catch (error) {

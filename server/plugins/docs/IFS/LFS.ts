@@ -23,7 +23,7 @@ class LFS implements IFS {
     }
 
     // File content operations
-    async readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer> {
+    async readFile(owner_id: number, path: string, encoding?: BufferEncoding): Promise<string | Buffer> {
         if (encoding) {
             return await fs.promises.readFile(path, encoding);
         }

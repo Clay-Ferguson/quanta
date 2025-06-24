@@ -88,7 +88,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_get_max_ordinal
 -- Equivalent to DocUtil.getMaxOrdinal() - finds highest ordinal in a directory
@@ -160,6 +159,7 @@ $$ LANGUAGE plpgsql;
 -- Returns BYTEA for compatibility, but content comes from appropriate column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_read_file(
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     root_key TEXT
@@ -177,7 +177,8 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = parent_path_param
         AND filename = filename_param
-        AND is_directory = FALSE;
+        AND is_directory = FALSE
+        AND (owner_id = owner_id_arg OR is_public = TRUE); 
         
     -- Check if file was found
     IF is_binary_file IS NULL THEN
@@ -200,7 +201,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_text_file(
-    owner_id INTEGER,
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     content_data TEXT,
@@ -236,7 +237,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
-        owner_id,
+        owner_id_arg,
         root_key,
         parent_path_param,
         final_filename,
@@ -269,7 +270,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_binary_file(
-    owner_id INTEGER,
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     content_data BYTEA,
@@ -305,7 +306,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
-        owner_id,
+        owner_id_arg,
         root_key,
         parent_path_param,
         final_filename,
@@ -532,7 +533,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_mkdir(
-    owner_id INTEGER,
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
@@ -571,7 +572,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
-        owner_id,
+        owner_id_arg,
         root_key,
         parent_path_param,
         final_dirname,
@@ -801,7 +802,7 @@ $$ LANGUAGE plpgsql;
 -- Helper function to create directory path recursively (like mkdir -p)
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_ensure_path(
-    owner_id INTEGER,
+    owner_id_arg INTEGER,
     full_path TEXT,
     root_key TEXT
 ) 
@@ -827,7 +828,7 @@ BEGIN
         
         -- Check if this directory exists
         IF NOT vfs_exists(current_path, part, root_key) THEN
-            PERFORM vfs_mkdir(owner_id, current_path, part, root_key, TRUE);
+            PERFORM vfs_mkdir(owner_id_arg, current_path, part, root_key, TRUE);
         END IF;
         
         -- Update current path
