@@ -8,7 +8,6 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
-import pgdb from "../../PGDB.js";
 const { exec } = await import('child_process');
 
 /**
@@ -188,8 +187,7 @@ class DocService {
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
-        // todo-0: tree render is not yet converted to a secure post request, so we use admin profile for now
-        const owner_id = pgdb.adminProfile!.id!; 
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
         if (!owner_id) {
             res.status(401).json({ error: 'Unauthorized: User profile not found' });
             return;
@@ -200,6 +198,7 @@ class DocService {
         try {
             // Extract the folder path from the URL after the API prefix
             // Example: "/api/docs/render/docs/folder" -> "/folder"
+            // todo-0: this string repacement is super ugly. Do something better.
             const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
             

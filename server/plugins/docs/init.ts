@@ -47,11 +47,11 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     private initRoutes(context: IAppContext) {
-
-        context.app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); // todo-0: needs to be a signed request (probably 'post' not a get)
-        context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage);  // todo-0: needs to be a signed request (probably 'post' not a get)
+        // todo-1: for now we don't have any security on attachments, and these files are accessed using admin authority
+        context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage);  
 
         // For now we only allow admin to access the docs API
+        context.app.post('/api/docs/render/:docRootKey/*', httpServerUtil.verifyReqHTTPSignature, docSvc.treeRender); 
         context.app.post('/api/docs/save-file/', httpServerUtil.verifyReqHTTPSignature, docMod.saveFile);
         context.app.post('/api/docs/upload', httpServerUtil.verifyReqHTTPSignature, docBinary.uploadFiles);
         context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyReqHTTPSignature, docMod.renameFolder); 

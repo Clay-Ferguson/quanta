@@ -1073,7 +1073,7 @@ export default function TreeViewerPage() {
             // setIsLoading(true);
             setError(null);
             const url = `/api/docs/render/${gs.docsRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
-            const treeResponse: TreeRender_Response | null = await httpClientUtil.httpGet(url);
+            const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
                 
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
