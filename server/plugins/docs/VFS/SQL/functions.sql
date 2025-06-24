@@ -194,6 +194,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_text_file(
+    owner_id INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     content_data TEXT,
@@ -216,6 +217,7 @@ BEGIN
     END IF;
     
     INSERT INTO vfs_nodes (
+        owner_id,
         doc_root_key,
         parent_path,
         filename,
@@ -228,6 +230,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
+        owner_id,
         root_key,
         parent_path_param,
         final_filename,
@@ -260,6 +263,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_write_binary_file(
+    owner_id INTEGER,
     parent_path_param TEXT,
     filename_param TEXT,
     content_data BYTEA,
@@ -282,6 +286,7 @@ BEGIN
     END IF;
     
     INSERT INTO vfs_nodes (
+        owner_id,
         doc_root_key,
         parent_path,
         filename,
@@ -294,6 +299,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
+        owner_id,
         root_key,
         parent_path_param,
         final_filename,
@@ -520,6 +526,7 @@ $$ LANGUAGE plpgsql;
 -- Uses filename prefixes for ordinal management instead of ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_mkdir(
+    owner_id INTEGER,
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
@@ -545,6 +552,7 @@ BEGIN
     
     -- Create the directory
     INSERT INTO vfs_nodes (
+        owner_id,
         doc_root_key,
         parent_path,
         filename,
@@ -557,6 +565,7 @@ BEGIN
         created_time,
         modified_time
     ) VALUES (
+        owner_id,
         root_key,
         parent_path_param,
         final_dirname,
@@ -786,6 +795,7 @@ $$ LANGUAGE plpgsql;
 -- Helper function to create directory path recursively (like mkdir -p)
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_ensure_path(
+    owner_id INTEGER,
     full_path TEXT,
     root_key TEXT
 ) 
@@ -811,7 +821,7 @@ BEGIN
         
         -- Check if this directory exists
         IF NOT vfs_exists(current_path, part, root_key) THEN
-            PERFORM vfs_mkdir(current_path, part, root_key, TRUE);
+            PERFORM vfs_mkdir(owner_id, current_path, part, root_key, TRUE);
         END IF;
         
         -- Update current path

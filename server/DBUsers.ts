@@ -1,4 +1,4 @@
-import { FileBase64Intf, UserProfile } from "../common/types/CommonTypes.js";
+import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./PGDB.js";
 
 /**
@@ -142,6 +142,42 @@ class DBUsers {
     }
 
     /**
+     * Retrieves a subset of user's profile information from the database.
+     * 
+     * @param publicKey - The public key of the user to retrieve
+     * @returns A Promise resolving to the user profile object or null if not found
+     */
+    getUserInfoCompact = async (publicKey: string): Promise<UserProfileCompact | null> => {
+        try {
+            if (!publicKey) {
+                console.error('Cannot get user info without a public key');
+                return null;
+            }
+
+            const userInfo = await pgdb.get(
+                `SELECT id, user_name, pub_key
+             FROM user_info 
+             WHERE pub_key = $1`,
+                publicKey
+            );
+
+            if (!userInfo) {
+                return null;
+            }
+
+            const userProfile: UserProfileCompact = {
+                id: userInfo.id,
+                name: userInfo.user_name,
+                publicKey
+            };
+            return userProfile;
+        } catch (error) {
+            console.error('Error retrieving user info:', error);
+            return null;
+        }
+    }
+
+    /**
      * Retrieves a user's profile information from the database.
      * Converts binary avatar data back to a base64 data URL if available.
      * 
@@ -156,7 +192,7 @@ class DBUsers {
             }
 
             const userInfo = await pgdb.get(
-                `SELECT user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
+                `SELECT id, user_name, user_desc, avatar_name, avatar_type, avatar_size, avatar_data 
              FROM user_info 
              WHERE pub_key = $1`,
                 publicKey
@@ -178,6 +214,7 @@ class DBUsers {
             }
 
             const userProfile: UserProfile = {
+                id: userInfo.id,
                 name: userInfo.user_name,
                 description: userInfo.user_desc,
                 avatar,

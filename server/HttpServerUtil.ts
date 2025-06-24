@@ -1,13 +1,9 @@
 import { crypt } from "../common/Crypto.js";
 import { Request, Response } from 'express';
-import { SignableObject } from "../common/types/CommonTypes.js";
+import { SignableObject, UserProfileCompact } from "../common/types/CommonTypes.js";
 import { config } from "./Config.js";
-
-// Extend the Express Request interface to include userProfile
-// This is done outside any namespace to avoid linting issues
-// interface RequestWithUser extends Request { // todo-0: not ready to implement this yet
-//     userProfile?: UserProfile;
-// }
+import { dbUsers } from "./DBUsers.js";
+import { AuthenticatedRequest } from "./ServerUtil.js";
 
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
@@ -27,10 +23,16 @@ class HttpServerUtil {
      * @returns Promise<void> 
      */
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
-        const { publicKey }: SignableObject = req.body;
+        // todo-0: We will be removing body-based publicKey and using only headers
+        let { publicKey }: SignableObject = req.body;
         if (!publicKey) {
-            res.status(401).json({ error: 'Public key is not set' });
-            return;
+            // get publicKey from request headers
+            publicKey = req.headers['public-key'] as string;
+            if (!publicKey) {
+                console.log('public-key header not found: Request headers:', req.headers);                
+                res.status(401).json({ error: 'Public key is not set in request body or header' });
+                return;
+            }
         }
         return this.verifyHTTPSignature(req, res, publicKey, next);
     }
@@ -153,13 +155,14 @@ class HttpServerUtil {
                 return;
             }
 
-            // todo-0: before doing this I need to remove DBManager which is involved in this and make the DB stuff between 'chat' and 'docs' plugins consistent
-            // const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
-            // if (userProfile) {
-            //     console.log(`Signature verified successfully for user: ${userProfile.name} (${publicKey})`);
-            //     // Store userProfile in the request object for use in downstream middleware and route handlers
-            //     (req as RequestWithUser).userProfile = userProfile;
-            // }
+            const userProfile: UserProfileCompact | null = await dbUsers.getUserInfoCompact(publicKey);
+            if (userProfile) {
+                // pretty print using formatted JSON the userProfile
+                console.log(`Signature verified successfully for user: ${JSON.stringify(userProfile, null, 2)}`);
+
+                // Store userProfile in the request object for use in downstream middleware and route handlers
+                (req as AuthenticatedRequest).userProfile = userProfile;
+            }
         
             console.log('Signature verified successfully for HTTP endpoint');
             next();

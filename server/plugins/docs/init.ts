@@ -47,25 +47,26 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     private initRoutes(context: IAppContext) {
-        context.app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); 
-        context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage); 
+
+        context.app.get('/api/docs/render/:docRootKey/*', docSvc.treeRender); // todo-0: needs to be a signed request (probably 'post' not a get)
+        context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage);  // todo-0: needs to be a signed request (probably 'post' not a get)
 
         // For now we only allow admin to access the docs API
-        context.app.post('/api/docs/save-file/', httpServerUtil.verifyReqHTTPSignature, docMod.saveFile); // todo-0: this request needs to be sending publicKey for middleware
-        context.app.post('/api/docs/upload', httpServerUtil.verifyAdminHTTPSignature, docBinary.uploadFiles);
-        context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyAdminHTTPSignature, docMod.renameFolder); 
-        context.app.post('/api/docs/delete', httpServerUtil.verifyAdminHTTPSignature, docMod.deleteFileOrFolder); 
-        context.app.post('/api/docs/move-up-down', httpServerUtil.verifyAdminHTTPSignature, docMod.moveUpOrDown); 
-        context.app.post('/api/docs/file/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFile); 
-        context.app.post('/api/docs/folder/create', httpServerUtil.verifyAdminHTTPSignature, docSvc.createFolder); 
-        context.app.post('/api/docs/make-folder', httpServerUtil.verifyAdminHTTPSignature, docMod.makeFolder); 
-        context.app.post('/api/docs/paste', httpServerUtil.verifyAdminHTTPSignature, docMod.pasteItems);
-        context.app.post('/api/docs/join', httpServerUtil.verifyAdminHTTPSignature, docMod.joinFiles);
+        context.app.post('/api/docs/save-file/', httpServerUtil.verifyReqHTTPSignature, docMod.saveFile);
+        context.app.post('/api/docs/upload', httpServerUtil.verifyReqHTTPSignature, docBinary.uploadFiles);
+        context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyReqHTTPSignature, docMod.renameFolder); 
+        context.app.post('/api/docs/delete', httpServerUtil.verifyReqHTTPSignature, docMod.deleteFileOrFolder); 
+        context.app.post('/api/docs/move-up-down', httpServerUtil.verifyReqHTTPSignature, docMod.moveUpOrDown); 
+        context.app.post('/api/docs/file/create', httpServerUtil.verifyReqHTTPSignature, docSvc.createFile); 
+        context.app.post('/api/docs/folder/create', httpServerUtil.verifyReqHTTPSignature, docSvc.createFolder); 
+        context.app.post('/api/docs/make-folder', httpServerUtil.verifyReqHTTPSignature, docMod.makeFolder); 
+        context.app.post('/api/docs/paste', httpServerUtil.verifyReqHTTPSignature, docMod.pasteItems);
+        context.app.post('/api/docs/join', httpServerUtil.verifyReqHTTPSignature, docMod.joinFiles);
         context.app.post('/api/docs/file-system-open', httpServerUtil.verifyAdminHTTPSignature, docUtil.openFileSystemItem);
-        context.app.post('/api/docs/search-binaries', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchBinaries);
-        context.app.post('/api/docs/search-text', httpServerUtil.verifyAdminHTTPSignature, docSvc.searchTextFiles);
-        context.app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);
-        context.app.post('/api/docs/ssg', httpServerUtil.verifyAdminHTTPSignature, ssg.generateStaticSite);
+        context.app.post('/api/docs/search-binaries', httpServerUtil.verifyReqHTTPSignature, docSvc.searchBinaries);
+        context.app.post('/api/docs/search-text', httpServerUtil.verifyReqHTTPSignature, docSvc.searchTextFiles);
+        context.app.post('/api/docs/search-vfs', httpServerUtil.verifyReqHTTPSignature, docVFS.searchVFSFiles);
+        context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, ssg.generateStaticSite);
 
         context.app.get('/doc/:docRootKey', context.serveIndexHtml("TreeViewerPage"));
 

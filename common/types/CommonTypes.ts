@@ -26,11 +26,15 @@ export type ChatMessageIntf = SignableObject & {
     state?: MessageStates;
 }
 
-export type UserProfile = {
+export type UserProfileCompact = {
+    id?: number;
     name: string;
+    publicKey: string;
+}
+
+export type UserProfile = UserProfileCompact & {
     description: string;
     avatar: FileBase64Intf | null;
-    publicKey: string;
     signature?: string; // will be null if not signed
 }
 

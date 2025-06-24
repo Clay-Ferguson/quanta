@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { svrUtil } from "../../ServerUtil.js";
+import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -123,7 +123,7 @@ class DocBinary {
         }
     }
 
-    onUploadEnd = async (chunks: any, boundary: any, res: Response): Promise<void> => {
+    onUploadEnd = async (owner_id: number, chunks: any, boundary: any, res: Response): Promise<void> => {
         return runTrans(async () => {
             try {
             // Combine all chunks into a single buffer for parsing
@@ -243,7 +243,7 @@ class DocBinary {
                         }
                             
                         // Write the file data to disk
-                        await ifs.writeFile(finalFilePath, file.data);
+                        await ifs.writeFile(owner_id, finalFilePath, file.data);
                         savedCount++;
                         console.log(`Uploaded file saved: ${finalFilePath}`);
                     } 
@@ -298,6 +298,11 @@ class DocBinary {
      * @returns Promise<void> - Resolves when upload processing is complete
      */
     uploadFiles = async (req: Request, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         try {
             // Validate that the request contains multipart form data
             const contentType = req.headers['content-type'];
@@ -318,7 +323,7 @@ class DocBinary {
             });
             
             // Process the complete request body when all data has been received
-            req.on('end', async () => await this.onUploadEnd(chunks, boundary, res));
+            req.on('end', async () => await this.onUploadEnd(owner_id, chunks, boundary, res));
     
         } catch (error) {
             // Handle any top-level errors in the upload process

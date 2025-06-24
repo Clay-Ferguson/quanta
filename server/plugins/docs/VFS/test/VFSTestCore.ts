@@ -106,7 +106,7 @@ export async function createFolderStructure(): Promise<void> {
         
         // First, ensure the root directory structure exists
         console.log('Creating root path...');
-        await pgdb.query('SELECT vfs_ensure_path($1, $2)', rootPath, testRootKey);
+        await pgdb.query('SELECT vfs_ensure_path($1, $2, $3)', pgdb.adminProfile!.id, rootPath, testRootKey);
 
         // Create 3 root-level folders
         console.log('Creating 3 root-level folders...');
@@ -119,8 +119,8 @@ export async function createFolderStructure(): Promise<void> {
             
             console.log(`Creating root folder: ${fullFolderName}`);
             await pgdb.query(
-                'SELECT vfs_mkdir($1, $2, $3, $4) as folder_id',
-                rootPath, fullFolderName, testRootKey, false
+                'SELECT vfs_mkdir($1, $2, $3, $4, $5) as folder_id',
+                pgdb.adminProfile!.id, rootPath, fullFolderName, testRootKey, false
             );
             
             // Now create contents inside this folder
@@ -134,8 +134,8 @@ export async function createFolderStructure(): Promise<void> {
                 const fileContent = Buffer.from(`# File ${j} in ${folderName}\n\nThis is test file ${j} inside folder ${folderName}.`);
                 
                 await pgdb.query(
-                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5) as file_id',
-                    currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown'
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6) as file_id',
+                    pgdb.adminProfile!.id, currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown'
                 );
             }
             
@@ -146,8 +146,8 @@ export async function createFolderStructure(): Promise<void> {
                 const subfolderName = `${subfolderOrdinal}_subfolder${k - 3}`;
                 
                 await pgdb.query(
-                    'SELECT vfs_mkdir($1, $2, $3, $4) as subfolder_id',
-                    currentFolderPath, subfolderName, testRootKey, false
+                    'SELECT vfs_mkdir($1, $2, $3, $4, $5) as subfolder_id',
+                    pgdb.adminProfile!.id, currentFolderPath, subfolderName, testRootKey, false
                 );
             }
         }

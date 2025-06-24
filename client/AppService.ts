@@ -41,9 +41,11 @@ export class AppService {
         // Load the keyPair from IndexedDB
         const keyPair: KeyPairHex = await idb.getItem(DBKeys.keyPair);
         if (!keyPair) {
+            console.warn('No keyPair found in IndexedDB, creating a new identity.');
             await appUsers.createIdentity(false);
         }
         else {
+            console.log('KeyPair loaded from IndexedDB:', keyPair);
             gd({ type: 'setIdentity', payload: { 
                 keyPair
             }});

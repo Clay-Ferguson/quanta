@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS vfs_nodes (
     id SERIAL PRIMARY KEY,
+    owner_id INTEGER NOT NULL,
     doc_root_key VARCHAR(255) NOT NULL,
     parent_path TEXT NOT NULL,
     filename VARCHAR(255) NOT NULL,
@@ -15,13 +16,17 @@ CREATE TABLE IF NOT EXISTS vfs_nodes (
     created_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     modified_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
-    UNIQUE(doc_root_key, parent_path, filename)
+    UNIQUE(doc_root_key, parent_path, filename),
+    FOREIGN KEY (owner_id) REFERENCES user_info(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_vfs_nodes_parent ON vfs_nodes(doc_root_key, parent_path);
 
 -- Index for binary flag to optimize queries
 CREATE INDEX IF NOT EXISTS idx_vfs_nodes_binary ON vfs_nodes(is_binary);
+
+-- Index for owner_id foreign key to optimize joins with user_info table
+CREATE INDEX IF NOT EXISTS idx_vfs_nodes_owner_id ON vfs_nodes(owner_id);
 
 -- Enable trigram extension for better text search performance (if not already enabled)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { svrUtil } from "../../ServerUtil.js";
+import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -54,6 +54,11 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             try {
                 // Extract request parameters
@@ -163,7 +168,7 @@ class DocMod {
                             
                             // Write the content part to its designated file
                             ifs.checkFileAccess(partFilePath, root);
-                            await ifs.writeFile(partFilePath, partContent, 'utf8');
+                            await ifs.writeFile(owner_id, partFilePath, partContent, 'utf8');
                             console.log(`Split file part ${i + 1} saved successfully: ${partFilePath}`);
                         }
                         
@@ -172,7 +177,7 @@ class DocMod {
                         res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
                     } else {
                     // No split delimiter found - save as single file
-                        await ifs.writeFile(finalFilePath, content, 'utf8');
+                        await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                         console.log(`File saved successfully: ${finalFilePath}`);
 
                         // todo-1: we should be consistent across the HTTP endpoints and just let 200 code mean success=true, and not have 'success' property
@@ -180,7 +185,7 @@ class DocMod {
                     }
                 } else {
                 // Standard save operation without content splitting
-                    await ifs.writeFile(finalFilePath, content, 'utf8');
+                    await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
                     res.json({ success: true, message: 'File saved successfully' });
                 }
@@ -846,6 +851,11 @@ class DocMod {
      * @returns void - Synchronous operation, no Promise needed
      */
     joinFiles = async (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             try {
             // Extract request parameters
@@ -920,7 +930,7 @@ class DocMod {
                     
                 // Write the joined content with security validation
                 ifs.checkFileAccess(firstFilePath, root);
-                await ifs.writeFile(firstFilePath, joinedContent, 'utf8');
+                await ifs.writeFile(owner_id, firstFilePath, joinedContent, 'utf8');
                 console.log(`Joined content saved to: ${firstFile.filename}`);
         
                 // Clean up by deleting all files except the first one
@@ -1000,6 +1010,11 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     makeFolder = async (req: Request<any, any, { filename: string; folderName: string; remainingContent: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             console.log("Make Folder Request");
             try {
@@ -1075,7 +1090,7 @@ class DocMod {
 
                 // Step 2: Create the new folder structure
                 ifs.checkFileAccess(absoluteNewFolderPath, root);
-                await ifs.mkdir(absoluteNewFolderPath, { recursive: true });
+                await ifs.mkdir(owner_id, absoluteNewFolderPath, { recursive: true });
                 console.log(`Folder created: ${absoluteNewFolderPath}`);
 
                 // Step 3: Optionally preserve content in a new file inside the folder
@@ -1086,7 +1101,7 @@ class DocMod {
                 
                     // Write the preserved content with security validation
                     ifs.checkFileAccess(newFilePath, root);
-                    await ifs.writeFile(newFilePath, remainingContent, 'utf8');
+                    await ifs.writeFile(owner_id, newFilePath, remainingContent, 'utf8');
                     console.log(`New file created with remaining content: ${newFilePath}`);
                 }
 

@@ -3,10 +3,15 @@ import { spawn } from 'child_process';
 import open from 'open';
 import path from 'path';
 import { Application } from "express";
+import { UserProfileCompact } from '../common/types/CommonTypes.js';
 
 export interface IAppContext {
     app: Application; // Express application instance
     serveIndexHtml: (page: string) => (req: Request, res: Response) => void;
+}
+
+export interface AuthenticatedRequest extends Request { 
+    userProfile?: UserProfileCompact;
 }
 
 /**

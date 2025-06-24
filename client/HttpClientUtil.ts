@@ -43,6 +43,10 @@ class HttpClientUtil {
      */
     secureHttpPost = async <TRequest = any, TResponse = any> (url: string, body?: TRequest): Promise<TResponse | null> => {
         const _gs = gs();
+        if (!_gs.keyPair) {
+            console.error("No key pair available in GlobalState for secure HTTP post");
+            return null;
+        }
 
         let response: TResponse | null = null;
         try {
@@ -69,6 +73,9 @@ class HttpClientUtil {
             
             url = encodeURI(url);
             const res = await fetch(url, opts); 
+            // // pretty print the response object using formatted JSON
+            // console.log(`>>>> RAW Response from ${url}:`, JSON.stringify(res, null, 2));
+
             if (res.ok) {
                 response = await res.json();
             }
@@ -87,6 +94,7 @@ class HttpClientUtil {
         return response;
     }
     
+    // todo-0: all calls to this can now remove 'publicKey' from the body of the post.
     buildSecureHeaders = async (url: string, keyPair: KeyPairHex, isFormData: boolean = false): Promise<Record<string,string>> => {
         // Get the current timestamp in seconds
         const created = Math.floor(Date.now() / 1000);
@@ -128,7 +136,8 @@ class HttpClientUtil {
     
         const headers: Record<string, string> = {
             'Signature-Input': sigInput,
-            'Signature': signatureHex
+            'Signature': signatureHex,
+            'public-key': keyPair.publicKey, // warning: the HTTP stack will force to lower case.
         };
 
         // Only set Content-Type for JSON requests, not FormData

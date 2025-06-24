@@ -14,11 +14,11 @@ export interface IFS {
 
     // File content operations
     readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
-    writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
+    writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
 
     // Directory operations
     readdir(path: string): Promise<string[]>;
-    mkdir(path: string, options?: { recursive?: boolean }): Promise<void>;
+    mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation
     rename(oldPath: string, newPath: string): Promise<void>;

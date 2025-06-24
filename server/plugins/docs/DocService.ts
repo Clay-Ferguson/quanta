@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
-import { svrUtil } from "../../ServerUtil.js";
+import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
@@ -414,6 +414,11 @@ class DocService {
      * @returns Promise<void> - Sends success response with created filename or error
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
@@ -485,7 +490,7 @@ class DocService {
                 }
 
                 // Create the new file with empty content
-                await ifs.writeFile(newFilePath, '', 'utf8');
+                await ifs.writeFile(owner_id, newFilePath, '', 'utf8');
                 //console.log(`File created successfully: ${newFilePath}`);
             
                 // Send success response with the created filename
@@ -530,6 +535,11 @@ class DocService {
      * @returns Promise<void> - Sends success response with created folder name or error
      */
     createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             console.log("Create Folder Request");
             try {
@@ -589,7 +599,7 @@ class DocService {
                 const newFolderPath = path.join(absoluteParentPath, newFolderName);
 
                 // Create the directory (recursive option ensures parent directories exist)
-                await ifs.mkdir(newFolderPath, { recursive: true });
+                await ifs.mkdir(owner_id,newFolderPath, { recursive: true });
 
                 console.log(`Folder created successfully: ${newFolderPath}`);
             

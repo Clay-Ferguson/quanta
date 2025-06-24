@@ -161,7 +161,7 @@ class VFS implements IFS {
         }
     }
 
-    async writeFile(fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
+    async writeFile(owner_id: number, fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             const { parentPath, filename } = this.parsePath(relativePath);
@@ -183,8 +183,8 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT vfs_write_binary_file($1, $2, $3, $4, $5)',
-                    parentPath, filename, content, rootKey, contentType
+                    'SELECT vfs_write_binary_file($1, $2, $3, $4, $5, $6)',
+                    owner_id, parentPath, filename, content, rootKey, contentType
                 );
             } else {
                 // Handle text files
@@ -196,8 +196,8 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5)',
-                    parentPath, filename, textContent, rootKey, contentType
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6)',
+                    owner_id, parentPath, filename, textContent, rootKey, contentType
                 );
             }
         } catch (error) {
@@ -284,7 +284,7 @@ class VFS implements IFS {
         }
     }
 
-    async mkdir(fullPath: string, options?: { recursive?: boolean }): Promise<void> {
+    async mkdir(owner_id: number, fullPath: string, options?: { recursive?: boolean }): Promise<void> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             const { parentPath, filename } = this.parsePath(relativePath);
@@ -305,8 +305,8 @@ class VFS implements IFS {
             }
             
             await pgdb.query(
-                'SELECT vfs_mkdir($1, $2, $3, $4)',
-                parentPath, finalFilename, rootKey, options?.recursive || false
+                'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
+                owner_id, parentPath, finalFilename, rootKey, options?.recursive || false
             );
         } catch (error) {
             console.error('VFS.mkdir error:', error);

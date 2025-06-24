@@ -3,6 +3,9 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Pool, PoolClient, QueryResult } from 'pg';
 import { getTransactionClient } from './Transactional.js';
+import { UserProfile, UserProfileCompact } from '../common/types/CommonTypes.js';
+import { dbUsers } from './DBUsers.js';
+import { config } from './Config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +24,7 @@ class PGDB {
 
     // todo-1: admin panel needs to be able to flip this on/off
     public logEnabled: boolean = false; 
+    public adminProfile: UserProfileCompact | null = null;
 
     constructor() {}
 
@@ -63,7 +67,34 @@ class PGDB {
             throw error;
         }
 
-        this.initSchema();
+        await this.initSchema();
+        await this.loadAdminUser();
+    }
+
+    private async loadAdminUser(): Promise<void> {
+        const adminPubKey = config.get("adminPublicKey");
+        this.adminProfile = await dbUsers.getUserInfoCompact(adminPubKey);
+        if (!this.adminProfile) {
+            // if we don't find the admin profile we need to create it!
+            console.warn(`Admin user with public key ${adminPubKey} not found. Creating default admin user...`);
+            const defaultAdminProfile: UserProfile = {
+                name: 'Admin',
+                avatar: null,
+                description: 'Default admin user',
+                publicKey: adminPubKey
+            };  
+            await dbUsers.saveUserInfo(defaultAdminProfile);
+
+            // now read it back.
+            this.adminProfile = await dbUsers.getUserInfoCompact(adminPubKey);
+            if (!this.adminProfile) {
+                console.error('Failed to create default admin user. Please check your database configuration.');
+                throw new Error('Failed to create default admin user');
+            }
+            else {
+                console.log('Default admin user created successfully:', this.adminProfile);
+            }
+        }
     }
 
     private async initSchema(): Promise<void> {
@@ -136,7 +167,6 @@ class PGDB {
     /**
      * Execute a database query using transaction client if available, otherwise use the pool
      */
-    // todo-0: find all calls to this and make sure params is an ARRAY
     async query(sql: string, ...params: any[]): Promise<any> {
         const transactionClient = getTransactionClient();
         if (transactionClient) {
@@ -180,13 +210,11 @@ class PGDB {
         return result;
     }
 
-    // todo-0: find all calls to this and make sure params is an ARRAY
     async get<T = any>(sql: any, ...params: any[]): Promise<T | undefined> {
         const result = await this.query(sql, ...params);
         return result.rows[0] as T;
     }
 
-    // todo-0: find all calls to this and make sure params is an ARRAY
     async all<T = any[]>(sql: any, ...params: any[]): Promise<T> {
         const result = await this.query(sql, ...params);
         return result.rows as T;

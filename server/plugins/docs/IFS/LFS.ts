@@ -30,7 +30,7 @@ class LFS implements IFS {
         return await fs.promises.readFile(path);
     }
 
-    async writeFile(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
+    async writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         if (encoding && typeof data === 'string') {
             await fs.promises.writeFile(path, data, encoding);
         } else {
@@ -43,7 +43,7 @@ class LFS implements IFS {
         return await fs.promises.readdir(path);
     }
 
-    async mkdir(path: string, options?: { recursive?: boolean }): Promise<void> {
+    async mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void> {
         await fs.promises.mkdir(path, options);
     }
 
