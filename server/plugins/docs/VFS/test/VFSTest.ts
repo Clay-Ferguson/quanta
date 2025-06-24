@@ -203,8 +203,8 @@ async function testFileOperations(owner_id: number): Promise<void> {
         
         console.log('2. Testing vfs_rename function...');
         const renameResult = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            owner_id, testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey
         );
         console.log(`   Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`   Diagnostic: ${renameResult.rows[0].diagnostic}`);
@@ -423,7 +423,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
  * Test to verify that renaming folders preserves their children
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function testFolderRenamePreservesChildren(): Promise<void> {
+async function testFolderRenamePreservesChildren(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
         
@@ -471,8 +471,8 @@ async function testFolderRenamePreservesChildren(): Promise<void> {
         
         // Perform the rename
         const renameResult = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            owner_id, oldParentPath, oldFilename, oldParentPath, newFilename, testRootKey
         );
         console.log(`Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`Diagnostic: ${renameResult.rows[0].diagnostic}`);

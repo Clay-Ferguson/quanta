@@ -20,8 +20,8 @@ export async function testFolderRenameWithChildren(owner_id: number): Promise<vo
         
         // Execute the rename
         const renameResult = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            oldParentPath, oldFolderName, newParentPath, newFolderName, testRootKey
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            owner_id, oldParentPath, oldFolderName, newParentPath, newFolderName, testRootKey
         );
         
         console.log(`Rename operation result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
@@ -64,8 +64,8 @@ export async function testFolderRenameWithChildren(owner_id: number): Promise<vo
         console.log(`Moving folder: ${sourcePath}/${sourceFolder} to ${destPath}/${destFolder}`);
         
         const moveResult = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            sourcePath, sourceFolder, destPath, destFolder, testRootKey
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            owner_id, sourcePath, sourceFolder, destPath, destFolder, testRootKey
         );
         
         console.log(`Move operation result: ${moveResult.rows[0].success ? 'Success' : 'Failed'}`);

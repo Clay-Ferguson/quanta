@@ -437,6 +437,7 @@ $$ LANGUAGE plpgsql;
 -- Returns both success status and diagnostic information
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_rename(
+    owner_id_arg INTEGER,
     old_parent_path TEXT,
     old_filename TEXT,
     new_parent_path TEXT,
@@ -464,7 +465,8 @@ BEGIN
     WHERE 
         doc_root_key = root_key
         AND parent_path = old_parent_path
-        AND filename = old_filename;
+        AND filename = old_filename
+        AND owner_id = owner_id_arg;
     
     IF is_dir IS NULL THEN
         RETURN QUERY SELECT FALSE AS success, 

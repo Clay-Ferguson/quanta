@@ -21,7 +21,7 @@ export interface IFS {
     mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation
-    rename(oldPath: string, newPath: string): Promise<void>;
+    rename(owner_id: number, oldPath: string, newPath: string): Promise<void>;
     unlink(owner_id: number, path: string): Promise<void>;
     rm(owner_id: number, path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void>;
 

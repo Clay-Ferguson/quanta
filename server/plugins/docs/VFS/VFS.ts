@@ -315,7 +315,7 @@ class VFS implements IFS {
     }
 
     // File/directory manipulation
-    async rename(oldPath: string, newPath: string): Promise<void> {
+    async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
         // console.log('VFS.rename:', oldPath, '->', newPath);
         const { rootKey: oldRootKey, relativePath: oldRelativePath } = this.getRelativePath(oldPath);
         const { rootKey: newRootKey, relativePath: newRelativePath } = this.getRelativePath(newPath);
@@ -329,8 +329,8 @@ class VFS implements IFS {
         const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newRelativePath);
             
         const result = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
+            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            owner_id, oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
         );
             
         // Log the diagnostic information

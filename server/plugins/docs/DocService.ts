@@ -306,11 +306,11 @@ class DocService {
             // Ensure file has ordinal prefix - files must follow "NNNNN_" naming convention
             if (!/^\d+_/.test(file)) {
                 // Assign next ordinal to files without numeric prefix
-                file = await docUtil.ensureOrdinalPrefix(absolutePath, file, ++nextOrdinal, root, ifs);
+                file = await docUtil.ensureOrdinalPrefix(owner_id, absolutePath, file, ++nextOrdinal, root, ifs);
             }
 
             // Standardize to 4-digit ordinal prefix format
-            const currentFileName = await docUtil.ensureFourDigitOrdinal(absolutePath, file, root, ifs);
+            const currentFileName = await docUtil.ensureFourDigitOrdinal(owner_id, absolutePath, file, root, ifs);
                 
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);

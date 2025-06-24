@@ -120,7 +120,7 @@ class DocMod {
                         
                         // Perform the file rename operation with security check
                         ifs.checkFileAccess(absoluteFilePath, root);
-                        await ifs.rename(absoluteFilePath, newAbsoluteFilePath);
+                        await ifs.rename(owner_id, absoluteFilePath, newAbsoluteFilePath);
                         console.log(`File renamed successfully: ${absoluteFilePath} -> ${newAbsoluteFilePath}`);
                     }
                     
@@ -221,6 +221,11 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             console.log("Rename Folder Request");
             try {
@@ -282,7 +287,7 @@ class DocMod {
                 // Perform the folder rename operation with security validation
                 ifs.checkFileAccess(oldAbsolutePath, root);
                 ifs.checkFileAccess(newAbsolutePath, root);
-                await ifs.rename(oldAbsolutePath, newAbsolutePath);
+                await ifs.rename(owner_id, oldAbsolutePath, newAbsolutePath);
             
                 console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
                 res.json({ success: true, message: 'Folder renamed successfully' });
@@ -555,11 +560,11 @@ class DocMod {
 
                 // Perform atomic rename operation using temporary file to avoid conflicts
                 // Step 1: Move current file to temporary location
-                await ifs.rename(currentPath, tempPath);
+                await ifs.rename(owner_id, currentPath, tempPath);
                 // Step 2: Rename target file to current file's new name
-                await ifs.rename(targetPath, path.join(absoluteParentPath, newTargetName));
+                await ifs.rename(owner_id, targetPath, path.join(absoluteParentPath, newTargetName));
                 // Step 3: Move temporary file to target file's new name
-                await ifs.rename(tempPath, path.join(absoluteParentPath, newCurrentName));
+                await ifs.rename(owner_id, tempPath, path.join(absoluteParentPath, newCurrentName));
 
                 console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
             
@@ -697,7 +702,7 @@ class DocMod {
                                 const tempPath = path.join(absoluteTargetPath, tempName);
                             
                                 // Move to temporary location
-                                await ifs.rename(sourceFilePath, tempPath);
+                                await ifs.rename(owner_id, sourceFilePath, tempPath);
                             
                                 // Calculate final name with new ordinal
                                 const currentOrdinal = insertOrdinal + i;
@@ -768,7 +773,7 @@ class DocMod {
                             if (tempMove) {
                                 const finalFilePath = path.join(absoluteTargetPath, tempMove.finalName);
                                 // Move from temp location to final location
-                                await ifs.rename(tempMove.tempPath, finalFilePath);
+                                await ifs.rename(owner_id, tempMove.tempPath, finalFilePath);
                                 pastedCount++;
                             } else {
                                 errors.push(`Temporary file not found for ${itemFullPath}`);
@@ -806,7 +811,7 @@ class DocMod {
                             }
 
                             // Move the file/folder
-                            await ifs.rename(sourceFilePath, targetFilePath);                    
+                            await ifs.rename(owner_id, sourceFilePath, targetFilePath);                    
                             pastedCount++;
                         }
                     } catch (error) {

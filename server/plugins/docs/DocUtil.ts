@@ -161,7 +161,7 @@ class DocUtil {
             // console.log(`Shifting file: ${file} -> ${newFileName}`);
             // const logEnableSaved = pgdb.logEnabled
             // pgdb.logEnabled = true;
-            await ifs.rename(oldPath, newPath);
+            await ifs.rename(owner_id, oldPath, newPath);
             // pgdb.logEnabled = logEnableSaved;
 
             
@@ -191,7 +191,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original or renamed) to use for further processing
      */
-    ensureFourDigitOrdinal = async (absolutePath: string, fileName: string, root: string, ifs: IFS): Promise<string> => {
+    ensureFourDigitOrdinal = async (owner_id: number, absolutePath: string, fileName: string, root: string, ifs: IFS): Promise<string> => {
         // Find the first underscore to extract the ordinal prefix
         const underscoreIndex = fileName.indexOf('_');
         const ordinalPrefix = fileName.substring(0, underscoreIndex);
@@ -214,7 +214,7 @@ class DocUtil {
                 // Rename the file/folder to have 4-digit ordinal prefix
                 ifs.checkFileAccess(oldFilePath, root);
                 ifs.checkFileAccess(newFilePath, root);
-                await ifs.rename(oldFilePath, newFilePath);
+                await ifs.rename(owner_id, oldFilePath, newFilePath);
                 console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(a)`);
                 
                 // Return the new filename for further processing
@@ -247,7 +247,7 @@ class DocUtil {
                     // Rename the file/folder to have 4-digit ordinal prefix
                     ifs.checkFileAccess(oldFilePath, root);
                     ifs.checkFileAccess(newFilePath, root);
-                    await ifs.rename(oldFilePath, newFilePath);
+                    await ifs.rename(owner_id, oldFilePath, newFilePath);
                     console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix(b)`);
                     
                     // Return the new filename for further processing
@@ -318,7 +318,7 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The filename (either original if rename failed, or the new renamed filename)
      */
-    ensureOrdinalPrefix = async (absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IFS): Promise<string> => {
+    ensureOrdinalPrefix = async (owner_id: number, absolutePath: string, fileName: string, ordinal: number, root: string, ifs: IFS): Promise<string> => {
     
         // Special case: content.md files are always given ordinal 0 by convention
         // TODO: This is a temporary hack for better Quanta export ingestion and will be removed later
@@ -342,7 +342,7 @@ class DocUtil {
             // Rename the file/folder to have 4-digit ordinal prefix
             ifs.checkFileAccess(oldFilePath, root);
             ifs.checkFileAccess(newFilePath, root);
-            await ifs.rename(oldFilePath, newFilePath);
+            await ifs.rename(owner_id, oldFilePath, newFilePath);
             console.log(`Renamed ${fileName} to ${newFileName} for 4-digit ordinal prefix (b)`);
                 
             // Return the new filename
