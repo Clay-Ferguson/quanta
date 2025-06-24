@@ -508,9 +508,6 @@ class DocService {
                     message: 'File created successfully',
                     fileName: finalFileName 
                 });
-
-                console.log(`Current folder structure after file creation:`);
-                printFolderStructure();
             } catch (error) {
             // Handle any errors during file creation
                 svrUtil.handleError(error, res, 'Failed to create file');

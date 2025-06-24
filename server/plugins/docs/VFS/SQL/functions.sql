@@ -664,8 +664,7 @@ BEGIN
     UPDATE vfs_nodes
     SET 
         parent_path = new_parent_path,
-        filename = new_filename,
-        modified_time = NOW()
+        filename = new_filename
     WHERE 
         doc_root_key = root_key
         AND parent_path = old_parent_path
@@ -695,8 +694,7 @@ BEGIN
                 WHEN parent_path = old_path THEN new_path
                 -- Deeper descendants - replace the prefix
                 ELSE regexp_replace(parent_path, '^' || old_path || '/', new_path || '/')
-            END,
-            modified_time = NOW()
+            END
         WHERE 
             doc_root_key = root_key
             AND (parent_path = old_path OR parent_path LIKE old_path || '/%');

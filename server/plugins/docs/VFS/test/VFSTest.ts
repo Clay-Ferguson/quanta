@@ -1,10 +1,12 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { docSvc } from '../../DocService.js';
+import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes, testOrdinalOperations } from './VFSTestCore.js';
+ 
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 
+// todo-0: need to make this same test case work unmodified for both LFS and VFS. Will be a different key for LFS.
 const testRootKey = 'pgroot';
 
 /**
@@ -12,26 +14,44 @@ const testRootKey = 'pgroot';
  * Creates a test file record and reads it back to verify everything is working
  */
 export async function pgdbTest(): Promise<void> {
-    await wipeTable();
-    //await simpleReadWriteTest();
-    await createFolderStructure();
-    // Test our fix for the folder rename bug
-    // await testFolderRenameWithChildren();
-    // await testOrdinalOperations();
-    // await testFileOperations();
-    // await testPathOperations();
-    // await testErrorHandling();
-    // await createNewFileAtTopOfRoot();
-    // await pgdbTestMoveUp();
+    await resetTestEnvironment();
+    await testFolderRenameWithChildren();
+    await simpleReadWriteTest();
+
+    await resetTestEnvironment();
+    await testOrdinalOperations();
+
+    await resetTestEnvironment();
+    await testFileOperations();
+
+    await resetTestEnvironment();
+    await testPathOperations();
+    
+    await resetTestEnvironment();
+    await testErrorHandling();
+
+    await resetTestEnvironment();
+    await createNewFileAtTopOfRoot();
+
+    await resetTestEnvironment();
+    await pgdbTestMoveUp();
 
     // Test search functionality
     // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
-    // await wipeTable();
-    // await createFolderStructureTest();
+    await resetTestEnvironment();
+    await dumpTableStructure();
+}
+
+async function dumpTableStructure(): Promise<void> {
     await printFolderStructure();
     await listAllVfsNodes();
+}
+
+async function resetTestEnvironment(): Promise<void> {
+    await wipeTable();
+    await createFolderStructure();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -88,7 +108,7 @@ async function deleteFolder(folderName: string): Promise<void> {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function simpleReadWriteTest(): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
@@ -161,7 +181,7 @@ async function simpleReadWriteTest(): Promise<void> {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function testFileOperations(): Promise<void> {
     try {
         console.log('\n=== TESTING FILE OPERATIONS ===');        
@@ -187,7 +207,7 @@ async function testFileOperations(): Promise<void> {
         console.log('2. Testing vfs_rename function...');
         const renameResult = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5)',
-            [testPath, '0005_file5.md', testPath, '0005_renamed-file.md', testRootKey]
+            [testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey]
         );
         console.log(`   Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`   Diagnostic: ${renameResult.rows[0].diagnostic}`);
@@ -195,7 +215,7 @@ async function testFileOperations(): Promise<void> {
         console.log('3. Testing file read after rename...');
         const readRenamedResult = await pgdb.query(
             'SELECT vfs_read_file($1, $2, $3) as content',
-            [testPath, '0005_renamed-file.md', testRootKey]
+            [testPath, '0003_renamed-file_3.md', testRootKey]
         );
         const renamedContent = readRenamedResult.rows[0].content.toString('utf8');
         console.log(`   Read renamed file content: ${renamedContent.substring(0, 50)}...`);
@@ -203,14 +223,14 @@ async function testFileOperations(): Promise<void> {
         console.log('4. Testing vfs_unlink (file deletion)...');
         await pgdb.query(
             'SELECT vfs_unlink($1, $2, $3)',
-            [testPath, '0004_file4.md', testRootKey]
+            [testPath, '0002_file2.md', testRootKey]
         );
-        console.log('   Successfully deleted 0004_file4.md');
+        console.log('   Successfully deleted 0002_file2.md');
         
         console.log('5. Verifying file no longer exists...');
         const existsAfterDelete = await pgdb.query(
             'SELECT vfs_exists($1, $2, $3) as exists',
-            [testPath, '0004_file4.md', testRootKey]
+            [testPath, '0002_file2.md', testRootKey]
         );
         console.log(`   File exists after deletion: ${existsAfterDelete.rows[0].exists}`);
         
@@ -218,9 +238,9 @@ async function testFileOperations(): Promise<void> {
         // Test vfs_is_directory
         const isDirResult = await pgdb.query(
             'SELECT vfs_is_directory($1, $2, $3) as is_dir',
-            [testPath, '0006_subfolder1', testRootKey]
+            [testPath, '0004_subfolder1', testRootKey]
         );
-        console.log(`   0006_subfolder1 is directory: ${isDirResult.rows[0].is_dir}`);
+        console.log(`   0004_subfolder1 is directory: ${isDirResult.rows[0].is_dir}`);
         
         console.log('=== FILE OPERATIONS TEST COMPLETED ===\n');
         
@@ -231,7 +251,7 @@ async function testFileOperations(): Promise<void> {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function testPathOperations(): Promise<void> {
     try {
         console.log('\n=== TESTING PATH OPERATIONS ===');
@@ -300,9 +320,10 @@ async function testPathOperations(): Promise<void> {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function testErrorHandling(): Promise<void> {
     try {
+        let failCount = 0; // Reset fail count for this test
         console.log('\n=== TESTING ERROR HANDLING ===');        
         const testPath = '/0001_test-structure/0001_one';
         
@@ -313,6 +334,7 @@ async function testErrorHandling(): Promise<void> {
                 [testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown']
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
+            failCount++;
         } catch (error: any) {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
@@ -324,6 +346,7 @@ async function testErrorHandling(): Promise<void> {
                 [testPath, '9999_nonexistent.md', testRootKey]
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
+            failCount++;
         } catch (error: any) {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
@@ -335,6 +358,7 @@ async function testErrorHandling(): Promise<void> {
                 [testPath, 'invalid-dirname', testRootKey, false]
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
+            failCount++;
         } catch (error: any) {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
@@ -346,6 +370,7 @@ async function testErrorHandling(): Promise<void> {
                 ['no-ordinal-file.md', testPath, testRootKey]
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
+            failCount++;
         } catch (error: any) {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
@@ -357,6 +382,7 @@ async function testErrorHandling(): Promise<void> {
                 [testPath, '8888_does-not-exist.md', testRootKey]
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
+            failCount++;
         } catch (error: any) {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
@@ -382,15 +408,18 @@ async function testErrorHandling(): Promise<void> {
                     [testPath, existingFolder.filename, testRootKey, false]
                 );
                 console.log('   **** ERROR ****: Should have failed but did not!');
+                failCount++;
             } catch (error: any) {
                 console.log('   All Ok. Expected error occurred:', error.message);
             }
         } else {
-            console.log('   Skipping duplicate directory test - no existing directories found');
+            throw new Error('Skipping duplicate directory test - no existing directories found');
         }
-        
+
+        if (failCount > 0) {
+            throw new Error(`Error handling test failed with ${failCount} expected failures`);
+        }
         console.log('=== ERROR HANDLING TEST COMPLETED ===\n');
-        
     } catch (error) {
         console.error('=== ERROR HANDLING TEST FAILED ===');
         console.error('Unexpected error during error handling test:', error);
@@ -402,18 +431,15 @@ async function testErrorHandling(): Promise<void> {
  * Test creating a new file at the top of root using actual DocService.createFile method
  * This will help debug the issue where folder children disappear after createFile
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// todo-0: This is the oddball method which tests an HTTP Endpoint Method. It's inconsistent with the rest of these tests
 async function createNewFileAtTopOfRoot(): Promise<void> {
     try {
         console.log('\n=== TESTING CREATE NEW FILE AT TOP OF ROOT ===');
         
-        // Import DocService instance
-        const { docSvc } = await import('../../DocService.js');
-        
         // Set up parameters for the createFile request
-        const docRootKey = testRootKey; // 'pgroot'
+        const docRootKey = testRootKey; 
 
-        // todo-0: I believe with "/" here for 'treeFolder' this used to cause a bug (come back to this and test it)
+        // Need to make this method take an argumetn for "treeFolder" so we can EXPECIALLY test both "/", and all other levels.
         const treeFolder = '/0001_test-structure'; // Root folder where files exist
         const fileName = 'new-test-file'; // Without extension, should get .md added
         const insertAfterNode = ''; // Empty means insert at top (ordinal 0)

@@ -1,5 +1,4 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, createFolderStructure, printFolderStructure } from './VFSTestCore.js';
 
 const testRootKey = 'pgroot';
 
@@ -10,14 +9,6 @@ const testRootKey = 'pgroot';
 export async function testFolderRenameWithChildren(): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME WITH CHILDREN ===');
-        
-        // First wipe the database and create our test structure
-        await wipeTable();
-        await createFolderStructure();
-        
-        // Print initial folder structure
-        console.log('\nInitial folder structure:');
-        await printFolderStructure();
         
         // Now rename one of the folders (e.g., '0001_test-structure/0001_one' to '0001_test-structure/0001_one-renamed')
         const oldParentPath = '/0001_test-structure';
@@ -35,10 +26,6 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         console.log(`Rename operation result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`Diagnostic information: ${renameResult.rows[0].diagnostic}`);
-        
-        // Print the updated folder structure
-        console.log('\nUpdated folder structure after rename:');
-        await printFolderStructure();
         
         // Now verify that child paths were properly updated
         console.log('\nVerifying child paths were updated correctly...');
@@ -83,10 +70,6 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         
         console.log(`Move operation result: ${moveResult.rows[0].success ? 'Success' : 'Failed'}`);
         console.log(`Diagnostic information: ${moveResult.rows[0].diagnostic}`);
-        
-        // Print the updated folder structure after moving
-        console.log('\nUpdated folder structure after move:');
-        await printFolderStructure();
         
         // Verify that files in the moved folder are accessible
         const movedPath = `${destPath}/${destFolder}`;
