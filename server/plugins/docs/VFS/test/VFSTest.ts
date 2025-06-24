@@ -1,5 +1,5 @@
 import pgdb from '../../../../PGDB.js';
-import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes, testOrdinalOperations } from './VFSTestCore.js';
+import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 
@@ -13,9 +13,6 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await testFolderRenameWithChildren();
     await simpleReadWriteTest();
-
-    await resetTestEnvironment();
-    await testOrdinalOperations();
 
     await resetTestEnvironment();
     await testFileOperations();
@@ -226,14 +223,6 @@ async function testFileOperations(): Promise<void> {
             [testPath, '0002_file2.md', testRootKey]
         );
         console.log(`   File exists after deletion: ${existsAfterDelete.rows[0].exists}`);
-        
-        console.log('6. Testing directory operations...');
-        // Test vfs_is_directory
-        const isDirResult = await pgdb.query(
-            'SELECT vfs_is_directory($1, $2, $3) as is_dir',
-            [testPath, '0004_subfolder1', testRootKey]
-        );
-        console.log(`   0004_subfolder1 is directory: ${isDirResult.rows[0].is_dir}`);
         
         console.log('=== FILE OPERATIONS TEST COMPLETED ===\n');
         

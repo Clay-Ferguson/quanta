@@ -155,26 +155,9 @@ class PostgreSQLFileSystem {
             [path, dirname, rootKey, options?.recursive || false, options?.force || false]);
     }
 
-    // Ordinal operations (your special sauce!)
-    async shiftOrdinalsDown(slotsToAdd: number, parentPath: string, insertOrdinal: number, rootKey: string, itemsToIgnore?: string[]): Promise<Map<string, string>> {
-        const result = await this.db.query('SELECT * FROM vfs_shift_ordinals_down($1, $2, $3, $4, $5)', 
-            [slotsToAdd, parentPath, insertOrdinal, rootKey, itemsToIgnore]);
-        
-        const pathMapping = new Map<string, string>();
-        result.rows.forEach(row => pathMapping.set(row.old_filename, row.new_filename));
-        return pathMapping;
-    }
-
     async getMaxOrdinal(parentPath: string, rootKey: string): Promise<number> {
         const result = await this.db.query('SELECT vfs_get_max_ordinal($1, $2)', [parentPath, rootKey]);
         return result.rows[0].vfs_get_max_ordinal;
-    }
-
-    async insertFileAtOrdinal(parentPath: string, filename: string, ordinal: number, rootKey: string, 
-                            content?: Buffer, contentType?: string): Promise<number> {
-        const result = await this.db.query('SELECT vfs_insert_file_at_ordinal($1, $2, $3, $4, $5, $6, $7)', 
-            [parentPath, filename, ordinal, rootKey, false, content, contentType]);
-        return result.rows[0].vfs_insert_file_at_ordinal;
     }
 }
 ```
