@@ -11,9 +11,14 @@ const testRootKey = 'pgroot';
  * Creates a test file record and reads it back to verify everything is working
  */
 export async function pgdbTest(): Promise<void> {
+    const owner_id = pgdb.adminProfile!.id;
+    if (!owner_id) {
+        throw new Error('Admin profile not found, cannot run tests');
+    }
+
     await resetTestEnvironment();
-    await testFolderRenameWithChildren();
-    await simpleReadWriteTest();
+    await testFolderRenameWithChildren(owner_id);
+    await simpleReadWriteTest(owner_id);
 
     await resetTestEnvironment();
     await testFileOperations();
@@ -22,21 +27,21 @@ export async function pgdbTest(): Promise<void> {
     await testPathOperations();
     
     await resetTestEnvironment();
-    await testErrorHandling();
+    await testErrorHandling(owner_id);
 
     await resetTestEnvironment();
-    await pgdbTestMoveUp();
+    await pgdbTestMoveUp(owner_id);
 
     // Test search functionality
     // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
     await resetTestEnvironment();
-    await dumpTableStructure();
+    await dumpTableStructure(owner_id);
 }
 
-async function dumpTableStructure(): Promise<void> {
-    await printFolderStructure();
+async function dumpTableStructure(owner_id: number): Promise<void> {
+    await printFolderStructure(owner_id);
     await listAllVfsNodes();
 }
 
@@ -46,7 +51,7 @@ async function resetTestEnvironment(): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function deleteFolder(folderName: string): Promise<void> {
+async function deleteFolder(owner_id: number, folderName: string): Promise<void> {
     try {
         console.log(`=== DELETING FOLDER: ${folderName} ===`);
         
@@ -56,8 +61,8 @@ async function deleteFolder(folderName: string): Promise<void> {
         console.log('Listing contents of root directory for debugging...');
         try {
             const rootContents = await pgdb.query(
-                'SELECT * FROM vfs_readdir($1, $2)',
-                rootPath, testRootKey
+                'SELECT * FROM vfs_readdir($1, $2, $3)',
+                owner_id, rootPath, testRootKey
             );
             console.log(`Found ${rootContents.rows.length} items in root:`);
             rootContents.rows.forEach((row: any) => {
@@ -100,7 +105,7 @@ async function deleteFolder(folderName: string): Promise<void> {
 }
 
  
-async function simpleReadWriteTest(): Promise<void> {
+async function simpleReadWriteTest(owner_id: number): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
 
@@ -154,8 +159,8 @@ async function simpleReadWriteTest(): Promise<void> {
         // Test directory listing
         console.log('Testing directory listing...');
         const dirResult = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2)',
-            testParentPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3)',
+            owner_id, testParentPath, testRootKey
         );
         
         console.log(`Found ${dirResult.rows.length} files in directory ${testParentPath}:`);
@@ -308,7 +313,7 @@ async function testPathOperations(): Promise<void> {
 
  
  
-async function testErrorHandling(): Promise<void> {
+async function testErrorHandling(owner_id: number): Promise<void> {
     try {
         let failCount = 0; // Reset fail count for this test
         console.log('\n=== TESTING ERROR HANDLING ===');        
@@ -377,8 +382,8 @@ async function testErrorHandling(): Promise<void> {
         console.log('6. Testing duplicate directory creation...');
         // First, let's see what actually exists in the test directory
         const dirContents = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2)',
-            testPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3)',
+            owner_id, testPath, testRootKey
         );
         console.log(`   Current contents of ${testPath}:`);
         dirContents.rows.forEach((item: any) => {

@@ -25,12 +25,12 @@ export async function wipeTable(): Promise<void> {
 /**
  * Prints the folder structure starting from the test root
  */
-export async function printFolderStructure(print: boolean=true): Promise<any> {
+export async function printFolderStructure(owner_id: number, print: boolean=true): Promise<any> {
     const meta = { count: 0 }; // Metadata to track item count
     try {
         let output = '\n=== FOLDER STRUCTURE VISUALIZATION ===\n';
         const rootPath = ''; 
-        output += await buildDirectoryContents(rootPath, testRootKey, 0, meta);
+        output += await buildDirectoryContents(owner_id, rootPath, testRootKey, 0, meta);
         output += '=== END FOLDER STRUCTURE ===\n';
         if (print) {
             console.log(output);
@@ -45,14 +45,14 @@ export async function printFolderStructure(print: boolean=true): Promise<any> {
 /**
  * Helper function to recursively build directory contents string
  */
-async function buildDirectoryContents(dirPath: string, rootKey: string, indentLevel: number, meta: any): Promise<string> {
+async function buildDirectoryContents(owner_id: number, dirPath: string, rootKey: string, indentLevel: number, meta: any): Promise<string> {
     const indent = '  '.repeat(indentLevel);
     let output = '';
     
     // Get directory contents
     const dirResult = await pgdb.query(
-        'SELECT * FROM vfs_readdir($1, $2)',
-        dirPath, rootKey
+        'SELECT * FROM vfs_readdir($1, $2, $3)',
+        owner_id, dirPath, rootKey
     );
     
     // Sort by ordinal to ensure proper order
@@ -66,7 +66,7 @@ async function buildDirectoryContents(dirPath: string, rootKey: string, indentLe
         // If it's a directory, recursively build its contents
         if (item.is_directory) {
             const subDirPath = `${dirPath}/${item.filename}`;
-            output += await buildDirectoryContents(subDirPath, rootKey, indentLevel + 1, meta);
+            output += await buildDirectoryContents(owner_id, subDirPath, rootKey, indentLevel + 1, meta);
         }
     }
     
@@ -159,7 +159,7 @@ export async function createFolderStructure(): Promise<void> {
     }
 }
 
-export async function checkInitialFolderStructureTest(): Promise<void> {
+export async function checkInitialFolderStructureTest(owner_id: number): Promise<void> {
     try {
         const rootPath = '/0001_test-structure';
         // Test the structure by listing contents
@@ -167,8 +167,8 @@ export async function checkInitialFolderStructureTest(): Promise<void> {
         
         // List root directory
         const rootDirResult = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2)',
-            rootPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3)',
+            owner_id, rootPath, testRootKey
         );
         
         console.log(`Root directory contains ${rootDirResult.rows.length} items:`);
@@ -179,8 +179,8 @@ export async function checkInitialFolderStructureTest(): Promise<void> {
             if (row.is_directory) {
                 const subDirPath = `${rootPath}/${row.filename}`;
                 const subDirResult = await pgdb.query(
-                    'SELECT * FROM vfs_readdir($1, $2)',
-                    subDirPath, testRootKey
+                    'SELECT * FROM vfs_readdir($1, $2, $3)',
+                    owner_id, subDirPath, testRootKey
                 );
                 
                 console.log(`    ${row.filename} contains ${subDirResult.rows.length} items:`);
@@ -229,8 +229,10 @@ export async function listAllVfsNodes(rootKey: string = testRootKey): Promise<vo
             ? 'SELECT id, is_directory, parent_path, filename FROM vfs_nodes WHERE doc_root_key = $1 ORDER BY parent_path, filename'
             : 'SELECT id, is_directory, parent_path, filename FROM vfs_nodes ORDER BY parent_path, filename';
         
-        const params = rootKey ? [rootKey] : [];
-        const result = await pgdb.query(query, params);
+        const _logEnabled = pgdb.logEnabled;
+        pgdb.logEnabled = true;
+        const result = await pgdb.query(query, rootKey);
+        pgdb.logEnabled = _logEnabled;
         
         console.log(`Found ${result.rows.length} records in vfs_nodes table:\n`);
         

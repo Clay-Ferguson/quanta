@@ -4,6 +4,7 @@ import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
+import pgdb from '../../PGDB.js';
 
 /**
  * DocBinary class handles binary file operations for the docs plugin
@@ -39,6 +40,12 @@ class DocBinary {
      * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
+        // todo-0: tree render is not yet converted to a secure post request, so we use admin profile for now
+        const owner_id = pgdb.adminProfile!.id!; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         // console.log("Serve Doc Image Request:", req.path);
         try {
             // Extract the relative image path from the request URL
@@ -219,7 +226,7 @@ class DocBinary {
     
                 // Shift existing files down to make room for new uploads
                 // This maintains the ordinal sequence without gaps
-                await docUtil.shiftOrdinalsDown(files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
+                await docUtil.shiftOrdinalsDown(owner_id, files.length, absoluteFolderPath, insertOrdinal, root, null, ifs);
     
                 // Save each uploaded file with proper ordinal prefix
                 let savedCount = 0;

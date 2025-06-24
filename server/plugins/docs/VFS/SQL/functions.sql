@@ -8,6 +8,7 @@
 -- Uses filename prefix for ordinal ordering instead of separate ordinal column
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_readdir(
+    owner_id_arg INTEGER,
     dir_path TEXT,
     root_key TEXT
 ) 
@@ -39,6 +40,8 @@ BEGIN
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
+        --  user can read files they own, or public files
+        AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
     ORDER BY 
         CASE 
             WHEN n.filename ~ '^[0-9]+_' THEN 
@@ -55,6 +58,7 @@ $$ LANGUAGE plpgsql;
 -- Simple version that just returns filenames (like fs.readdirSync() with no options)
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_readdir_names(
+    owner_id_arg INTEGER,
     dir_path TEXT,
     root_key TEXT
 ) 
@@ -68,6 +72,8 @@ BEGIN
         WHERE 
             n.doc_root_key = root_key 
             AND n.parent_path = dir_path
+            --  user can read files they own, or public files
+            AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
         ORDER BY 
             CASE 
                 WHEN n.filename ~ '^[0-9]+_' THEN 

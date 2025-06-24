@@ -8,6 +8,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
+import pgdb from "../../PGDB.js";
 const { exec } = await import('child_process');
 
 /**
@@ -73,7 +74,7 @@ class DocService {
      * @param treeFolder - Non-ordinal path to resolve (e.g., "FolderName/SubFolderName")
      * @returns The resolved path with ordinals (e.g., "/1234_FolderName/5678_SubFolderName")
      */
-    resolveNonOrdinalPath = async (docRootKey: string, treeFolder: string): Promise<string> => {        
+    resolveNonOrdinalPath = async (owner_id: number, docRootKey: string, treeFolder: string): Promise<string> => {        
         // Resolve the document root path using the provided key
         const root = config.getPublicFolderByKey(docRootKey).path;
         if (!root) {
@@ -111,7 +112,7 @@ class DocService {
             ifs.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
-            const entries = await ifs.readdir(currentPath);
+            const entries = await ifs.readdir(owner_id, currentPath);
             
             // Search for folder that matches the non-ordinal name
             let matchedFolder: string | null = null;
@@ -187,6 +188,12 @@ class DocService {
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
+        // todo-0: tree render is not yet converted to a secure post request, so we use admin profile for now
+        const owner_id = pgdb.adminProfile!.id!; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         // Clean up path by removing double slashes
         const pathName = req.path.replace("//", "/");
         
@@ -237,7 +244,7 @@ class DocService {
             }
 
             // Generate the tree structure
-            const treeNodes: TreeNode[] = await this.getTreeNodes(absolutePath, pullup==="true", root, ifs);
+            const treeNodes: TreeNode[] = await this.getTreeNodes(owner_id, absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
             const response: TreeRender_Response = { treeNodes };
@@ -279,16 +286,16 @@ class DocService {
      * @param root - The document root path for security validation
      * @returns Array of TreeNode objects representing directory contents, sorted alphabetically
      */
-    getTreeNodes = async (absolutePath: string, pullup: boolean, root: string, ifs: IFS): Promise<TreeNode[]> => {
+    getTreeNodes = async (owner_id: number, absolutePath: string, pullup: boolean, root: string, ifs: IFS): Promise<TreeNode[]> => {
         // Security check: ensure the path is within the allowed root directory
         ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        const files = await ifs.readdir(absolutePath);
+        const files = await ifs.readdir(owner_id, absolutePath);
         const treeNodes: TreeNode[] = [];
         
         // Get the next available ordinal number for files without ordinal prefixes
-        let nextOrdinal = await docUtil.getMaxOrdinal(absolutePath, root, ifs);
+        let nextOrdinal = await docUtil.getMaxOrdinal(owner_id, absolutePath, root, ifs);
 
         // Process each file/folder in the directory
         for (let file of files) {
@@ -324,7 +331,7 @@ class DocService {
                 // Handle pullup folders: folders ending with '_' get their contents inlined
                 if (pullup && currentFileName.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
-                    children = await this.getTreeNodes(filePath, true, root, ifs);
+                    children = await this.getTreeNodes(owner_id, filePath, true, root, ifs);
                     
                     // Set children to null if empty (cleaner JSON output)
                     if (children.length === 0) {
@@ -333,7 +340,7 @@ class DocService {
                 }
                 
                 // Check if folder has any children in the filesystem
-                fsChildren = (await ifs.readdir(filePath)).length > 0;
+                fsChildren = (await ifs.readdir(owner_id, filePath)).length > 0;
             } 
             // FILE
             else {
@@ -469,7 +476,7 @@ class DocService {
 
                 // Shift existing files down to make room for the new file
                 // This ensures proper ordinal sequence is maintained
-                await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+                await docUtil.shiftOrdinalsDown(owner_id, 1, absoluteParentPath, insertOrdinal, root, null, ifs);
                 
                 // Create filename with ordinal prefix
                 const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
@@ -590,7 +597,7 @@ class DocService {
 
                 // Shift existing files/folders down to make room for the new folder
                 // This ensures proper ordinal sequence is maintained
-                await docUtil.shiftOrdinalsDown(1, absoluteParentPath, insertOrdinal, root, null, ifs);
+                await docUtil.shiftOrdinalsDown(owner_id, 1, absoluteParentPath, insertOrdinal, root, null, ifs);
 
                 // Create folder name with ordinal prefix
                 const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded

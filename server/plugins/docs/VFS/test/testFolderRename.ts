@@ -6,7 +6,7 @@ const testRootKey = 'pgroot';
  * Test function to verify that renaming folders properly updates all child paths
  * Uses our vfs_rename function to rename folders and checks if child paths are updated
  */
-export async function testFolderRenameWithChildren(): Promise<void> {
+export async function testFolderRenameWithChildren(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME WITH CHILDREN ===');
         
@@ -33,8 +33,8 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         // Check if files under the renamed folder exist with their new paths
         const childPath = '/0001_test-structure/0001_one-renamed';
         const childFiles = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2)',
-            childPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3)',
+            owner_id, childPath, testRootKey
         );
         
         console.log(`Found ${childFiles.rows.length} items in renamed folder:`);
@@ -74,8 +74,8 @@ export async function testFolderRenameWithChildren(): Promise<void> {
         // Verify that files in the moved folder are accessible
         const movedPath = `${destPath}/${destFolder}`;
         const movedFiles = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2)',
-            movedPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3)',
+            owner_id, movedPath, testRootKey
         );
         
         console.log(`\nFound ${movedFiles.rows.length} items in moved folder:`);

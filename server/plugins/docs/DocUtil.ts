@@ -99,7 +99,7 @@ class DocUtil {
      * @param itemsToIgnore - Array of filenames to skip during shifting (optional, useful for newly created items)
      * @returns Map of old relative paths to new relative paths for renamed items
      */
-    shiftOrdinalsDown = async (slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
+    shiftOrdinalsDown = async (owner_id: number, slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
         itemsToIgnore: string[] | null, ifs: IFS): Promise<Map<string, string>> => {
         console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         ifs.checkFileAccess(absoluteParentPath, root);
@@ -112,7 +112,7 @@ class DocUtil {
         
         // Read directory contents and filter for files/folders with numeric prefixes
         console.log(`Reading directory contents to prepare for shifting down: ${absoluteParentPath}`);
-        const allFiles = await ifs.readdir(absoluteParentPath);
+        const allFiles = await ifs.readdir(owner_id, absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
         // Sort files by name (which will sort by numeric prefix for proper ordering)
@@ -278,11 +278,11 @@ class DocUtil {
      * @param root - The root directory for security validation
      * @returns The maximum ordinal value found, or 0 if no numbered files exist
      */
-    getMaxOrdinal = async (absolutePath: string, root: string, ifs: IFS): Promise<number> => {
+    getMaxOrdinal = async (owner_id: number, absolutePath: string, root: string, ifs: IFS): Promise<number> => {
         ifs.checkFileAccess(absolutePath, root);
                 
         // Read directory contents and filter for files/folders with numeric prefixes
-        const allFiles = await ifs.readdir(absolutePath);
+        const allFiles = await ifs.readdir(owner_id, absolutePath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
                 
         // Return 0 if no numbered files exist

@@ -17,7 +17,7 @@ export interface IFS {
     writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
 
     // Directory operations
-    readdir(path: string): Promise<string[]>;
+    readdir(owner_id: number, path: string): Promise<string[]>;
     mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation

@@ -39,7 +39,7 @@ class LFS implements IFS {
     }
 
     // Directory operations
-    async readdir(path: string): Promise<string[]> {
+    async readdir(owner_id: number, path: string): Promise<string[]> {
         return await fs.promises.readdir(path);
     }
 

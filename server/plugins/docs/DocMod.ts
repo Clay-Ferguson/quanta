@@ -142,7 +142,7 @@ class DocMod {
                         // Make room for new files by shifting existing ordinals down
                         // Subtract 1 because the original file keeps its position
                         const numberOfNewFiles = parts.length - 1;
-                        await docUtil.shiftOrdinalsDown(numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
+                        await docUtil.shiftOrdinalsDown(owner_id, numberOfNewFiles, path.dirname(finalFilePath), originalOrdinal + 1, root, null, ifs);
                         
                         // Create a separate file for each content part
                         for (let i = 0; i < parts.length; i++) {
@@ -450,8 +450,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
-        // Console log a pretty print of test request parameters
+            // Console log a pretty print of test request parameters
             console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
         
             try {
@@ -486,7 +491,7 @@ class DocMod {
                 // Read directory contents and filter for items with numeric ordinal prefixes
                 // Only files/folders matching the pattern "NNNN_*" are considered for ordering
                 ifs.checkFileAccess(absoluteParentPath, root);
-                const allFiles = await ifs.readdir(absoluteParentPath);
+                const allFiles = await ifs.readdir(owner_id, absoluteParentPath);
                 const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
             
                 // Sort by filename which naturally sorts by numeric prefix due to zero-padding
@@ -601,6 +606,11 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */ 
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
         return runTrans(async () => {
             try {
                 const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
@@ -704,7 +714,7 @@ class DocMod {
                     itemsToIgnore = null;
                 }
             
-                const pathMapping = await docUtil.shiftOrdinalsDown(pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
+                const pathMapping = await docUtil.shiftOrdinalsDown(owner_id, pasteItems.length, absoluteTargetPath, insertOrdinal, root, itemsToIgnore, ifs);
             
                 // Update pasteItems with new paths after ordinal shifting
                 for (let i = 0; i < pasteItems.length; i++) {

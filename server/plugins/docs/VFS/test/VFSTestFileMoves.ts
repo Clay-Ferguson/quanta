@@ -1,4 +1,5 @@
 import pgdb from '../../../../PGDB.js';
+import { AuthenticatedRequest } from '../../../../ServerUtil.js';
 import { docMod } from '../../DocMod.js';
 
 const testRootKey = 'pgroot';
@@ -28,7 +29,7 @@ const testRootKey = 'pgroot';
  *   /0003_three/
  *     (same structure)
  */
-export async function pgdbTestMoveUp(): Promise<void> {
+export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
     try {
         console.log('=== FILE MOVE TEST Starting ===');
         
@@ -37,8 +38,8 @@ export async function pgdbTestMoveUp(): Promise<void> {
         console.log(`\nListing contents of ${targetFolderPath} before move:`);
         
         const beforeResult = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2) ORDER BY filename',
-            targetFolderPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3) ORDER BY filename',
+            owner_id, targetFolderPath, testRootKey
         );
         
         console.log(`Found ${beforeResult.rows.length} items in target folder:`);
@@ -90,7 +91,7 @@ export async function pgdbTestMoveUp(): Promise<void> {
                 }
             }
         };
-        
+        (mockReq as AuthenticatedRequest).userProfile = pgdb.adminProfile!; // Mock user profile with owner_id
         // Call the moveUpOrDown method directly
         await docMod.moveUpOrDown(mockReq as any, mockRes as any);
         
@@ -98,8 +99,8 @@ export async function pgdbTestMoveUp(): Promise<void> {
         console.log('\nVerifying results after move...');
         
         const afterResult = await pgdb.query(
-            'SELECT * FROM vfs_readdir($1, $2) ORDER BY filename',
-            targetFolderPath, testRootKey
+            'SELECT * FROM vfs_readdir($1, $2, $3) ORDER BY filename',
+            owner_id, targetFolderPath, testRootKey
         );
         
         console.log(`Contents of ${targetFolderPath} after move:`);

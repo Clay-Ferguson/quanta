@@ -60,7 +60,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
         let docPath = req.query.path as string || "";
         if (docPath) {
-            docPath = await docSvc.resolveNonOrdinalPath(req.params.docRootKey, docPath);
+            docPath = await docSvc.resolveNonOrdinalPath(pgdb.adminProfile!.id!, req.params.docRootKey, docPath);
             console.log(`Resolved docPath: ${docPath}`);
         }
 

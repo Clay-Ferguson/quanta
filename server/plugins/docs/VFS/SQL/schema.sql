@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS vfs_nodes (
     parent_path TEXT NOT NULL,
     filename VARCHAR(255) NOT NULL,
     is_directory BOOLEAN NOT NULL DEFAULT FALSE,
+    is_public BOOLEAN NOT NULL DEFAULT FALSE,
     
     -- Hybrid content storage
     content_text TEXT,              -- For text files (.md, .txt, .json, .html, .css, .js, .ts, etc.)

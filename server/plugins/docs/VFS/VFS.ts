@@ -268,13 +268,13 @@ class VFS implements IFS {
     }
 
     // Directory operations
-    async readdir(fullPath: string): Promise<string[]> {
+    async readdir(owner_id: number, fullPath: string): Promise<string[]> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             
             const result = await pgdb.query(
-                'SELECT vfs_readdir_names($1, $2)',
-                relativePath, rootKey
+                'SELECT vfs_readdir_names($1, $2, $3)',
+                owner_id, relativePath, rootKey
             );
             
             return result.rows[0].vfs_readdir_names || [];
