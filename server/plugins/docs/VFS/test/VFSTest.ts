@@ -34,14 +34,14 @@ export async function pgdbTest(): Promise<void> {
     // await resetTestEnvironment();
     // await pgdbTestMoveUp(owner_id);
 
-    await resetTestEnvironment();
-    await pgdbTestSetFolderPublic(owner_id);
+    // await resetTestEnvironment();
+    // await pgdbTestSetFolderPublic(owner_id);
 
-    // Test search functionality
-    // await pgdbTestSearch();
+    // // Test search functionality
+    // // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
-    // await resetTestEnvironment();
+    await resetTestEnvironment();
     await dumpTableStructure(owner_id);
 }
 
@@ -144,6 +144,7 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         console.log('Retrieved content:', contentAsString);
         
         // Also get file metadata using vfs_stat
+        // todo-0: file stats doesn't need to be returning ordinal.
         const statResult = await pgdb.query(
             'SELECT * FROM vfs_stat($1, $2, $3)',
             testParentPath, testFilename, testRootKey
@@ -170,7 +171,7 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         
         console.log(`Found ${dirResult.rows.length} files in directory ${testParentPath}:`);
         dirResult.rows.forEach((row: any, index: number) => {
-            console.log(`  ${index + 1}. ${row.filename} (${row.is_directory ? 'directory' : 'file'}, ordinal: ${row.ordinal})`);
+            console.log(`  ${index + 1}. ${row.filename} (${row.is_directory ? 'directory' : 'file'})`);
         });
 
         console.log('=== PGDB Test Completed Successfully ===');

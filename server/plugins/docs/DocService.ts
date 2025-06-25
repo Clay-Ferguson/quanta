@@ -291,114 +291,68 @@ class DocService {
         ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        // todo-0: This whole method needs a LOT of work because we should never even have TWO arrays of TreeNodes. If we need to filter and modify
-        //         what we get back from readdirEx we can, but the way this has evolved into now is bad.
         const fileNodes = await vfs.readdirEx(owner_id, absolutePath);
-        const treeNodes: TreeNode[] = [];
-        
-        // Get the next available ordinal number for files without ordinal prefixes
-        let nextOrdinal = await docUtil.getMaxOrdinal(owner_id, absolutePath, root, ifs);
 
         // Process each file/folder in the directory
-        // todo-0: we need a "converter" method that goes from this kind of DB record to a TreeNode
-        for (const file of fileNodes) {
-            // Skip hidden files (starting with .) and system files (starting with _)
-            if (file.name.startsWith('.') || file.name.startsWith('_')) {
-                continue;
-            }
-
-            // Ensure file has ordinal prefix - files must follow "NNNNN_" naming convention
-            if (!/^\d+_/.test(file.name)) {
-                // Assign next ordinal to files without numeric prefix
-                file.name = await docUtil.ensureOrdinalPrefix(owner_id, absolutePath, file.name, ++nextOrdinal, root, ifs);
-            }
-
-            // Standardize to 4-digit ordinal prefix format
-            const currentFileName = await docUtil.ensureFourDigitOrdinal(owner_id, absolutePath, file.name, root, ifs);
-                
+        for (const file of fileNodes) {    
             // Get file information
-            const filePath = path.join(absolutePath, currentFileName);
+            const filePath = path.join(absolutePath, file.name);
             ifs.checkFileAccess(filePath, root); 
-            // const fileStat = await ifs.stat(filePath);
-                
-            // Initialize node properties
-            let content = '';
-            let type = '';
-            let fsChildren = false; // Indicates if folder has children in filesystem
-            let children: TreeNode[] | null = null;
 
             // DIRECTORY
             // todo-0: we can get directory flag from 'row type' right?
             //if (fileStat.isDirectory()) {
             if (file.type === 'folder') {
-                type = 'folder';
 
                 // Handle pullup folders: folders ending with '_' get their contents inlined
-                if (pullup && currentFileName.endsWith('_')) {
+                if (pullup && file.name.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
-                    children = await this.getTreeNodes(owner_id, filePath, true, root, ifs);
+                    file.children = await this.getTreeNodes(owner_id, filePath, true, root, ifs);
                     
                     // Set children to null if empty (cleaner JSON output)
-                    if (children.length === 0) {
-                        children = null;
+                    if (file.children.length === 0) {
+                        file.children = null;
                     }
                 }
                 
                 // Check if folder has any children in the filesystem
                 // todo-0: this can be a MUCH more optimzed call than a dir read! Need a `vfs_has_children` method
-                fsChildren = (await ifs.readdir(owner_id, filePath)).length > 0;
+                file.fsChildren = (await ifs.readdir(owner_id, filePath)).length > 0;
             } 
             // FILE
             else {
+                file.fsChildren = false; // Files do not have children
                 // Process files based on their extension
-                const ext = path.extname(currentFileName).toLowerCase();
+                const ext = path.extname(file.name).toLowerCase();
                     
                 // IMAGE FILE
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
                     // Image files: store relative path for URL construction
-                    type = 'image';
+                    file.type = 'image';
                     const relativePath = path.relative(root, filePath);
-                    content = relativePath;
+                    file.content = relativePath;
                 } 
                 // TEXT FILE
                 else if (['.md', '.txt'].includes(ext)) {
                     // Text files: read and store content
-                    type = 'text';
+                    file.type = 'text';
                     try {
-                        content = await ifs.readFile(owner_id, filePath, 'utf8') as string;
+                        file.content = await ifs.readFile(owner_id, filePath, 'utf8') as string;
                     } catch (error) {
                         console.warn(`Could not read file ${filePath} as text:`, error);
-                        content = '';
-                        type = 'unknown';
+                        file.content = '';
+                        file.type = 'unknown';
                     }
                 } 
                 // BINAY FILE
                 else {
                     // Binary/other files: don't load content
-                    type = 'binary';
-                    content = '';
+                    file.type = 'binary';
+                    file.content = '';
                 }
             }
-
-            // Create the TreeNode object
-            const treeNode: TreeNode = {
-                is_public: file.is_public, // todo-0: this should be set in the DB query
-                name: currentFileName,
-                createTime: file.createTime, //fileStat.birthtime.getTime(),  // File creation timestamp
-                modifyTime: file.modifyTime, // fileStat.mtime.getTime(),      // File modification timestamp
-                content,
-                type,
-                children,      // Only set for pullup folders
-                fsChildren     // Indicates if folder has children (for UI expansion)
-            };
-            
-            treeNodes.push(treeNode);
         }
-
-        // Sort alphabetically by filename for consistent ordering
-        // todo-0: this should be done in the DB query, not here
-        treeNodes.sort((a, b) => a.name.localeCompare(b.name));
-        return treeNodes;
+        return fileNodes;
     }
 
     /**

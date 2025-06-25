@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION vfs_readdir(
 RETURNS TABLE(
     is_public BOOLEAN,
     filename VARCHAR(255),
-    ordinal INTEGER,
+    -- ordinal INTEGER,
     is_directory BOOLEAN,
     size_bytes BIGINT,
     content_type VARCHAR(100),
@@ -27,12 +27,12 @@ BEGIN
     SELECT 
         n.is_public,
         n.filename,
-        CASE 
-            WHEN n.filename ~ '^[0-9]+_' THEN 
-                substring(n.filename FROM '^([0-9]+)_')::INTEGER
-            ELSE 
-                0
-        END as ordinal,
+        -- CASE 
+        --     WHEN n.filename ~ '^[0-9]+_' THEN 
+        --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
+        --     ELSE 
+        --         0
+        -- END as ordinal,
         n.is_directory,
         n.size_bytes,
         n.content_type,
@@ -45,12 +45,12 @@ BEGIN
         --  user can read files they own, or public files
         AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
     ORDER BY 
-        CASE 
-            WHEN n.filename ~ '^[0-9]+_' THEN 
-                substring(n.filename FROM '^([0-9]+)_')::INTEGER
-            ELSE 
-                0
-        END ASC, 
+        -- CASE 
+        --     WHEN n.filename ~ '^[0-9]+_' THEN 
+        --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
+        --     ELSE 
+        --         0
+        -- END ASC, 
         n.filename ASC;
 END;
 $$ LANGUAGE plpgsql;
@@ -77,12 +77,12 @@ BEGIN
             --  user can read files they own, or public files
             AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
         ORDER BY 
-            CASE 
-                WHEN n.filename ~ '^[0-9]+_' THEN 
-                    substring(n.filename FROM '^([0-9]+)_')::INTEGER
-                ELSE 
-                    0
-            END ASC, 
+            -- CASE 
+            --     WHEN n.filename ~ '^[0-9]+_' THEN 
+            --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
+            --     ELSE 
+            --         0
+            -- END ASC, 
             n.filename ASC
     ) INTO result;
     
@@ -388,6 +388,8 @@ BEGIN
         n.created_time,
         n.modified_time,
         n.content_type,
+
+        -- todo-0: we don't need ordinal
         CASE 
             WHEN n.filename ~ '^[0-9]+_' THEN 
                 substring(n.filename FROM '^([0-9]+)_')::INTEGER

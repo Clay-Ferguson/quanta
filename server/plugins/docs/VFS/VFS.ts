@@ -306,8 +306,7 @@ class VFS implements IFS {
                     createTime: row.created_time,
                     modifyTime: row.modified_time,
                     content: row.content,
-                    // todo-0: need to convert to other types (e.g. 'binary', 'image', etc.) based on content type, see 'getTreeNodes' where we have this kind of code already
-                    type: row.is_directory ? 'folder' : 'text', 
+                    type: row.is_directory ? 'folder' : 'text', // todo-0: need to make 'type' column just be an 'is_directory' boolean
                 } as TreeNode;
             });
             return treeNodes;

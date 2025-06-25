@@ -174,7 +174,7 @@ export async function checkInitialFolderStructureTest(owner_id: number): Promise
         
         console.log(`Root directory contains ${rootDirResult.rows.length} items:`);
         for (const row of rootDirResult.rows) {
-            console.log(`  - ${row.filename} (${row.is_directory ? 'folder' : 'file'}, ordinal: ${row.ordinal})`);
+            console.log(`  - ${row.filename} (${row.is_directory ? 'folder' : 'file'})`);
             
             // If it's a directory, list its contents too
             if (row.is_directory) {
@@ -186,7 +186,7 @@ export async function checkInitialFolderStructureTest(owner_id: number): Promise
                 
                 console.log(`    ${row.filename} contains ${subDirResult.rows.length} items:`);
                 for (const subRow of subDirResult.rows) {
-                    console.log(`      - ${subRow.filename} (${subRow.is_directory ? 'folder' : 'file'}, ordinal: ${subRow.ordinal})`);
+                    console.log(`      - ${subRow.filename} (${subRow.is_directory ? 'folder' : 'file'})`);
                 }
             }
         }
