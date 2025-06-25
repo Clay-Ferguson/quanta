@@ -57,6 +57,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyReqHTTPSignature, docMod.renameFolder); 
         context.app.post('/api/docs/delete', httpServerUtil.verifyReqHTTPSignature, docMod.deleteFileOrFolder); 
         context.app.post('/api/docs/move-up-down', httpServerUtil.verifyReqHTTPSignature, docMod.moveUpOrDown); 
+        context.app.post('/api/docs/set-public', httpServerUtil.verifyReqHTTPSignature, docMod.setPublic); 
         context.app.post('/api/docs/file/create', httpServerUtil.verifyReqHTTPSignature, docSvc.createFile); 
         context.app.post('/api/docs/folder/create', httpServerUtil.verifyReqHTTPSignature, docSvc.createFolder); 
         context.app.post('/api/docs/make-folder', httpServerUtil.verifyReqHTTPSignature, docMod.makeFolder); 

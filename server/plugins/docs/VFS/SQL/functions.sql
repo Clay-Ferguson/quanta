@@ -369,6 +369,7 @@ CREATE OR REPLACE FUNCTION vfs_stat(
     root_key TEXT
 ) 
 RETURNS TABLE(
+    is_public BOOLEAN,
     is_directory BOOLEAN,
     size_bytes BIGINT,
     created_time TIMESTAMP WITH TIME ZONE,
@@ -379,6 +380,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT 
+        n.is_public,
         n.is_directory,
         n.size_bytes,
         n.created_time,
@@ -867,7 +869,11 @@ DECLARE
     is_dir BOOLEAN;
     full_path TEXT;
     target_id INTEGER;
+    normalized_parent_path TEXT;
 BEGIN
+    -- Normalize empty parent path to '/'
+    normalized_parent_path := CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END;
+
     -- Check if the target exists
     SELECT id, is_directory INTO target_id, is_dir
     FROM vfs_nodes
@@ -879,7 +885,9 @@ BEGIN
     
     IF target_id IS NULL THEN
         RETURN QUERY SELECT FALSE AS success, 
-                     format('Target not found: %s/%s', parent_path_arg, filename_arg) AS diagnostic;
+                     format('Target not found: %s/%s', 
+                            CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END, 
+                            filename_arg) AS diagnostic;
         RETURN;
     END IF;
 
@@ -919,15 +927,19 @@ BEGIN
         GET DIAGNOSTICS child_count = ROW_COUNT;
         
         RETURN QUERY SELECT TRUE AS success, 
-                     format('Updated visibility of %s/%s to %s. Additionally updated %s child items.', 
-                           parent_path_arg, filename_arg, 
+                     format('Updated visibility of %s%s%s to %s. Additionally updated %s child items.', 
+                           CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END,
+                           CASE WHEN parent_path_arg = '' OR parent_path_arg = '/' THEN '' ELSE '/' END,
+                           filename_arg, 
                            CASE WHEN is_public_arg THEN 'public' ELSE 'private' END, 
                            child_count) AS diagnostic;
     ELSE
         -- For non-recursive updates or single files
         RETURN QUERY SELECT TRUE AS success, 
-                     format('Updated visibility of %s/%s to %s.', 
-                           parent_path_arg, filename_arg,
+                     format('Updated visibility of %s%s%s to %s.', 
+                           CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END,
+                           CASE WHEN parent_path_arg = '' OR parent_path_arg = '/' THEN '' ELSE '/' END,
+                           filename_arg,
                            CASE WHEN is_public_arg THEN 'public' ELSE 'private' END) AS diagnostic;
     END IF;
 END;

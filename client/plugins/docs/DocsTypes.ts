@@ -32,6 +32,7 @@ export interface DocsGlobalState extends GlobalState {
     docsSearchOrder?: 'MOD_TIME' | 'DATE';
     docsHighlightedFolderName?: string | null;
     docsHighlightedFileName?: string | null;
+    docsShowSharingDialog?: boolean;
 }
 
 // =============================================

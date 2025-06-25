@@ -4,6 +4,7 @@ import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
+import pgdb from "../../PGDB.js";
 
 /**
  * DocMod - Document Modification Service
@@ -580,6 +581,86 @@ class DocMod {
             } catch (error) {
             // Handle any errors that occurred during the move operation
                 svrUtil.handleError(error, res, 'Failed to move file or folder');
+                throw error;
+            }
+        });
+    }
+
+    setPublic = async (req: Request<any, any, { is_public: boolean; filename: string; treeFolder: string; docRootKey: string; recursive?: boolean }>, res: Response): Promise<void> => {
+        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return;
+        }
+        return runTrans(async () => {
+            try {
+                // Extract request parameters
+                const { is_public, filename, docRootKey } = req.body;
+                let {treeFolder} = req.body;
+                const recursive = req.body.recursive === true; // Default to false if not provided
+                
+                // Get the appropriate file system implementation
+                const ifs = docUtil.getFileSystem(docRootKey);
+                
+                // Validate document root configuration
+                const root = config.getPublicFolderByKey(docRootKey).path;
+                if (!root) {
+                    res.status(500).json({ error: 'bad root' });
+                    return;
+                }
+
+                // Validate required parameters
+                if (is_public === undefined || !filename || !treeFolder) {
+                    res.status(400).json({ error: 'is_public status, filename, and treeFolder are required' });
+                    return;
+                }
+
+                // Construct absolute paths for the operation
+                const absoluteParentPath = path.join(root, treeFolder);
+                const absoluteFilePath = path.join(absoluteParentPath, filename);
+
+                // Check if the specified file/folder exists
+                if (!await ifs.exists(absoluteFilePath)) {
+                    res.status(404).json({ error: 'File or folder not found' });
+                    return;
+                }
+
+                // For PostgreSQL VFS mode, make direct database call
+                if (ifs.constructor.name === 'VFS') {
+                    // vfs_set_public needs '' instead of '/' for root folder
+                    if (treeFolder === '/') {
+                        treeFolder = '';
+                    }
+                    // Call the PostgreSQL function
+                    const result = await pgdb.query(
+                        'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+                        owner_id, treeFolder, filename, is_public, recursive, docRootKey
+                    );
+                    
+                    const success = result.rows[0].success;
+                    const diagnostic = result.rows[0].diagnostic;
+                    
+                    if (success) {
+                        console.log(`Successfully set visibility to ${is_public ? 'public' : 'private'}: ${diagnostic}`);
+                        res.json({ 
+                            success: true, 
+                            message: diagnostic 
+                        });
+                    } else {
+                        console.error(`Failed to set visibility: ${diagnostic}`);
+                        res.status(500).json({ error: diagnostic });
+                    }
+                } else {
+                    // For local filesystem, we don't have a visibility concept
+                    // Future implementation could add this via extended attributes or similar
+                    console.log(`LFS mode doesn't support visibility settings, returning success without changes`);
+                    res.json({ 
+                        success: true, 
+                        message: `Visibility settings are only supported in PostgreSQL mode` 
+                    });
+                }
+            } catch (error) {
+                svrUtil.handleError(error, res, 'Failed to set public status');
                 throw error;
             }
         });

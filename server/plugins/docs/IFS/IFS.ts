@@ -1,5 +1,5 @@
 
-import * as fs from 'fs';
+// import * as fs from 'fs';
 
 /**
  * Virtual File System Interface
@@ -10,7 +10,7 @@ import * as fs from 'fs';
 export interface IFS {
     // File existence and metadata
     exists(path: string): Promise<boolean>;
-    stat(path: string): Promise<fs.Stats>;
+    stat(path: string): Promise<any>; //<fs.Stats>; // todo-0: We need a wrapper around 'fs.Stats' so the API is clean and can abstract to LFS and VFS. For now we use 'any'
 
     // File content operations
     readFile(owner_id: number, path: string, encoding?: BufferEncoding): Promise<string | Buffer>;

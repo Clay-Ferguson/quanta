@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -18,6 +18,7 @@ import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
 import { formatDisplayName, stripOrdinal, createClickablePathComponents } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
+import SharingDialog from '../SharingDialog';
 
 declare const PAGE: string;
 declare const ADMIN_PUBLIC_KEY: string;
@@ -92,6 +93,17 @@ function EditFolder({
     handleFolderNameChange, 
     handleCancelClick 
 }: EditFolderProps) {
+    // Handler for Share button
+    const handleShareClick = () => {
+        // Open sharing dialog with the current folder name
+        gd({ 
+            type: 'setSharingDialog', 
+            payload: { 
+                docsShowSharingDialog: true,
+            }
+        });
+    };
+
     return (
         <div className="flex items-center flex-grow">
             <FontAwesomeIcon 
@@ -113,6 +125,12 @@ function EditFolder({
                         className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                     >
                     Rename
+                    </button>
+                    <button
+                        onClick={handleShareClick}
+                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                    >
+                    Share
                     </button>
                     <button
                         onClick={handleCancelClick}
@@ -340,12 +358,13 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 
 interface ClickableBreadcrumbProps {
     gs: DocsGlobalState;
+    rootPublic: boolean;
 }
 
 /**
  * Component for rendering clickable folder path breadcrumbs
  */
-function ClickableBreadcrumb({ gs }: ClickableBreadcrumbProps) {
+function ClickableBreadcrumb({ gs, rootPublic }: ClickableBreadcrumbProps) {
     if (!gs.docsFolder || gs.docsFolder.length <= 1) {
         return null;
     }
@@ -364,19 +383,28 @@ function ClickableBreadcrumb({ gs }: ClickableBreadcrumbProps) {
 
     return (
         <div className="text-center mb-3">
-            <div className="inline-flex items-center text-blue-300 text-2xl font-medium">
-                {pathComponents.map((component, index) => (
-                    <span key={index} className="flex items-center">
-                        {index > 0 && <span className="text-gray-500">/</span>}
-                        <button
-                            onClick={() => handlePathClick(component.navigationPath)}
-                            className="text-blue-300 hover:text-blue-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-1"
-                            title={`Go to ${component.displayName}`}
-                        >
-                            {component.displayName}
-                        </button>
-                    </span>
-                ))}
+            <div className="flex justify-center items-center">
+                <div className="inline-flex items-center text-blue-300 text-2xl font-medium">
+                    {pathComponents.map((component, index) => (
+                        <span key={index} className="flex items-center">
+                            {index > 0 && <span className="text-gray-500">/</span>}
+                            <button
+                                onClick={() => handlePathClick(component.navigationPath)}
+                                className="text-blue-300 hover:text-blue-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded px-1 py-1"
+                                title={`Go to ${component.displayName}`}
+                            >
+                                {component.displayName}
+                            </button>
+                        </span>
+                    ))}
+                    {rootPublic && (
+                        <FontAwesomeIcon
+                            icon={faShareAlt}
+                            className="text-green-400 ml-3 h-5 w-5"
+                            title="This folder is shared publicly"
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -1026,6 +1054,7 @@ export default function TreeViewerPage() {
     const isLoading = false; // Disable loading state for now
 
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
+    const [rootPublic, setRootPublic] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
     const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -1077,10 +1106,12 @@ export default function TreeViewerPage() {
                 
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
+                setRootPublic(treeResponse.is_root_public || false);
                 return treeResponse.treeNodes;
             }
             else {
                 setTreeNodes([]);
+                setRootPublic(false);
                 return [];
             }
         } catch (fetchError) {
@@ -1180,7 +1211,7 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div className="mt-4">
-                            <ClickableBreadcrumb gs={gs} />
+                            <ClickableBreadcrumb gs={gs} rootPublic={rootPublic}/>
 
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
@@ -1194,6 +1225,11 @@ export default function TreeViewerPage() {
                 </div>
             </div>
             <ImageViewerComp />
+            
+            {/* Sharing Dialog */}
+            {gs.docsShowSharingDialog && 
+                <SharingDialog/>
+            }
         </div>
     );
 }

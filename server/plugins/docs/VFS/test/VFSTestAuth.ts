@@ -41,6 +41,9 @@ export async function pgdbTestSetFolderPublic(owner_id: number): Promise<void> {
         // Test 3: Set a folder to public recursively
         await testSetFolderPublicRecursive(owner_id);
         
+        // Test 4: Test with root level folder (empty parent path)
+        await testSetRootFolderPublic(owner_id);
+        
         console.log('=== FOLDER PUBLIC VISIBILITY TEST COMPLETED SUCCESSFULLY ===\n');
         
     } catch (error) {
@@ -299,4 +302,118 @@ async function testSetFolderPublicRecursive(owner_id: number): Promise<void> {
     }
     
     console.log('   ✅ Recursive folder visibility test passed!');
+}
+
+/**
+ * Test setting a root level folder to public (both recursively and non-recursively)
+ * This specifically tests the case where the parent path is an empty string ('')
+ */
+async function testSetRootFolderPublic(owner_id: number): Promise<void> {
+    console.log('\n4. Testing setting a root-level folder to public...');
+    
+    // For this test, we'll use the main test structure folder that's in the root
+    const folderPath = ''; // Empty string for root path
+    const folderName = '0001_test-structure';
+    
+    // First, get the current state of the folder
+    const beforeFolderResult = await pgdb.query(
+        'SELECT id, is_public FROM vfs_nodes WHERE parent_path = $1 AND filename = $2 AND doc_root_key = $3',
+        folderPath, folderName, testRootKey
+    );
+    
+    if (beforeFolderResult.rows.length === 0) {
+        console.error(`❌ Folder ${folderName} not found in root path!`);
+        return;
+    }
+    
+    console.log(`   Before: Root folder ${folderName} is_public = ${beforeFolderResult.rows[0].is_public}`);
+    
+    // First test: Set to public non-recursively
+    console.log('   Testing non-recursive public setting for root folder...');
+    
+    // Make non-recursive change
+    const setPublicNonRecResult = await pgdb.query(
+        'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+        owner_id, folderPath, folderName, true, false, testRootKey
+    );
+    
+    console.log(`   Result: ${setPublicNonRecResult.rows[0].success ? 'Success' : 'Failed'} - ${setPublicNonRecResult.rows[0].diagnostic}`);
+    
+    // Verify the folder changed
+    const afterNonRecResult = await pgdb.query(
+        'SELECT id, is_public FROM vfs_nodes WHERE parent_path = $1 AND filename = $2 AND doc_root_key = $3',
+        folderPath, folderName, testRootKey
+    );
+    
+    console.log(`   After non-recursive: Root folder ${folderName} is_public = ${afterNonRecResult.rows[0].is_public}`);
+    
+    if (afterNonRecResult.rows[0].is_public !== true) {
+        throw new Error(`Failed to set root folder ${folderName} to public!`);
+    }
+    
+    // Check that children didn't change
+    const childPath = `/${folderName}`;
+    const childrenAfterNonRec = await pgdb.query(
+        'SELECT COUNT(*) as total, SUM(CASE WHEN is_public = true THEN 1 ELSE 0 END) as public_count FROM vfs_nodes ' +
+        'WHERE parent_path = $1 AND doc_root_key = $2',
+        childPath, testRootKey
+    );
+    
+    const totalChildren = parseInt(childrenAfterNonRec.rows[0].total);
+    const publicChildren = parseInt(childrenAfterNonRec.rows[0].public_count) || 0;
+    
+    console.log(`   Children state after non-recursive update: ${publicChildren} public out of ${totalChildren} total`);
+    
+    if (publicChildren > 0 && publicChildren === totalChildren) {
+        console.warn('⚠️ All children were made public when they should not have been!');
+    }
+    
+    // Now test recursive setting to private (reset plus test recursive operation)
+    console.log('   Testing recursive setting to private for root folder...');
+    
+    // Count all descendants before change
+    const countAllDescendants = await pgdb.query(
+        'SELECT COUNT(*) AS count FROM vfs_nodes ' +
+        'WHERE (parent_path = $1 OR parent_path LIKE $2) AND doc_root_key = $3',
+        childPath, childPath + '/%', testRootKey
+    );
+    
+    const totalDescendants = parseInt(countAllDescendants.rows[0].count);
+    
+    // Make recursive change back to private
+    const setPrivateRecResult = await pgdb.query(
+        'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+        owner_id, folderPath, folderName, false, true, testRootKey
+    );
+    
+    console.log(`   Result: ${setPrivateRecResult.rows[0].success ? 'Success' : 'Failed'} - ${setPrivateRecResult.rows[0].diagnostic}`);
+    
+    // Verify the folder changed
+    const afterRecResult = await pgdb.query(
+        'SELECT id, is_public FROM vfs_nodes WHERE parent_path = $1 AND filename = $2 AND doc_root_key = $3',
+        folderPath, folderName, testRootKey
+    );
+    
+    console.log(`   After recursive: Root folder ${folderName} is_public = ${afterRecResult.rows[0].is_public}`);
+    
+    // Verify all descendants changed
+    const descendantsAfterRec = await pgdb.query(
+        'SELECT COUNT(*) as private_count FROM vfs_nodes ' +
+        'WHERE (parent_path = $1 OR parent_path LIKE $2) AND is_public = false AND doc_root_key = $3',
+        childPath, childPath + '/%', testRootKey
+    );
+    
+    const privateDescendants = parseInt(descendantsAfterRec.rows[0].private_count);
+    
+    console.log(`   Descendants state after recursive update: ${privateDescendants} private out of ${totalDescendants} total`);
+    
+    if (privateDescendants !== totalDescendants) {
+        throw new Error(`Not all descendants were set to private! ${privateDescendants} out of ${totalDescendants}`);
+    }
+    
+    if (afterRecResult.rows[0].is_public !== false) {
+        throw new Error(`Failed to set root folder ${folderName} back to private!`);
+    }
+    
+    console.log('   ✅ Root folder visibility tests passed!');
 }

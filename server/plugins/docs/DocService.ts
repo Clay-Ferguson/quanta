@@ -246,7 +246,7 @@ class DocService {
             const treeNodes: TreeNode[] = await this.getTreeNodes(owner_id, absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
-            const response: TreeRender_Response = { treeNodes };
+            const response: TreeRender_Response = { is_root_public: stat.is_public, treeNodes };
             res.json(response);
         } catch (error) {
             // Handle any errors that occurred during tree rendering

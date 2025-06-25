@@ -48,6 +48,7 @@ export type GetMessagesByIds_Response = {
 }
 
 export type TreeRender_Response = {
+    is_root_public: boolean;
     treeNodes: TreeNode[];
 }
 

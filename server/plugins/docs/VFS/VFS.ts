@@ -90,7 +90,8 @@ class VFS implements IFS {
         }
     }
 
-    async stat(fullPath: string): Promise<fs.Stats> {
+    // todo-0: We need a wrapper around 'fs.Stats' so the API is clean and can abstract to LFS and VFS. For now we use 'any'
+    async stat(fullPath: string): Promise<any> { // <fs.Stats> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             
@@ -98,16 +99,17 @@ class VFS implements IFS {
             if (relativePath === '') {
                 // Return mock stats for root directory
                 return {
+                    // Root is considered owned by admin and not public.
+                    is_public: false,
                     isDirectory: () => true,
                     isFile: () => false,
                     birthtime: new Date(),
                     mtime: new Date(),
                     size: 0
-                } as fs.Stats;
+                } as any; //as fs.Stats;
             }
             
             const { parentPath, filename } = this.parsePath(relativePath);
-            
             const result = await pgdb.query(
                 'SELECT * FROM vfs_stat($1, $2, $3)',
                 parentPath, filename, rootKey
@@ -121,12 +123,13 @@ class VFS implements IFS {
             
             // Create a mock fs.Stats object with the required properties
             return {
+                is_public: row.is_public,
                 isDirectory: () => row.is_directory,
                 isFile: () => !row.is_directory,
                 birthtime: new Date(row.created_time),
                 mtime: new Date(row.modified_time),
                 size: row.size_bytes || 0
-            } as fs.Stats;
+            }; // as fs.Stats;
         } catch (error) {
             console.error('VFS.stat error:', error);
             throw error;

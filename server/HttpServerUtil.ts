@@ -157,14 +157,9 @@ class HttpServerUtil {
 
             const userProfile: UserProfileCompact | null = await dbUsers.getUserInfoCompact(publicKey);
             if (userProfile) {
-                // pretty print using formatted JSON the userProfile
-                console.log(`Signature verified successfully for user: ${JSON.stringify(userProfile, null, 2)}`);
-
                 // Store userProfile in the request object for use in downstream middleware and route handlers
                 (req as AuthenticatedRequest).userProfile = userProfile;
-            }
-        
-            console.log('Signature verified successfully for HTTP endpoint');
+            }        
             next();
         } catch (error) {
             console.error('Error verifying signature:', error);

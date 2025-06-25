@@ -88,6 +88,7 @@ export type AttachmentInfo = {
 }
 
 export type TreeNode = {
+    is_public?: boolean; // todo-0: I could possibly make this non-optional
     name: string; // filename
     createTime: number;
     modifyTime: number;

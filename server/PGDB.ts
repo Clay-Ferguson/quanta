@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { getTransactionClient } from './Transactional.js';
 import { UserProfile, UserProfileCompact } from '../common/types/CommonTypes.js';
 import { dbUsers } from './DBUsers.js';
@@ -168,21 +168,10 @@ class PGDB {
      * Execute a database query using transaction client if available, otherwise use the pool
      */
     async query(sql: string, ...params: any[]): Promise<any> {
-        const transactionClient = getTransactionClient();
-        if (transactionClient) {
-            return await transactionClient.query(sql, params.length > 0 ? params : undefined);
-        }
-        return await this.internal_query(sql, params.length > 0 ? params : undefined);
-    }
-
-    /**
-     * Execute a query using the connection pool
-     */
-    private async internal_query(sql: string, params?: any[]): Promise<any> {
         this.checkDb();
-        
+        let result = null;
         if (this.logEnabled) {
-        // Log the SQL query and parameters
+            // Log the SQL query and parameters
             console.log('Executing SQL query:');
             console.log(sql);
             if (params && params.length > 0) {
@@ -192,17 +181,29 @@ class PGDB {
                 });
             }
         }
-        
-        const result: QueryResult<any> = await this.pool!.query(sql, params && params.length > 0 ? params : undefined);
+
+        try {
+            const transactionClient = getTransactionClient();
+            if (transactionClient) {
+                result = await transactionClient.query(sql, params.length > 0 ? params : undefined);
+            }
+            else {
+                result = await this.pool!.query(sql, params && params.length > 0 ? params : undefined); 
+            }
+        }
+        catch (error) {
+            console.error('Error executing SQL query:', sql, error);
+            throw error;
+        }
 
         if (this.logEnabled) {
-        // Log the query results
+            // Log the query results
             console.log('  Query result:');
             console.log(`    Rows returned: ${result.rows.length}`);
             if (result.rows.length > 0) {
                 console.log('    Data:');
                 result.rows.forEach((row, index) => {
-                    console.log(`      Row ${index}:`, JSON.stringify(row, null, 2).split('\n').map((line, i) => i === 0 ? line : `        ${line}`).join('\n'));
+                    console.log(`      Row ${index}:`, JSON.stringify(row, null, 2));
                 });
             }
         }
