@@ -1,6 +1,7 @@
 import { alertModal } from '../../components/AlertModalComp';
 import { httpClientUtil } from '../../HttpClientUtil';
 import { useGlobalState, gd } from './DocsTypes';
+import { useState } from 'react';
 
 interface SharingDialogProps {
     title?: string;
@@ -13,13 +14,15 @@ export default function SharingDialog({
     title = "Sharing Options", 
 }: SharingDialogProps) {
     const gs = useGlobalState();
-    const onShare = async () => { 
+    const [recursive, setRecursive] = useState(true);
+    
+    const onShare = async (is_public: boolean) => { 
         const requestBody = {
-            is_public: true,
+            is_public,
             treeFolder: gs.docsFolder || '/',
             filename: gs.docsEditNode?.name,
             docRootKey: gs.docsRootKey,
-            recursive: true
+            recursive
         }; 
 
         // Close dialog
@@ -27,6 +30,7 @@ export default function SharingDialog({
             type: 'setSharingDialog', 
             payload: { 
                 docsShowSharingDialog: false,
+                docsEditNode: null,
             }
         });
 
@@ -46,7 +50,7 @@ export default function SharingDialog({
     }
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 max-w-md w-full border border-gray-700">
+            <div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 max-w-2xl w-full border border-gray-700">
                 <h3 className="text-xl font-bold mb-4">{title}</h3>
                 
                 {gs.docsEditNode?.name && (
@@ -54,17 +58,32 @@ export default function SharingDialog({
                         Folder: <span className="font-medium">{gs.docsEditNode?.name}</span>
                     </p>
                 )}
-
-                <p className="mb-6 text-gray-300">
-                    Select sharing options for this folder:
-                </p>
+                
+                <div className="mb-4 flex items-center">
+                    <input
+                        type="checkbox"
+                        id="recursive-checkbox"
+                        checked={recursive}
+                        onChange={(e) => setRecursive(e.target.checked)}
+                        className="mr-2 h-4 w-4"
+                    />
+                    <label htmlFor="recursive-checkbox" className="text-gray-300">
+                        Recursive (include all subfolders and files)
+                    </label>
+                </div>
                 
                 <div className="flex justify-end gap-3">
                     <button
-                        onClick={onShare}
+                        onClick={() => onShare(true)}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
                     >
                         Share to Public
+                    </button>
+                    <button
+                        onClick={() => onShare(false)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
+                    >
+                        Remove Sharing
                     </button>
                     <button
                         onClick={onCancel}
