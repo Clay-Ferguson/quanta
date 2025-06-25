@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 interface SharingDialogProps {
     title?: string;
+    reRenderTree?: () => void; // Callback to re-render the tree after sharing action   
 }
 
 /**
@@ -12,6 +13,7 @@ interface SharingDialogProps {
  */
 export default function SharingDialog({ 
     title = "Sharing Options", 
+    reRenderTree = () => { /* no-op */ }
 }: SharingDialogProps) {
     const gs = useGlobalState();
     const [recursive, setRecursive] = useState(true);
@@ -26,7 +28,7 @@ export default function SharingDialog({
         }; 
 
         // Close dialog
-        gd({ 
+        await gd({ 
             type: 'setSharingDialog', 
             payload: { 
                 docsShowSharingDialog: false,
@@ -38,6 +40,8 @@ export default function SharingDialog({
         if (!response) {
             await alertModal("Unable to share to public. Please try again later.");
         }
+
+        reRenderTree();
     }
     const onCancel = () => {
         // Close dialog without action

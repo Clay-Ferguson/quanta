@@ -4,6 +4,7 @@ import path from 'path';
 import { IFS } from '../IFS/IFS.js'
 import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
+import { TreeNode } from '../../../../common/types/CommonTypes.js';
 
 /**
  * Virtual File System (VFS) for handling file operations in a server environment, by using PostgreSQL as a backend for storage of files and folders.
@@ -283,6 +284,35 @@ class VFS implements IFS {
             return result.rows[0].vfs_readdir_names || [];
         } catch (error) {
             console.error('VFS.readdir error:', error);
+            throw error;
+        }
+    }
+
+    // Special version with no 'LFS' equivalent called only from Docs plugin
+    // todo-0: for the treeRender method we can use this to get CONTENTS instad of doing a read of the file records one by one.
+    async readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            
+            const rootContents = await pgdb.query(
+                'SELECT * FROM vfs_readdir($1, $2, $3)',
+                owner_id, relativePath, rootKey
+            );
+            const treeNodes = rootContents.rows.map((row: any) => {
+                // Convert PostgreSQL row to TreeNode format
+                return {
+                    is_public: row.is_public,
+                    name: row.filename, 
+                    createTime: row.created_time,
+                    modifyTime: row.modified_time,
+                    content: row.content,
+                    // todo-0: need to convert to other types (e.g. 'binary', 'image', etc.) based on content type, see 'getTreeNodes' where we have this kind of code already
+                    type: row.is_directory ? 'folder' : 'text', 
+                } as TreeNode;
+            });
+            return treeNodes;
+        } catch (error) {
+            console.error('VFS.readdirEx error:', error);
             throw error;
         }
     }

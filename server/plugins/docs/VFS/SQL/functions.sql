@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION vfs_readdir(
     root_key TEXT
 ) 
 RETURNS TABLE(
+    is_public BOOLEAN,
     filename VARCHAR(255),
     ordinal INTEGER,
     is_directory BOOLEAN,
@@ -24,6 +25,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT 
+        n.is_public,
         n.filename,
         CASE 
             WHEN n.filename ~ '^[0-9]+_' THEN 

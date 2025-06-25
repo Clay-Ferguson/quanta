@@ -400,7 +400,7 @@ function ClickableBreadcrumb({ gs, rootPublic }: ClickableBreadcrumbProps) {
                     {rootPublic && (
                         <FontAwesomeIcon
                             icon={faShareAlt}
-                            className="text-green-400 ml-3 h-5 w-5"
+                            className="text-green-400 ml-2 h-5 w-5"
                             title="This folder is shared publicly"
                         />
                     )}
@@ -877,6 +877,14 @@ function TreeNodeComponent({
                                                 title="This folder has no children in the file system"
                                             />
                                         }
+
+                                        {node.is_public && (
+                                            <FontAwesomeIcon
+                                                icon={faShareAlt}
+                                                className="text-green-400 ml-2 h-5 w-5"
+                                                title="This folder is shared publicly"
+                                            />
+                                        )}
                                     </div>
                                     {gs.docsEditMode && 
                                         <div className="mt-3">
@@ -1228,7 +1236,7 @@ export default function TreeViewerPage() {
             
             {/* Sharing Dialog */}
             {gs.docsShowSharingDialog && 
-                <SharingDialog/>
+                <SharingDialog reRenderTree={reRenderTree}/>
             }
         </div>
     );

@@ -8,6 +8,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
+import vfs from "./VFS/VFS.js";
 const { exec } = await import('child_process');
 
 /**
@@ -290,32 +291,35 @@ class DocService {
         ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        const files = await ifs.readdir(owner_id, absolutePath);
+        // todo-0: This whole method needs a LOT of work because we should never even have TWO arrays of TreeNodes. If we need to filter and modify
+        //         what we get back from readdirEx we can, but the way this has evolved into now is bad.
+        const fileNodes = await vfs.readdirEx(owner_id, absolutePath);
         const treeNodes: TreeNode[] = [];
         
         // Get the next available ordinal number for files without ordinal prefixes
         let nextOrdinal = await docUtil.getMaxOrdinal(owner_id, absolutePath, root, ifs);
 
         // Process each file/folder in the directory
-        for (let file of files) {
+        // todo-0: we need a "converter" method that goes from this kind of DB record to a TreeNode
+        for (const file of fileNodes) {
             // Skip hidden files (starting with .) and system files (starting with _)
-            if (file.startsWith('.') || file.startsWith('_')) {
+            if (file.name.startsWith('.') || file.name.startsWith('_')) {
                 continue;
             }
 
             // Ensure file has ordinal prefix - files must follow "NNNNN_" naming convention
-            if (!/^\d+_/.test(file)) {
+            if (!/^\d+_/.test(file.name)) {
                 // Assign next ordinal to files without numeric prefix
-                file = await docUtil.ensureOrdinalPrefix(owner_id, absolutePath, file, ++nextOrdinal, root, ifs);
+                file.name = await docUtil.ensureOrdinalPrefix(owner_id, absolutePath, file.name, ++nextOrdinal, root, ifs);
             }
 
             // Standardize to 4-digit ordinal prefix format
-            const currentFileName = await docUtil.ensureFourDigitOrdinal(owner_id, absolutePath, file, root, ifs);
+            const currentFileName = await docUtil.ensureFourDigitOrdinal(owner_id, absolutePath, file.name, root, ifs);
                 
             // Get file information
             const filePath = path.join(absolutePath, currentFileName);
             ifs.checkFileAccess(filePath, root); 
-            const fileStat = await ifs.stat(filePath);
+            // const fileStat = await ifs.stat(filePath);
                 
             // Initialize node properties
             let content = '';
@@ -324,7 +328,9 @@ class DocService {
             let children: TreeNode[] | null = null;
 
             // DIRECTORY
-            if (fileStat.isDirectory()) {
+            // todo-0: we can get directory flag from 'row type' right?
+            //if (fileStat.isDirectory()) {
+            if (file.type === 'folder') {
                 type = 'folder';
 
                 // Handle pullup folders: folders ending with '_' get their contents inlined
@@ -339,6 +345,7 @@ class DocService {
                 }
                 
                 // Check if folder has any children in the filesystem
+                // todo-0: this can be a MUCH more optimzed call than a dir read! Need a `vfs_has_children` method
                 fsChildren = (await ifs.readdir(owner_id, filePath)).length > 0;
             } 
             // FILE
@@ -375,9 +382,10 @@ class DocService {
 
             // Create the TreeNode object
             const treeNode: TreeNode = {
+                is_public: file.is_public, // todo-0: this should be set in the DB query
                 name: currentFileName,
-                createTime: fileStat.birthtime.getTime(),  // File creation timestamp
-                modifyTime: fileStat.mtime.getTime(),      // File modification timestamp
+                createTime: file.createTime, //fileStat.birthtime.getTime(),  // File creation timestamp
+                modifyTime: file.modifyTime, // fileStat.mtime.getTime(),      // File modification timestamp
                 content,
                 type,
                 children,      // Only set for pullup folders
@@ -388,6 +396,7 @@ class DocService {
         }
 
         // Sort alphabetically by filename for consistent ordering
+        // todo-0: this should be done in the DB query, not here
         treeNodes.sort((a, b) => a.name.localeCompare(b.name));
         return treeNodes;
     }
