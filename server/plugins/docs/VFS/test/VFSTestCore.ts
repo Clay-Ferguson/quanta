@@ -29,6 +29,7 @@ export async function printFolderStructure(owner_id: number, print: boolean=true
     const meta = { count: 0 }; // Metadata to track item count
     try {
         let output = '\n=== FOLDER STRUCTURE VISUALIZATION ===\n';
+        output += '📁 = Folder, 📄 = File, [P] = Public item\n';
         const rootPath = ''; 
         output += await buildDirectoryContents(owner_id, rootPath, testRootKey, 0, meta);
         output += '=== END FOLDER STRUCTURE ===\n';
@@ -228,11 +229,8 @@ export async function listAllVfsNodes(rootKey: string = testRootKey): Promise<vo
         const query = rootKey 
             ? 'SELECT id, is_directory, parent_path, filename FROM vfs_nodes WHERE doc_root_key = $1 ORDER BY parent_path, filename'
             : 'SELECT id, is_directory, parent_path, filename FROM vfs_nodes ORDER BY parent_path, filename';
-        
-        const _logEnabled = pgdb.logEnabled;
-        pgdb.logEnabled = true;
+                
         const result = await pgdb.query(query, rootKey);
-        pgdb.logEnabled = _logEnabled;
         
         console.log(`Found ${result.rows.length} records in vfs_nodes table:\n`);
         

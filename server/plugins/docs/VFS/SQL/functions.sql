@@ -846,3 +846,89 @@ BEGIN
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_set_public
+-- Sets the is_public flag on a file or directory, with option to recursively apply to children
+-- Returns both success status and diagnostic information
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_set_public(
+    owner_id_arg INTEGER,
+    parent_path_arg TEXT,
+    filename_arg TEXT,
+    is_public_arg BOOLEAN,
+    recursive BOOLEAN,
+    root_key TEXT
+)
+RETURNS TABLE(success BOOLEAN, diagnostic TEXT) AS $$
+DECLARE
+    updated_count INTEGER := 0;
+    child_count INTEGER := 0;
+    is_dir BOOLEAN;
+    full_path TEXT;
+    target_id INTEGER;
+BEGIN
+    -- Check if the target exists
+    SELECT id, is_directory INTO target_id, is_dir
+    FROM vfs_nodes
+    WHERE 
+        doc_root_key = root_key
+        AND parent_path = parent_path_arg
+        AND filename = filename_arg
+        AND owner_id = owner_id_arg;
+    
+    IF target_id IS NULL THEN
+        RETURN QUERY SELECT FALSE AS success, 
+                     format('Target not found: %s/%s', parent_path_arg, filename_arg) AS diagnostic;
+        RETURN;
+    END IF;
+
+    -- Update the main record
+    UPDATE vfs_nodes
+    SET 
+        is_public = is_public_arg
+    WHERE 
+        id = target_id;
+
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    
+    -- If it's a directory and recursive flag is true, update all children
+    IF is_dir AND recursive THEN
+        -- Build the full path for child updates
+        -- Normalize path format for consistent handling
+        IF parent_path_arg = '' OR parent_path_arg = '/' THEN
+            full_path := '/' || filename_arg;
+        ELSE
+            full_path := parent_path_arg || '/' || filename_arg;
+        END IF;
+        
+        -- Update all children recursively
+        UPDATE vfs_nodes
+        SET 
+            is_public = is_public_arg
+        WHERE 
+            doc_root_key = root_key
+            AND (
+                -- Direct children (parent_path = full_path)
+                parent_path = full_path
+                -- Or descendants (parent_path starts with full_path/)
+                OR parent_path LIKE full_path || '/%'
+            )
+            AND owner_id = owner_id_arg;
+        
+        GET DIAGNOSTICS child_count = ROW_COUNT;
+        
+        RETURN QUERY SELECT TRUE AS success, 
+                     format('Updated visibility of %s/%s to %s. Additionally updated %s child items.', 
+                           parent_path_arg, filename_arg, 
+                           CASE WHEN is_public_arg THEN 'public' ELSE 'private' END, 
+                           child_count) AS diagnostic;
+    ELSE
+        -- For non-recursive updates or single files
+        RETURN QUERY SELECT TRUE AS success, 
+                     format('Updated visibility of %s/%s to %s.', 
+                           parent_path_arg, filename_arg,
+                           CASE WHEN is_public_arg THEN 'public' ELSE 'private' END) AS diagnostic;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;

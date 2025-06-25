@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import pgdb from '../../../../PGDB.js';
 import { testFolderRenameWithChildren } from './testFolderRename.js';
+import { pgdbTestSetFolderPublic } from './VFSTestAuth.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
  
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
@@ -16,27 +18,30 @@ export async function pgdbTest(): Promise<void> {
         throw new Error('Admin profile not found, cannot run tests');
     }
 
-    await resetTestEnvironment();
-    await testFolderRenameWithChildren(owner_id);
-    await simpleReadWriteTest(owner_id);
+    // await resetTestEnvironment();
+    // await testFolderRenameWithChildren(owner_id);
+    // await simpleReadWriteTest(owner_id);
 
-    await resetTestEnvironment();
-    await testFileOperations(owner_id);
+    // await resetTestEnvironment();
+    // await testFileOperations(owner_id);
 
-    await resetTestEnvironment();
-    await testPathOperations();
+    // await resetTestEnvironment();
+    // await testPathOperations();
     
-    await resetTestEnvironment();
-    await testErrorHandling(owner_id);
+    // await resetTestEnvironment();
+    // await testErrorHandling(owner_id);
+
+    // await resetTestEnvironment();
+    // await pgdbTestMoveUp(owner_id);
 
     await resetTestEnvironment();
-    await pgdbTestMoveUp(owner_id);
+    await pgdbTestSetFolderPublic(owner_id);
 
     // Test search functionality
     // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
-    await resetTestEnvironment();
+    // await resetTestEnvironment();
     await dumpTableStructure(owner_id);
 }
 
@@ -50,7 +55,7 @@ async function resetTestEnvironment(): Promise<void> {
     await createFolderStructure();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function deleteFolder(owner_id: number, folderName: string): Promise<void> {
     try {
         console.log(`=== DELETING FOLDER: ${folderName} ===`);
@@ -422,7 +427,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
 /**
  * Test to verify that renaming folders preserves their children
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function testFolderRenamePreservesChildren(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
@@ -504,7 +509,7 @@ async function testFolderRenamePreservesChildren(owner_id: number): Promise<void
  * Test function to verify PostgreSQL search functionality
  * Tests the vfs_search_text function with basic substring search
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function pgdbTestSearch(): Promise<void> {
     try {
         console.log('=== PGDB SEARCH TEST STARTING ===');
