@@ -331,6 +331,28 @@ class VFS implements IFS {
         }
     }
 
+    /**
+     * Gets the maximum ordinal value for files/folders in a directory
+     * Useful for creating new items with the next available ordinal
+     * @param fullPath - The directory path to check
+     * @returns The maximum ordinal value (0 if no files with ordinals exist)
+     */
+    async getMaxOrdinal(fullPath: string): Promise<number> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            
+            const result = await pgdb.query(
+                'SELECT vfs_get_max_ordinal($1, $2)',
+                relativePath, rootKey
+            );
+            
+            return result.rows[0].vfs_get_max_ordinal || 0;
+        } catch (error) {
+            console.error('VFS.getMaxOrdinal error:', error);
+            return 0; // Return 0 as default if there's an error
+        }
+    }
+
     async mkdir(owner_id: number, fullPath: string, options?: { recursive?: boolean }): Promise<void> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
@@ -340,12 +362,15 @@ class VFS implements IFS {
             // If the filename doesn't have one, we need to generate it
             let finalFilename = filename;
             if (!filename.match(/^[0-9]+_/)) {
-                // Get the next ordinal for this directory
-                const maxOrdinalResult = await pgdb.query(
-                    'SELECT vfs_get_max_ordinal($1, $2)',
-                    parentPath, rootKey
+                // Get the next ordinal for this directory using our wrapper method
+                // Find the full path for the parent directory
+                const root = config.getPublicFolderByKey(rootKey);
+                const fullParentPath = path.join(
+                    root?.path || '',
+                    parentPath
                 );
-                const maxOrdinal = maxOrdinalResult.rows[0].vfs_get_max_ordinal || 0;
+                // todo-0: this is new. Need to test this path.
+                const maxOrdinal = await this.getMaxOrdinal(fullParentPath);
                 const nextOrdinal = maxOrdinal + 1;
                 const ordinalPrefix = nextOrdinal.toString().padStart(4, '0');
                 finalFilename = `${ordinalPrefix}_${filename}`;

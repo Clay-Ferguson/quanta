@@ -73,7 +73,7 @@ class PGDB {
 
     private async loadAdminUser(): Promise<void> {
         const adminPubKey = config.get("adminPublicKey");
-        this.adminProfile = await dbUsers.getUserInfoCompact(adminPubKey);
+        this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);
         if (!this.adminProfile) {
             // if we don't find the admin profile we need to create it!
             console.warn(`Admin user with public key ${adminPubKey} not found. Creating default admin user...`);
@@ -86,7 +86,7 @@ class PGDB {
             await dbUsers.saveUserInfo(defaultAdminProfile);
 
             // now read it back.
-            this.adminProfile = await dbUsers.getUserInfoCompact(adminPubKey);
+            this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);
             if (!this.adminProfile) {
                 console.error('Failed to create default admin user. Please check your database configuration.');
                 throw new Error('Failed to create default admin user');

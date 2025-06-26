@@ -167,7 +167,7 @@ class DBUsers {
             );
 
             if (userProfile) {
-                const confirmUserProfile: UserProfileCompact | null = await this.getUserInfoCompact(userProfile.publicKey);
+                const confirmUserProfile: UserProfileCompact | null = await this.getUserProfileCompact(userProfile.publicKey);
                 if (confirmUserProfile) { 
                     await svrUtil.onCreateNewUser(confirmUserProfile);
                 }
@@ -194,7 +194,7 @@ class DBUsers {
             }
                 
             // Get user info from the database
-            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
+            const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
             if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
                 // Return a 404 for missing avatars
                 res.status(404).send('Avatar not found');
@@ -229,14 +229,14 @@ class DBUsers {
      * @param req - Express request object containing pubKey in params
      * @param res - Express response object
      */
-    getUserProfile = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
+    getUserProfileReq = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
         try {
             const publicKey = req.params.pubKey;
             if (!publicKey) {
                 res.status(400).json({ error: 'Public key is required' });
                 return;
             }
-            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
+            const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
             if (userProfile) {
                 res.json(userProfile);
             } else {
@@ -253,9 +253,7 @@ class DBUsers {
      * @param publicKey - The public key of the user to retrieve
      * @returns A Promise resolving to the user profile object or null if not found
      */
-    // todo-0: rename to getUserProfileCompact
-    getUserInfoCompact = async (publicKey: string): Promise<UserProfileCompact | null> => {
-        // console.log(`getUserInfoCompact for public key: ${publicKey}`);
+    getUserProfileCompact = async (publicKey: string): Promise<UserProfileCompact | null> => {
         try {
             if (!publicKey) {
                 console.error('Cannot get user info without a public key');
@@ -294,7 +292,7 @@ class DBUsers {
      * @param publicKey - The public key of the user to retrieve
      * @returns A Promise resolving to the user profile object or null if not found
      */
-    getUserInfo = async (publicKey: string): Promise<UserProfile | null> => {
+    getUserProfile = async (publicKey: string): Promise<UserProfile | null> => {
         try {
             if (!publicKey) {
                 console.error('Cannot get user info without a public key');

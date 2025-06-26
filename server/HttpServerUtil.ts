@@ -171,7 +171,7 @@ class HttpServerUtil {
                 return;
             }
 
-            const userProfile: UserProfileCompact | null = await dbUsers.getUserInfoCompact(publicKey);
+            const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
             if (userProfile) {
                 // console.log('User profile found for public key:', publicKey);
                 // Store userProfile in the request object for use in downstream middleware and route handlers

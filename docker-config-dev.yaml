@@ -16,7 +16,7 @@ plugins:
 # Public folders configuration - array of folder objects with name and path
 public-folders:
   - name: "Users"
-    key: "usr"
+    key: "usr" # warning: this value is hardcoded in places in the code.
     path: "/"
     type: "vfs"  # Type can be 'lfs' for Linux file system or 'vfs' for virtual PostregreSQL file system
     # Accessable at: http://localhost:8000/doc/pgroot

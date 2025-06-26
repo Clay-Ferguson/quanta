@@ -74,9 +74,10 @@ $$ LANGUAGE plpgsql;
 -- Function: vfs_get_max_ordinal
 -- Equivalent to DocUtil.getMaxOrdinal() - finds highest ordinal in a directory
 -- Extracts ordinal from filename prefix instead of using ordinal column
+-- Returns the maximum ordinal value from direct children in the given path
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_get_max_ordinal(
-    parent_path_param TEXT,
+    parent_path_arg TEXT,
     root_key TEXT
 ) 
 RETURNS INTEGER AS $$
@@ -88,7 +89,7 @@ BEGIN
     FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
-        AND parent_path = parent_path_param
+        AND parent_path = parent_path_arg
         AND filename ~ '^[0-9]+_';  -- Only consider files with ordinal prefixes
         
     RETURN max_ord;

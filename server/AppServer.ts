@@ -94,7 +94,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
 app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, svrUtil.runAdminCommand); 
 app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, dbUsers.saveUserProfile); 
-app.get('/api/users/:pubKey/info', dbUsers.getUserProfile);
+app.get('/api/users/:pubKey/info', dbUsers.getUserProfileReq);
 app.get('/api/users/:pubKey/avatar', dbUsers.serveAvatar);
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
@@ -104,7 +104,7 @@ await svrUtil.initPlugins(plugins, {app, serveIndexHtml});
 app.use(express.static("./dist", { index: false }));
 
 // Fallback for any other routes not handled above
-await svrUtil.finishRoutes(plugins, {app, serveIndexHtml});
+await svrUtil.finishRoutes({app, serveIndexHtml});
 
 let server = null;
 
