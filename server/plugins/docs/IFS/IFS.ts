@@ -1,6 +1,15 @@
 
 // import * as fs from 'fs';
 
+// Similar to 'fs.Stats', but for our virtual file system (VFS) or local file system (LFS)
+export interface IFSStats {
+    is_public?: boolean;
+    is_directory: boolean;
+    birthtime: Date;
+    mtime: Date;
+    size: number;
+}
+
 /**
  * Virtual File System Interface
  * 
@@ -10,7 +19,9 @@
 export interface IFS {
     // File existence and metadata
     exists(path: string): Promise<boolean>;
-    stat(path: string): Promise<any>; //<fs.Stats>; // todo-0: We need a wrapper around 'fs.Stats' so the API is clean and can abstract to LFS and VFS. For now we use 'any'
+    childrenExist(owner_id: number, path: string): Promise<boolean>;
+
+    stat(path: string): Promise<IFSStats>; 
 
     // File content operations
     readFile(owner_id: number, path: string, encoding?: BufferEncoding): Promise<string | Buffer>;

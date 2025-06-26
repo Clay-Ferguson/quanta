@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as fs from 'fs';
 import path from 'path';
-import { IFS } from '../IFS/IFS.js'
+import { IFS, IFSStats } from '../IFS/IFS.js'
 import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
 import { TreeNode } from '../../../../common/types/CommonTypes.js';
@@ -67,6 +67,27 @@ class VFS implements IFS {
         throw new Error(`No VFS root found for path: ${fullPath}`);
     }
 
+    async childrenExist(owner_id: number, path: string): Promise<boolean> {
+        try {
+            const { rootKey, relativePath } = this.getRelativePath(path);
+            
+            // Special case for root directory
+            if (relativePath === '') {
+                return true;
+            }
+            // const { parentPath, filename } = this.parsePath(relativePath);
+            const result = await pgdb.query(
+                'SELECT vfs_children_exist($1, $2, $3)',
+                owner_id, path, rootKey
+            );
+            
+            return result.rows[0].vfs_children_exist;
+        } catch (error) {
+            console.error('VFS.children_exist error:', error);
+            return false;
+        }
+    }
+
     // File existence and metadata
     async exists(fullPath: string): Promise<boolean> {
         try {
@@ -91,8 +112,7 @@ class VFS implements IFS {
         }
     }
 
-    // todo-0: We need a wrapper around 'fs.Stats' so the API is clean and can abstract to LFS and VFS. For now we use 'any'
-    async stat(fullPath: string): Promise<any> { // <fs.Stats> {
+    async stat(fullPath: string): Promise<IFSStats> { 
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
             
@@ -102,12 +122,11 @@ class VFS implements IFS {
                 return {
                     // Root is considered owned by admin and not public.
                     is_public: false,
-                    isDirectory: () => true,
-                    isFile: () => false,
+                    is_directory: true,
                     birthtime: new Date(),
                     mtime: new Date(),
                     size: 0
-                } as any; //as fs.Stats;
+                } as IFSStats;
             }
             
             const { parentPath, filename } = this.parsePath(relativePath);
@@ -121,16 +140,13 @@ class VFS implements IFS {
             }
             
             const row = result.rows[0];
-            
-            // Create a mock fs.Stats object with the required properties
             return {
                 is_public: row.is_public,
-                isDirectory: () => row.is_directory,
-                isFile: () => !row.is_directory,
+                is_directory: row.is_directory,
                 birthtime: new Date(row.created_time),
                 mtime: new Date(row.modified_time),
                 size: row.size_bytes || 0
-            }; // as fs.Stats;
+            } as IFSStats;
         } catch (error) {
             console.error('VFS.stat error:', error);
             throw error;
@@ -289,7 +305,6 @@ class VFS implements IFS {
     }
 
     // Special version with no 'LFS' equivalent called only from Docs plugin
-    // todo-0: for the treeRender method we can use this to get CONTENTS instad of doing a read of the file records one by one.
     async readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]> {
         try {
             const { rootKey, relativePath } = this.getRelativePath(fullPath);
@@ -302,11 +317,11 @@ class VFS implements IFS {
                 // Convert PostgreSQL row to TreeNode format
                 return {
                     is_public: row.is_public,
+                    is_directory: row.is_directory,
                     name: row.filename, 
                     createTime: row.created_time,
                     modifyTime: row.modified_time,
                     content: row.content,
-                    type: row.is_directory ? 'folder' : 'text', // todo-0: need to make 'type' column just be an 'is_directory' boolean
                 } as TreeNode;
             });
             return treeNodes;
@@ -397,7 +412,7 @@ class VFS implements IFS {
             // Check if this is a directory or file
             const stats = await this.stat(fullPath);
             
-            if (stats.isDirectory()) {
+            if (stats.is_directory) {
                 // Use vfs_rmdir for directories
                 await pgdb.query(
                     'SELECT vfs_rmdir($1, $2, $3, $4, $5)',

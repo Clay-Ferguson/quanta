@@ -40,7 +40,7 @@ class DocBinary {
      * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
-        // todo-0: tree render is not yet converted to a secure post request, so we use admin profile for now
+        // todo-1: tree render is not yet converted to a secure post request, so we use admin profile for now
         const owner_id = pgdb.adminProfile!.id!; 
         if (!owner_id) {
             res.status(401).json({ error: 'Unauthorized: User profile not found' });
@@ -82,7 +82,7 @@ class DocBinary {
 
             // Verify the path points to a file, not a directory
             const stat = await ifs.stat(absoluteImagePath);
-            if (!stat.isFile()) {
+            if (stat.is_directory) {
                 res.status(400).json({ error: 'Path is not a file' });
                 return;
             }

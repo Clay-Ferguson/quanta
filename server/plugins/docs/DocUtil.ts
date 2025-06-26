@@ -82,7 +82,7 @@ class DocUtil {
      * incrementing the ordinal prefixes of existing files. It's essential for maintaining
      * proper sequential ordering when inserting new items.
      * 
-     * NOTE: todo-1: We do have a Postgres VFS method in a single call but it's untested, and we need to 
+     * NOTE: todo-1: We do have a Postgres VFS function for doing this in a single call but it's untested, and we need to 
      * verify that this way of doing it works anyway, so we don't use the more efficient VFS method yet for now.
      * 
      * Process:

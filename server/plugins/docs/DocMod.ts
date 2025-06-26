@@ -100,7 +100,7 @@ class DocMod {
     
                 // Ensure the target path is actually a directory
                 const stat = await ifs.stat(absoluteFolderPath);
-                if (!stat.isDirectory()) {
+                if (!stat.is_directory) {
                     res.status(400).json({ error: 'Path is not a directory' });
                     return;
                 }
@@ -268,7 +268,7 @@ class DocMod {
 
                 // Ensure the target is actually a directory, not a file
                 const stat = await ifs.stat(oldAbsolutePath);
-                if (!stat.isDirectory()) {
+                if (!stat.is_directory) {
                     res.status(400).json({ error: 'Path is not a directory' });
                     return;
                 }
@@ -389,7 +389,7 @@ class DocMod {
                         const stat = await ifs.stat(absoluteTargetPath);
                     
                         ifs.checkFileAccess(absoluteTargetPath, root);
-                        if (stat.isDirectory()) {
+                        if (stat.is_directory) {
                         // Remove directory recursively
                             await ifs.rm(owner_id, absoluteTargetPath, { recursive: true, force: true });
                             console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
@@ -1163,7 +1163,7 @@ class DocMod {
 
                 // Ensure the target is actually a file, not a directory
                 const fileStat = await ifs.stat(absoluteFilePath);
-                if (!fileStat.isFile()) {
+                if (fileStat.is_directory) {
                     res.status(400).json({ error: 'Path is not a file' });
                     return;
                 }

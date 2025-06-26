@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { IFS } from './IFS.js';
+import { IFS, IFSStats } from './IFS.js';
 import path from 'path';
 
 /**
@@ -8,6 +8,11 @@ import path from 'path';
  */
 class LFS implements IFS {
     
+    async childrenExist(owner_id: number, path: string): Promise<boolean> {
+        const ret = (await fs.promises.readdir(path)).length > 0;
+        return ret;
+    }
+
     // File existence and metadata
     async exists(path: string): Promise<boolean> {
         try {
@@ -18,8 +23,17 @@ class LFS implements IFS {
         }
     }
 
-    async stat(path: string): Promise<fs.Stats> {
-        return await fs.promises.stat(path);
+    async stat(path: string): Promise<IFSStats> {
+        const stat =  await fs.promises.stat(path);
+        return {
+            is_public: true,
+            is_directory: stat.isDirectory(),
+            // isDirectory: () => row.is_directory,
+            // isFile: () => !row.is_directory,
+            birthtime: stat.birthtime,
+            mtime: stat.mtime,
+            size: stat.size,
+        } as IFSStats;
     }
 
     // File content operations

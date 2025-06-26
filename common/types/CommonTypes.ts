@@ -88,12 +88,13 @@ export type AttachmentInfo = {
 }
 
 export type TreeNode = {
-    is_public?: boolean; // todo-0: I could possibly make this non-optional
+    is_directory?: boolean; 
+    is_public?: boolean; // todo-1: I could possibly make this non-optional
     name: string; // filename
     createTime: number;
     modifyTime: number;
     content: string;
-    type: string; 
+    type: string; // <--- this is obsolete and will eventually be removed, use 'is_directory' and/or file extension instead
     children?: TreeNode[] | null; // subdirectories or files (pullups only)
     fsChildren?: boolean; // true if this node has children in the file system
 }

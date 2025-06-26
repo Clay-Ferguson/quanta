@@ -23,7 +23,6 @@ class HttpServerUtil {
      * @returns Promise<void> 
      */
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
-        // todo-0: We will be removing body-based publicKey and using only headers
         let { publicKey }: SignableObject = req.body;
         if (!publicKey) {
             // get publicKey from request headers

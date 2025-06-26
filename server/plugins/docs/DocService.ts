@@ -127,7 +127,7 @@ class DocService {
                 const entryPath = path.join(currentPath, entry);
                 const stat = await ifs.stat(entryPath);
                 
-                if (stat.isDirectory() && /^\d+_/.test(entry)) {
+                if (stat.is_directory && /^\d+_/.test(entry)) {
                     // Extract the folder name without the ordinal prefix
                     const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
                     
@@ -138,7 +138,7 @@ class DocService {
                     }
                 } else {
                     // Log non-matching entries for debugging purposes
-                    console.log(`    Entry "${entry}" is ${!stat.isDirectory() ? 'not a directory' : 'directory without ordinal prefix'}`);
+                    console.log(`    Entry "${entry}" is ${!stat.is_directory ? 'not a directory' : 'directory without ordinal prefix'}`);
                 }
             }
             
@@ -148,7 +148,7 @@ class DocService {
                 for (const entry of entries) {
                     const entryPath = path.join(currentPath, entry);
                     const stat = await ifs.stat(entryPath);
-                    if (stat.isDirectory() && /^\d+_/.test(entry)) {
+                    if (stat.is_directory && /^\d+_/.test(entry)) {
                         const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
                         console.log(`  - "${entry}" -> "${nameWithoutOrdinal}"`);
                     }
@@ -199,7 +199,7 @@ class DocService {
         try {
             // Extract the folder path from the URL after the API prefix
             // Example: "/api/docs/render/docs/folder" -> "/folder"
-            // todo-0: this string repacement is super ugly. Do something better.
+            // todo-1: this string repacement is super ugly. Do something better.
             const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
             const treeFolder = decodeURIComponent(rawTreeFolder);
             
@@ -237,7 +237,7 @@ class DocService {
             
             // Verify the target is actually a directory (not a file)
             const stat = await ifs.stat(absolutePath);
-            if (!stat.isDirectory()) {
+            if (!stat.is_directory) {
                 console.warn(`Path is not a directory: ${absolutePath}`);
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -247,7 +247,7 @@ class DocService {
             const treeNodes: TreeNode[] = await this.getTreeNodes(owner_id, absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
-            const response: TreeRender_Response = { is_root_public: stat.is_public, treeNodes };
+            const response: TreeRender_Response = { is_root_public: stat.is_public!, treeNodes };
             res.json(response);
         } catch (error) {
             // Handle any errors that occurred during tree rendering
@@ -300,10 +300,8 @@ class DocService {
             ifs.checkFileAccess(filePath, root); 
 
             // DIRECTORY
-            // todo-0: we can get directory flag from 'row type' right?
-            //if (fileStat.isDirectory()) {
-            if (file.type === 'folder') {
-
+            if (file.is_directory) {
+                file.type = 'folder'; // Set type to folder
                 // Handle pullup folders: folders ending with '_' get their contents inlined
                 if (pullup && file.name.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
@@ -316,8 +314,7 @@ class DocService {
                 }
                 
                 // Check if folder has any children in the filesystem
-                // todo-0: this can be a MUCH more optimzed call than a dir read! Need a `vfs_has_children` method
-                file.fsChildren = (await ifs.readdir(owner_id, filePath)).length > 0;
+                file.fsChildren = await ifs.childrenExist(owner_id, filePath);
             } 
             // FILE
             else {

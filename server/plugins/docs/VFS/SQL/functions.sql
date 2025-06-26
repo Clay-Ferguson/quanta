@@ -15,7 +15,6 @@ CREATE OR REPLACE FUNCTION vfs_readdir(
 RETURNS TABLE(
     is_public BOOLEAN,
     filename VARCHAR(255),
-    -- ordinal INTEGER,
     is_directory BOOLEAN,
     size_bytes BIGINT,
     content_type VARCHAR(100),
@@ -27,12 +26,6 @@ BEGIN
     SELECT 
         n.is_public,
         n.filename,
-        -- CASE 
-        --     WHEN n.filename ~ '^[0-9]+_' THEN 
-        --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
-        --     ELSE 
-        --         0
-        -- END as ordinal,
         n.is_directory,
         n.size_bytes,
         n.content_type,
@@ -42,15 +35,8 @@ BEGIN
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
-        --  user can read files they own, or public files
         AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
     ORDER BY 
-        -- CASE 
-        --     WHEN n.filename ~ '^[0-9]+_' THEN 
-        --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
-        --     ELSE 
-        --         0
-        -- END ASC, 
         n.filename ASC;
 END;
 $$ LANGUAGE plpgsql;
@@ -77,12 +63,6 @@ BEGIN
             --  user can read files they own, or public files
             AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
         ORDER BY 
-            -- CASE 
-            --     WHEN n.filename ~ '^[0-9]+_' THEN 
-            --         substring(n.filename FROM '^([0-9]+)_')::INTEGER
-            --     ELSE 
-            --         0
-            -- END ASC, 
             n.filename ASC
     ) INTO result;
     
@@ -118,7 +98,7 @@ $$ LANGUAGE plpgsql;
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_get_ordinal_from_name
 -- Equivalent to DocUtil.getOrdinalFromName() - extracts ordinal from filename prefix
--- todo-0: not currently used (yet), except for in some test cases
+-- todo-1: not currently used (yet), except for in some test cases
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_get_ordinal_from_name(
     filename_param TEXT,
@@ -376,8 +356,7 @@ RETURNS TABLE(
     size_bytes BIGINT,
     created_time TIMESTAMP WITH TIME ZONE,
     modified_time TIMESTAMP WITH TIME ZONE,
-    content_type VARCHAR(100),
-    ordinal INTEGER
+    content_type VARCHAR(100)
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -387,15 +366,7 @@ BEGIN
         n.size_bytes,
         n.created_time,
         n.modified_time,
-        n.content_type,
-
-        -- todo-0: we don't need ordinal
-        CASE 
-            WHEN n.filename ~ '^[0-9]+_' THEN 
-                substring(n.filename FROM '^([0-9]+)_')::INTEGER
-            ELSE 
-                0
-        END as ordinal
+        n.content_type
     FROM vfs_nodes n
     WHERE 
         n.doc_root_key = root_key
@@ -433,6 +404,33 @@ BEGIN
     END IF;
     
     RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_children_exist
+-- Checks if a directory has any children (files or folders)
+-- Returns true if the specified path has any files or folders in it
+-- Used to determine if a directory is empty
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_children_exist(
+    owner_id_arg INTEGER,
+    path_param TEXT,
+    root_key TEXT
+) 
+RETURNS BOOLEAN AS $$
+DECLARE
+    has_children BOOLEAN;
+BEGIN
+    SELECT COUNT(*) > 0
+    INTO has_children
+    FROM vfs_nodes
+    WHERE 
+        doc_root_key = root_key
+        AND parent_path = path_param
+        AND owner_id = owner_id_arg;
+        
+    RETURN has_children;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -144,7 +144,6 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         console.log('Retrieved content:', contentAsString);
         
         // Also get file metadata using vfs_stat
-        // todo-0: file stats doesn't need to be returning ordinal.
         const statResult = await pgdb.query(
             'SELECT * FROM vfs_stat($1, $2, $3)',
             testParentPath, testFilename, testRootKey
@@ -156,7 +155,6 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
                 is_directory: fileStats.is_directory,
                 size_bytes: fileStats.size_bytes,
                 content_type: fileStats.content_type,
-                ordinal: fileStats.ordinal,
                 created_time: fileStats.created_time,
                 modified_time: fileStats.modified_time
             });
@@ -202,7 +200,6 @@ async function testFileOperations(owner_id: number): Promise<void> {
             console.log(`     Size: ${stats.size_bytes} bytes`);
             console.log(`     Type: ${stats.content_type}`);
             console.log(`     Is Directory: ${stats.is_directory}`);
-            console.log(`     Ordinal: ${stats.ordinal}`);
             console.log(`     Created: ${stats.created_time}`);
             console.log(`     Modified: ${stats.modified_time}`);
         }
