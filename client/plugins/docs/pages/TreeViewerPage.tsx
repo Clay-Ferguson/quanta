@@ -1105,11 +1105,15 @@ export default function TreeViewerPage() {
             setTreeNodes([]);
             return [];
         }
-        const folder = gs.docsFolder || '';
+        let folder = gs.docsFolder || '';
+        if (!folder.startsWith('/')) {
+            folder = `/${folder}`;
+        }
         try {
             // setIsLoading(true);
             setError(null);
-            const url = `/api/docs/render/${gs.docsRootKey}/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
+            // console.log(`Refreshing tree for folder "${folder}" with rootKey="${gs.docsRootKey}"...`);
+            const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
                 
             if (treeResponse && treeResponse.treeNodes) {
@@ -1181,7 +1185,7 @@ export default function TreeViewerPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText="Doc Viewer"/>
+                <LogoBlockComp subText=""/>
                 <div className="flex items-center space-x-4">
                     <ViewWidthDropdown gs={gs} />
                     {isAdmin && 

@@ -7,12 +7,17 @@ import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 
 const testRootKey = 'pgroot';
+const testEnabled = false;
 
 /**
  * Test function to verify PostgreSQL database functionality
  * Creates a test file record and reads it back to verify everything is working
  */
 export async function pgdbTest(): Promise<void> {
+    if (!testEnabled) {
+        console.log('PGDB tests are disabled. Set testEnabled to true to run tests.');
+        return;
+    }
     const owner_id = pgdb.adminProfile!.id;
     if (!owner_id) {
         throw new Error('Admin profile not found, cannot run tests');

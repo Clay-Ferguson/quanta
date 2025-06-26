@@ -51,7 +51,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.get('/api/docs/images/:docRootKey/*', docBinary.serveDocImage);  
 
         // For now we only allow admin to access the docs API
-        context.app.post('/api/docs/render/:docRootKey/*', httpServerUtil.verifyReqHTTPSignature, docSvc.treeRender); 
+        context.app.post('/api/docs/render/:docRootKey/*', httpServerUtil.verifyReqHTTPSignatureAllowAnon, docSvc.treeRender); 
         context.app.post('/api/docs/save-file/', httpServerUtil.verifyReqHTTPSignature, docMod.saveFile); 
         context.app.post('/api/docs/upload', httpServerUtil.verifyReqHTTPSignature, docBinary.uploadFiles); 
         context.app.post('/api/docs/rename-folder/', httpServerUtil.verifyReqHTTPSignature, docMod.renameFolder); 

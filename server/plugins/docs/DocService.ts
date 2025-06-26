@@ -188,11 +188,11 @@ class DocService {
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
+        let owner_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
         if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
-        }
+            owner_id = 0; // Default to 0 if user profile is not available
+        }                   
+       
         // Clean up path by removing double slashes
         const pathName = req.path.replace("//", "/");
         

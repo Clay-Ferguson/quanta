@@ -25,13 +25,27 @@ class HttpServerUtil {
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         // get publicKey from request headers
         const publicKey = req.headers['public-key'] as string;
+        // console.log('verifyReqHTTPSignature: publicKey:', publicKey);
         if (!publicKey) {
-            console.log('public-key header not found: Request headers:', req.headers);                
+            // console.log('public-key header not found: Request headers:', req.headers);    
             res.status(401).json({ error: 'Public key is not set in request body or header' });
             return;
         }
         
-        return this.verifyHTTPSignature(req, res, publicKey, next);
+        return this.verifyHTTPSignature(req, res, publicKey, false, next);
+    }
+
+    verifyReqHTTPSignatureAllowAnon = async (req: Request, res: Response, next: any): Promise<void> => {
+        // get publicKey from request headers
+        const publicKey = req.headers['public-key'] as string;
+        // console.log('verifyReqHTTPSignature: publicKey:', publicKey);
+        if (!publicKey) {
+            console.log('public-key header not found: Request headers:', req.headers);    
+            next();
+            return;
+        }
+        
+        return this.verifyHTTPSignature(req, res, publicKey, true, next);
     }
 
     /**
@@ -44,7 +58,7 @@ class HttpServerUtil {
      * @returns Promise<void>
      */
     verifyAdminHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
-        return this.verifyHTTPSignature(req, res, ADMIN_PUBLIC_KEY!, next);
+        return this.verifyHTTPSignature(req, res, ADMIN_PUBLIC_KEY!, false, next);
     }
 
     /**
@@ -70,10 +84,15 @@ class HttpServerUtil {
      * @param next - Express next function to continue to the next middleware
      * @returns Promise<void>
      */
-    verifyHTTPSignature = async (req: Request, res: Response, publicKey: string, next: any): Promise<void> => {
+    verifyHTTPSignature = async (req: Request, res: Response, publicKey: string, allowAnon: boolean, next: any): Promise<void> => {
         try {
             if (!publicKey) {
-                res.status(500).json({ error: 'Public key is not set' });
+                if (!allowAnon) {
+                    res.status(500).json({ error: 'Public key is not set' });
+                }
+                else {
+                    next();
+                }
                 return;
             }
             const sig = req.headers['signature'];
@@ -154,9 +173,17 @@ class HttpServerUtil {
 
             const userProfile: UserProfileCompact | null = await dbUsers.getUserInfoCompact(publicKey);
             if (userProfile) {
+                // console.log('User profile found for public key:', publicKey);
                 // Store userProfile in the request object for use in downstream middleware and route handlers
                 (req as AuthenticatedRequest).userProfile = userProfile;
-            }        
+            }       
+            else {
+                if (!allowAnon) {
+                    res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                    return;
+                }
+                // console.warn('User profile not found for public key (treating as ANON USER)', publicKey);
+            } 
             next();
         } catch (error) {
             console.error('Error verifying signature:', error);
