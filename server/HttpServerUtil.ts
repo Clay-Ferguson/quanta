@@ -1,6 +1,6 @@
 import { crypt } from "../common/Crypto.js";
 import { Request, Response } from 'express';
-import { SignableObject, UserProfileCompact } from "../common/types/CommonTypes.js";
+import { UserProfileCompact } from "../common/types/CommonTypes.js";
 import { config } from "./Config.js";
 import { dbUsers } from "./DBUsers.js";
 import { AuthenticatedRequest } from "./ServerUtil.js";
@@ -23,16 +23,14 @@ class HttpServerUtil {
      * @returns Promise<void> 
      */
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
-        let { publicKey }: SignableObject = req.body;
+        // get publicKey from request headers
+        const publicKey = req.headers['public-key'] as string;
         if (!publicKey) {
-            // get publicKey from request headers
-            publicKey = req.headers['public-key'] as string;
-            if (!publicKey) {
-                console.log('public-key header not found: Request headers:', req.headers);                
-                res.status(401).json({ error: 'Public key is not set in request body or header' });
-                return;
-            }
+            console.log('public-key header not found: Request headers:', req.headers);                
+            res.status(401).json({ error: 'Public key is not set in request body or header' });
+            return;
         }
+        
         return this.verifyHTTPSignature(req, res, publicKey, next);
     }
 

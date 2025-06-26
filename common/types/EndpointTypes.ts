@@ -7,7 +7,6 @@ export type DeleteRoom_Request = {
 export type DeleteMessage_Request = {
     messageId: string;
     roomName: string;
-    publicKey: string;
 }
 
 export type BlockUser_Request = {
@@ -20,7 +19,6 @@ export type GetMessagesByIds_Request = {
 
 export type SendMessages_Request = {
     messages: ChatMessage[];
-    publicKey: string;
 }
 
 export type GetMessageIdsForRoom_Response = {

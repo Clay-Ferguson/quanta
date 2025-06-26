@@ -264,7 +264,7 @@ class ChatService {
      */
     deleteMessage = async (req: Request<any, any, DeleteMessage_Request>, res: Response): Promise<void> => {
         try {
-            const { messageId, roomName, publicKey } = req.body;
+            const { messageId, roomName } = req.body;
         
             if (!messageId) {
                 res.status(400).json({ 
@@ -273,6 +273,8 @@ class ChatService {
                 });
                 return;
             }
+
+            const publicKey = req.headers['public-key'] as string;
         
             console.log('Admin request: Deleting message:', messageId);
             const success = await dbMessages.deleteMessage(messageId, publicKey, ADMIN_PUBLIC_KEY!);

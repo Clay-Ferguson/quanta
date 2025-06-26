@@ -84,7 +84,6 @@ export class AppMessages {
             await httpClientUtil.secureHttpPost<DeleteMessage_Request, any>('/api/delete-message', {
                 messageId,
                 roomName: _gs.chatRoom!,
-                publicKey: _gs.keyPair!.publicKey
             });
         }
     }
@@ -356,7 +355,6 @@ export class AppMessages {
             const response = await httpClientUtil.secureHttpPost<SendMessages_Request, any>(
                 `/api/rooms/${encodeURIComponent(roomName!)}/send-messages`, { 
                     messages: messagesToSend,
-                    publicKey: gs().keyPair!.publicKey
                 }
             );
                 

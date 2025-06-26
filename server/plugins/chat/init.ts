@@ -62,8 +62,8 @@ class ChatServerPlugin implements IServerPlugin {
 
         context.app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteAttachment);
         context.app.post('/api/rooms/:roomId/get-messages-by-id', chatSvc.getMessagesByIds);
-        context.app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, chatSvc.saveUserProfile);
-        context.app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages);
+        context.app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, chatSvc.saveUserProfile); 
+        context.app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages); 
         context.app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); 
 
         // We serve the index.html page for the chat plugin at the root path, if 'chat' is the default plugin.
