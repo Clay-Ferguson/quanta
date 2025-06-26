@@ -9,6 +9,7 @@ import { httpServerUtil } from './HttpServerUtil.js';
 import { docSvc } from './plugins/docs/DocService.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
+import { dbUsers } from './DBUsers.js';
 
 logInit();
 
@@ -92,6 +93,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 };
 
 app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, svrUtil.runAdminCommand); 
+app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, dbUsers.saveUserProfile); 
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
 await svrUtil.initPlugins(plugins, {app, serveIndexHtml});

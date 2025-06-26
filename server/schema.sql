@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS user_info (
     id SERIAL PRIMARY KEY,
     pub_key TEXT UNIQUE NOT NULL,
-    user_name TEXT,
+    user_name TEXT UNIQUE NOT NULL,
     user_desc TEXT,
     avatar_name TEXT,
     avatar_type TEXT,

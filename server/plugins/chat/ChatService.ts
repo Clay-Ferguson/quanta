@@ -376,29 +376,6 @@ class ChatService {
     }
 
     /**
-     * Saves or updates user profile information in the database
-     * @param req - Express request object containing UserProfile in body
-     * @param res - Express response object
-     */
-    saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
-        try {
-            const userProfile: UserProfile = req.body;
-            if (!userProfile.publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
-            }
-            const success = await dbUsers.saveUserInfo(userProfile); 
-            if (success) {
-                res.json({ success: true });
-            } else {
-                res.status(500).json({ error: 'Failed to save user information' });
-            }
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to save user profile');
-        }
-    }
-
-    /**
      * Saves multiple messages to the database for a specific room
      * @param req - Express request object containing roomId in params and SendMessages_Request in body
      * @param res - Express response object

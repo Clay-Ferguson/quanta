@@ -1,11 +1,35 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./PGDB.js";
+import { Request, Response } from 'express';
+import { svrUtil } from "./ServerUtil.js";
 
 /**
  * Database operations for managing user data.
  * Provides methods to handle user profiles, content moderation, and access control.
  */
 class DBUsers {
+    /**
+     * Saves or updates user profile information in the database
+     * @param req - Express request object containing UserProfile in body
+     * @param res - Express response object
+     */
+    saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
+        try {
+            const userProfile: UserProfile = req.body;
+            if (!userProfile.publicKey) {
+                res.status(400).json({ error: 'Public key is required' });
+                return;
+            }
+            const success = await this.saveUserInfo(userProfile); 
+            if (success) {
+                res.json({ success: true });
+            } else {
+                res.status(500).json({ error: 'Failed to save user information' });
+            }
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to save user profile');
+        }
+    }
 
     /**
      * Checks if a user is blocked in the system.
