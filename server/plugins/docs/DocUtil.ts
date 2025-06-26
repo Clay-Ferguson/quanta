@@ -6,6 +6,8 @@ import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
 import vfs from './VFS/VFS.js';
 import lfs from './IFS/LFS.js';
+import pgdb from '../../PGDB.js';
+import { UserProfileCompact } from '../../../common/types/CommonTypes.js';
 const { exec } = await import('child_process');
 
 /**
@@ -22,6 +24,18 @@ const { exec } = await import('child_process');
  * operations are restricted to allowed root directories.
  */
 class DocUtil {
+    async createUserFolder(userProfile: UserProfileCompact) {
+        // todo-0: do something about this hardcoded value. Must always match a config and this is fragile.
+        const docRootKey = "usr";
+        // todo-0: need validation of 'name' here.
+        // todo-0: need method 'vfs_get_max_ordinal' to get the max ordinal for this user, so we can use it to create the next ordinal.
+        pgdb.logEnabled = true; // Enable logging for this operation
+        await pgdb.query(
+            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
+            userProfile.id, "", '0001_'+userProfile.name, docRootKey, false
+        );
+    }
+
     /**
      * Factory method to create the appropriate file system implementation based on root configuration.
      * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.

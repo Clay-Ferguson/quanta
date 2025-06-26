@@ -78,9 +78,9 @@ class PGDB {
             // if we don't find the admin profile we need to create it!
             console.warn(`Admin user with public key ${adminPubKey} not found. Creating default admin user...`);
             const defaultAdminProfile: UserProfile = {
-                name: 'Admin',
+                name: 'admin',
                 avatar: null,
-                description: 'Default admin user',
+                description: 'Admin user',
                 publicKey: adminPubKey
             };  
             await dbUsers.saveUserInfo(defaultAdminProfile);

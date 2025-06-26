@@ -7,6 +7,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import pgdb from '../../PGDB.js';
+import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
+import { docUtil } from "../docs/DocUtil.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,12 +49,15 @@ class ChatServerPlugin implements IServerPlugin {
         }
     }
 
+    onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
+        await docUtil.createUserFolder(userProfile);
+        return userProfile;
+    }
+
     private initRoutes(context: IAppContext) {
         context.app.get('/api/rooms/:roomId/message-ids', chatSvc.getMessageIdsForRoom);
         context.app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
         context.app.get('/api/messages', chatSvc.getMessageHistory);
-        context.app.get('/api/users/:pubKey/info', chatSvc.getUserProfile);
-        context.app.get('/api/users/:pubKey/avatar', chatSvc.serveAvatar);
 
         context.app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRoomInfo);
         context.app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteRoom);

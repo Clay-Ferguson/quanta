@@ -1,4 +1,4 @@
-import { FileBlob, UserProfile } from "../../../common/types/CommonTypes.js";
+import { FileBlob } from "../../../common/types/CommonTypes.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
@@ -111,73 +111,6 @@ class ChatService {
             svrUtil.handleError(error, res, 'Failed to retrieve message history');
         }
     } 
-
-    /**
-     * Retrieves user profile information by public key
-     * @param req - Express request object containing pubKey in params
-     * @param res - Express response object
-     */
-    getUserProfile = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
-        try {
-            const publicKey = req.params.pubKey;
-            if (!publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
-            }
-            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
-            if (userProfile) {
-                res.json(userProfile);
-            } else {
-                res.status(404).json({ error: 'User information not found' });
-            }
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve user profile');
-        }
-    }
-
-    /**
-     * Serves user avatar images by public key, returning the binary image data
-     * @param req - Express request object containing pubKey in params
-     * @param res - Express response object
-     */
-    serveAvatar = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
-        try {
-            const publicKey = req.params.pubKey;
-            if (!publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
-            }
-                
-            // Get user info from the database
-            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
-            if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
-                // Return a 404 for missing avatars
-                res.status(404).send('Avatar not found');
-                return;
-            }
-                
-            // Extract content type and base64 data
-            const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-            if (!matches || matches.length !== 3) {
-                res.status(400).send('Invalid avatar data format');
-                return;
-            }
-                
-            const contentType = matches[1];
-            const base64Data = matches[2];
-            const binaryData = Buffer.from(base64Data, 'base64');
-                
-            // Set appropriate headers
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Content-Length', binaryData.length);
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-                
-            // Send the binary image data
-            res.send(binaryData);
-        } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve avatar');
-        }
-    }    
 
     /**
      * Administrative endpoint to retrieve information about all rooms in the system

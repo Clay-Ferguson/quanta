@@ -2,6 +2,7 @@ import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types
 import pgdb from "./PGDB.js";
 import { Request, Response } from 'express';
 import { svrUtil } from "./ServerUtil.js";
+import { config } from "./Config.js";
 
 /**
  * Database operations for managing user data.
@@ -123,6 +124,13 @@ class DBUsers {
      */
     saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
         try {
+            const adminPubKey = config.get("adminPublicKey");
+            if (userProfile.publicKey.trim() === adminPubKey) {
+                if (userProfile.name !== 'admin') {
+                    throw new Error('Cannot change admin user name.');
+                }
+            }
+
             if (!userProfile.publicKey) {
                 console.error('Cannot save user info without a public key');
                 return false;
@@ -157,6 +165,13 @@ class DBUsers {
                 userProfile.avatar?.size || null,
                 avatarBinaryData
             );
+
+            if (userProfile) {
+                const confirmUserProfile: UserProfileCompact | null = await this.getUserInfoCompact(userProfile.publicKey);
+                if (confirmUserProfile) { 
+                    await svrUtil.onCreateNewUser(confirmUserProfile);
+                }
+            }
             console.log(`User info saved for public key: ${userProfile.publicKey}`);
             return true;
         } catch (error) {
@@ -166,12 +181,81 @@ class DBUsers {
     }
 
     /**
+     * Serves user avatar images by public key, returning the binary image data
+     * @param req - Express request object containing pubKey in params
+     * @param res - Express response object
+     */
+    serveAvatar = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
+        try {
+            const publicKey = req.params.pubKey;
+            if (!publicKey) {
+                res.status(400).json({ error: 'Public key is required' });
+                return;
+            }
+                
+            // Get user info from the database
+            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
+            if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
+                // Return a 404 for missing avatars
+                res.status(404).send('Avatar not found');
+                return;
+            }
+                
+            // Extract content type and base64 data
+            const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+            if (!matches || matches.length !== 3) {
+                res.status(400).send('Invalid avatar data format');
+                return;
+            }
+                
+            const contentType = matches[1];
+            const base64Data = matches[2];
+            const binaryData = Buffer.from(base64Data, 'base64');
+                
+            // Set appropriate headers
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Length', binaryData.length);
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                
+            // Send the binary image data
+            res.send(binaryData);
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to retrieve avatar');
+        }
+    }    
+
+    /**
+     * Retrieves user profile information by public key
+     * @param req - Express request object containing pubKey in params
+     * @param res - Express response object
+     */
+    getUserProfile = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
+        try {
+            const publicKey = req.params.pubKey;
+            if (!publicKey) {
+                res.status(400).json({ error: 'Public key is required' });
+                return;
+            }
+            const userProfile: UserProfile | null = await dbUsers.getUserInfo(publicKey);
+            if (userProfile) {
+                res.json(userProfile);
+            } else {
+                res.status(404).json({ error: 'User information not found' });
+            }
+        } catch (error) {
+            svrUtil.handleError(error, res, 'Failed to retrieve user profile');
+        }
+    }
+
+    /**
      * Retrieves a subset of user's profile information from the database.
      * 
      * @param publicKey - The public key of the user to retrieve
      * @returns A Promise resolving to the user profile object or null if not found
      */
+    // todo-0: rename to getUserProfileCompact
     getUserInfoCompact = async (publicKey: string): Promise<UserProfileCompact | null> => {
+        // console.log(`getUserInfoCompact for public key: ${publicKey}`);
         try {
             if (!publicKey) {
                 console.error('Cannot get user info without a public key');
@@ -194,6 +278,8 @@ class DBUsers {
                 name: userInfo.user_name,
                 publicKey
             };
+            // do a json pretty print of the userProfile
+            // console.log('User profile compact:', JSON.stringify(userProfile, null, 2));
             return userProfile;
         } catch (error) {
             console.error('Error retrieving user info:', error);

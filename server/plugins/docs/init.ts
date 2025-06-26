@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import pgdb from "../../PGDB.js";
 import docVFS from "./VFS/DocVFS.js";
 import { pgdbTest } from "./VFS/test/VFSTest.js";
+import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,10 @@ class DocsServerPlugin implements IServerPlugin {
         else {
             console.warn('POSTGRES_HOST environment variable is not set. Skipping database initialization.');
         }
+    }
+
+    onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
+        return userProfile;
     }
 
     private initRoutes(context: IAppContext) {

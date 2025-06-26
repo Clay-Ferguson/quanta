@@ -35,6 +35,9 @@ export interface IServerPlugin {
      * @param server - The server instance (for WebRTC or other server-level operations)
      */
     notify(server: any): void;
+
+    // rename to onUserProfileChange
+    onCreateNewUser(userProfile: UserProfileCompact): Promise<UserProfileCompact>;
 }
 
 /**
@@ -106,11 +109,20 @@ class ServerUtil {
      * @param plugins - Array of plugin configurations (unused, method uses cached pluginsArray)
      * @param context - Context object passed to each plugin's finishRoute method
      */
+    // todo-0: remove obsolete 'plugins' parameter on this and similar methods
     finishRoutes = async (plugins: any, context: IAppContext) => {
         console.log('Finishing plugin routes...');
         for (const plugin of this.pluginsArray) {
             plugin.finishRoute(context);
         }
+    }
+
+    onCreateNewUser = async (userProfile: UserProfileCompact) => {
+        // console.log('Notify plugins of onCreateNewUser...');
+        for (const plugin of this.pluginsArray) {
+            userProfile = await plugin.onCreateNewUser(userProfile);
+        }
+        return userProfile; // Return the [potentially] modified user profile after all plugins have processed it
     }
 
     /**

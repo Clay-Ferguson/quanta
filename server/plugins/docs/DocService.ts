@@ -509,7 +509,7 @@ class DocService {
         return runTrans(async () => {
             console.log("Create Folder Request");
             try {
-            // Extract parameters from request body
+                // Extract parameters from request body
                 const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
             
                 // Get the appropriate file system implementation
@@ -565,7 +565,7 @@ class DocService {
                 const newFolderPath = path.join(absoluteParentPath, newFolderName);
 
                 // Create the directory (recursive option ensures parent directories exist)
-                await ifs.mkdir(owner_id,newFolderPath, { recursive: true });
+                await ifs.mkdir(owner_id, newFolderPath, { recursive: true });
 
                 console.log(`Folder created successfully: ${newFolderPath}`);
             
