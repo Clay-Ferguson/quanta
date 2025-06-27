@@ -8,7 +8,6 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import pgdb from '../../PGDB.js';
 import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
-import { docUtil } from "../docs/DocUtil.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +49,6 @@ class ChatServerPlugin implements IServerPlugin {
     }
 
     onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
-        await docUtil.createUserFolder(userProfile);
         return userProfile;
     }
 

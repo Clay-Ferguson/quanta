@@ -1,6 +1,5 @@
 -- PostgreSQL Functions for Document Filesystem
 -- This file contains all PostgreSQL stored procedures for the filesystem abstraction
-
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_readdir
 -- Equivalent to fs.readdirSync() - lists directory contents
@@ -35,7 +34,7 @@ BEGIN
     WHERE 
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
-        AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
+        AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
     ORDER BY 
         n.filename ASC;
 END;
@@ -61,7 +60,7 @@ BEGIN
             n.doc_root_key = root_key 
             AND n.parent_path = dir_path
             --  user can read files they own, or public files
-            AND (n.owner_id = owner_id_arg OR  n.is_public = TRUE) 
+            AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
         ORDER BY 
             n.filename ASC
     ) INTO result;
@@ -161,7 +160,7 @@ BEGIN
         AND parent_path = parent_path_param
         AND filename = filename_param
         AND is_directory = FALSE
-        AND (owner_id = owner_id_arg OR is_public = TRUE); 
+        AND (owner_id_arg = 0 OR owner_id = owner_id_arg OR is_public = TRUE); 
         
     -- Check if file was found
     IF is_binary_file IS NULL THEN
@@ -396,7 +395,7 @@ BEGIN
         AND parent_path = parent_path_param
         AND filename = filename_param
         AND is_directory = FALSE
-        AND owner_id = owner_id_arg;
+        AND (owner_id_arg = 0 OR owner_id = owner_id_arg);
         
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
@@ -429,7 +428,7 @@ BEGIN
     WHERE 
         doc_root_key = root_key
         AND parent_path = path_param
-        AND owner_id = owner_id_arg;
+        AND (owner_id_arg = 0 OR owner_id = owner_id_arg OR is_public = TRUE);
         
     RETURN has_children;
 END;
@@ -471,7 +470,7 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = old_parent_path
         AND filename = old_filename
-        AND owner_id = owner_id_arg;
+        AND (owner_id = 0 OR owner_id = owner_id_arg);
     
     IF is_dir IS NULL THEN
         RETURN QUERY SELECT FALSE AS success, 
@@ -604,6 +603,7 @@ $$ LANGUAGE plpgsql;
 -- Equivalent to fs.rmSync() - removes a directory (with recursive option)
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_rmdir(
+    owner_id_arg INTEGER,
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
@@ -624,12 +624,17 @@ BEGIN
         dir_path := '/' || dirname_param;
     END IF;
     
-    -- Check if directory exists
+    -- Check if directory exists and user has permission
     IF NOT vfs_exists(parent_path_param, dirname_param, root_key) THEN
         IF NOT force_flag THEN
             RAISE EXCEPTION 'Directory not found: %/%', parent_path_param, dirname_param;
         END IF;
         RETURN 0;
+    END IF;
+    
+    -- Check authorization
+    IF NOT vfs_check_auth(owner_id_arg, parent_path_param, dirname_param, root_key, TRUE) THEN
+        RAISE EXCEPTION 'Not authorized to remove directory: %/%', parent_path_param, dirname_param;
     END IF;
     
     -- Check if directory has children
@@ -650,7 +655,7 @@ BEGIN
             -- Base case: direct children
             SELECT id, parent_path, filename, is_directory
             FROM vfs_nodes
-            WHERE doc_root_key = root_key AND parent_path = dir_path
+            WHERE doc_root_key = root_key AND parent_path = dir_path 
             
             UNION ALL
             
@@ -679,13 +684,66 @@ END;
 $$ LANGUAGE plpgsql;
 
 -----------------------------------------------------------------------------------------------------------
+-- Function: vfs_check_auth
+-- Checks if a user is authorized to access/modify a file or directory
+-- Returns true if:
+-- 1. User is the owner of the file/folder
+-- 2. User has admin privileges (owner_id_arg = 0)
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_check_auth(
+    owner_id_arg INTEGER,
+    parent_path_param TEXT,
+    filename_param TEXT,
+    root_key TEXT,
+    is_directory_param BOOLEAN DEFAULT NULL
+) 
+RETURNS BOOLEAN AS $$
+DECLARE
+    item_owner_id INTEGER;
+    item_exists BOOLEAN;
+    item_is_directory BOOLEAN;
+BEGIN
+    -- Check if the item exists and get its owner_id
+    SELECT 
+        owner_id, 
+        TRUE, 
+        is_directory
+    INTO 
+        item_owner_id, 
+        item_exists, 
+        item_is_directory
+    FROM vfs_nodes
+    WHERE 
+        doc_root_key = root_key
+        AND parent_path = parent_path_param
+        AND filename = filename_param
+        AND (is_directory_param IS NULL OR is_directory = is_directory_param);
+    
+    -- Item doesn't exist
+    IF item_exists IS NULL THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Admin always has access
+    IF owner_id_arg = 0 THEN
+        RETURN TRUE;
+    END IF;
+    
+    -- Check if user is the owner
+    RETURN item_owner_id = owner_id_arg;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_search_text
 -- PostgreSQL-based text search function for VFS
 -- Searches through text content in non-binary files
 -- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
 -- Optionally filters by timestamp requirements
 -----------------------------------------------------------------------------------------------------------
+-- todo-0: use on all calls pgdb.authId(id)
 CREATE OR REPLACE FUNCTION vfs_search_text(
+    -- todo-0: need owner_id_arg here (standard security)
     search_query TEXT,
     search_path TEXT,
     root_key TEXT,
@@ -857,6 +915,7 @@ $$ LANGUAGE plpgsql;
 -- Sets the is_public flag on a file or directory, with option to recursively apply to children
 -- Returns both success status and diagnostic information
 -----------------------------------------------------------------------------------------------------------
+-- todo-0: use on all calls pgdb.authId(id)
 CREATE OR REPLACE FUNCTION vfs_set_public(
     owner_id_arg INTEGER,
     parent_path_arg TEXT,
@@ -884,6 +943,7 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = parent_path_arg
         AND filename = filename_arg
+        -- It is correct and not a mistake the we don't give admin authority to do this
         AND owner_id = owner_id_arg;
     
     IF target_id IS NULL THEN

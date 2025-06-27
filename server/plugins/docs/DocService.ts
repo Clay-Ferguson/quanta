@@ -112,6 +112,7 @@ class DocService {
             ifs.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
+            // todo-0: this can be calling the vfs_read_names instead so it's not getting content, only what it needs.
             const entries = await ifs.readdir(owner_id, currentPath);
             
             // Search for folder that matches the non-ordinal name

@@ -48,6 +48,7 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
+        await docUtil.createUserFolder(userProfile);
         return userProfile;
     }
 

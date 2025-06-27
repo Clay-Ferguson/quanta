@@ -1,7 +1,7 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./PGDB.js";
 import { Request, Response } from 'express';
-import { svrUtil } from "./ServerUtil.js";
+import { AuthenticatedRequest, svrUtil } from "./ServerUtil.js";
 import { config } from "./Config.js";
 
 /**
@@ -15,8 +15,21 @@ class DBUsers {
      * @param res - Express response object
      */
     saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
+        if (!(req as AuthenticatedRequest).validSignature) {
+            res.status(401).json({ error: 'Invalid or missing signature' });
+            return;
+        }
+
+        const userProfile: UserProfile = req.body;
+        const publicKey = req.headers['public-key'] as string;
+
+        // Check to see that the publicKey we validated in the header matches the one in the body.
+        if (publicKey !== userProfile.publicKey) {
+            res.status(400).json({ error: 'Public key in header does not match public key in body' });
+            return;
+        }
+
         try {
-            const userProfile: UserProfile = req.body;
             if (!userProfile.publicKey) {
                 res.status(400).json({ error: 'Public key is required' });
                 return;

@@ -140,7 +140,7 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         
         const readResult = await pgdb.query(
             'SELECT vfs_read_file($1, $2, $3, $4) as content',
-            owner_id, testParentPath, testFilename, testRootKey
+            pgdb.authId(owner_id), testParentPath, testFilename, testRootKey
         );
         
         const retrievedContent = readResult.rows[0].content;
@@ -343,7 +343,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         try {
             await pgdb.query(
                 'SELECT vfs_read_file($1, $2, $3, $4)',
-                owner_id, testPath, '9999_nonexistent.md', testRootKey
+                pgdb.authId(owner_id), testPath, '9999_nonexistent.md', testRootKey
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;

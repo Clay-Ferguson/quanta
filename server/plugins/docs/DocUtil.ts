@@ -25,6 +25,7 @@ const { exec } = await import('child_process');
  */
 class DocUtil {
     async createUserFolder(userProfile: UserProfileCompact) {
+        console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
         const docRootKey = "usr";
 
         // Throw an error of 'userProfile.name' is not a valid filename containing only alphanumeric characters and underscores.
@@ -32,9 +33,12 @@ class DocUtil {
             throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
         }
 
-        const maxOrdinal = await vfs.getMaxOrdinal(""); // Get the max ordinal function from VFS
+        // todo-0: This 'getMaxOrdinal' is failing, saying the entire 'vfs_get_max_ordinal' function is missing which is wrong, it exists.
+        let maxOrdinal = await vfs.getMaxOrdinal(""); // Get the max ordinal function from VFS
+        maxOrdinal++;
         const maxOrdinalStr = maxOrdinal.toString().padStart(4, '0');
 
+        pgdb.logEnabled = true; // todo-0: remove this
         await pgdb.query(
             'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
             userProfile.id, "", `${maxOrdinalStr}_${userProfile.name}`, docRootKey, false

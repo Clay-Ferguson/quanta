@@ -51,9 +51,15 @@ class VFS implements IFS {
      */
     private getRelativePath(fullPath: string): { rootKey: string; relativePath: string } {
         const roots = config.getPublicFolders();
+        let searchPath = path.normalize(fullPath);
+
+        // todo-1: we should probably just normalize 'root.path' and not monkey around with converting a '.' to '/'.
+        if (searchPath===".") {
+            searchPath = "/";
+        }
         
         for (const root of roots) {
-            if (root.type === 'vfs' && fullPath.startsWith(root.path)) {
+            if (root.type === 'vfs' && searchPath.startsWith(root.path)) {
                 const relativePath = path.relative(root.path, fullPath);
                 // Convert to parent/filename format for PostgreSQL
                 if (relativePath === '') {
@@ -64,7 +70,7 @@ class VFS implements IFS {
             }
         }
         
-        throw new Error(`No VFS root found for path: ${fullPath}`);
+        throw new Error(`No VFS root found for path: [${fullPath}]`);
     }
 
     async childrenExist(owner_id: number, path: string): Promise<boolean> {
@@ -78,7 +84,7 @@ class VFS implements IFS {
             // const { parentPath, filename } = this.parsePath(relativePath);
             const result = await pgdb.query(
                 'SELECT vfs_children_exist($1, $2, $3)',
-                owner_id, path, rootKey
+                pgdb.authId(owner_id), path, rootKey
             );
             
             return result.rows[0].vfs_children_exist;
@@ -161,15 +167,13 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT vfs_read_file($1, $2, $3, $4)',
-                owner_id, parentPath, filename, rootKey
+                pgdb.authId(owner_id), parentPath, filename, rootKey
             );
             
             if (result.rows.length === 0) {
                 throw new Error(`File not found: ${fullPath}`);
             }
-            
             const content = result.rows[0].vfs_read_file;
-            
             if (encoding) {
                 return content.toString(encoding);
             } else {
@@ -294,7 +298,7 @@ class VFS implements IFS {
             
             const result = await pgdb.query(
                 'SELECT vfs_readdir_names($1, $2, $3)',
-                owner_id, relativePath, rootKey
+                pgdb.authId(owner_id), relativePath, rootKey
             );
             
             return result.rows[0].vfs_readdir_names || [];
@@ -311,8 +315,10 @@ class VFS implements IFS {
             
             const rootContents = await pgdb.query(
                 'SELECT * FROM vfs_readdir($1, $2, $3)',
-                owner_id, relativePath, rootKey
+                pgdb.authId(owner_id), relativePath, rootKey
             );
+            // print formatted JSON of the rootContents
+            console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
             const treeNodes = rootContents.rows.map((row: any) => {
                 // Convert PostgreSQL row to TreeNode format
                 return {
@@ -402,7 +408,7 @@ class VFS implements IFS {
             
         const result = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
-            owner_id, oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
+            pgdb.authId(owner_id), oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
         );
             
         // Log the diagnostic information
@@ -421,7 +427,7 @@ class VFS implements IFS {
             
             await pgdb.query(
                 'SELECT vfs_unlink($1, $2, $3, $4)',
-                owner_id, parentPath, filename, rootKey
+                pgdb.authId(owner_id), parentPath, filename, rootKey
             );
         } catch (error) {
             console.error('VFS.unlink error:', error);
@@ -441,13 +447,13 @@ class VFS implements IFS {
                 // Use vfs_rmdir for directories
                 await pgdb.query(
                     'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
-                    parentPath, filename, rootKey, options?.recursive || false, options?.force || false
+                    pgdb.authId(owner_id), parentPath, filename, rootKey, options?.recursive || false, options?.force || false
                 );
             } else {
                 // Use vfs_unlink for files
                 await pgdb.query(
                     'SELECT vfs_unlink($1, $2, $3, $4)',
-                    owner_id, parentPath, filename, rootKey
+                    pgdb.authId(owner_id), parentPath, filename, rootKey
                 );
             }
         } catch (error) {

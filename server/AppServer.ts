@@ -61,7 +61,8 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
         let docPath = req.query.path as string || "";
         if (docPath) {
-            docPath = await docSvc.resolveNonOrdinalPath(pgdb.adminProfile!.id!, req.params.docRootKey, docPath);
+            // owner_id of 0 always has super powers.
+            docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath);
             console.log(`Resolved docPath: ${docPath}`);
         }
 
@@ -93,7 +94,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 };
 
 app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, svrUtil.runAdminCommand); 
-app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignature, dbUsers.saveUserProfile); 
+app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, dbUsers.saveUserProfile); 
 app.get('/api/users/:pubKey/info', dbUsers.getUserProfileReq);
 app.get('/api/users/:pubKey/avatar', dbUsers.serveAvatar);
 

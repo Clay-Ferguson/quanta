@@ -12,6 +12,7 @@ export interface IAppContext {
 
 export interface AuthenticatedRequest extends Request { 
     userProfile?: UserProfileCompact;
+    validSignature?: boolean; // Indicates if the request has a valid signature
 }
 
 /**

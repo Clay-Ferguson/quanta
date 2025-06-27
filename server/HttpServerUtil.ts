@@ -25,7 +25,6 @@ class HttpServerUtil {
     verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         // get publicKey from request headers
         const publicKey = req.headers['public-key'] as string;
-        // console.log('verifyReqHTTPSignature: publicKey:', publicKey);
         if (!publicKey) {
             // console.log('public-key header not found: Request headers:', req.headers);    
             res.status(401).json({ error: 'Public key is not set in request body or header' });
@@ -170,6 +169,9 @@ class HttpServerUtil {
                 res.status(401).json({ error: 'Invalid signature' });
                 return;
             }
+
+            // This is required so that we can let the user save a UserProfile knowing that they're the owner of the private key.
+            (req as AuthenticatedRequest).validSignature = true;
 
             const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
             if (userProfile) {

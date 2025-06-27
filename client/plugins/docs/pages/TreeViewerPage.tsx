@@ -21,7 +21,6 @@ import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
 
 declare const PAGE: string;
-declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: string;
 
 interface ColumnMarkdownRendererProps {
@@ -447,7 +446,7 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
     );
 }
 
-interface TopRightAdminCompsProps {
+interface TopRightCompsProps {
     gs: DocsGlobalState;
     itemsAreSelected: boolean | undefined;
     reRenderTree: () => Promise<TreeNode[]>;
@@ -459,7 +458,7 @@ interface TopRightAdminCompsProps {
 /**
  * Component for rendering the admin controls in the top right of the header
  */
-function TopRightAdminComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightAdminCompsProps) {
+function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightCompsProps) {
     const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
 
     return (
@@ -1157,7 +1156,6 @@ export default function TreeViewerPage() {
     useEffect(() => scrollEffects.effect(elmRef), []);
 
     const itemsAreSelected = gs.docsSelItems && gs.docsSelItems?.size > 0;
-    const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
     
     // Filter out cut items by comparing full paths
     const currentFolder = gs.docsFolder || '/';
@@ -1188,16 +1186,16 @@ export default function TreeViewerPage() {
                 <LogoBlockComp subText=""/>
                 <div className="flex items-center space-x-4">
                     <ViewWidthDropdown gs={gs} />
-                    {isAdmin && 
-                        <TopRightAdminComps 
-                            gs={gs} 
-                            itemsAreSelected={itemsAreSelected} 
-                            reRenderTree={reRenderTree} 
-                            treeNodes={treeNodes} 
-                            setTreeNodes={setTreeNodes} 
-                            isLoading={isLoading} 
-                        />
-                    }
+                    
+                    <TopRightComps 
+                        gs={gs} 
+                        itemsAreSelected={itemsAreSelected} 
+                        reRenderTree={reRenderTree} 
+                        treeNodes={treeNodes} 
+                        setTreeNodes={setTreeNodes} 
+                        isLoading={isLoading} 
+                    />
+                    
                     {gs.docsFolder && gs.docsFolder.length > 1 && 
                         <button 
                             onClick={() => handleParentClick(gs)}
