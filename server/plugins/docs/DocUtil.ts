@@ -6,8 +6,6 @@ import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
 import vfs from './VFS/VFS.js';
 import lfs from './IFS/LFS.js';
-import pgdb from '../../PGDB.js';
-import { UserProfileCompact } from '../../../common/types/CommonTypes.js';
 const { exec } = await import('child_process');
 
 /**
@@ -24,27 +22,6 @@ const { exec } = await import('child_process');
  * operations are restricted to allowed root directories.
  */
 class DocUtil {
-    async createUserFolder(userProfile: UserProfileCompact) {
-        console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
-        const docRootKey = "usr";
-
-        // Throw an error of 'userProfile.name' is not a valid filename containing only alphanumeric characters and underscores.
-        if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name)) {
-            throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
-        }
-
-        // todo-0: This 'getMaxOrdinal' is failing, saying the entire 'vfs_get_max_ordinal' function is missing which is wrong, it exists.
-        let maxOrdinal = await vfs.getMaxOrdinal(""); // Get the max ordinal function from VFS
-        maxOrdinal++;
-        const maxOrdinalStr = maxOrdinal.toString().padStart(4, '0');
-
-        pgdb.logEnabled = true; // todo-0: remove this
-        await pgdb.query(
-            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-            userProfile.id, "", `${maxOrdinalStr}_${userProfile.name}`, docRootKey, false
-        );
-    }
-
     /**
      * Factory method to create the appropriate file system implementation based on root configuration.
      * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.

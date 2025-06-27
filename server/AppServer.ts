@@ -59,10 +59,14 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         }
         console.log(`Serving index.html for page: ${page}`);
 
-        let docPath = req.query.path as string || "";
+        let docPath: string | null = req.query.path as string || "";
         if (docPath) {
             // owner_id of 0 always has super powers.
             docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath);
+            if (!docPath) {
+                console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
+                return res.status(404).send('Document not found');
+            }
             console.log(`Resolved docPath: ${docPath}`);
         }
 
@@ -98,6 +102,9 @@ app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, dbUs
 app.get('/api/users/:pubKey/info', dbUsers.getUserProfileReq);
 app.get('/api/users/:pubKey/avatar', dbUsers.serveAvatar);
 
+// NOTE: This MUST be calle before 'initPlugins'
+await pgdb.loadAdminUser();
+
 // NOTE: It's important to initialize plugins before defining the other routes below.
 await svrUtil.initPlugins(plugins, {app, serveIndexHtml});
 
@@ -131,4 +138,5 @@ server.listen(PORT, () => {
 });
 
 await svrUtil.notifyPlugins(plugins, server);
+
 console.log("App init complete.");

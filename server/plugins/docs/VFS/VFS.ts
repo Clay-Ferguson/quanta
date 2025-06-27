@@ -1,30 +1,39 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import * as fs from 'fs';
-import path from 'path';
 import { IFS, IFSStats } from '../IFS/IFS.js'
 import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
-import { TreeNode } from '../../../../common/types/CommonTypes.js';
+import { TreeNode, UserProfileCompact } from '../../../../common/types/CommonTypes.js';
+import { svrUtil } from '../../../ServerUtil.js';
+import { docSvc } from '../DocService.js';
+
+const rootKey = "usr"; // Default root key for VFS, can be changed based on configuration
 
 /**
  * Virtual File System (VFS) for handling file operations in a server environment, by using PostgreSQL as a backend for storage of files and folders.
  */
 class VFS implements IFS {
-    
     /**
      * Parse a full path to extract parent path and filename
      * @param fullPath - The full absolute path 
      * @returns Object with parentPath and filename
      */
     private parsePath(fullPath: string): { parentPath: string; filename: string } {
-        const normalizedPath = path.normalize(fullPath);
-        const parentPath = path.dirname(normalizedPath);
-        const filename = path.basename(normalizedPath);
+        const normalizedPath = svrUtil.normalizePath(fullPath);
+
+        // Split the path into parent directory and filename, using string functions, by finding the last slash
+        const lastSlashIndex = normalizedPath.lastIndexOf('/');
+        let parentPath: string;
+        let filename: string;
+        if (lastSlashIndex === -1) {
+            // No slashes found, this is just a filename
+            parentPath = '';
+            filename = normalizedPath;
+        } else {
+            // Split into parent path and filename
+            parentPath = normalizedPath.slice(0, lastSlashIndex);
+            filename = normalizedPath.slice(lastSlashIndex + 1);
+        }
         
-        // Convert root parent path to empty string for PostgreSQL functions
-        const pgParentPath = parentPath === '/' ? '' : parentPath;
-        
-        return { parentPath: pgParentPath, filename };
+        return { parentPath, filename };
     }
 
     /**
@@ -44,47 +53,17 @@ class VFS implements IFS {
         throw new Error(`No VFS root found for path: ${fullPath}`);
     }
 
-    /**
-     * Convert full path to relative path within the VFS root
-     * @param fullPath - The full absolute path
-     * @returns Object with rootKey and relativePath
-     */
-    private getRelativePath(fullPath: string): { rootKey: string; relativePath: string } {
-        const roots = config.getPublicFolders();
-        let searchPath = path.normalize(fullPath);
-
-        // todo-1: we should probably just normalize 'root.path' and not monkey around with converting a '.' to '/'.
-        if (searchPath===".") {
-            searchPath = "/";
-        }
-        
-        for (const root of roots) {
-            if (root.type === 'vfs' && searchPath.startsWith(root.path)) {
-                const relativePath = path.relative(root.path, fullPath);
-                // Convert to parent/filename format for PostgreSQL
-                if (relativePath === '') {
-                    // This is the root directory itself
-                    return { rootKey: root.key, relativePath: '' };
-                }
-                return { rootKey: root.key, relativePath: '/' + relativePath.replace(/\\/g, '/') };
-            }
-        }
-        
-        throw new Error(`No VFS root found for path: [${fullPath}]`);
-    }
-
     async childrenExist(owner_id: number, path: string): Promise<boolean> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(path);
+            const relativePath = svrUtil.normalizePath(path);
             
             // Special case for root directory
             if (relativePath === '') {
                 return true;
             }
-            // const { parentPath, filename } = this.parsePath(relativePath);
             const result = await pgdb.query(
                 'SELECT vfs_children_exist($1, $2, $3)',
-                pgdb.authId(owner_id), path, rootKey
+                pgdb.authId(owner_id), relativePath, rootKey
             );
             
             return result.rows[0].vfs_children_exist;
@@ -97,9 +76,9 @@ class VFS implements IFS {
     // File existence and metadata
     async exists(fullPath: string): Promise<boolean> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const relativePath = svrUtil.normalizePath(fullPath);
             
-            // Special case for root directory
+            // Special case for root directory. It always exists and we have no DB table 'row' for it.
             if (relativePath === '') {
                 return true;
             }
@@ -120,7 +99,7 @@ class VFS implements IFS {
 
     async stat(fullPath: string): Promise<IFSStats> { 
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const relativePath = svrUtil.normalizePath(fullPath);
             
             // Special case for root directory
             if (relativePath === '') {
@@ -162,8 +141,7 @@ class VFS implements IFS {
     // File content operations
     async readFile(owner_id: number, fullPath: string, encoding?: BufferEncoding): Promise<string | Buffer> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
-            const { parentPath, filename } = this.parsePath(relativePath);
+            const { parentPath, filename } = this.parsePath(fullPath);
             
             const result = await pgdb.query(
                 'SELECT vfs_read_file($1, $2, $3, $4)',
@@ -187,11 +165,12 @@ class VFS implements IFS {
 
     async writeFile(owner_id: number, fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
-            const { parentPath, filename } = this.parsePath(relativePath);
+            const { parentPath, filename } = this.parsePath(fullPath);
             
             // Determine if this is a binary file based on extension
-            const ext = path.extname(filename).toLowerCase();
+            const ext = svrUtil.getFilenameExtension(filename).toLowerCase();
+
+            // todo-1: What we need instead of this is an 'isTextFile' because it's a shorter list and everythin else is binary.
             const isBinary = this.isBinaryFile(ext);
             
             // Determine content type based on file extension
@@ -294,7 +273,7 @@ class VFS implements IFS {
     // Directory operations
     async readdir(owner_id: number, fullPath: string): Promise<string[]> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const relativePath = svrUtil.normalizePath(fullPath);
             
             const result = await pgdb.query(
                 'SELECT vfs_readdir_names($1, $2, $3)',
@@ -311,14 +290,14 @@ class VFS implements IFS {
     // Special version with no 'LFS' equivalent called only from Docs plugin
     async readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const relativePath = svrUtil.normalizePath(fullPath);
             
             const rootContents = await pgdb.query(
                 'SELECT * FROM vfs_readdir($1, $2, $3)',
                 pgdb.authId(owner_id), relativePath, rootKey
             );
             // print formatted JSON of the rootContents
-            console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
+            // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
             const treeNodes = rootContents.rows.map((row: any) => {
                 // Convert PostgreSQL row to TreeNode format
                 return {
@@ -345,7 +324,8 @@ class VFS implements IFS {
      */
     async getMaxOrdinal(fullPath: string): Promise<number> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
+            const relativePath = svrUtil.normalizePath(fullPath);
+            // console.log(`VFS.getMaxOrdinal: fullPath=[${fullPath}], relativePath=[${relativePath}], rootKey=[${rootKey}]`);
             
             const result = await pgdb.query(
                 'SELECT vfs_get_max_ordinal($1, $2)',
@@ -361,8 +341,7 @@ class VFS implements IFS {
 
     async mkdir(owner_id: number, fullPath: string, options?: { recursive?: boolean }): Promise<void> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
-            const { parentPath, filename } = this.parsePath(relativePath);
+            const { parentPath, filename } = this.parsePath(fullPath);
             
             // The PostgreSQL function expects directories to have ordinal prefixes
             // If the filename doesn't have one, we need to generate it
@@ -371,11 +350,10 @@ class VFS implements IFS {
                 // Get the next ordinal for this directory using our wrapper method
                 // Find the full path for the parent directory
                 const root = config.getPublicFolderByKey(rootKey);
-                const fullParentPath = path.join(
+                const fullParentPath = svrUtil.pathJoin(
                     root?.path || '',
                     parentPath
                 );
-                // todo-0: this is new. Need to test this path.
                 const maxOrdinal = await this.getMaxOrdinal(fullParentPath);
                 const nextOrdinal = maxOrdinal + 1;
                 const ordinalPrefix = nextOrdinal.toString().padStart(4, '0');
@@ -394,21 +372,16 @@ class VFS implements IFS {
 
     // File/directory manipulation
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
-        // console.log('VFS.rename:', oldPath, '->', newPath);
-        const { rootKey: oldRootKey, relativePath: oldRelativePath } = this.getRelativePath(oldPath);
-        const { rootKey: newRootKey, relativePath: newRelativePath } = this.getRelativePath(newPath);
-            
-        // Ensure both paths are in the same root
-        if (oldRootKey !== newRootKey) {
-            throw new Error('Cannot rename across different VFS roots');
+        if (!svrUtil.validPath(newPath)) {
+            throw new Error(`Invalid new path: ${newPath}. Only alphanumeric characters and underscores`);
         }
-            
-        const { parentPath: oldParentPath, filename: oldFilename } = this.parsePath(oldRelativePath);
-        const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newRelativePath);
+        // console.log('VFS.rename:', oldPath, '->', newPath);    
+        const { parentPath: oldParentPath, filename: oldFilename } = this.parsePath(oldPath);
+        const { parentPath: newParentPath, filename: newFilename } = this.parsePath(newPath);
             
         const result = await pgdb.query(
             'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
-            pgdb.authId(owner_id), oldParentPath, oldFilename, newParentPath, newFilename, oldRootKey
+            pgdb.authId(owner_id), oldParentPath, oldFilename, newParentPath, newFilename, rootKey
         );
             
         // Log the diagnostic information
@@ -422,8 +395,7 @@ class VFS implements IFS {
 
     async unlink(owner_id: number, fullPath: string): Promise<void> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
-            const { parentPath, filename } = this.parsePath(relativePath);
+            const { parentPath, filename } = this.parsePath(fullPath);
             
             await pgdb.query(
                 'SELECT vfs_unlink($1, $2, $3, $4)',
@@ -437,8 +409,7 @@ class VFS implements IFS {
 
     async rm(owner_id: number, fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         try {
-            const { rootKey, relativePath } = this.getRelativePath(fullPath);
-            const { parentPath, filename } = this.parsePath(relativePath);
+            const { parentPath, filename } = this.parsePath(fullPath);
             
             // Check if this is a directory or file
             const stats = await this.stat(fullPath);
@@ -466,6 +437,44 @@ class VFS implements IFS {
         }
     }
 
+    // todo-0: We should really create a subfolder named "u" that contains all user folders, so that we can have a single root, and admin 
+    // remains free to own all the rest of the root.
+    async createUserFolder(userProfile: UserProfileCompact) {
+        // todo-0: NOTE: Currently if user changes their username this will lead to left over abandoned folders with the old name, so really what we need here
+        // is to find ANY folder in the root that matches the user_id, and then that's their root. The fact that it doesn't get renamed when they
+        // rename their user name is a separate problem to be solved.
+        console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
+        const rootKey = "usr";
+
+        // Throw an error if 'userProfile.name' is not a valid filename containing only alphanumeric characters and underscores.
+        if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name)) {
+            throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
+        }
+
+        // Check for already existing user folder
+        const docPath = await docSvc.resolveNonOrdinalPath(0, rootKey, userProfile.name);
+        if (docPath) {
+            console.log(`Resolved docPath: ${docPath}`);
+            if (await this.exists(docPath)) {
+                console.log(`User folder already exists: ${docPath}`);
+                return; 
+            }
+        }
+
+        console.log('********** Getting max ordinal.');
+        let maxOrdinal = await this.getMaxOrdinal(""); 
+        console.log(`Max ordinal now in DB: ${maxOrdinal}`);
+        maxOrdinal++;
+        const maxOrdinalStr = maxOrdinal.toString().padStart(4, '0');
+        console.log(`Making user folder ${maxOrdinalStr}_${userProfile.name}`);
+
+        await pgdb.query(
+            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
+            userProfile.id, "", `${maxOrdinalStr}_${userProfile.name}`, rootKey, false
+        );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     checkFileAccess(filename: string, root: string): void {
         // NOTE to AI: Do not try to implement this method, it is not needed for VFS. It needs to remain a no-op.
     }

@@ -1,17 +1,18 @@
 import pgdb from '../../../../PGDB.js';
 import { AuthenticatedRequest } from '../../../../ServerUtil.js';
 import { docMod } from '../../DocMod.js';
+import { dumpTableStructure } from './VFSTest.js';
 
-const testRootKey = 'pgroot';
+const testRootKey = 'usr';
 
 /**
  * Test function to test file move operations using DocMod.moveUpOrDown
  * 
  * Creates a folder structure and tests moving a file up in the ordering
- * The test moves "0005_file5.md" up in "/0001_test-structure/0002_two" folder
+ * The test moves "0005_file5.md" up in "0001_test-structure/0002_two" folder
  * 
  * Expected folder structure from createFolderStructureTest:
- * /0001_test-structure/
+ * 0001_test-structure/
  *   /0001_one/
  *     0001_file1.md
  *     0002_file2.md
@@ -34,7 +35,7 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
         console.log('=== FILE MOVE TEST Starting ===');
         
         // Step 3: Verify the initial structure in the target folder
-        const targetFolderPath = '/0001_test-structure/0002_two'; 
+        const targetFolderPath = '0001_test-structure/0002_two'; 
         console.log(`\nListing contents of ${targetFolderPath} before move:`);
         
         const beforeResult = await pgdb.query(
@@ -70,8 +71,8 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
             body: {
                 direction: "up",
                 filename: "0003_file3.md",
-                treeFolder: "/0001_test-structure/0002_two", // Full path from root
-                docRootKey: "pgroot"
+                treeFolder: "0001_test-structure/0002_two", // Full path from root
+                docRootKey: "usr"
             }
         };
         
@@ -80,6 +81,8 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
                 json: (data: any) => {
                     console.log(`Response status: ${code}, data:`, data);
                     if (code !== 200) {
+                        console.error(`Move operation failed with. Here's the current DB Dump.`);
+                        dumpTableStructure(owner_id);
                         throw new Error(`Move operation failed with status ${code}: ${JSON.stringify(data)}`);
                     }
                 }
@@ -118,3 +121,5 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
         throw error;
     }
 }
+
+

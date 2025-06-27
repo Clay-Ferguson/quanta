@@ -470,11 +470,11 @@ BEGIN
         doc_root_key = root_key
         AND parent_path = old_parent_path
         AND filename = old_filename
-        AND (owner_id = 0 OR owner_id = owner_id_arg);
+        AND (owner_id_arg = 0 OR owner_id = owner_id_arg);
     
     IF is_dir IS NULL THEN
         RETURN QUERY SELECT FALSE AS success, 
-                     format('Source file not found: %s/%s', old_parent_path, old_filename) AS diagnostic;
+                     format('Source file not found: path=[%s] name=[%s] doc_root_key=[%s] owner_id_arg=[%L]', old_parent_path, old_filename, root_key, owner_id_arg) AS diagnostic;
         RETURN;
     END IF;
     
@@ -915,7 +915,6 @@ $$ LANGUAGE plpgsql;
 -- Sets the is_public flag on a file or directory, with option to recursively apply to children
 -- Returns both success status and diagnostic information
 -----------------------------------------------------------------------------------------------------------
--- todo-0: use on all calls pgdb.authId(id)
 CREATE OR REPLACE FUNCTION vfs_set_public(
     owner_id_arg INTEGER,
     parent_path_arg TEXT,

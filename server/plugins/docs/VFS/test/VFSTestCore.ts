@@ -1,6 +1,6 @@
 import pgdb from '../../../../PGDB.js';
 
-const testRootKey = 'pgroot';
+const testRootKey = 'usr';
 
 /**
  * Wipes all records from the vfs_nodes table
@@ -103,7 +103,7 @@ async function buildDirectoryContents(owner_id: number, dirPath: string, rootKey
 export async function createFolderStructure(): Promise<void> {
     try {
         console.log('=== PGDB Folder Structure Test Starting ===');
-        const rootPath = '/0001_test-structure';
+        const rootPath = '0001_test-structure';
         
         // First, ensure the root directory structure exists
         console.log('Creating root path...');
@@ -162,7 +162,7 @@ export async function createFolderStructure(): Promise<void> {
 
 export async function checkInitialFolderStructureTest(owner_id: number): Promise<void> {
     try {
-        const rootPath = '/0001_test-structure';
+        const rootPath = '0001_test-structure';
         // Test the structure by listing contents
         console.log('Verifying folder structure...');
         

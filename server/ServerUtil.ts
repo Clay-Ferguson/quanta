@@ -35,7 +35,7 @@ export interface IServerPlugin {
      * Notify the plugin that server startup is complete
      * @param server - The server instance (for WebRTC or other server-level operations)
      */
-    notify(server: any): void;
+    notify(server: any): Promise<void>;
 
     // rename to onUserProfileChange
     onCreateNewUser(userProfile: UserProfileCompact): Promise<UserProfileCompact>;
@@ -47,6 +47,54 @@ export interface IServerPlugin {
 class ServerUtil {
     /** Array of initialized plugin instances implementing IServerPlugin interface */
     pluginsArray: IServerPlugin[] = [];
+
+    // Split 'fullPath' by '/' and then run 'validName' on each part or if there's no '/' just run 'validName' on the fullPath
+    public validPath(fullPath: string): boolean {
+        // Normalize the path to ensure consistent formatting
+        fullPath = this.normalizePath(fullPath);
+
+        // Split the path by '/' and check each part
+        const parts = fullPath.split('/');
+        for (const part of parts) {
+            if (!this.validName(part)) {
+                return false; // If any part is invalid, return false
+            }
+        }
+        return true; // All parts are valid
+    }
+
+    // todo-0: need to be calling this to check all IFS/VFS 'file/folder' creates and renames
+    public validName(name: string): boolean {
+        return /^[a-zA-Z0-9_. -]+$/.test(name);
+    }
+
+    public pathJoin(...parts: string[]): string {
+        return this.normalizePath(parts.join('/'));
+    }
+    
+    public getFilenameExtension(fullPath: string): string {
+        // All we do is find the last dot and return the subtring including the dot.
+        const lastDotIndex = fullPath.lastIndexOf('.');
+        if (lastDotIndex === -1 || lastDotIndex === fullPath.length - 1) {
+            // No extension found or dot is the last character
+            return '';
+        }
+        return fullPath.substring(lastDotIndex);
+    }
+
+    /* Removes leading slashes and dots and replaces multiple slashes with a single slash */
+    public normalizePath(fullPath: string): string {
+        // use regex to strip any leading slashes or dots
+        const normalizedPath = 
+            // strip any leading slashes or dots
+            fullPath.replace(/^[/.]+/, '')
+                // replace multiple slashes with a single slash
+                .replace(/\/+/g, '/')
+                // final replacement to ensure no trailing slash
+                .replace(/\/+$/, '');
+
+        return normalizedPath;
+    }
 
     /**
      * Retrieves and validates an environment variable
@@ -93,7 +141,7 @@ class ServerUtil {
                 const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
                 const pluginInst = pluginModule.plugin;
                 if (pluginInst) {
-                    pluginInst.init(context); // Initialize the plugin
+                    await pluginInst.init(context); // Initialize the plugin
                     this.pluginsArray.push(pluginInst); // Cache the plugin instance
                 } else {
                     console.warn(`Plugin ${plugin.key} does not have a plugin instance with init method.`);
@@ -117,7 +165,7 @@ class ServerUtil {
     }
 
     onCreateNewUser = async (userProfile: UserProfileCompact) => {
-        // console.log('Notify plugins of onCreateNewUser...');
+        console.log('Notify plugins of onCreateNewUser...');
         for (const plugin of this.pluginsArray) {
             userProfile = await plugin.onCreateNewUser(userProfile);
         }
@@ -135,7 +183,7 @@ class ServerUtil {
         for (const pluginInstance of this.pluginsArray) {
             try {
                 if (pluginInstance.notify) {
-                    pluginInstance.notify(context);
+                    await pluginInstance.notify(context);
                 } else {
                     console.warn(`Plugin instance does not have a notify method.`);
                 }

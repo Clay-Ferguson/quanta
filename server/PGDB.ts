@@ -6,7 +6,6 @@ import { getTransactionClient } from './Transactional.js';
 import { UserProfile, UserProfileCompact } from '../common/types/CommonTypes.js';
 import { dbUsers } from './DBUsers.js';
 import { config } from './Config.js';
-import { docUtil } from './plugins/docs/DocUtil.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,7 +68,6 @@ class PGDB {
         }
 
         await this.initSchema();
-        await this.loadAdminUser();
     }
 
     // Returns id or 0 of it's admin. Postgres functions know to treat 0 as admin.
@@ -80,7 +78,7 @@ class PGDB {
         return this.adminProfile.id==id ? 0 : id;
     }
 
-    private async loadAdminUser(): Promise<void> {
+    async loadAdminUser(): Promise<void> {
         const adminPubKey = config.get("adminPublicKey");
         this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);
         if (!this.adminProfile) {
@@ -96,7 +94,6 @@ class PGDB {
 
             // now read it back.
             this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);
-            // todo-0: This isn't yet triggering the plugin functionality that creates subfolders for admin users.
             if (!this.adminProfile) {
                 console.error('Failed to create default admin user. Please check your database configuration.');
                 throw new Error('Failed to create default admin user');
@@ -104,7 +101,6 @@ class PGDB {
             else {
                 console.log('Default admin user created successfully:', this.adminProfile);
             }
-            await docUtil.createUserFolder(this.adminProfile);
         }
     }
 

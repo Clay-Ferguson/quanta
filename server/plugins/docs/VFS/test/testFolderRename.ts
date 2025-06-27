@@ -1,6 +1,6 @@
 import pgdb from '../../../../PGDB.js';
 
-const testRootKey = 'pgroot';
+const testRootKey = 'usr';
 
 /**
  * Test function to verify that renaming folders properly updates all child paths
@@ -11,9 +11,9 @@ export async function testFolderRenameWithChildren(owner_id: number): Promise<vo
         console.log('\n=== TESTING FOLDER RENAME WITH CHILDREN ===');
         
         // Now rename one of the folders (e.g., '0001_test-structure/0001_one' to '0001_test-structure/0001_one-renamed')
-        const oldParentPath = '/0001_test-structure';
+        const oldParentPath = '0001_test-structure';
         const oldFolderName = '0001_one';
-        const newParentPath = '/0001_test-structure';
+        const newParentPath = '0001_test-structure';
         const newFolderName = '0001_one-renamed';
         
         console.log(`\nRenaming folder: ${oldParentPath}/${oldFolderName} to ${newParentPath}/${newFolderName}`);
@@ -31,7 +31,7 @@ export async function testFolderRenameWithChildren(owner_id: number): Promise<vo
         console.log('\nVerifying child paths were updated correctly...');
         
         // Check if files under the renamed folder exist with their new paths
-        const childPath = '/0001_test-structure/0001_one-renamed';
+        const childPath = '0001_test-structure/0001_one-renamed';
         const childFiles = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2, $3)',
             owner_id, childPath, testRootKey
@@ -56,9 +56,9 @@ export async function testFolderRenameWithChildren(owner_id: number): Promise<vo
         // Test a path traversal rename (moving folder to another parent)
         console.log('\n=== TESTING CROSS-DIRECTORY RENAME (MOVE) ===');
         
-        const sourcePath = '/0001_test-structure';
+        const sourcePath = '0001_test-structure';
         const sourceFolder = '0003_three';
-        const destPath = '/0001_test-structure/0002_two';
+        const destPath = '0001_test-structure/0002_two';
         const destFolder = '0100_moved-three';
         
         console.log(`Moving folder: ${sourcePath}/${sourceFolder} to ${destPath}/${destFolder}`);

@@ -19,5 +19,5 @@ public-folders:
     key: "usr" # warning: this value is hardcoded in places in the code.
     path: "/"
     type: "vfs"  # Type can be 'lfs' for Linux file system or 'vfs' for virtual PostregreSQL file system
-    # Accessable at: http://localhost:8000/doc/pgroot
+    # Accessable at: http://localhost:8000/doc/usr
   

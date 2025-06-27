@@ -6,8 +6,8 @@ import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes
  
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 
-const testRootKey = 'pgroot';
-const testEnabled = false;
+const testRootKey = 'usr';
+const testEnabled = true;
 
 /**
  * Test function to verify PostgreSQL database functionality
@@ -23,34 +23,34 @@ export async function pgdbTest(): Promise<void> {
         throw new Error('Admin profile not found, cannot run tests');
     }
 
-    // await resetTestEnvironment();
-    // await testFolderRenameWithChildren(owner_id);
-    // await simpleReadWriteTest(owner_id);
+    await resetTestEnvironment();
+    await testFolderRenameWithChildren(owner_id);
+    await simpleReadWriteTest(owner_id);
 
-    // await resetTestEnvironment();
-    // await testFileOperations(owner_id);
+    await resetTestEnvironment();
+    await testFileOperations(owner_id);
 
-    // await resetTestEnvironment();
-    // await testPathOperations();
+    await resetTestEnvironment();
+    await testPathOperations();
     
-    // await resetTestEnvironment();
-    // await testErrorHandling(owner_id);
+    await resetTestEnvironment();
+    await testErrorHandling(owner_id);
 
-    // await resetTestEnvironment();
-    // await pgdbTestMoveUp(owner_id);
+    await resetTestEnvironment();
+    await pgdbTestMoveUp(owner_id);
 
-    // await resetTestEnvironment();
-    // await pgdbTestSetFolderPublic(owner_id);
+    await resetTestEnvironment();
+    await pgdbTestSetFolderPublic(owner_id);
 
-    // // Test search functionality
-    // // await pgdbTestSearch();
+    // Test search functionality
+    // await pgdbTestSearch();
 
     // now reset for gui to have a clean slate
     await resetTestEnvironment();
     await dumpTableStructure(owner_id);
 }
 
-async function dumpTableStructure(owner_id: number): Promise<void> {
+export async function dumpTableStructure(owner_id: number): Promise<void> {
     await printFolderStructure(owner_id);
     await listAllVfsNodes();
 }
@@ -191,7 +191,7 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
 async function testFileOperations(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FILE OPERATIONS ===');        
-        const testPath = '/0001_test-structure/0002_two';  // Test in the 'two' folder
+        const testPath = '0001_test-structure/0002_two';  // Test in the 'two' folder
         
         console.log('1. Testing vfs_stat function...');
         const statResult = await pgdb.query(
@@ -247,8 +247,6 @@ async function testFileOperations(owner_id: number): Promise<void> {
         throw error;
     }
 }
-
- 
  
 async function testPathOperations(): Promise<void> {
     try {
@@ -256,7 +254,7 @@ async function testPathOperations(): Promise<void> {
                 
         console.log('1. Testing manual deep path creation...');
         // Create nested directories manually since vfs_ensure_path may not handle ordinal prefixes correctly
-        const basePath = '/0001_test-structure/0003_three';
+        const basePath = '0001_test-structure/0003_three';
         
         // Create each level manually
         await pgdb.query(
@@ -305,8 +303,8 @@ async function testPathOperations(): Promise<void> {
         console.log('4. Testing directory removal of nested structure...');
         // Remove the deep nested structure
         await pgdb.query(
-            'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
-            basePath, '0011_deep', testRootKey, true, false
+            'SELECT vfs_rmdir($1, $2, $3, $4, $5, $6)',
+            pgdb.adminProfile!.id, basePath, '0011_deep', testRootKey, true, false
         );
         console.log('   Removed nested structure recursively');
         
@@ -317,15 +315,13 @@ async function testPathOperations(): Promise<void> {
         console.error('Error during path operations test:', error);
         throw error;
     }
-}
-
- 
+} 
  
 async function testErrorHandling(owner_id: number): Promise<void> {
     try {
         let failCount = 0; // Reset fail count for this test
         console.log('\n=== TESTING ERROR HANDLING ===');        
-        const testPath = '/0001_test-structure/0001_one';
+        const testPath = '0001_test-structure/0001_one';
         
         console.log('1. Testing invalid filename format (missing ordinal)...');
         try {
@@ -447,7 +443,7 @@ async function testFolderRenamePreservesChildren(owner_id: number): Promise<void
         });
         
         // Test renaming 0001_one to 0099_renamed-one and verify children are preserved
-        const oldParentPath = '/0001_test-structure';
+        const oldParentPath = '0001_test-structure';
         const oldFilename = '0001_one'; // Use the correct existing folder name
         const newFilename = '0099_renamed-one';
         
@@ -518,7 +514,7 @@ async function pgdbTestSearch(): Promise<void> {
         console.log('=== PGDB SEARCH TEST STARTING ===');
         
         // First, let's add some specific content to search for
-        const testPath = '/0001_test-structure/0002_two';
+        const testPath = '0001_test-structure/0002_two';
         const testFileName = '0003_search-test.md';
         const searchContent = `# Search Test File
 
@@ -540,7 +536,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 1: Basic substring search for "SEARCHME"...');
         const searchResult1 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'SEARCHME', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'SEARCHME', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult1.rows.length} files containing "SEARCHME"`);
@@ -560,7 +556,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 2: Search for "test file" (should match multiple files)...');
         const searchResult2 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'test file', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'test file', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult2.rows.length} files containing "test file"`);
@@ -573,7 +569,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 3: Search for unique string "UNIQUESTRING123"...');
         const searchResult3 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'UNIQUESTRING123', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'UNIQUESTRING123', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult3.rows.length} files containing "UNIQUESTRING123"`);
@@ -587,7 +583,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 4: Search for non-existent string "NOTFOUND12345"...');
         const searchResult4 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'NOTFOUND12345', '/0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'NOTFOUND12345', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult4.rows.length} files containing "NOTFOUND12345"`);
@@ -601,7 +597,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.log('Test 5: MATCH_ALL search for "database postgresql" (both words must be present)...');
         const searchResult5 = await pgdb.query(
             'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'database postgresql', '/0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME'
+            'database postgresql', '0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult5.rows.length} files containing both "database" and "postgresql"`);

@@ -1,6 +1,6 @@
 import pgdb from '../../../../PGDB.js';
 
-const testRootKey = 'pgroot';
+const testRootKey = 'usr';
 
 /** 
  * Tests that we can set the `is_public` property of `vfs_nodes`
@@ -59,7 +59,7 @@ export async function pgdbTestSetFolderPublic(owner_id: number): Promise<void> {
 async function testSetSingleFilePublic(owner_id: number): Promise<void> {
     console.log('\n1. Testing setting a single file to public...');
     
-    const filePath = '/0001_test-structure/0001_one';
+    const filePath = '0001_test-structure/0001_one';
     const fileName = '0001_file1.md';
     
     // First, check the current public status
@@ -124,7 +124,7 @@ async function testSetSingleFilePublic(owner_id: number): Promise<void> {
 async function testSetFolderPublicNonRecursive(owner_id: number): Promise<void> {
     console.log('\n2. Testing setting a folder to public non-recursively...');
     
-    const folderPath = '/0001_test-structure';
+    const folderPath = '0001_test-structure';
     const folderName = '0002_two';
     
     // First, get the current state of the folder
@@ -211,7 +211,7 @@ async function testSetFolderPublicNonRecursive(owner_id: number): Promise<void> 
 async function testSetFolderPublicRecursive(owner_id: number): Promise<void> {
     console.log('\n3. Testing setting a folder to public recursively...');
     
-    const folderPath = '/0001_test-structure';
+    const folderPath = '0001_test-structure';
     const folderName = '0003_three';
     
     // First, get the current state of the folder

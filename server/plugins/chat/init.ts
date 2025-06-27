@@ -86,8 +86,8 @@ class ChatServerPlugin implements IServerPlugin {
         }
     }
 
-    notify(server: any) {
-        rtc.init(HOST, PORT, server);
+    async notify(server: any): Promise<void> {
+        await rtc.init(HOST, PORT, server);
     }
 }
 

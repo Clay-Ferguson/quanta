@@ -34,14 +34,14 @@ class HttpServerUtil {
         return this.verifyHTTPSignature(req, res, publicKey, false, next);
     }
 
+    /* NOTE: Allow anon means there need not be a UserProfile stored in the database yet fo the public key, but the request
+    still must be signed with some key. Users DO have to have crypto running in browser. */
     verifyReqHTTPSignatureAllowAnon = async (req: Request, res: Response, next: any): Promise<void> => {
         // get publicKey from request headers
         const publicKey = req.headers['public-key'] as string;
-        // console.log('verifyReqHTTPSignature: publicKey:', publicKey);
+        // console.log('verifyReqHTTPSignatureAllowAnon: publicKey:', publicKey);
         if (!publicKey) {
-            console.log('public-key header not found: Request headers:', req.headers);    
-            next();
-            return;
+            throw new Error('Public key is not set in request body or header');
         }
         
         return this.verifyHTTPSignature(req, res, publicKey, true, next);
@@ -85,14 +85,9 @@ class HttpServerUtil {
      */
     verifyHTTPSignature = async (req: Request, res: Response, publicKey: string, allowAnon: boolean, next: any): Promise<void> => {
         try {
+            // console.log('verifyHTTPSignature: publicKey:', publicKey);
             if (!publicKey) {
-                if (!allowAnon) {
-                    res.status(500).json({ error: 'Public key is not set' });
-                }
-                else {
-                    next();
-                }
-                return;
+                throw new Error('Public key is not set in request body or header');
             }
             const sig = req.headers['signature'];
             const sigInput = req.headers['signature-input'];

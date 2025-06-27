@@ -13,6 +13,7 @@ import pgdb from "../../PGDB.js";
 import docVFS from "./VFS/DocVFS.js";
 import { pgdbTest } from "./VFS/test/VFSTest.js";
 import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
+import vfs from "./VFS/VFS.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,11 @@ class DocsServerPlugin implements IServerPlugin {
             // Initialize stored functions
             await this.initializeFunctions();
 
+            if (!pgdb.adminProfile) {
+                throw new Error('Admin profile not loaded. Please ensure the database is initialized and the admin user is created.');
+            }
+            await vfs.createUserFolder(pgdb.adminProfile);
+
             // Test PostgreSQL database functionality
             try {
                 await pgdbTest(); 
@@ -48,7 +54,10 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
-        await docUtil.createUserFolder(userProfile);
+        if (process.env.POSTGRES_HOST) {
+            console.log('Docs onCreateNewUser: ', userProfile);
+            await vfs.createUserFolder(userProfile);
+        }
         return userProfile;
     }
 
@@ -92,8 +101,7 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    notify(server: any) {
-        // not used 
+    async notify(server: any): Promise<void> {
     }
 
     /**
