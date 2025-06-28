@@ -101,7 +101,7 @@ class DocUtil {
      */
     shiftOrdinalsDown = async (owner_id: number, slotsToAdd: number, absoluteParentPath: string, insertOrdinal: number, root: string, 
         itemsToIgnore: string[] | null, ifs: IFS): Promise<Map<string, string>> => {
-        console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
+        // console.log(`Shifting ordinals down by ${slotsToAdd} slots at ${absoluteParentPath} for insert ordinal ${insertOrdinal}`);
         ifs.checkFileAccess(absoluteParentPath, root);
         
         // Map to track old relative paths to new relative paths for external reference updates
@@ -111,7 +111,7 @@ class DocUtil {
         const relativeFolderPath = path.relative(root, absoluteParentPath);
         
         // Read directory contents and filter for files/folders with numeric prefixes
-        console.log(`Reading directory contents to prepare for shifting down: ${absoluteParentPath}`);
+        // console.log(`Reading directory contents to prepare for shifting down: ${absoluteParentPath}`);
         const allFiles = await ifs.readdir(owner_id, absoluteParentPath);
         const numberedFiles = allFiles.filter(file => /^\d+_/.test(file));
         
@@ -134,7 +134,7 @@ class DocUtil {
             
             // Skip files that should be ignored (e.g., newly created items)
             if (itemsToIgnore && itemsToIgnore.includes(file)) {
-                console.log(`    Skipping file: ${file} (in itemsToIgnore)`);
+                // console.log(`    Skipping file: ${file} (in itemsToIgnore)`);
                 continue;
             }
             

@@ -47,8 +47,7 @@ export type GetMessagesByIds_Response = {
 
 export type TreeRender_Response = {
     user_id: number;
-    root_owner_id?: number;
-    is_root_public: boolean;
     treeNodes: TreeNode[];
+    rootNode: TreeNode;
 }
 

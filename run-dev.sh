@@ -2,6 +2,8 @@
 
 export CONFIG_FILE="./config-dev.yaml"
 
+./kill.sh
+
 # remove package-lock.json if anythiong ever creates it. This app uses Yarn instead.
 rm -f package-lock.json
 rm -rf ./dist

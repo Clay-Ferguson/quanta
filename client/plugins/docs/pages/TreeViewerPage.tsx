@@ -358,14 +358,13 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 
 interface ClickableBreadcrumbProps {
     gs: DocsGlobalState;
-    rootPublic: boolean;
-    rootOwnerId?: number;   
+    rootNode: TreeNode | null;
 }
 
 /**
  * Component for rendering clickable folder path breadcrumbs
  */
-function ClickableBreadcrumb({ gs, rootPublic, rootOwnerId }: ClickableBreadcrumbProps) {
+function ClickableBreadcrumb({ gs, rootNode }: ClickableBreadcrumbProps) {
     if (!gs.docsFolder || gs.docsFolder.length <= 1) {
         return null;
     }
@@ -398,7 +397,7 @@ function ClickableBreadcrumb({ gs, rootPublic, rootOwnerId }: ClickableBreadcrum
                             </button>
                         </span>
                     ))}
-                    {!DESKTOP_MODE && rootPublic && rootOwnerId==gs.userId && (
+                    {!DESKTOP_MODE && rootNode?.is_public && rootNode.owner_id==gs.userId && (
                         <FontAwesomeIcon
                             icon={faShareAlt}
                             className="text-green-400 h-5 w-5"
@@ -1079,11 +1078,7 @@ export default function TreeViewerPage() {
     const isLoading = false; // Disable loading state for now
 
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
-
-    // todo-0: We need to always get 'treeNodes' and 'rootNode' back from server as TreeNode object rather and then
-    // rather than having these two root properties it will just be the 'rootNode' one.
-    const [rootPublic, setRootPublic] = useState<boolean>(false);
-    const [rootOwnerId, setRootOwnerId] = useState<number>(-1);
+    const [rootNode, setRootNode] = useState<TreeNode | null>(null);
 
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
@@ -1148,15 +1143,12 @@ export default function TreeViewerPage() {
                 
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
-                setRootPublic(treeResponse.is_root_public || false);
-                setRootOwnerId(treeResponse.root_owner_id || -1);
-                // todo-0: need a 'root_owner" sent back as well so we can only show the sharing icon if we own it, consistent with other places we show sharing icon.
+                setRootNode(treeResponse.rootNode);
                 return treeResponse.treeNodes;
             }
             else {
                 setTreeNodes([]);
-                setRootPublic(false);
-                setRootOwnerId(-1);
+                setRootNode(null);
                 return [];
             }
         } catch (fetchError) {
@@ -1255,7 +1247,7 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div className="mt-4">
-                            <ClickableBreadcrumb gs={gs} rootPublic={rootPublic} rootOwnerId={rootOwnerId}/>
+                            <ClickableBreadcrumb gs={gs} rootNode={rootNode}/>
 
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />

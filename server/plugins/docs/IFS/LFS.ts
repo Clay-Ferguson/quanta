@@ -22,12 +22,14 @@ class LFS implements IFS {
         return ret;
     }
 
-    // File existence and metadata
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async exists(path: string, info: any): Promise<boolean> {
         path = this.normalize(path);
         try {
             await fs.promises.access(path, fs.constants.F_OK);
+            if (info) {
+                const stat = await this.stat(path);
+                info.node = {is_directory: stat.is_directory} as TreeNode;
+            }
             return true;
         } catch {
             return false;

@@ -227,7 +227,6 @@ class DocService {
             const absolutePath = svrUtil.pathJoin(root, treeFolder);
 
             const info: any = {};
-            let root_owner_id = -1;
             // Verify the target directory exists
             if (!await ifs.exists(absolutePath, info)) { 
                 console.warn(`Directory does not exist: ${absolutePath}`);
@@ -236,18 +235,16 @@ class DocService {
             }
 
             // NOTE: Checks for root node will end up here with 'info.node' being empty object
-            if (info && info.node) {
-                root_owner_id = info.node.owner_id || -1; // Use owner_id from info if available
-                // JSON pretty print the info object for debugging
-                console.log(`Directory info: ${JSON.stringify(info, null, 2)}`);
+            if (!info.node) {
+                // If info.node is not available, we can assume it's a root node with no owner_id
+                throw new Error(`Failed to create TreeNode ${absolutePath}`);
             }
 
             // Security validation: ensure path is within allowed root
             ifs.checkFileAccess(absolutePath, root);
             
             // Verify the target is actually a directory (not a file)
-            const stat = await ifs.stat(absolutePath);
-            if (!stat.is_directory) {
+            if (!info.node.is_directory) {
                 console.warn(`Path is not a directory: ${absolutePath}`);
                 res.status(400).json({ error: 'Path is not a directory' });
                 return;
@@ -258,7 +255,10 @@ class DocService {
             
             // Send the tree data as JSON response
             // todo-0: sending back -1 for now until we have a way to get this
-            const response: TreeRender_Response = { root_owner_id, user_id: owner_id, is_root_public: stat.is_public!, treeNodes };
+            const response: TreeRender_Response = { 
+                user_id: owner_id, 
+                rootNode: info.node,
+                treeNodes };
             res.json(response);
         } catch (error) {
             // Handle any errors that occurred during tree rendering

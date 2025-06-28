@@ -79,7 +79,7 @@ class VFS implements IFS {
         // which returns the whole record.
         console.log('VFS.exists:', fullPath, 'info:', info);
         if (info) {
-            const node = await this.getNodeByName(fullPath);
+            const node: TreeNode | null = await this.getNodeByName(fullPath);
             if (node) {
                 info.node = node; // Attach the node to the info object
                 return true; // File exists
@@ -109,13 +109,30 @@ class VFS implements IFS {
         }
     }
 
-    async getNodeByName(fullPath: string): Promise<any | null> {
+    // todo-0: we're not calling this from everywhere we could yet.
+    convertToTreeNode(row: any): TreeNode | null {
+        if (!row) {
+            return null; // No row found, return null
+        }
+        // Convert PostgreSQL row to TreeNode format
+        return {
+            owner_id: row.owner_id,
+            is_public: row.is_public,
+            is_directory: row.is_directory,
+            name: row.filename, 
+            createTime: row.created_time,
+            modifyTime: row.modified_time,
+            content: row.content,
+        } as TreeNode;
+    }
+
+    async getNodeByName(fullPath: string): Promise<TreeNode | null> {
         try {
             const relativePath = svrUtil.normalizePath(fullPath);
             
             // Special case for root directory. It always exists and we have no DB table 'row' for it.
             if (relativePath === '') {
-                return {}; // Root directory has no database row
+                return {is_directory: true} as TreeNode; // Root directory has no database row
             }
             
             const { parentPath, filename } = this.parsePath(relativePath);
@@ -128,7 +145,7 @@ class VFS implements IFS {
             pgdb.logEnabled = false;
             
             // Return the first row if found, null if no rows returned
-            return result.rows.length > 0 ? result.rows[0] : null;
+            return result.rows.length > 0 ? this.convertToTreeNode(result.rows[0]) : null;
         } catch (error) {
             console.error('VFS.getNodeByName error:', error);
             return null;
