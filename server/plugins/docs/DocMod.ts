@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
+import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -55,13 +55,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             try {
@@ -225,13 +221,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             console.log("Rename Folder Request");
@@ -329,13 +321,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             console.log("Delete File or Folder Request");
@@ -470,13 +458,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             // Console log a pretty print of test request parameters
@@ -599,13 +583,9 @@ class DocMod {
     }
 
     setPublic = async (req: Request<any, any, { is_public: boolean; filename: string; treeFolder: string; docRootKey: string; recursive?: boolean }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             try {
@@ -709,13 +689,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */ 
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             try {
@@ -967,13 +943,9 @@ class DocMod {
      * @returns void - Synchronous operation, no Promise needed
      */
     joinFiles = async (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             try {
@@ -1129,13 +1101,9 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     makeFolder = async (req: Request<any, any, { filename: string; folderName: string; remainingContent: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             console.log("Make Folder Request");

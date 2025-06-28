@@ -48,6 +48,19 @@ class ServerUtil {
     /** Array of initialized plugin instances implementing IServerPlugin interface */
     pluginsArray: IServerPlugin[] = [];
 
+    /* Gets the appropriate owner_id to use for processing a request and null if we should not process the request */
+    public getOwnerId = (req: Request, res: Response): number | null => {
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return null;
+            }
+        }
+        return owner_id;
+    }
+
     // Split 'fullPath' by '/' and then run 'validName' on each part or if there's no '/' just run 'validName' on the fullPath
     public validPath(fullPath: string): boolean {
         // Normalize the path to ensure consistent formatting

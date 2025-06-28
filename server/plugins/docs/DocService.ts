@@ -394,13 +394,9 @@ class DocService {
      * @returns Promise<void> - Sends success response with created filename or error
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
         return runTrans(async () => {
             // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
@@ -518,13 +514,9 @@ class DocService {
      * @returns Promise<void> - Sends success response with created folder name or error
      */
     createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
 
         return runTrans(async () => {

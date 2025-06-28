@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
+import { svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -312,14 +312,9 @@ class DocBinary {
      * @returns Promise<void> - Resolves when upload processing is complete
      */
     uploadFiles = async (req: Request, res: Response): Promise<void> => {
-        // this little chunk of code that gets owner_id can be put into svrUtil, because it is used in other places too.
-        let owner_id: number | undefined = -1;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return;
-            }
+        const owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
 
         try {
