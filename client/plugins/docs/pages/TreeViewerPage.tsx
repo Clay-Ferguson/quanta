@@ -397,7 +397,7 @@ function ClickableBreadcrumb({ gs, rootNode }: ClickableBreadcrumbProps) {
                             </button>
                         </span>
                     ))}
-                    {!DESKTOP_MODE && rootNode?.is_public && rootNode.owner_id==gs.userId && (
+                    {!DESKTOP_MODE && rootNode?.is_public && rootNode.owner_id==gs.userProfile!.userId && (
                         <FontAwesomeIcon
                             icon={faShareAlt}
                             className="text-green-400 h-5 w-5"
@@ -783,8 +783,6 @@ function TreeNodeComponent({
     // Compare the stripped names (without ordinal prefix) for exact match
     const isHighlightedFile = !isFolder && gs.docsHighlightedFileName && 
         stripOrdinal(node.name) === gs.docsHighlightedFileName;
-
-    // console.log(`Rendering node: ${node.name}, owner_id: ${node.owner_id}, gs.userId: ${gs.userId}`);
     
     // Determine the border class based on whether this is highlighted
     const getBorderClass = () => {
@@ -880,7 +878,7 @@ function TreeNodeComponent({
                                             />
                                         }
 
-                                        {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
+                                        {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userProfile!.userId && (
                                             <FontAwesomeIcon
                                                 icon={faShareAlt}
                                                 className="text-green-400 ml-2 h-5 w-5"
@@ -939,7 +937,7 @@ function TreeNodeComponent({
                                 <span className="text-lg font-medium">
                                     {formatDisplayName(node.name)}
                                 </span>
-                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
+                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userProfile!.userId && (
                                     <FontAwesomeIcon
                                         icon={faShareAlt}
                                         className="text-green-400 h-5 w-5"
@@ -950,7 +948,7 @@ function TreeNodeComponent({
                             : 
                             <div className="mb-3 relative">
                                 <ColumnMarkdownRenderer content={node.content} docMode={true}/>
-                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
+                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userProfile!.userId && (
                                     <FontAwesomeIcon
                                         icon={faShareAlt}
                                         className="absolute top-0 right-0 text-green-400 h-5 w-5 z-10"
@@ -1134,8 +1132,9 @@ export default function TreeViewerPage() {
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
             
             // Update user_id from the response if it's provided
-            if (treeResponse?.user_id && treeResponse.user_id !== gs.userId) {
-                gd({ type: 'setUserId', payload: { userId: treeResponse.user_id } });
+            if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
+                gs.userProfile!.userId = treeResponse.user_id;
+                gd({ type: 'setUserProfile', payload: { userProfile: gs.userProfile } });
             }
 
             // JSON pretty print the entire tree response
@@ -1159,7 +1158,7 @@ export default function TreeViewerPage() {
         finally {
             // setIsLoading(false);
         }
-    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey, gs.userId]);
+    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey, gs.userProfile]);
 
     useEffect(() => {
         const fetchTree = async () => {

@@ -70,7 +70,7 @@ class DocsClientPlugin implements IClientPlugin {
         const docsSearchTextOnly: boolean = await idb.getItem(DBKeys.docsSearchTextOnly, false) === true;
         const docsSearchOrder: 'MOD_TIME' | 'DATE' = await idb.getItem(DBKeys.docsSearchOrder, 'MOD_TIME');
     
-        gs.userId = userId;
+        gs.userProfile!.userId = userId;
         gs.docsViewWidth = docsViewWidth;
         gs.docsEditMode = docsEditMode;
         gs.docsMetaMode = docsMetaMode;

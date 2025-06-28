@@ -38,7 +38,7 @@ class AppUsers {
         // set page to userprofile 
         const _gs = gs();
         app.setTopPage(_gs, PageNames.userProfile);
-        _gs.userProfile = {name: '', publicKey, description: '', avatar: null};
+        _gs.userProfile = {userId: null, name: '', publicKey, description: '', avatar: null};
         gd({ type: 'setUserProfile', payload: _gs});
     }
 
@@ -77,8 +77,7 @@ class AppUsers {
             if (ret) {
                 // Save id to IndexedDB for future reference
                 if (ret.user_id) {
-                    // _gs.userProfile!.id = ret.user_id; todo-0: This 'userProfile' is only used on UserSettings page right? Does it ever need 'id' set on it?
-                    _gs.userId = ret.user_id;
+                    _gs.userProfile!.userId = ret.user_id;
                     await idb.setItem(DBKeys.userId, ret.user_id);
                     gd({ type: 'setUserProfile', payload: _gs });
                 }

@@ -33,6 +33,7 @@ export type UserProfileCompact = {
 }
 
 export type UserProfile = UserProfileCompact & {
+    userId?: number | null; // will be null if not set
     description: string;
     avatar: FileBase64Intf | null;
     signature?: string; // will be null if not signed
