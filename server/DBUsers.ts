@@ -36,7 +36,7 @@ class DBUsers {
             }
             const success = await this.saveUserInfo(userProfile); 
             if (success) {
-                res.json({ success: true });
+                res.json({ success: true, user_id: userProfile.id });
             } else {
                 res.status(500).json({ error: 'Failed to save user information' });
             }
@@ -133,7 +133,8 @@ class DBUsers {
      * Handles avatar binary data conversion from base64 encoding.
      * 
      * @param userProfile - The user profile object containing name, description, avatar, and public key
-     * @returns A Promise resolving to true if the save operation was successful, false otherwise
+     * @returns A Promise resolving to true if the save operation was successful, false otherwise, and if the record was saved
+     *          the side effect of setting the ID on the 'userProfile' object will have occurred.
      */
     saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
         try {
@@ -182,6 +183,7 @@ class DBUsers {
             if (userProfile) {
                 const confirmUserProfile: UserProfileCompact | null = await this.getUserProfileCompact(userProfile.publicKey);
                 if (confirmUserProfile) { 
+                    userProfile.id = confirmUserProfile.id; // Set the ID on the userProfile object
                     await svrUtil.onCreateNewUser(confirmUserProfile);
                 }
             }

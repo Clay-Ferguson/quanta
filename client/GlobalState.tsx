@@ -29,6 +29,7 @@ export interface GlobalState {
     userAvatar?: FileBase64Intf | null;
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile | null;
+    userId?: number | null; // todo-0: We need to move all userProfile-type information INTO the userProfile object ONLY 
     modalMessage?: string | null;
     showModalButton?: boolean;
     confirmMessage?: string | null;
@@ -48,6 +49,7 @@ const initialState: GlobalState = {
     userDescription: '',
     userAvatar: null,
     userProfile: null,
+    userId: null, // Default to null until set by user profile loading
     modalMessage: null,
     showModalButton: true,
     confirmMessage: null,

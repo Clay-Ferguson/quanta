@@ -12,6 +12,7 @@ CREATE OR REPLACE FUNCTION vfs_readdir(
     root_key TEXT
 ) 
 RETURNS TABLE(
+    owner_id INTEGER,
     is_public BOOLEAN,
     filename VARCHAR(255),
     is_directory BOOLEAN,
@@ -23,6 +24,7 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     SELECT 
+        n.owner_id,
         n.is_public,
         n.filename,
         n.is_directory,
@@ -337,6 +339,56 @@ BEGIN
         AND filename = filename_param;
         
     RETURN exists_flag;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_get_node_by_name
+-- Similar to vfs_exists but returns the entire node row if found, or null if not found
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_get_node_by_name(
+    parent_path_param TEXT,
+    filename_param TEXT,
+    root_key TEXT
+) 
+RETURNS TABLE(
+    id INTEGER,
+    owner_id INTEGER,
+    doc_root_key VARCHAR(255),
+    parent_path TEXT,
+    filename VARCHAR(255),
+    is_directory BOOLEAN,
+    content_text TEXT,
+    content_binary BYTEA,
+    is_binary BOOLEAN,
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    created_time TIMESTAMP WITH TIME ZONE,
+    modified_time TIMESTAMP WITH TIME ZONE,
+    is_public BOOLEAN
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        n.id,
+        n.owner_id,
+        n.doc_root_key,
+        n.parent_path,
+        n.filename,
+        n.is_directory,
+        n.content_text,
+        n.content_binary,
+        n.is_binary,
+        n.content_type,
+        n.size_bytes,
+        n.created_time,
+        n.modified_time,
+        n.is_public
+    FROM vfs_nodes n
+    WHERE 
+        n.doc_root_key = root_key
+        AND n.parent_path = parent_path_param
+        AND n.filename = filename_param;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -930,11 +982,7 @@ DECLARE
     is_dir BOOLEAN;
     full_path TEXT;
     target_id INTEGER;
-    normalized_parent_path TEXT;
 BEGIN
-    -- Normalize empty parent path to '/'
-    normalized_parent_path := CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END;
-
     -- Check if the target exists
     SELECT id, is_directory INTO target_id, is_dir
     FROM vfs_nodes
@@ -947,9 +995,7 @@ BEGIN
     
     IF target_id IS NULL THEN
         RETURN QUERY SELECT FALSE AS success, 
-                     format('Target not found: %s/%s', 
-                            CASE WHEN parent_path_arg = '' THEN '/' ELSE parent_path_arg END, 
-                            filename_arg) AS diagnostic;
+                     format('Target not found: parent=[%s] file=[%s]', parent_path_arg, filename_arg) AS diagnostic;
         RETURN;
     END IF;
 

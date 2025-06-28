@@ -72,7 +72,19 @@ class AppUsers {
                 description: userDescription,
                 avatar: userAvatar
             };
-            await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
+            const ret = await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
+            // pretty print the response
+            if (ret) {
+                // Save id to IndexedDB for future reference
+                if (ret.user_id) {
+                    // _gs.userProfile!.id = ret.user_id; todo-0: This 'userProfile' is only used on UserSettings page right? Does it ever need 'id' set on it?
+                    _gs.userId = ret.user_id;
+                    await idb.setItem(DBKeys.userId, ret.user_id);
+                    gd({ type: 'setUserProfile', payload: _gs });
+                }
+                // todo-0: Then we need to ALSO need to make it where every call to render the tree will send back ALSO the 'user_id' so it's continually updated
+                //         even in different browser apps, as long as of course the publicKey is set.
+            }
         }
     }
 

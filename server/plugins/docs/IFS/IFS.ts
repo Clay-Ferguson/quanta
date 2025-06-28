@@ -1,6 +1,8 @@
 
 // import * as fs from 'fs';
 
+import { TreeNode } from "../../../../common/types/CommonTypes.js";
+
 // Similar to 'fs.Stats', but for our virtual file system (VFS) or local file system (LFS)
 export interface IFSStats {
     is_public?: boolean;
@@ -18,7 +20,7 @@ export interface IFSStats {
  */
 export interface IFS {
     // File existence and metadata
-    exists(path: string): Promise<boolean>;
+    exists(path: string, info?: any): Promise<boolean>;
     childrenExist(owner_id: number, path: string): Promise<boolean>;
 
     stat(path: string): Promise<IFSStats>; 
@@ -29,6 +31,7 @@ export interface IFS {
 
     // Directory operations
     readdir(owner_id: number, path: string): Promise<string[]>;
+    readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]>;
     mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
 
     // File/directory manipulation

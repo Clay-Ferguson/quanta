@@ -31,7 +31,7 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsNewFileName = null;
         gs.docsSelItems = new Set<TreeNode>();
         gs.docsCutItems = new Set<string>();
-        gs.docsRootKey = DOC_ROOT_KEY || 'root'; // defined in config.yaml
+        gs.docsRootKey = DOC_ROOT_KEY || 'usr'; // defined in config.yaml
         gs.docsRootType = DOC_ROOT_TYPE || 'vfs'; // default to 'vfs' if not defined
         gs.docsViewWidth = 'medium';
         gs.docsSearch = '';
@@ -64,11 +64,13 @@ class DocsClientPlugin implements IClientPlugin {
         const docsViewWidth: 'narrow' | 'medium' | 'wide' | 'full' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
         const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
+        const userId: number = await idb.getItem(DBKeys.userId, null);
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
         const docsRequireDate: boolean = await idb.getItem(DBKeys.docsRequireDate, false) === true;
         const docsSearchTextOnly: boolean = await idb.getItem(DBKeys.docsSearchTextOnly, false) === true;
         const docsSearchOrder: 'MOD_TIME' | 'DATE' = await idb.getItem(DBKeys.docsSearchOrder, 'MOD_TIME');
     
+        gs.userId = userId;
         gs.docsViewWidth = docsViewWidth;
         gs.docsEditMode = docsEditMode;
         gs.docsMetaMode = docsMetaMode;

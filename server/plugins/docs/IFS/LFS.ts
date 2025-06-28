@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { IFS, IFSStats } from './IFS.js';
 import path from 'path';
+import { TreeNode } from '../../../../common/types/CommonTypes.js';
 
 /**
  * Linux File System. This is a wrapper around the standard NodeJS 'fs' module, as an abstraction layer for file operations.
@@ -8,13 +9,23 @@ import path from 'path';
  */
 class LFS implements IFS {
     
+    normalize(path: string) {
+        if (!path.startsWith('/')) {
+            return '/'+path;
+        }
+        return path;
+    }
+
     async childrenExist(owner_id: number, path: string): Promise<boolean> {
+        path = this.normalize(path);
         const ret = (await fs.promises.readdir(path)).length > 0;
         return ret;
     }
 
     // File existence and metadata
-    async exists(path: string): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async exists(path: string, info: any): Promise<boolean> {
+        path = this.normalize(path);
         try {
             await fs.promises.access(path, fs.constants.F_OK);
             return true;
@@ -24,6 +35,7 @@ class LFS implements IFS {
     }
 
     async stat(path: string): Promise<IFSStats> {
+        path = this.normalize(path);
         const stat =  await fs.promises.stat(path);
         return {
             is_public: true,
@@ -38,6 +50,7 @@ class LFS implements IFS {
 
     // File content operations
     async readFile(owner_id: number, path: string, encoding?: BufferEncoding): Promise<string | Buffer> {
+        path = this.normalize(path);
         if (encoding) {
             return await fs.promises.readFile(path, encoding);
         }
@@ -45,6 +58,7 @@ class LFS implements IFS {
     }
 
     async writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
+        path = this.normalize(path);
         if (encoding && typeof data === 'string') {
             await fs.promises.writeFile(path, data, encoding);
         } else {
@@ -54,23 +68,49 @@ class LFS implements IFS {
 
     // Directory operations
     async readdir(owner_id: number, path: string): Promise<string[]> {
+        path = this.normalize(path);
         return await fs.promises.readdir(path);
     }
 
+    async readdirEx(owner_id: number, path: string): Promise<TreeNode[]> {
+        try {
+            path = this.normalize(path);
+            const rootContents = await fs.promises.readdir(path, { withFileTypes: true });
+
+            // print formatted JSON of the rootContents
+            // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
+            const treeNodes = rootContents.map((dirent) => {
+                return {
+                    is_directory: dirent.isDirectory(),
+                    name: dirent.name
+                } as TreeNode;
+            });
+            return treeNodes;
+        } catch (error) {
+            console.error('LFS.readdirEx error:', error);
+            throw error;
+        }
+    }
+
     async mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void> {
+        path = this.normalize(path);
         await fs.promises.mkdir(path, options);
     }
 
     // File/directory manipulation
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
+        oldPath = this.normalize(oldPath);
+        newPath = this.normalize(newPath);
         await fs.promises.rename(oldPath, newPath);
     }
 
     async unlink(owner_id: number, path: string): Promise<void> {
+        path = this.normalize(path);
         await fs.promises.unlink(path);
     }
 
     async rm(owner_id: number, path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
+        path = this.normalize(path);
         await fs.promises.rm(path, options);
     }
 
@@ -90,6 +130,7 @@ class LFS implements IFS {
      * @param root - The allowed root directory (absolute path)
      */     
     checkFileAccess = (filename: string, root: string) => {
+        filename = this.normalize(filename);
         if (!filename) {
             throw new Error('Invalid file access: '+filename);
         }

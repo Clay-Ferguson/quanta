@@ -40,18 +40,24 @@ class DocBinary {
      * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
+        let owner_id = -1;
+        if (process.env.POSTGRES_HOST) {
         // todo-1: tree render is not yet converted to a secure post request, so we use admin profile for now
-        const owner_id = pgdb.adminProfile!.id!; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+            owner_id = pgdb.adminProfile!.id!; 
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
-        // console.log("Serve Doc Image Request:", req.path);
+
+        console.log("Serve Doc Image Request:", req.path);
         try {
             // Extract the relative image path from the request URL
             // Remove the API prefix and docRootKey to get the actual file path
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
+            console.log("Raw Image Path:", rawImagePath);
             const imagePath = decodeURIComponent(rawImagePath);
+            console.log("Decoded Image Path:", imagePath);
             
             // Get the appropriate file system implementation
             const ifs = docUtil.getFileSystem(req.params.docRootKey);
@@ -70,7 +76,8 @@ class DocBinary {
             }
 
             // Construct the absolute path to the image file
-            const absoluteImagePath = path.join(root, imagePath);
+            const absoluteImagePath = imagePath; // path.join(root, imagePath);
+            // console.log("Absolute Image Path:", absoluteImagePath);
 
             // Perform security check to ensure file is within allowed directory
             // and verify file exists
@@ -305,11 +312,16 @@ class DocBinary {
      * @returns Promise<void> - Resolves when upload processing is complete
      */
     uploadFiles = async (req: Request, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        // this little chunk of code that gets owner_id can be put into svrUtil, because it is used in other places too.
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
+
         try {
             // Validate that the request contains multipart form data
             const contentType = req.headers['content-type'];

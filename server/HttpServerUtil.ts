@@ -168,19 +168,21 @@ class HttpServerUtil {
             // This is required so that we can let the user save a UserProfile knowing that they're the owner of the private key.
             (req as AuthenticatedRequest).validSignature = true;
 
-            const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
-            if (userProfile) {
+            if (process.env.POSTGRES_HOST) {
+                const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
+                if (userProfile) {
                 // console.log('User profile found for public key:', publicKey);
                 // Store userProfile in the request object for use in downstream middleware and route handlers
-                (req as AuthenticatedRequest).userProfile = userProfile;
-            }       
-            else {
-                if (!allowAnon) {
-                    res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                    return;
-                }
+                    (req as AuthenticatedRequest).userProfile = userProfile;
+                }       
+                else {
+                    if (!allowAnon) {
+                        res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                        return;
+                    }
                 // console.warn('User profile not found for public key (treating as ANON USER)', publicKey);
-            } 
+                } 
+            }
             next();
         } catch (error) {
             console.error('Error verifying signature:', error);

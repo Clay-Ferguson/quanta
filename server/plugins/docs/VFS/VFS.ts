@@ -74,7 +74,19 @@ class VFS implements IFS {
     }
 
     // File existence and metadata
-    async exists(fullPath: string): Promise<boolean> {
+    async exists(fullPath: string, info: any=null): Promise<boolean> {
+        // if a non-info object was passed the caller needs additional info so we run getNodeByName
+        // which returns the whole record.
+        console.log('VFS.exists:', fullPath, 'info:', info);
+        if (info) {
+            const node = await this.getNodeByName(fullPath);
+            if (node) {
+                info.node = node; // Attach the node to the info object
+                return true; // File exists
+            }
+            return false; // File does not exist
+        }
+
         try {
             const relativePath = svrUtil.normalizePath(fullPath);
             
@@ -94,6 +106,32 @@ class VFS implements IFS {
         } catch (error) {
             console.error('VFS.exists error:', error);
             return false;
+        }
+    }
+
+    async getNodeByName(fullPath: string): Promise<any | null> {
+        try {
+            const relativePath = svrUtil.normalizePath(fullPath);
+            
+            // Special case for root directory. It always exists and we have no DB table 'row' for it.
+            if (relativePath === '') {
+                return {}; // Root directory has no database row
+            }
+            
+            const { parentPath, filename } = this.parsePath(relativePath);
+            
+            pgdb.logEnabled = true;
+            const result = await pgdb.query(
+                'SELECT * FROM vfs_get_node_by_name($1, $2, $3)',
+                parentPath, filename, rootKey
+            );
+            pgdb.logEnabled = false;
+            
+            // Return the first row if found, null if no rows returned
+            return result.rows.length > 0 ? result.rows[0] : null;
+        } catch (error) {
+            console.error('VFS.getNodeByName error:', error);
+            return null;
         }
     }
 
@@ -300,7 +338,9 @@ class VFS implements IFS {
             // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
             const treeNodes = rootContents.rows.map((row: any) => {
                 // Convert PostgreSQL row to TreeNode format
+                // todo-0: need a "Row Converter" class that can convert any row to a TreeNode
                 return {
+                    owner_id: row.owner_id,
                     is_public: row.is_public,
                     is_directory: row.is_directory,
                     name: row.filename, 
@@ -461,12 +501,9 @@ class VFS implements IFS {
             }
         }
 
-        console.log('********** Getting max ordinal.');
         let maxOrdinal = await this.getMaxOrdinal(""); 
-        console.log(`Max ordinal now in DB: ${maxOrdinal}`);
         maxOrdinal++;
         const maxOrdinalStr = maxOrdinal.toString().padStart(4, '0');
-        console.log(`Making user folder ${maxOrdinalStr}_${userProfile.name}`);
 
         await pgdb.query(
             'SELECT vfs_mkdir($1, $2, $3, $4, $5)',

@@ -6,7 +6,6 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
-import vfs from "./VFS/VFS.js";
 import fs from 'fs';
 import path from 'path';
 const { exec } = await import('child_process');
@@ -227,10 +226,20 @@ class DocService {
             // Construct the absolute path to the target directory
             const absolutePath = svrUtil.pathJoin(root, treeFolder);
 
+            const info: any = {};
+            let root_owner_id = -1;
             // Verify the target directory exists
-            if (!await ifs.exists(absolutePath)) {
-                res.status(404).json({ error: 'Directory not found' });
+            if (!await ifs.exists(absolutePath, info)) { 
+                console.warn(`Directory does not exist: ${absolutePath}`);
+                res.status(404).json({ error: `Directory not found: ${absolutePath}` });
                 return;
+            }
+
+            // NOTE: Checks for root node will end up here with 'info.node' being empty object
+            if (info && info.node) {
+                root_owner_id = info.node.owner_id || -1; // Use owner_id from info if available
+                // JSON pretty print the info object for debugging
+                console.log(`Directory info: ${JSON.stringify(info, null, 2)}`);
             }
 
             // Security validation: ensure path is within allowed root
@@ -248,7 +257,8 @@ class DocService {
             const treeNodes: TreeNode[] = await this.getTreeNodes(owner_id, absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
-            const response: TreeRender_Response = { is_root_public: stat.is_public!, treeNodes };
+            // todo-0: sending back -1 for now until we have a way to get this
+            const response: TreeRender_Response = { root_owner_id, user_id: owner_id, is_root_public: stat.is_public!, treeNodes };
             res.json(response);
         } catch (error) {
             // Handle any errors that occurred during tree rendering
@@ -293,7 +303,7 @@ class DocService {
         
         // Read the directory contents
         // todo-0: oops this code MUST remain polymorphic! BEFORE retesting for LFS we must fix this AND remove any 'vfs' import into this class
-        const fileNodes = await vfs.readdirEx(owner_id, absolutePath);
+        const fileNodes = await ifs.readdirEx(owner_id, absolutePath);
 
         // Process each file/folder in the directory
         for (const file of fileNodes) {    
@@ -384,10 +394,13 @@ class DocService {
      * @returns Promise<void> - Sends success response with created filename or error
      */
     createFile = async (req: Request<any, any, { fileName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
@@ -505,11 +518,15 @@ class DocService {
      * @returns Promise<void> - Sends success response with created folder name or error
      */
     createFolder = async (req: Request<any, any, { folderName: string; treeFolder: string; insertAfterNode: string, docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
+
         return runTrans(async () => {
             console.log("Create Folder Request");
             try {

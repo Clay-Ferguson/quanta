@@ -125,12 +125,13 @@ function EditFolder({
                     >
                     Rename
                     </button>
-                    <button
-                        onClick={handleShareClick}
-                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
-                    >
-                    Share
-                    </button>
+                    {!DESKTOP_MODE && 
+                        <button
+                            onClick={handleShareClick}
+                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                        >
+                        Share
+                        </button>}
                     <button
                         onClick={handleCancelClick}
                         className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
@@ -358,12 +359,13 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
 interface ClickableBreadcrumbProps {
     gs: DocsGlobalState;
     rootPublic: boolean;
+    rootOwnerId?: number;   
 }
 
 /**
  * Component for rendering clickable folder path breadcrumbs
  */
-function ClickableBreadcrumb({ gs, rootPublic }: ClickableBreadcrumbProps) {
+function ClickableBreadcrumb({ gs, rootPublic, rootOwnerId }: ClickableBreadcrumbProps) {
     if (!gs.docsFolder || gs.docsFolder.length <= 1) {
         return null;
     }
@@ -396,10 +398,10 @@ function ClickableBreadcrumb({ gs, rootPublic }: ClickableBreadcrumbProps) {
                             </button>
                         </span>
                     ))}
-                    {rootPublic && (
+                    {!DESKTOP_MODE && rootPublic && rootOwnerId==gs.userId && (
                         <FontAwesomeIcon
                             icon={faShareAlt}
-                            className="text-green-400 ml-2 h-5 w-5"
+                            className="text-green-400 h-5 w-5"
                             title="This folder is shared publicly"
                         />
                     )}
@@ -782,6 +784,8 @@ function TreeNodeComponent({
     // Compare the stripped names (without ordinal prefix) for exact match
     const isHighlightedFile = !isFolder && gs.docsHighlightedFileName && 
         stripOrdinal(node.name) === gs.docsHighlightedFileName;
+
+    // console.log(`Rendering node: ${node.name}, owner_id: ${node.owner_id}, gs.userId: ${gs.userId}`);
     
     // Determine the border class based on whether this is highlighted
     const getBorderClass = () => {
@@ -877,7 +881,7 @@ function TreeNodeComponent({
                                             />
                                         }
 
-                                        {node.is_public && (
+                                        {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
                                             <FontAwesomeIcon
                                                 icon={faShareAlt}
                                                 className="text-green-400 ml-2 h-5 w-5"
@@ -936,10 +940,24 @@ function TreeNodeComponent({
                                 <span className="text-lg font-medium">
                                     {formatDisplayName(node.name)}
                                 </span>
+                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
+                                    <FontAwesomeIcon
+                                        icon={faShareAlt}
+                                        className="text-green-400 h-5 w-5"
+                                        title="This file is shared publicly"
+                                    />
+                                )}
                             </div>
                             : 
-                            <div className="mb-3">
+                            <div className="mb-3 relative">
                                 <ColumnMarkdownRenderer content={node.content} docMode={true}/>
+                                {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userId && (
+                                    <FontAwesomeIcon
+                                        icon={faShareAlt}
+                                        className="absolute top-0 right-0 text-green-400 h-5 w-5 z-10"
+                                        title="This file is shared publicly"
+                                    />
+                                )}
                             </div>
                     )}
 
@@ -1061,7 +1079,12 @@ export default function TreeViewerPage() {
     const isLoading = false; // Disable loading state for now
 
     const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
+
+    // todo-0: We need to always get 'treeNodes' and 'rootNode' back from server as TreeNode object rather and then
+    // rather than having these two root properties it will just be the 'rootNode' one.
     const [rootPublic, setRootPublic] = useState<boolean>(false);
+    const [rootOwnerId, setRootOwnerId] = useState<number>(-1);
+
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
     const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -1114,15 +1137,26 @@ export default function TreeViewerPage() {
             // console.log(`Refreshing tree for folder "${folder}" with rootKey="${gs.docsRootKey}"...`);
             const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
+            
+            // Update user_id from the response if it's provided
+            if (treeResponse?.user_id && treeResponse.user_id !== gs.userId) {
+                gd({ type: 'setUserId', payload: { userId: treeResponse.user_id } });
+            }
+
+            // JSON pretty print the entire tree response
+            // console.log('Tree response:', JSON.stringify(treeResponse, null, 2));
                 
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
                 setRootPublic(treeResponse.is_root_public || false);
+                setRootOwnerId(treeResponse.root_owner_id || -1);
+                // todo-0: need a 'root_owner" sent back as well so we can only show the sharing icon if we own it, consistent with other places we show sharing icon.
                 return treeResponse.treeNodes;
             }
             else {
                 setTreeNodes([]);
                 setRootPublic(false);
+                setRootOwnerId(-1);
                 return [];
             }
         } catch (fetchError) {
@@ -1133,7 +1167,7 @@ export default function TreeViewerPage() {
         finally {
             // setIsLoading(false);
         }
-    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey]);
+    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey, gs.userId]);
 
     useEffect(() => {
         const fetchTree = async () => {
@@ -1221,7 +1255,7 @@ export default function TreeViewerPage() {
                         </div>
                     ) : (
                         <div className="mt-4">
-                            <ClickableBreadcrumb gs={gs} rootPublic={rootPublic}/>
+                            <ClickableBreadcrumb gs={gs} rootPublic={rootPublic} rootOwnerId={rootOwnerId}/>
 
                             {gs.docsEditMode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />

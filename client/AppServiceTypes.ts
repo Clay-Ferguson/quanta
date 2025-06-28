@@ -17,6 +17,7 @@ export enum DBKeys {
     chatDaysOfHistory = 'chatDaysOfHistory',
     chatRoomHistory = 'chatRoomHistory',
     headerExpanded = 'headerExpanded',
+    userId ='userId',
 
     // chat plugin
     chatConnected = 'chatConnected',

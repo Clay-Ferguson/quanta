@@ -57,43 +57,58 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             console.error('Error reading index.html:', err);
             return res.status(500).send('Error loading page');
         }
-        console.log(`Serving index.html for page: ${page}`);
+        
+        try {
+            console.log(`Serving index.html for page: ${page}`);
 
-        let docPath: string | null = req.query.path as string || "";
-        if (docPath) {
-            // owner_id of 0 always has super powers.
-            docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath);
-            if (!docPath) {
-                console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
-                return res.status(404).send('Document not found');
+            let docPath: string | null = req.query.path as string || "";
+            if (docPath) {
+                // owner_id of 0 always has super powers.
+                docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath);
+                if (!docPath) {
+                    console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
+                    return res.status(404).send('Document not found');
+                }
+                console.log(`Resolved docPath: ${docPath}`);
             }
-            console.log(`Resolved docPath: ${docPath}`);
+
+            // use the docRootKey to get the file system type (vfs or lfs), by calling getFileSystemType
+            let docRootType = "";
+            if (req.params.docRootKey) {
+                docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
+            }
+
+            // Replace the placeholders with actual values
+            const result = data
+                .replace('{{HOST}}', HOST)
+                .replace('{{CLIENT_HOST}}', CLIENT_HOST)
+                .replace('{{PORT}}', PORT)
+                .replace('{{SECURE}}', SECURE)
+                .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
+                .replace(`{{PAGE}}`, page)
+                .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
+                .replace('{{DOC_ROOT_TYPE}}', docRootType)
+                .replace('{{DOC_PATH}}', docPath)
+                .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
+                .replace('{{PLUGINS}}', pluginKeys)
+                .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
+
+            // Set the content type and send the modified HTML
+            res.contentType('text/html');
+            res.send(result);
+        } catch (error) {
+            console.error('Error processing page request:', error);
+            const errorMessage = `
+                <html>
+                    <head><title>Server Error</title></head>
+                    <body>
+                        <h1>Server Error</h1>
+                        <p>An error occurred while processing your request. Please try again later.</p>
+                    </body>
+                </html>
+            `;
+            res.status(500).contentType('text/html').send(errorMessage);
         }
-
-        // use the docRootKey to get the file system type (vfs or lfs), by calling getFileSystemType
-        let docRootType = "";
-        if (req.params.docRootKey) {
-            docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
-        }
-
-        // Replace the placeholders with actual values
-        const result = data
-            .replace('{{HOST}}', HOST)
-            .replace('{{CLIENT_HOST}}', CLIENT_HOST)
-            .replace('{{PORT}}', PORT)
-            .replace('{{SECURE}}', SECURE)
-            .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
-            .replace(`{{PAGE}}`, page)
-            .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
-            .replace('{{DOC_ROOT_TYPE}}', docRootType)
-            .replace('{{DOC_PATH}}', docPath)
-            .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
-            .replace('{{PLUGINS}}', pluginKeys)
-            .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
-
-        // Set the content type and send the modified HTML
-        res.contentType('text/html');
-        res.send(result);
     });
 };
 
@@ -102,8 +117,10 @@ app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, dbUs
 app.get('/api/users/:pubKey/info', dbUsers.getUserProfileReq);
 app.get('/api/users/:pubKey/avatar', dbUsers.serveAvatar);
 
-// NOTE: This MUST be calle before 'initPlugins'
-await pgdb.loadAdminUser();
+if (process.env.POSTGRES_HOST) {
+    // NOTE: This MUST be called before 'initPlugins'
+    await pgdb.loadAdminUser();
+}
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
 await svrUtil.initPlugins(plugins, {app, serveIndexHtml});

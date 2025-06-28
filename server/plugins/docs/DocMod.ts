@@ -55,10 +55,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             try {
@@ -222,10 +225,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     renameFolder = async (req: Request<any, any, { oldFolderName: string; newFolderName: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             console.log("Rename Folder Request");
@@ -323,10 +329,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             console.log("Delete File or Folder Request");
@@ -461,10 +470,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     moveUpOrDown = async (req: Request<any, any, { direction: string; filename: string; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             // Console log a pretty print of test request parameters
@@ -587,16 +599,20 @@ class DocMod {
     }
 
     setPublic = async (req: Request<any, any, { is_public: boolean; filename: string; treeFolder: string; docRootKey: string; recursive?: boolean }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             try {
                 // Extract request parameters
                 const { is_public, filename, docRootKey } = req.body;
                 let {treeFolder} = req.body;
+                treeFolder = svrUtil.normalizePath(treeFolder); // Ensure treeFolder is normalized
                 const recursive = req.body.recursive === true; // Default to false if not provided
                 
                 // Get the appropriate file system implementation
@@ -627,10 +643,6 @@ class DocMod {
 
                 // For PostgreSQL VFS mode, make direct database call
                 if (ifs.constructor.name === 'VFS') {
-                    // vfs_set_public needs '' instead of '/' for root folder
-                    if (treeFolder === '/') {
-                        treeFolder = '';
-                    }
                     // Call the PostgreSQL function
                     const result = await pgdb.query(
                         'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
@@ -697,10 +709,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */ 
     pasteItems = async (req: Request<any, any, { targetFolder: string; pasteItems: string[], docRootKey: string, targetOrdinal?: string }>, res: Response): Promise<void> => {    
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id; 
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             try {
@@ -952,10 +967,13 @@ class DocMod {
      * @returns void - Synchronous operation, no Promise needed
      */
     joinFiles = async (req: Request<any, any, { filenames: string[]; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             try {
@@ -1111,10 +1129,13 @@ class DocMod {
      * @returns Promise<void> - Resolves when operation completes
      */
     makeFolder = async (req: Request<any, any, { filename: string; folderName: string; remainingContent: string; treeFolder: string; docRootKey: string }>, res: Response): Promise<void> => {
-        const owner_id = (req as AuthenticatedRequest).userProfile?.id;
-        if (!owner_id) {
-            res.status(401).json({ error: 'Unauthorized: User profile not found' });
-            return;
+        let owner_id: number | undefined = -1;
+        if (process.env.POSTGRES_HOST) {
+            owner_id = (req as AuthenticatedRequest).userProfile?.id;
+            if (!owner_id) {
+                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                return;
+            }
         }
         return runTrans(async () => {
             console.log("Make Folder Request");
