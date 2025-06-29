@@ -185,9 +185,9 @@ class DocService {
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
-        let owner_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
-        if (!owner_id) {
-            owner_id = -1; // -1 is ANON.
+        let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
+        if (!user_id) {
+            user_id = -1; // -1 is ANON.
         }                   
        
         // Clean up path by removing double slashes
@@ -248,12 +248,11 @@ class DocService {
             }
 
             // Generate the tree structure
-            const treeNodes: TreeNode[] = await this.getTreeNodes(owner_id, absolutePath, pullup==="true", root, ifs);
+            const treeNodes: TreeNode[] = await this.getTreeNodes(user_id, absolutePath, pullup==="true", root, ifs);
             
             // Send the tree data as JSON response
-            // todo-0: sending back -1 for now until we have a way to get this
             const response: TreeRender_Response = { 
-                user_id: owner_id, 
+                user_id, 
                 rootNode: info.node,
                 treeNodes };
             res.json(response);
@@ -299,7 +298,6 @@ class DocService {
         ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        // todo-0: oops this code MUST remain polymorphic! BEFORE retesting for LFS we must fix this AND remove any 'vfs' import into this class
         let fileNodes = await ifs.readdirEx(owner_id, absolutePath);
 
         // This filters out hidden files and system files
@@ -339,7 +337,7 @@ class DocService {
                     // Image files: store relative path for URL construction
                     file.type = 'image';
                     // If filePath starts with root, strip the root part to get relative path
-                    // todo-0: need to verify this path stipping of 'root' didn't break VFS!
+                    // todo-1: need to verify this path stipping of 'root' didn't break VFS!
                     // console.log(`Processing image file: [${filePath}] under root [${root}]`);
                     const relativePath = filePath.startsWith(root) ? filePath.substring(root.length) : filePath;
                     // console.log(`Relative image path: ${relativePath}`);
@@ -404,7 +402,9 @@ class DocService {
             // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
                 // Extract parameters from request body
-                const { fileName, treeFolder, insertAfterNode, docRootKey } = req.body;
+                const { treeFolder, insertAfterNode, docRootKey } = req.body;
+                let {fileName} = req.body;
+                fileName = svrUtil.fixName(fileName); // Ensure valid file name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
@@ -525,7 +525,9 @@ class DocService {
             console.log("Create Folder Request");
             try {
                 // Extract parameters from request body
-                const { folderName, treeFolder, insertAfterNode, docRootKey } = req.body;
+                const { treeFolder, insertAfterNode, docRootKey } = req.body;
+                let {folderName} = req.body;
+                folderName = svrUtil.fixName(folderName); // Ensure valid folder name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);

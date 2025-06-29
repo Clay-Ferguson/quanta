@@ -12,6 +12,7 @@ import { AttachmentInfo } from '../../../../common/types/CommonTypes';
 import { GetRecentAttachments_Response } from '../../../../common/types/EndpointTypes';
 import { confirmModal } from '../../../components/ConfirmModalComp';
 import appMessages from '../AppMessages';
+import { formatDate } from '../../../../common/CommonUtils';
 
 declare const ADMIN_PUBLIC_KEY: string;
 
@@ -55,11 +56,6 @@ export default function RecentAttachmentsPage({ pluginTitle }: RecentAttachments
         console.error('Admin public key is not set.');
         return null;
     }
-
-    // Format timestamp to readable date
-    const formatDate = (timestamp: number): string => {
-        return new Date(timestamp).toLocaleString();
-    };
 
     // Truncate long text with ellipsis
     const truncateText = (text: string, maxLength: number): string => {

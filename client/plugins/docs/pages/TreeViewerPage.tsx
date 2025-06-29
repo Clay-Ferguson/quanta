@@ -16,7 +16,7 @@ import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditC
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
-import { formatDisplayName, stripOrdinal, createClickablePathComponents } from '../../../../common/CommonUtils';
+import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
 
@@ -512,7 +512,7 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                     {!hasCutItems && itemsAreSelected && 
                         <button 
                             onClick={() => onDelete(gs, treeNodes, setTreeNodes)}
-                            className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                            className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                             title="Delete selected items"
                         >
                         Delete
@@ -826,11 +826,16 @@ function TreeNodeComponent({
                 }
                 <div className="flex-grow">
                     {!isFolder && !isBinary && 
-                        <div className="mt-3 text-s text-gray-500 flex justify-end items-center">
+                        <div className="mt-3 text-s text-gray-400 flex justify-end items-center">
                             {gs.docsMetaMode && 
                                 <>
                                     <span className="mr-4">{node.name}</span>
-                                    <span className="mr-4">{new Date(node.modifyTime).toLocaleDateString()}</span>
+                                    <span 
+                                        className="mr-4 cursor-pointer" 
+                                        title={`Timestamps: \n\nCreated: ${formatDateTime(node.createTime)}\n\nModified: ${formatDateTime(node.modifyTime)}`}
+                                    >
+                                        {new Date(node.modifyTime).toLocaleDateString()}
+                                    </span>
                                 </>}
                             {gs.docsEditMode && 
                                 <EditIcons 
@@ -901,7 +906,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className={gs.docsNamesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
+                                className={gs.docsNamesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "border border-gray-600 max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -1134,6 +1139,7 @@ export default function TreeViewerPage() {
             // Update user_id from the response if it's provided
             if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
                 gs.userProfile!.userId = treeResponse.user_id;
+                await idb.setItem(DBKeys.userId, treeResponse.user_id);
                 gd({ type: 'setUserProfile', payload: { userProfile: gs.userProfile } });
             }
 

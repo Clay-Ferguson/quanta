@@ -530,9 +530,6 @@ export const onUndoCut = (gs: DocsGlobalState, reRenderTree: any) => {
 
     // Re-render the tree to reflect the changes
     reRenderTree();
-    
-    // Optionally, show a message to the user
-    alertModal("Cut/Past cancelled.");
 }
 
 // Header button handlers for Cut, Paste, Delete

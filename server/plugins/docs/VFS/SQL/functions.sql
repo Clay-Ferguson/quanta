@@ -793,9 +793,8 @@ $$ LANGUAGE plpgsql;
 -- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
 -- Optionally filters by timestamp requirements
 -----------------------------------------------------------------------------------------------------------
--- todo-0: use on all calls pgdb.authId(id)
 CREATE OR REPLACE FUNCTION vfs_search_text(
-    -- todo-0: need owner_id_arg here (standard security)
+    -- todo-1: need owner_id_arg here (standard security), and call 'pgdb.authId(id)' with id before we get here.
     search_query TEXT,
     search_path TEXT,
     root_key TEXT,

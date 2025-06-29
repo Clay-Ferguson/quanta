@@ -64,6 +64,11 @@ class DocMod {
                 // Extract request parameters
                 const { filename, content, treeFolder, docRootKey, split } = req.body;
                 let { newFileName } = req.body;
+
+                if (!svrUtil.validName(filename)) {
+                    res.status(400).json({ error: 'Invalid filename' });
+                    return;
+                }
     
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey!);
@@ -228,8 +233,10 @@ class DocMod {
         return runTrans(async () => {
             console.log("Rename Folder Request");
             try {
-            // Extract request parameters
-                const { oldFolderName, newFolderName, treeFolder, docRootKey } = req.body;
+                // Extract request parameters
+                const { oldFolderName, treeFolder, docRootKey } = req.body;
+                let {newFolderName} = req.body;
+                newFolderName = svrUtil.fixName(newFolderName); // Ensure valid folder name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
@@ -1106,8 +1113,10 @@ class DocMod {
         return runTrans(async () => {
             console.log("Make Folder Request");
             try {
-            // Extract request parameters
-                const { filename, folderName, remainingContent, treeFolder, docRootKey } = req.body;
+                // Extract request parameters
+                const { filename, remainingContent, treeFolder, docRootKey } = req.body;
+                let { folderName } = req.body;
+                folderName = svrUtil.fixName(folderName); // Ensure no leading/trailing whitespace
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);

@@ -64,16 +64,11 @@ class DocsClientPlugin implements IClientPlugin {
         const docsViewWidth: 'narrow' | 'medium' | 'wide' | 'full' = await idb.getItem(DBKeys.docsViewWidth, 'medium');
         const docsEditMode: boolean = await idb.getItem(DBKeys.docsEditMode, false) === true;
         const docsMetaMode: boolean = await idb.getItem(DBKeys.docsMetaMode, false) === true;
-        const userId: number = await idb.getItem(DBKeys.userId, null);
         const docsNamesMode: boolean = await idb.getItem(DBKeys.docsNamesMode, false) === true;
         const docsRequireDate: boolean = await idb.getItem(DBKeys.docsRequireDate, false) === true;
         const docsSearchTextOnly: boolean = await idb.getItem(DBKeys.docsSearchTextOnly, false) === true;
         const docsSearchOrder: 'MOD_TIME' | 'DATE' = await idb.getItem(DBKeys.docsSearchOrder, 'MOD_TIME');
     
-        // todo-0: gs.userProfile being null here is a problem. need to fix.
-        if (gs.userProfile) {
-            gs.userProfile.userId = userId;
-        }
         gs.docsViewWidth = docsViewWidth;
         gs.docsEditMode = docsEditMode;
         gs.docsMetaMode = docsMetaMode;

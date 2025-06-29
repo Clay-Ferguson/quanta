@@ -1,4 +1,22 @@
-export const formatDisplayName = (name: string) => {
+
+// Format timestamp to readable date
+export function formatDate(timestamp: number): string {
+    return new Date(timestamp).toLocaleString();
+};
+
+export function formatDateTime(timestamp: number): string {
+    return new Date(timestamp).toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+}
+
+export function formatDisplayName(name: string) {
     name = stripOrdinal(name);
     const endsWithUnderscore = name.endsWith('_');
 
@@ -21,7 +39,7 @@ export const formatDisplayName = (name: string) => {
 }   
 
 // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
-export const stripOrdinal = (name: string) => {
+export function stripOrdinal(name: string) {
     const idx = name.indexOf('_');
     return idx !== -1 ? name.substring(idx + 1) : name;
 }   

@@ -76,7 +76,7 @@ class DocBinary {
             }
 
             // Construct the absolute path to the image file
-            // todo-0: I'm adding back th pathJoin here working in LFS, need to verify this didn't now break VFS!
+            // todo-1: I'm adding back th pathJoin here working in LFS, need to verify this didn't now break VFS!
             const absoluteImagePath = ifs.pathJoin(root, imagePath);
             // console.log("Absolute Image Path:", absoluteImagePath);
 
@@ -157,11 +157,12 @@ class DocBinary {
     
                 // Process each multipart section to extract form fields and files
                 for (const part of parts) {
-                // Find the end of headers (marked by double CRLF)
+                    // Find the end of headers (marked by double CRLF)
                     const headerEnd = part.indexOf('\r\n\r\n');
                     if (headerEnd === -1) continue;
     
                     // Split headers and body content
+                    // todo-1: slice is deprecated.
                     const headers = part.slice(0, headerEnd).toString();
                     const body = part.slice(headerEnd + 4);
     
@@ -241,6 +242,7 @@ class DocBinary {
                 let savedCount = 0;
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
+                    file.name = svrUtil.fixName(file.name); // Ensure valid file name
                     const ordinal = insertOrdinal + i;
                         
                     // Create zero-padded ordinal prefix (e.g., "0001", "0002")
@@ -332,7 +334,8 @@ class DocBinary {
             if (!boundary) {
                 res.status(400).json({ error: 'No boundary found in multipart data' });
                 return;
-            }            // Collect raw request body data as it streams in
+            }            
+            // Collect raw request body data as it streams in
             const chunks: Buffer[] = [];
             req.on('data', (chunk: Buffer) => {
                 chunks.push(chunk);

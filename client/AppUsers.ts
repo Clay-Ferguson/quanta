@@ -81,8 +81,6 @@ class AppUsers {
                     await idb.setItem(DBKeys.userId, ret.user_id);
                     gd({ type: 'setUserProfile', payload: _gs });
                 }
-                // todo-0: Then we need to ALSO need to make it where every call to render the tree will send back ALSO the 'user_id' so it's continually updated
-                //         even in different browser apps, as long as of course the publicKey is set.
             }
         }
     }

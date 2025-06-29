@@ -10,7 +10,7 @@ export enum DocsPageNames {
 
 export interface DocsGlobalState extends GlobalState {
     // Plugin-specific state uses plugin key perfix, e.g. 'docs'
-    docsUserName?: string | null; // todo-0: remove. Use gs.userProfile.name instead.
+    docsUserName?: string | null; 
     docsFolder?: string;
     docsEditMode?: boolean; 
     docsMetaMode?: boolean; 

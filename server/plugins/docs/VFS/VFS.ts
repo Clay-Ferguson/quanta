@@ -109,7 +109,6 @@ class VFS implements IFS {
         }
     }
 
-    // todo-0: we're not calling this from everywhere we could yet.
     convertToTreeNode(row: any): TreeNode | null {
         if (!row) {
             return null; // No row found, return null
@@ -355,16 +354,7 @@ class VFS implements IFS {
             // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
             const treeNodes = rootContents.rows.map((row: any) => {
                 // Convert PostgreSQL row to TreeNode format
-                // todo-0: need a "Row Converter" class that can convert any row to a TreeNode
-                return {
-                    owner_id: row.owner_id,
-                    is_public: row.is_public,
-                    is_directory: row.is_directory,
-                    name: row.filename, 
-                    createTime: row.created_time,
-                    modifyTime: row.modified_time,
-                    content: row.content,
-                } as TreeNode;
+                return this.convertToTreeNode(row);
             });
             return treeNodes;
         } catch (error) {
@@ -494,8 +484,6 @@ class VFS implements IFS {
         }
     }
 
-    // todo-0: We should really create a subfolder named "u" that contains all user folders, so that we can have a single root, and admin 
-    // remains free to own all the rest of the root.
     async createUserFolder(userProfile: UserProfileCompact) {
         // todo-0: NOTE: Currently if user changes their username this will lead to left over abandoned folders with the old name, so really what we need here
         // is to find ANY folder in the root that matches the user_id, and then that's their root. The fact that it doesn't get renamed when they

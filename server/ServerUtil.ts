@@ -61,10 +61,14 @@ class ServerUtil {
         return owner_id;
     }
 
-    // todo-0: need to be calling this to check all IFS/VFS 'file/folder' creates and renames
     public validName(name: string): boolean {
         return /^[a-zA-Z0-9_. -]+$/.test(name);
     }
+
+    public fixName(name: string): string {
+        // Replace any invalid characters with an underscore
+        return name.replace(/[^a-zA-Z0-9_. -]/g, '_');
+    }   
     
     public getFilenameExtension(fullPath: string): string {
         // All we do is find the last dot and return the subtring including the dot.

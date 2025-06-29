@@ -80,14 +80,29 @@ class LFS implements IFS {
             path = this.normalize(path);
             const rootContents = await fs.promises.readdir(path, { withFileTypes: true });
 
-            // print formatted JSON of the rootContents
-            // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
-            const treeNodes = rootContents.map((dirent) => {
+            // Get stats for all files in parallel for efficiency
+            const statPromises = rootContents.map(async (dirent) => {
+                const filePath = this.pathJoin(path, dirent.name);
+                const stat = await fs.promises.stat(filePath);
+                return {
+                    dirent,
+                    stat
+                };
+            });
+
+            const statsResults = await Promise.all(statPromises);
+
+            const treeNodes = statsResults.map(({ dirent, stat }) => {
                 return {
                     is_directory: dirent.isDirectory(),
-                    name: dirent.name
+                    name: dirent.name,
+                    createTime: stat.birthtime.getTime(),
+                    modifyTime: stat.mtime.getTime()
                 } as TreeNode;
             });
+            
+            // Sort by filename (case-insensitive)
+            treeNodes.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
             return treeNodes;
         } catch (error) {
             console.error('LFS.readdirEx error:', error);
