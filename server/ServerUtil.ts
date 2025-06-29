@@ -61,28 +61,9 @@ class ServerUtil {
         return owner_id;
     }
 
-    // Split 'fullPath' by '/' and then run 'validName' on each part or if there's no '/' just run 'validName' on the fullPath
-    public validPath(fullPath: string): boolean {
-        // Normalize the path to ensure consistent formatting
-        fullPath = this.normalizePath(fullPath);
-
-        // Split the path by '/' and check each part
-        const parts = fullPath.split('/');
-        for (const part of parts) {
-            if (!this.validName(part)) {
-                return false; // If any part is invalid, return false
-            }
-        }
-        return true; // All parts are valid
-    }
-
     // todo-0: need to be calling this to check all IFS/VFS 'file/folder' creates and renames
     public validName(name: string): boolean {
         return /^[a-zA-Z0-9_. -]+$/.test(name);
-    }
-
-    public pathJoin(...parts: string[]): string {
-        return this.normalizePath(parts.join('/'));
     }
     
     public getFilenameExtension(fullPath: string): string {
@@ -93,20 +74,6 @@ class ServerUtil {
             return '';
         }
         return fullPath.substring(lastDotIndex);
-    }
-
-    /* Removes leading slashes and dots and replaces multiple slashes with a single slash */
-    public normalizePath(fullPath: string): string {
-        // use regex to strip any leading slashes or dots
-        const normalizedPath = 
-            // strip any leading slashes or dots
-            fullPath.replace(/^[/.]+/, '')
-                // replace multiple slashes with a single slash
-                .replace(/\/+/g, '/')
-                // final replacement to ensure no trailing slash
-                .replace(/\/+$/, '');
-
-        return normalizedPath;
     }
 
     /**

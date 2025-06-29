@@ -39,5 +39,8 @@ export interface IFS {
     unlink(owner_id: number, path: string): Promise<void>;
     rm(owner_id: number, path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void>;
 
+    pathJoin(...parts: string[]): string;
+    normalizePath(fullPath: string): string;
+
     checkFileAccess(filename: string, root: string): void;
 }

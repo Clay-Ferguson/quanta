@@ -107,13 +107,13 @@ export default function Markdown({ markdownContent, docMode, basePath }: Markdow
 
         if (basePath) {
             imgSrc = `${basePath}/${src}`;
-            console.log(`Transformed image path: [${src}] -> [${imgSrc}]`);
+            // console.log(`Transformed image path: basePath=[${basePath}] / srcPart=[${src}]`);
         }
         // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
         else if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
             // Transform relative paths to use the docs images API
             imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}`;
-            console.log(`Transformed image path: ${src} -> ${imgSrc}`);
+            // console.log(`Transformed image path: docRoot=[${DOC_ROOT_KEY}] / src=[${src}`);
         }
         return <img src={imgSrc} {...props} onClick={() => setFullSizeImage({src: imgSrc!, name: "Markdown image"})} />;
     };

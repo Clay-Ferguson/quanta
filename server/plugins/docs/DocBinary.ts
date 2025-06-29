@@ -50,14 +50,14 @@ class DocBinary {
             }
         }
 
-        console.log("Serve Doc Image Request:", req.path);
+        // console.log(">>>>>>> Serve Doc Image Request:", req.path);
         try {
             // Extract the relative image path from the request URL
             // Remove the API prefix and docRootKey to get the actual file path
             const rawImagePath = req.path.replace(`/api/docs/images/${req.params.docRootKey}`, '');
-            console.log("Raw Image Path:", rawImagePath);
+            // console.log("Raw Image Path:", rawImagePath);
             const imagePath = decodeURIComponent(rawImagePath);
-            console.log("Decoded Image Path:", imagePath);
+            // console.log("Decoded Image Path:", imagePath);
             
             // Get the appropriate file system implementation
             const ifs = docUtil.getFileSystem(req.params.docRootKey);
@@ -76,13 +76,15 @@ class DocBinary {
             }
 
             // Construct the absolute path to the image file
-            const absoluteImagePath = imagePath; // path.join(root, imagePath);
+            // todo-0: I'm adding back th pathJoin here working in LFS, need to verify this didn't now break VFS!
+            const absoluteImagePath = ifs.pathJoin(root, imagePath);
             // console.log("Absolute Image Path:", absoluteImagePath);
 
             // Perform security check to ensure file is within allowed directory
             // and verify file exists
             ifs.checkFileAccess(absoluteImagePath, root);
             if (!await ifs.exists(absoluteImagePath)) {
+                console.error(`Image file not found at absolute path: ${absoluteImagePath}`);
                 res.status(404).json({ error: 'Image file not found' });
                 return;
             }

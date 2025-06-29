@@ -10,6 +10,7 @@ import { TreeNode } from '../../../../common/types/CommonTypes.js';
 class LFS implements IFS {
     
     normalize(path: string) {
+        // NOTE: IMPORTANT: LFS paths always start with a leading slash, but VFS paths never do!
         if (!path.startsWith('/')) {
             return '/'+path;
         }
@@ -146,6 +147,24 @@ class LFS implements IFS {
         if (!canonicalFilename.startsWith(canonicalRoot + path.sep) && canonicalFilename !== canonicalRoot) {
             throw new Error('Invalid file access: '+filename);
         }
+    }
+
+    public pathJoin(...parts: string[]): string {
+        return this.normalizePath(parts.join('/'));
+    }
+
+    /* NOTE: VFS requires NO leading slashes, but LFS requires a leading slash. */
+    public normalizePath(fullPath: string): string {
+        // use regex to strip any leading slashes or dots
+        const normalizedPath = 
+            // strip any leading slashes or dots
+            fullPath.replace(/^[/.]+/, '')
+                // replace multiple slashes with a single slash
+                .replace(/\/+/g, '/')
+                // final replacement to ensure no trailing slash
+                .replace(/\/+$/, '');
+
+        return "/"+normalizedPath;
     }
 }
 

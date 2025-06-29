@@ -464,7 +464,7 @@ class DocMod {
         }
         return runTrans(async () => {
             // Console log a pretty print of test request parameters
-            console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
+            // console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
         
             try {
             // Extract request parameters
@@ -563,7 +563,7 @@ class DocMod {
                 // Step 3: Move temporary file to target file's new name
                 await ifs.rename(owner_id, tempPath, path.join(absoluteParentPath, newCurrentName));
 
-                console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
+                // console.log(`Files swapped successfully: ${currentFile} <-> ${targetFile}`);
             
                 // Return detailed information about the swap for UI updates
                 res.json({ 
@@ -592,11 +592,9 @@ class DocMod {
                 // Extract request parameters
                 const { is_public, filename, docRootKey } = req.body;
                 let {treeFolder} = req.body;
-                treeFolder = svrUtil.normalizePath(treeFolder); // Ensure treeFolder is normalized
-                const recursive = req.body.recursive === true; // Default to false if not provided
-                
-                // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
+                treeFolder = ifs.normalizePath(treeFolder); // Ensure treeFolder is normalized
+                const recursive = req.body.recursive === true; // Default to false if not provided
                 
                 // Validate document root configuration
                 const root = config.getPublicFolderByKey(docRootKey).path;

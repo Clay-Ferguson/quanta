@@ -73,17 +73,14 @@ class DocService {
      * @param treeFolder - Non-ordinal path to resolve (e.g., "FolderName/SubFolderName")
      * @returns The resolved path with ordinals (e.g., "/1234_FolderName/5678_SubFolderName"), or null if no path found
      */
-    resolveNonOrdinalPath = async (owner_id: number, docRootKey: string, treeFolder: string): Promise<string | null> => {       
-        treeFolder = svrUtil.normalizePath(treeFolder);
+    resolveNonOrdinalPath = async (owner_id: number, docRootKey: string, treeFolder: string, ifs: IFS): Promise<string | null> => {       
+        treeFolder = ifs.normalizePath(treeFolder);
         // Resolve the document root path using the provided key
         const root = config.getPublicFolderByKey(docRootKey).path;
         if (!root) {
             throw new Error('Invalid document root key');
         }
-        
-        // Get the appropriate file system implementation
-        const ifs = docUtil.getFileSystem(docRootKey);
-        
+
         // Decode URL encoding and sanitize the tree folder path
         const decodedTreeFolder = decodeURIComponent(treeFolder);
         
@@ -125,7 +122,7 @@ class DocService {
                 }
                 
                 // Check if entry is a directory and follows ordinal naming convention
-                const entryPath = svrUtil.pathJoin(currentPath, entry);
+                const entryPath = ifs.pathJoin(currentPath, entry);
                 const stat = await ifs.stat(entryPath);
                 
                 if (stat.is_directory && /^\d+_/.test(entry)) {
@@ -147,7 +144,7 @@ class DocService {
             if (!matchedFolder) {
                 // Log available options for debugging
                 for (const entry of entries) {
-                    const entryPath = svrUtil.pathJoin(currentPath, entry);
+                    const entryPath = ifs.pathJoin(currentPath, entry);
                     const stat = await ifs.stat(entryPath);
                     if (stat.is_directory && /^\d+_/.test(entry)) {
                         const nameWithoutOrdinal = entry.substring(entry.indexOf('_') + 1);
@@ -158,7 +155,7 @@ class DocService {
             }
             
             // Update paths for next iteration
-            currentPath = svrUtil.pathJoin(currentPath, matchedFolder);
+            currentPath = ifs.pathJoin(currentPath, matchedFolder);
             resolvedPath += '/' + matchedFolder;
         }
         return resolvedPath;
@@ -224,7 +221,7 @@ class DocService {
             }
 
             // Construct the absolute path to the target directory
-            const absolutePath = svrUtil.pathJoin(root, treeFolder);
+            const absolutePath = ifs.pathJoin(root, treeFolder);
 
             const info: any = {};
             // Verify the target directory exists
@@ -303,12 +300,15 @@ class DocService {
         
         // Read the directory contents
         // todo-0: oops this code MUST remain polymorphic! BEFORE retesting for LFS we must fix this AND remove any 'vfs' import into this class
-        const fileNodes = await ifs.readdirEx(owner_id, absolutePath);
+        let fileNodes = await ifs.readdirEx(owner_id, absolutePath);
+
+        // This filters out hidden files and system files
+        fileNodes = fileNodes.filter(file => !file.name.startsWith('.') && !file.name.startsWith('_'));
 
         // Process each file/folder in the directory
         for (const file of fileNodes) {    
             // Get file information
-            const filePath = svrUtil.pathJoin(absolutePath, file.name);
+            const filePath = ifs.pathJoin(absolutePath, file.name);
             ifs.checkFileAccess(filePath, root); 
 
             // DIRECTORY
@@ -338,10 +338,12 @@ class DocService {
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
                     // Image files: store relative path for URL construction
                     file.type = 'image';
-                    // todo-0: this MUST be retested for LFS and VFS, because we don'w want to use 'path.relative' here, it's not workable for VFS deploys
-                    // const relativePath = path.relative(root, filePath);
-                    // file.content = relativePath;
-                    file.content = filePath; // Use absolute path for image display 
+                    // If filePath starts with root, strip the root part to get relative path
+                    // todo-0: need to verify this path stipping of 'root' didn't break VFS!
+                    // console.log(`Processing image file: [${filePath}] under root [${root}]`);
+                    const relativePath = filePath.startsWith(root) ? filePath.substring(root.length) : filePath;
+                    // console.log(`Relative image path: ${relativePath}`);
+                    file.content = relativePath; // Use absolute path for image display 
                 } 
                 // TEXT FILE
                 else if (['.md', '.txt'].includes(ext)) {
@@ -421,7 +423,7 @@ class DocService {
                 }
 
                 // Construct absolute path to parent directory
-                const absoluteParentPath = svrUtil.pathJoin(root, treeFolder);
+                const absoluteParentPath = ifs.pathJoin(root, treeFolder);
 
                 // Verify parent directory exists and is accessible
                 ifs.checkFileAccess(absoluteParentPath, root); 
@@ -460,7 +462,7 @@ class DocService {
                     finalFileName = `${newFileName}.md`;
                 }
             
-                const newFilePath = svrUtil.pathJoin(absoluteParentPath, finalFileName);
+                const newFilePath = ifs.pathJoin(absoluteParentPath, finalFileName);
 
                 // Safety check: prevent overwriting existing files
                 if (await ifs.exists(newFilePath)) {
@@ -542,7 +544,7 @@ class DocService {
                 }
 
                 // Construct absolute path to parent directory
-                const absoluteParentPath = svrUtil.pathJoin(root, treeFolder);
+                const absoluteParentPath = ifs.pathJoin(root, treeFolder);
 
                 // Verify parent directory exists and is accessible
                 ifs.checkFileAccess(absoluteParentPath, root);
@@ -575,7 +577,7 @@ class DocService {
                 const ordinalPrefix = insertOrdinal.toString().padStart(4, '0'); // 4-digit zero-padded
                 const newFolderName = `${ordinalPrefix}_${folderName}`;
             
-                const newFolderPath = svrUtil.pathJoin(absoluteParentPath, newFolderName);
+                const newFolderPath = ifs.pathJoin(absoluteParentPath, newFolderName);
 
                 // Create the directory (recursive option ensures parent directories exist)
                 await ifs.mkdir(owner_id, newFolderPath, { recursive: true });
@@ -666,8 +668,9 @@ class DocService {
                 return;
             }
             
+            const ifs = docUtil.getFileSystem(docRootKey);
             // Construct and validate search path
-            const absoluteSearchPath = svrUtil.pathJoin(root, treeFolder);
+            const absoluteSearchPath = ifs.pathJoin(root, treeFolder);
             // ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {

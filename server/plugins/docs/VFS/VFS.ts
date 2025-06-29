@@ -17,7 +17,7 @@ class VFS implements IFS {
      * @returns Object with parentPath and filename
      */
     private parsePath(fullPath: string): { parentPath: string; filename: string } {
-        const normalizedPath = svrUtil.normalizePath(fullPath);
+        const normalizedPath = this.normalizePath(fullPath);
 
         // Split the path into parent directory and filename, using string functions, by finding the last slash
         const lastSlashIndex = normalizedPath.lastIndexOf('/');
@@ -55,7 +55,7 @@ class VFS implements IFS {
 
     async childrenExist(owner_id: number, path: string): Promise<boolean> {
         try {
-            const relativePath = svrUtil.normalizePath(path);
+            const relativePath = this.normalizePath(path);
             
             // Special case for root directory
             if (relativePath === '') {
@@ -88,7 +88,7 @@ class VFS implements IFS {
         }
 
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             
             // Special case for root directory. It always exists and we have no DB table 'row' for it.
             if (relativePath === '') {
@@ -128,7 +128,7 @@ class VFS implements IFS {
 
     async getNodeByName(fullPath: string): Promise<TreeNode | null> {
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             
             // Special case for root directory. It always exists and we have no DB table 'row' for it.
             if (relativePath === '') {
@@ -154,7 +154,7 @@ class VFS implements IFS {
 
     async stat(fullPath: string): Promise<IFSStats> { 
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             
             // Special case for root directory
             if (relativePath === '') {
@@ -328,7 +328,7 @@ class VFS implements IFS {
     // Directory operations
     async readdir(owner_id: number, fullPath: string): Promise<string[]> {
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             
             const result = await pgdb.query(
                 'SELECT vfs_readdir_names($1, $2, $3)',
@@ -345,7 +345,7 @@ class VFS implements IFS {
     // Special version with no 'LFS' equivalent called only from Docs plugin
     async readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]> {
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             
             const rootContents = await pgdb.query(
                 'SELECT * FROM vfs_readdir($1, $2, $3)',
@@ -381,7 +381,7 @@ class VFS implements IFS {
      */
     async getMaxOrdinal(fullPath: string): Promise<number> {
         try {
-            const relativePath = svrUtil.normalizePath(fullPath);
+            const relativePath = this.normalizePath(fullPath);
             // console.log(`VFS.getMaxOrdinal: fullPath=[${fullPath}], relativePath=[${relativePath}], rootKey=[${rootKey}]`);
             
             const result = await pgdb.query(
@@ -407,7 +407,7 @@ class VFS implements IFS {
                 // Get the next ordinal for this directory using our wrapper method
                 // Find the full path for the parent directory
                 const root = config.getPublicFolderByKey(rootKey);
-                const fullParentPath = svrUtil.pathJoin(
+                const fullParentPath = this.pathJoin(
                     root?.path || '',
                     parentPath
                 );
@@ -429,7 +429,7 @@ class VFS implements IFS {
 
     // File/directory manipulation
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
-        if (!svrUtil.validPath(newPath)) {
+        if (!this.validPath(newPath)) {
             throw new Error(`Invalid new path: ${newPath}. Only alphanumeric characters and underscores`);
         }
         // console.log('VFS.rename:', oldPath, '->', newPath);    
@@ -509,7 +509,7 @@ class VFS implements IFS {
         }
 
         // Check for already existing user folder
-        const docPath = await docSvc.resolveNonOrdinalPath(0, rootKey, userProfile.name);
+        const docPath = await docSvc.resolveNonOrdinalPath(0, rootKey, userProfile.name, this);
         if (docPath) {
             console.log(`Resolved docPath: ${docPath}`);
             if (await this.exists(docPath)) {
@@ -531,6 +531,39 @@ class VFS implements IFS {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     checkFileAccess(filename: string, root: string): void {
         // NOTE to AI: Do not try to implement this method, it is not needed for VFS. It needs to remain a no-op.
+    }
+
+    public pathJoin(...parts: string[]): string {
+        return this.normalizePath(parts.join('/'));
+    }
+
+    /* NOTE: VFS requires NO leading slashes, but LFS requires a leading slash. */
+    public normalizePath(fullPath: string): string {
+        // use regex to strip any leading slashes or dots
+        const normalizedPath = 
+            // strip any leading slashes or dots
+            fullPath.replace(/^[/.]+/, '')
+                // replace multiple slashes with a single slash
+                .replace(/\/+/g, '/')
+                // final replacement to ensure no trailing slash
+                .replace(/\/+$/, '');
+
+        return normalizedPath;
+    }
+
+    // Split 'fullPath' by '/' and then run 'validName' on each part or if there's no '/' just run 'validName' on the fullPath
+    public validPath(fullPath: string): boolean {
+        // Normalize the path to ensure consistent formatting
+        fullPath = this.normalizePath(fullPath);
+
+        // Split the path by '/' and check each part
+        const parts = fullPath.split('/');
+        for (const part of parts) {
+            if (!svrUtil.validName(part)) {
+                return false; // If any part is invalid, return false
+            }
+        }
+        return true; // All parts are valid
     }
 }
 

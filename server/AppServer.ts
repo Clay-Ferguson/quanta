@@ -64,7 +64,8 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
             let docPath: string | null = req.query.path as string || "";
             if (docPath) {
                 // owner_id of 0 always has super powers.
-                docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath);
+                const ifs = docUtil.getFileSystem(req.params.docRootKey);
+                docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath, ifs);
                 if (!docPath) {
                     console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
                     return res.status(404).send('Document not found');
