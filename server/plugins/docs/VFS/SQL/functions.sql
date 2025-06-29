@@ -968,7 +968,7 @@ BEGIN
         
         -- Update current path
         IF current_path = '' THEN
-            current_path := '/' || part;
+            current_path := part;
         ELSE
             current_path := current_path || '/' || part;
         END IF;

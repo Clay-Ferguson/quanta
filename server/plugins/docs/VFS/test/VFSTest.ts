@@ -48,6 +48,9 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
 
+    await resetTestEnvironment();
+    await testEnsurePath(owner_id);
+
     // Test search functionality
     // await pgdbTestSearch();
 
@@ -264,7 +267,7 @@ async function testFileOperations(owner_id: number): Promise<void> {
         
         console.log('2. Testing vfs_rename function...');
         const renameResult = await pgdb.query(
-            'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+            'SELECT * from vfs_rename($1, $2, $3, $4, $5, $6)',
             owner_id, testPath, '0003_file3.md', testPath, '0003_renamed-file_3.md', testRootKey
         );
         console.log(`   Rename result: ${renameResult.rows[0].success ? 'Success' : 'Failed'}`);
@@ -797,5 +800,117 @@ async function renameFolder(owner_id: number, folderName: string, newFolderName:
         console.log('=== RENAME FOLDER TEST FAILED ===');
         console.error('Error during folder rename test:', error);
         // Don't throw the error - we want tests to continue even if rename fails
+    }
+}
+
+async function testEnsurePath(owner_id: number): Promise<void> {
+    try {
+        console.log(`=== TESTING VFS_ENSURE_PATH ===`);
+        
+        // Test 1: Test creating a path starting from root (empty string)
+        const rootPath = '';
+        const testPath1 = '0099_auto-created/0001_level1/0002_level2';
+        
+        console.log(`1. Testing vfs_ensure_path with root-based path: '${testPath1}'`);
+        
+        // Collect all existing items before ensure_path
+        const beforeItems = await pgdb.query(`
+            SELECT id, parent_path, filename, is_directory 
+            FROM vfs_nodes 
+            WHERE doc_root_key = $1 
+            ORDER BY parent_path, filename
+        `, testRootKey);
+        
+        console.log(`Found ${beforeItems.rows.length} existing items before ensure_path`);
+        
+        // Call vfs_ensure_path
+        const result1 = await pgdb.query(
+            'SELECT vfs_ensure_path($1, $2, $3) as success',
+            owner_id, testPath1, testRootKey
+        );
+        
+        console.log(`vfs_ensure_path result: ${result1.rows[0].success}`);
+        
+        // Collect all items after ensure_path
+        const afterItems = await pgdb.query(`
+            SELECT id, parent_path, filename, is_directory 
+            FROM vfs_nodes 
+            WHERE doc_root_key = $1 
+            ORDER BY parent_path, filename
+        `, testRootKey);
+        
+        console.log(`Found ${afterItems.rows.length} items after ensure_path (should be ${beforeItems.rows.length + 3} more)`);
+        
+        // Check what was created
+        const newItems = afterItems.rows.filter((after: any) => 
+            !beforeItems.rows.some((before: any) => before.id === after.id)
+        );
+        
+        console.log(`Created ${newItems.length} new directories:`);
+        newItems.forEach((item: any) => {
+            console.log(`  📁 ID:${item.id} - ${item.parent_path}/${item.filename}`);
+        });
+        
+        // Test 2: Verify the expected directory structure was created
+        console.log('2. Verifying expected directory structure...');
+        
+        const expectedDirs = [
+            { parent: '', name: '0099_auto-created' },
+            { parent: '0099_auto-created', name: '0001_level1' },
+            { parent: '0099_auto-created/0001_level1', name: '0002_level2' }
+        ];
+        
+        let allFound = true;
+        for (const expected of expectedDirs) {
+            const exists = await pgdb.query(
+                'SELECT vfs_exists($1, $2, $3) as exists',
+                expected.parent, expected.name, testRootKey
+            );
+            
+            if (exists.rows[0].exists) {
+                console.log(`  ✅ Found: ${expected.parent}/${expected.name}`);
+            } else {
+                console.log(`  ❌ Missing: ${expected.parent}/${expected.name}`);
+                allFound = false;
+            }
+        }
+        
+        // Test 3: Test with a path that has some existing directories
+        console.log('3. Testing vfs_ensure_path with partially existing path...');
+        const testPath2 = '0099_auto-created/0001_level1/0003_new-branch/0001_deep';
+        
+        const result2 = await pgdb.query(
+            'SELECT vfs_ensure_path($1, $2, $3) as success',
+            owner_id, testPath2, testRootKey
+        );
+        
+        console.log(`Second vfs_ensure_path result: ${result2.rows[0].success}`);
+        
+        // Verify the new branch was created
+        const newBranchExists = await pgdb.query(
+            'SELECT vfs_exists($1, $2, $3) as exists',
+            '0099_auto-created/0001_level1', '0003_new-branch', testRootKey
+        );
+        
+        const deepExists = await pgdb.query(
+            'SELECT vfs_exists($1, $2, $3) as exists',
+            '0099_auto-created/0001_level1/0003_new-branch', '0001_deep', testRootKey
+        );
+        
+        console.log(`  New branch created: ${newBranchExists.rows[0].exists}`);
+        console.log(`  Deep directory created: ${deepExists.rows[0].exists}`);
+        
+        if (allFound && newBranchExists.rows[0].exists && deepExists.rows[0].exists) {
+            console.log('✅ SUCCESS: vfs_ensure_path appears to be working correctly');
+        } else {
+            console.log('❌ ISSUES DETECTED: vfs_ensure_path may have path-handling problems');
+        }
+        
+        console.log('=== VFS_ENSURE_PATH TEST COMPLETED ===\n');
+        
+    } catch (error) {
+        console.log('=== VFS_ENSURE_PATH TEST FAILED ===');
+        console.error('Error during vfs_ensure_path test:', error);
+        // Don't throw the error - we want tests to continue
     }
 }
