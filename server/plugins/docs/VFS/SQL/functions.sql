@@ -1,5 +1,6 @@
 -- PostgreSQL Functions for Document Filesystem
 -- This file contains all PostgreSQL stored procedures for the filesystem abstraction
+
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_readdir
 -- Equivalent to fs.readdirSync() - lists directory contents
@@ -37,6 +38,47 @@ BEGIN
         n.doc_root_key = root_key 
         AND n.parent_path = dir_path
         AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
+    ORDER BY 
+        n.filename ASC;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_readdir_by_owner
+-- Finds all files/folders in the specified path owned by the specified owner
+-- Returns files/folders in ordinal order with their metadata
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_readdir_by_owner(
+    owner_id_arg INTEGER,
+    dir_path TEXT,
+    root_key TEXT
+) 
+RETURNS TABLE(
+    owner_id INTEGER,
+    is_public BOOLEAN,
+    filename VARCHAR(255),
+    is_directory BOOLEAN,
+    size_bytes BIGINT,
+    content_type VARCHAR(100),
+    created_time TIMESTAMP WITH TIME ZONE,
+    modified_time TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        n.owner_id,
+        n.is_public,
+        n.filename,
+        n.is_directory,
+        n.size_bytes,
+        n.content_type,
+        n.created_time,
+        n.modified_time
+    FROM vfs_nodes n
+    WHERE 
+        n.doc_root_key = root_key 
+        AND n.parent_path = dir_path
+        AND n.owner_id = owner_id_arg 
     ORDER BY 
         n.filename ASC;
 END;
@@ -652,74 +694,48 @@ $$ LANGUAGE plpgsql;
 
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_rmdir
--- Equivalent to fs.rmSync() - removes a directory (with recursive option)
+-- Equivalent to fs.rmSync() - removes a directory recursively
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_rmdir(
     owner_id_arg INTEGER,
     parent_path_param TEXT,
     dirname_param TEXT,
-    root_key TEXT,
-    recursive_flag BOOLEAN DEFAULT FALSE,
-    force_flag BOOLEAN DEFAULT FALSE
+    root_key TEXT
 ) 
 RETURNS INTEGER AS $$
 DECLARE
-    deleted_count INTEGER;
-    child_count INTEGER;
+    deleted_count INTEGER := 0;
     dir_path TEXT;
 BEGIN
     -- Build the full path of the directory to delete
-    dir_path := parent_path_param;
-    IF dir_path != '/' THEN
-        dir_path := dir_path || '/' || dirname_param;
+    -- Handle empty string (root) vs non-empty parent paths
+    IF parent_path_param = '' THEN
+        dir_path := dirname_param;
     ELSE
-        dir_path := '/' || dirname_param;
+        dir_path := parent_path_param || '/' || dirname_param;
     END IF;
     
-    -- Check if directory exists and user has permission
+    -- Check if directory exists
     IF NOT vfs_exists(parent_path_param, dirname_param, root_key) THEN
-        IF NOT force_flag THEN
-            RAISE EXCEPTION 'Directory not found: %/%', parent_path_param, dirname_param;
-        END IF;
-        RETURN 0;
+        RAISE EXCEPTION 'Directory not found: %s/%s', parent_path_param, dirname_param;
     END IF;
     
     -- Check authorization
     IF NOT vfs_check_auth(owner_id_arg, parent_path_param, dirname_param, root_key, TRUE) THEN
-        RAISE EXCEPTION 'Not authorized to remove directory: %/%', parent_path_param, dirname_param;
+        RAISE EXCEPTION 'Not authorized to remove directory: %s/%s', parent_path_param, dirname_param;
     END IF;
     
-    -- Check if directory has children
-    SELECT COUNT(*)
-    INTO child_count
-    FROM vfs_nodes
-    WHERE doc_root_key = root_key AND parent_path = dir_path;
+    -- Delete all children recursively first (using a simpler approach)
+    -- Delete all descendants where parent_path starts with our directory path
+    DELETE FROM vfs_nodes
+    WHERE 
+        doc_root_key = root_key
+        AND (
+            parent_path = dir_path OR 
+            parent_path LIKE dir_path || '/%'
+        );
     
-    -- If directory has children and recursive is false, error
-    IF child_count > 0 AND NOT recursive_flag THEN
-        RAISE EXCEPTION 'Directory not empty: %/% (use recursive option)', parent_path_param, dirname_param;
-    END IF;
-    
-    -- Delete recursively if needed
-    IF recursive_flag THEN
-        -- Delete all children recursively
-        WITH RECURSIVE dir_tree AS (
-            -- Base case: direct children
-            SELECT id, parent_path, filename, is_directory
-            FROM vfs_nodes
-            WHERE doc_root_key = root_key AND parent_path = dir_path 
-            
-            UNION ALL
-            
-            -- Recursive case: children of subdirectories
-            SELECT n.id, n.parent_path, n.filename, n.is_directory
-            FROM vfs_nodes n
-            INNER JOIN dir_tree dt ON n.parent_path = dt.parent_path || '/' || dt.filename
-            WHERE n.doc_root_key = root_key AND dt.is_directory = TRUE
-        )
-        DELETE FROM vfs_nodes
-        WHERE id IN (SELECT id FROM dir_tree);
-    END IF;
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
     -- Delete the directory itself
     DELETE FROM vfs_nodes
@@ -729,7 +745,8 @@ BEGIN
         AND filename = dirname_param
         AND is_directory = TRUE;
         
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    -- Add the directory itself to the count
+    deleted_count := deleted_count + 1;
     
     RETURN deleted_count;
 END;

@@ -3,7 +3,6 @@ import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
 import { TreeNode, UserProfileCompact } from '../../../../common/types/CommonTypes.js';
 import { svrUtil } from '../../../ServerUtil.js';
-import { docSvc } from '../DocService.js';
 
 const rootKey = "usr"; // Default root key for VFS, can be changed based on configuration
 
@@ -77,7 +76,7 @@ class VFS implements IFS {
     async exists(fullPath: string, info: any=null): Promise<boolean> {
         // if a non-info object was passed the caller needs additional info so we run getNodeByName
         // which returns the whole record.
-        console.log('VFS.exists:', fullPath, 'info:', info);
+        // console.log('VFS.exists:', fullPath, 'info:', info);
         if (info) {
             const node: TreeNode | null = await this.getNodeByName(fullPath);
             if (node) {
@@ -136,12 +135,10 @@ class VFS implements IFS {
             
             const { parentPath, filename } = this.parsePath(relativePath);
             
-            pgdb.logEnabled = true;
             const result = await pgdb.query(
                 'SELECT * FROM vfs_get_node_by_name($1, $2, $3)',
                 parentPath, filename, rootKey
             );
-            pgdb.logEnabled = false;
             
             // Return the first row if found, null if no rows returned
             return result.rows.length > 0 ? this.convertToTreeNode(result.rows[0]) : null;
@@ -363,6 +360,25 @@ class VFS implements IFS {
         }
     }
 
+    // Finds all nodes under the specified path (non-recursive) that are owned by the specified owner_id.
+    async readdirByOwner(owner_id: number, fullPath: string): Promise<TreeNode[]> {
+        try {
+            const relativePath = this.normalizePath(fullPath);
+            
+            const rootContents = await pgdb.query(
+                'SELECT * FROM vfs_readdir_by_owner($1, $2, $3)',
+                owner_id, relativePath, rootKey
+            );
+            const treeNodes = rootContents.rows.map((row: any) => {
+                return this.convertToTreeNode(row);
+            });
+            return treeNodes;
+        } catch (error) {
+            console.error('VFS.readdirEx error:', error);
+            throw error;
+        }
+    }
+
     /**
      * Gets the maximum ordinal value for files/folders in a directory
      * Useful for creating new items with the next available ordinal
@@ -404,6 +420,7 @@ class VFS implements IFS {
                 const maxOrdinal = await this.getMaxOrdinal(fullParentPath);
                 const nextOrdinal = maxOrdinal + 1;
                 const ordinalPrefix = nextOrdinal.toString().padStart(4, '0');
+                // console.log(`VFS.mkdir: fullPath=[${fullPath}], parentPath=[${parentPath}], filename=[${filename}], ordinalPrefix=[${ordinalPrefix}]`);
                 finalFilename = `${ordinalPrefix}_${filename}`;
             }
             
@@ -418,6 +435,8 @@ class VFS implements IFS {
     }
 
     // File/directory manipulation
+    // todo-0: There's a bug in this rename where it's not recursively renaming. Specifically when calle because a user changed their username, that's
+    //         how we discovered this bug.
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
         if (!this.validPath(newPath)) {
             throw new Error(`Invalid new path: ${newPath}. Only alphanumeric characters and underscores`);
@@ -454,7 +473,7 @@ class VFS implements IFS {
         }
     }
 
-    async rm(owner_id: number, fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
+    async rm(owner_id: number, fullPath: string): Promise<void> {
         try {
             const { parentPath, filename } = this.parsePath(fullPath);
             
@@ -463,10 +482,13 @@ class VFS implements IFS {
             
             if (stats.is_directory) {
                 // Use vfs_rmdir for directories
+                // todo-0: currently we have a bug where ofphans are left after a folder delete.
+                pgdb.logEnabled = true; // Enable logging for debugging
                 await pgdb.query(
-                    'SELECT vfs_rmdir($1, $2, $3, $4, $5)',
-                    pgdb.authId(owner_id), parentPath, filename, rootKey, options?.recursive || false, options?.force || false
+                    'SELECT vfs_rmdir($1, $2, $3, $4)',
+                    pgdb.authId(owner_id), parentPath, filename, rootKey
                 );
+                pgdb.logEnabled = false; // Enable logging for debugging
             } else {
                 // Use vfs_unlink for files
                 await pgdb.query(
@@ -476,7 +498,7 @@ class VFS implements IFS {
             }
         } catch (error) {
             // If force option is enabled, don't throw errors for non-existent files/directories
-            if (options?.force && error instanceof Error && error.message.includes('not found')) {
+            if (error instanceof Error && error.message.includes('not found')) {
                 return;
             }
             console.error('VFS.rm error:', error);
@@ -484,10 +506,8 @@ class VFS implements IFS {
         }
     }
 
+    /* Ensures that this user has a folder in the VFS root directory, and that it's named after their username. */
     async createUserFolder(userProfile: UserProfileCompact) {
-        // todo-0: NOTE: Currently if user changes their username this will lead to left over abandoned folders with the old name, so really what we need here
-        // is to find ANY folder in the root that matches the user_id, and then that's their root. The fact that it doesn't get renamed when they
-        // rename their user name is a separate problem to be solved.
         console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
         const rootKey = "usr";
 
@@ -496,15 +516,36 @@ class VFS implements IFS {
             throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
         }
 
-        // Check for already existing user folder
-        const docPath = await docSvc.resolveNonOrdinalPath(0, rootKey, userProfile.name, this);
-        if (docPath) {
-            console.log(`Resolved docPath: ${docPath}`);
-            if (await this.exists(docPath)) {
-                console.log(`User folder already exists: ${docPath}`);
-                return; 
-            }
+        if (!userProfile.id) {
+            throw new Error(`User profile must have an ID to create a folder. User: ${JSON.stringify(userProfile)}`);
         }
+        const existingNodes = await this.readdirByOwner(userProfile.id, "");
+        if (existingNodes && existingNodes.length > 0) {
+            const node = existingNodes[0];
+            // todo-0: what we NEED to do here is simply rename the folder, preserving it's ordinal, so that it matches the new user name.
+            const ordinalPrefix = node.name.split('_')[0]; // Get the ordinal prefix from the first node
+            // Get the substring to the right of the "_" in node.name
+            const nameSuffix = node.name.split('_').slice(1).join('_'); // Join the rest of the name after the ordinal prefix
+            if (nameSuffix === userProfile.name) {
+                console.log(`User folder already exists with the correct name: ${node.name}`);
+                return; // User folder already exists with the correct name
+            }
+
+            const newFolderName = `${ordinalPrefix}_${userProfile.name}`;
+            console.log(`Renaming existing user folder to: ${newFolderName}`);
+            await this.rename(userProfile.id, existingNodes[0].name, newFolderName);
+            return;
+        }
+
+        // Check for already existing user folder
+        // const docPath = await docSvc.resolveNonOrdinalPath(0, rootKey, userProfile.name, this);
+        // if (docPath) {
+        //     console.log(`Resolved docPath: ${docPath}`);
+        //     if (await this.exists(docPath)) {
+        //         console.log(`User folder already exists: ${docPath}`);
+        //         return; 
+        //     }
+        // }
 
         let maxOrdinal = await this.getMaxOrdinal(""); 
         maxOrdinal++;

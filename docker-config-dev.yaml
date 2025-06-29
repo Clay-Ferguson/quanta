@@ -4,7 +4,7 @@ clientHost: "localhost"  # This is the host that the client will connect to, typ
 port: "8000"
 secure: "n"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
-desktopMode: "y"
+desktopMode: "n"
 defaultPlugin: "docs"
 
 plugins:

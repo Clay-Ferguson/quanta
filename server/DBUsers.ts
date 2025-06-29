@@ -141,6 +141,9 @@ class DBUsers {
             const adminPubKey = config.get("adminPublicKey");
             if (userProfile.publicKey.trim() === adminPubKey) {
                 if (userProfile.name !== 'admin') {
+                    // todo-0: Going into Admin User Profile, we can try to chagne the admin name to sometthing else
+                    // and this error correctly catches it, but errors like this don't get shown to the UI in an acceptable way.
+                    // so we need a universal way to handle errors like this, which DO have a message we WANT users to see.
                     throw new Error('Cannot change admin user name.');
                 }
             }

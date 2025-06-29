@@ -42,6 +42,9 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await pgdbTestSetFolderPublic(owner_id);
 
+    await resetTestEnvironment();
+    await deleteFolder(owner_id, '0001_test-structure');
+
     // Test search functionality
     // await pgdbTestSearch();
 
@@ -60,7 +63,6 @@ async function resetTestEnvironment(): Promise<void> {
     await createFolderStructure();
 }
 
- 
 async function deleteFolder(owner_id: number, folderName: string): Promise<void> {
     try {
         console.log(`=== DELETING FOLDER: ${folderName} ===`);
@@ -91,15 +93,65 @@ async function deleteFolder(owner_id: number, folderName: string): Promise<void>
         console.log(`Checking if ${folderName} exists in path '${rootPath}': ${exists.rows[0].exists}`);
         
         if (exists.rows[0].exists) {
-            console.log(`Folder ${folderName} exists, deleting recursively...`);
+            console.log(`Folder ${folderName} exists, collecting all files/folders to be deleted...`);
+            
+            // Build the full path of the folder we're about to delete
+            const folderFullPath = rootPath ? `${rootPath}/${folderName}` : folderName;
+            
+            // Collect all IDs that should be deleted (the folder itself and all its descendants)
+            const allItemsToDelete = await pgdb.query(`
+                SELECT id, parent_path, filename, is_directory 
+                FROM vfs_nodes 
+                WHERE doc_root_key = $1 
+                AND (
+                    (parent_path = $2 AND filename = $3) OR  -- The folder itself
+                    parent_path LIKE $4                      -- All descendants
+                )
+                ORDER BY parent_path, filename
+            `, testRootKey, rootPath, folderName, `${folderFullPath}%`);
+            
+            console.log(`Found ${allItemsToDelete.rows.length} items that should be deleted:`);
+            const itemsMap = new Map<number, any>();
+            
+            allItemsToDelete.rows.forEach((item: any) => {
+                itemsMap.set(item.id, item);
+                const type = item.is_directory ? '📁' : '📄';
+                console.log(`  ${type} ID:${item.id} - ${item.parent_path}/${item.filename}`);
+            });
             
             // Delete the folder recursively (this will delete all contents too)
+            console.log('Performing recursive deletion...');
             const result = await pgdb.query(
-                'SELECT vfs_rmdir($1, $2, $3, $4, $5) as deleted_count',
-                rootPath, folderName, testRootKey, true, false // recursive=true, force=false
+                'SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count',
+                pgdb.adminProfile!.id, rootPath, folderName, testRootKey
             );
             
-            console.log(`Successfully deleted folder ${folderName} and ${result.rows[0].deleted_count} items`);
+            console.log(`Delete operation reported ${result.rows[0].deleted_count} items deleted`);
+            
+            // Now check for orphans - see if any of the items we expected to be deleted still exist
+            console.log('Checking for orphaned items...');
+            const orphanIds: number[] = [];
+            
+            for (const [itemId, itemData] of itemsMap) {
+                const stillExists = await pgdb.query(
+                    'SELECT COUNT(*) as count FROM vfs_nodes WHERE id = $1',
+                    itemId
+                );
+                
+                if (stillExists.rows[0].count > 0) {
+                    orphanIds.push(itemId);
+                    const type = itemData.is_directory ? '📁' : '📄';
+                    console.log(`  🚨 ORPHAN FOUND: ${type} ID:${itemId} - ${itemData.parent_path}/${itemData.filename}`);
+                }
+            }
+            
+            if (orphanIds.length > 0) {
+                console.log(`❌ BUG DETECTED: Found ${orphanIds.length} orphaned items after recursive deletion!`);
+                console.log(`Expected to delete ${itemsMap.size} items, but ${orphanIds.length} still exist.`);
+            } else {
+                console.log(`✅ SUCCESS: All ${itemsMap.size} items were properly deleted, no orphans found.`);
+            }
+            
         } else {
             console.log(`Folder ${folderName} does not exist, nothing to delete`);
         }
@@ -303,8 +355,8 @@ async function testPathOperations(): Promise<void> {
         console.log('4. Testing directory removal of nested structure...');
         // Remove the deep nested structure
         await pgdb.query(
-            'SELECT vfs_rmdir($1, $2, $3, $4, $5, $6)',
-            pgdb.adminProfile!.id, basePath, '0011_deep', testRootKey, true, false
+            'SELECT vfs_rmdir($1, $2, $3, $4)',
+            pgdb.adminProfile!.id, basePath, '0011_deep', testRootKey
         );
         console.log('   Removed nested structure recursively');
         

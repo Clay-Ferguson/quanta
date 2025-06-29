@@ -90,8 +90,8 @@ Rough draft of functions...
 const dirId = await db.query('SELECT vfs_mkdir($1, $2, $3)', ['/documents', 'new-folder', 'rootKey']);
 
 // Remove directory (equivalent to fs.rmSync())
-await db.query('SELECT vfs_rmdir($1, $2, $3, $4, $5)', 
-    ['/documents', 'old-folder', 'rootKey', true, false]); // recursive=true, force=false
+await db.query('SELECT vfs_rmdir($1, $2, $3)', 
+    ['/documents', 'old-folder', 'rootKey']);
 
 // Check if path is directory
 const isDir = await db.query('SELECT vfs_is_directory($1, $2, $3)', ['/documents', 'folder-name', 'rootKey']);
@@ -106,59 +106,31 @@ await db.query('SELECT vfs_ensure_path($1, $2)', ['/documents/deep/nested/path',
 Rough draft of a wrapper class...
 
 ```ts
-class PostgreSQLFileSystem {
-    constructor(private db: any) {}
+export interface IFS {
+    // File existence and metadata
+    exists(path: string, info?: any): Promise<boolean>;
+    childrenExist(owner_id: number, path: string): Promise<boolean>;
 
-    // Directory listing
-    async readdirSync(path: string, rootKey: string): Promise<string[]> {
-        const result = await this.db.query('SELECT vfs_readdir_names($1, $2)', [path, rootKey]);
-        return result.rows[0].vfs_readdir_names || [];
-    }
+    stat(path: string): Promise<IFSStats>; 
 
-    // File operations
-    async readFileSync(path: string, filename: string, rootKey: string): Promise<Buffer> {
-        const result = await this.db.query('SELECT vfs_read_file($1, $2, $3)', [path, filename, rootKey]);
-        return result.rows[0].vfs_read_file;
-    }
-
-    async writeFileSync(path: string, filename: string, content: Buffer, rootKey: string, contentType?: string): Promise<void> {
-        await this.db.query('SELECT pg_write_file($1, $2, $3, $4, $5)', 
-            [path, filename, content, rootKey, contentType || 'application/octet-stream']);
-    }
-
-    async existsSync(path: string, filename: string, rootKey: string): Promise<boolean> {
-        const result = await this.db.query('SELECT vfs_exists($1, $2, $3)', [path, filename, rootKey]);
-        return result.rows[0].vfs_exists;
-    }
-
-    async statSync(path: string, filename: string, rootKey: string): Promise<any> {
-        const result = await this.db.query('SELECT * FROM vfs_stat($1, $2, $3)', [path, filename, rootKey]);
-        return result.rows[0];
-    }
-
-    async unlinkSync(path: string, filename: string, rootKey: string): Promise<void> {
-        await this.db.query('SELECT vfs_unlink($1, $2, $3)', [path, filename, rootKey]);
-    }
-
-    async renameSync(oldPath: string, oldName: string, newPath: string, newName: string, rootKey: string): Promise<void> {
-        await this.db.query('SELECT vfs_rename($1, $2, $3, $4, $5)', [oldPath, oldName, newPath, newName, rootKey]);
-    }
+    // File content operations
+    readFile(owner_id: number, path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
+    writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>;
 
     // Directory operations
-    async mkdirSync(path: string, dirname: string, rootKey: string, options?: { recursive?: boolean }): Promise<void> {
-        await this.db.query('SELECT vfs_mkdir($1, $2, $3, $4)', 
-            [path, dirname, rootKey, options?.recursive || false]);
-    }
+    readdir(owner_id: number, path: string): Promise<string[]>;
+    readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]>;
+    mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
 
-    async rmSync(path: string, dirname: string, rootKey: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
-        await this.db.query('SELECT vfs_rmdir($1, $2, $3, $4, $5)', 
-            [path, dirname, rootKey, options?.recursive || false, options?.force || false]);
-    }
+    // File/directory manipulation
+    rename(owner_id: number, oldPath: string, newPath: string): Promise<void>;
+    unlink(owner_id: number, path: string): Promise<void>;
+    rm(owner_id: number, path: string, options?: { recursive?: boolean, force?: boolean }): Promise<void>;
 
-    async getMaxOrdinal(parentPath: string, rootKey: string): Promise<number> {
-        const result = await this.db.query('SELECT vfs_get_max_ordinal($1, $2)', [parentPath, rootKey]);
-        return result.rows[0].vfs_get_max_ordinal;
-    }
+    pathJoin(...parts: string[]): string;
+    normalizePath(fullPath: string): string;
+
+    checkFileAccess(filename: string, root: string): void;
 }
 ```
 
