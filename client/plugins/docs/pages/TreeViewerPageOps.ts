@@ -10,7 +10,7 @@ import { util } from "../../../Util";
 import { stripOrdinal } from "../../../../common/CommonUtils";
 
 declare const ADMIN_PUBLIC_KEY: string;
-declare const DESKTOP_MODE: string;
+declare const DESKTOP_MODE: boolean;
 
 export const handleCancelClick = (gs: DocsGlobalState) => {
     // Clear editing state without saving
@@ -46,7 +46,7 @@ export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
 
 export const handleFileClick = async (gs: DocsGlobalState, fileName: string) => {
     const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
-    if (!isAdmin || DESKTOP_MODE!=="y") {
+    if (!isAdmin || !DESKTOP_MODE) {
         return;
     }
     // Construct the full path to the file

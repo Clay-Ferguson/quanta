@@ -20,7 +20,7 @@ import DocViewerPage from '../../pages/DocViewerPage';
 
 declare const CLIENT_HOST: string;
 declare const PORT: string;
-declare const SECURE: string;
+declare const SECURE: boolean;
 
 class ChatClientPlugin implements IClientPlugin {
 
@@ -43,7 +43,7 @@ class ChatClientPlugin implements IClientPlugin {
         gs.chatRoomHistory = []; 
 
         const chatSaveToServer = await context.idb.getItem(DBKeys.chatSaveToServer, true);
-        rtc.init(CLIENT_HOST, PORT, SECURE==='y', chatSaveToServer);
+        rtc.init(CLIENT_HOST, PORT, SECURE, chatSaveToServer);
     }
 
     async notify() {

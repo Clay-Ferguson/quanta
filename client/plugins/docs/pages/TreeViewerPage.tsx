@@ -21,7 +21,7 @@ import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
 
 declare const PAGE: string;
-declare const DESKTOP_MODE: string;
+declare const DESKTOP_MODE: boolean;
 
 interface ColumnMarkdownRendererProps {
     content: string;
@@ -529,7 +529,7 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                 </div>
             }
             
-            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
+            {DESKTOP_MODE && gs.docsRootType==='lfs' && <button 
                 onClick={() => openItemInFileSystem(gs, "explore")}
                 className="btn-icon"
                 title="Open folder in file system"
@@ -538,7 +538,7 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                 <FontAwesomeIcon icon={faFolderOpen} className="h-5 w-5" />
             </button>}
 
-            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
+            {DESKTOP_MODE && gs.docsRootType==='lfs' && <button 
                 onClick={() => openItemInFileSystem(gs, "edit")}
                 className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                 title="Open File system Editor"
@@ -555,13 +555,14 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                 <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
             </button>
 
-            <button 
-                onClick={() => app.goToPage(DocsPageNames.searchView)}
-                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                title="Search documents"
-            >
-                <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
-            </button>
+            {DESKTOP_MODE &&
+                <button 
+                    onClick={() => app.goToPage(DocsPageNames.searchView)}
+                    className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                    title="Search documents"
+                >
+                    <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+                </button>}
 
             <button 
                 onClick={() => app.goToPage(PageNames.settings)}
@@ -571,27 +572,28 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                 <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
             </button>
 
-            {DESKTOP_MODE=="y" && gs.docsRootType==='lfs' && <button 
-                onClick={async () => {
-                    try {
-                        const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
-                            treeFolder: gs.docsFolder,
-                            docRootKey: gs.docsRootKey 
-                        });
-                        if (!response || !response.success) {
-                            throw new Error(response?.message || "SSG failed");
+            {DESKTOP_MODE && gs.docsRootType==='lfs' && 
+                <button 
+                    onClick={async () => {
+                        try {
+                            const response = await httpClientUtil.secureHttpPost(`/api/docs/ssg`, { 
+                                treeFolder: gs.docsFolder,
+                                docRootKey: gs.docsRootKey 
+                            });
+                            if (!response || !response.success) {
+                                throw new Error(response?.message || "SSG failed");
+                            }
+                            alertModal("Static Site Generate Complete.");
+                        } catch (error) {
+                            console.error('SSG failed:', error);
                         }
-                        alertModal("Static Site Generate Complete.");
-                    } catch (error) {
-                        console.error('SSG failed:', error);
-                    }
-                }}
-                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                title="Generate Static Site"
-                disabled={isLoading}
-            >
-                <FontAwesomeIcon icon={faCubes} className="h-5 w-5" />
-            </button>}
+                    }}
+                    className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                    title="Generate Static Site"
+                    disabled={isLoading}
+                >
+                    <FontAwesomeIcon icon={faCubes} className="h-5 w-5" />
+                </button>}
 
             <button 
                 onClick={() => app.goToPage(DocsPageNames.docsUserGuide)}
