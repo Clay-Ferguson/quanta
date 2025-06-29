@@ -45,6 +45,9 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await deleteFolder(owner_id, '0001_test-structure');
 
+    await resetTestEnvironment();
+    await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
+
     // Test search functionality
     // await pgdbTestSearch();
 
@@ -237,8 +240,6 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         throw error;
     }
 }
-
-
  
 async function testFileOperations(owner_id: number): Promise<void> {
     try {
@@ -665,5 +666,136 @@ And some unique content: UNIQUESTRING123 for exact matching.
         console.error('=== PGDB SEARCH TEST FAILED ===');
         console.error('Error during search test:', error);
         throw error;
+    }
+}
+
+async function renameFolder(owner_id: number, folderName: string, newFolderName: string): Promise<void> {
+    try {
+        console.log(`=== RENAMING FOLDER: ${folderName} to ${newFolderName} ===`);
+        
+        const rootPath = '';  // Empty string for root directory
+        
+        // Debug: List what's in the root directory first
+        console.log('Listing contents of root directory for debugging...');
+        try {
+            const rootContents = await pgdb.query(
+                'SELECT * FROM vfs_readdir($1, $2, $3)',
+                owner_id, rootPath, testRootKey
+            );
+            console.log(`Found ${rootContents.rows.length} items in root:`);
+            rootContents.rows.forEach((row: any) => {
+                console.log(`  - ${row.filename} (${row.is_directory ? 'folder' : 'file'})`);
+            });
+        } catch (debugError) {
+            console.log('Error listing root contents:', debugError);
+        }
+        
+        // Check if the folder exists before trying to rename it
+        const exists = await pgdb.query(
+            'SELECT vfs_exists($1, $2, $3) as exists',
+            rootPath, folderName, testRootKey
+        );
+        
+        console.log(`Checking if ${folderName} exists in path '${rootPath}': ${exists.rows[0].exists}`);
+        
+        if (exists.rows[0].exists) {
+            console.log(`Folder ${folderName} exists, collecting all files/folders that should be affected by rename...`);
+            
+            // Build the old full path of the folder we're about to rename
+            const oldFolderFullPath = rootPath ? `${rootPath}/${folderName}` : folderName;
+            
+            // Collect all IDs that should be affected by the rename (the folder itself and all its descendants)
+            const allItemsToRename = await pgdb.query(`
+                SELECT id, parent_path, filename, is_directory 
+                FROM vfs_nodes 
+                WHERE doc_root_key = $1 
+                AND (
+                    (parent_path = $2 AND filename = $3) OR  -- The folder itself
+                    parent_path LIKE $4                      -- All descendants
+                )
+                ORDER BY parent_path, filename
+            `, testRootKey, rootPath, folderName, `${oldFolderFullPath}%`);
+            
+            console.log(`Found ${allItemsToRename.rows.length} items that should be affected by rename:`);
+            const itemsMap = new Map<number, any>();
+            
+            allItemsToRename.rows.forEach((item: any) => {
+                itemsMap.set(item.id, item);
+                const type = item.is_directory ? '📁' : '📄';
+                console.log(`  ${type} ID:${item.id} - ${item.parent_path}/${item.filename}`);
+            });
+            
+            // Build the expected new full path
+            const newFolderFullPath = rootPath ? `${rootPath}/${newFolderName}` : newFolderName;
+            
+            // Perform the rename
+            console.log('Performing folder rename...');
+            const result = await pgdb.query(
+                'SELECT * FROM vfs_rename($1, $2, $3, $4, $5, $6)',
+                pgdb.adminProfile!.id, rootPath, folderName, rootPath, newFolderName, testRootKey
+            );
+            
+            console.log(`Rename operation result: ${result.rows[0].success ? 'Success' : 'Failed'}`);
+            console.log(`Diagnostic: ${result.rows[0].diagnostic}`);
+            
+            // Now check for orphans - see if any of the items we expected to be renamed still have old paths
+            console.log('Checking for orphaned items with old paths...');
+            const orphanIds: number[] = [];
+            
+            for (const [itemId, itemData] of itemsMap) {
+                const currentRecord = await pgdb.query(
+                    'SELECT parent_path, filename FROM vfs_nodes WHERE id = $1',
+                    itemId
+                );
+                
+                if (currentRecord.rows.length > 0) {
+                    const current = currentRecord.rows[0];
+                    const currentFullPath = current.parent_path ? `${current.parent_path}/${current.filename}` : current.filename;
+                    
+                    // Check if this item should have been updated but wasn't
+                    let shouldHaveBeenUpdated = false;
+                    let expectedNewPath = '';
+                    
+                    if (itemData.parent_path === rootPath && itemData.filename === folderName) {
+                        // This is the folder itself - should now have new name
+                        shouldHaveBeenUpdated = (current.filename !== newFolderName);
+                        expectedNewPath = `${rootPath}/${newFolderName}`;
+                    } else if (itemData.parent_path.startsWith(oldFolderFullPath)) {
+                        // This is a descendant - its parent_path should be updated
+                        expectedNewPath = itemData.parent_path.replace(oldFolderFullPath, newFolderFullPath);
+                        shouldHaveBeenUpdated = (current.parent_path !== expectedNewPath);
+                    }
+                    
+                    if (shouldHaveBeenUpdated) {
+                        orphanIds.push(itemId);
+                        const type = itemData.is_directory ? '📁' : '📄';
+                        console.log(`  🚨 ORPHAN FOUND: ${type} ID:${itemId} - Still has old path: ${current.parent_path}/${current.filename}`);
+                        console.log(`    Expected new path: ${expectedNewPath}${itemData.filename !== folderName ? '/' + itemData.filename : ''}`);
+                    }
+                } else {
+                    // Item was deleted somehow - that's also a problem
+                    orphanIds.push(itemId);
+                    const type = itemData.is_directory ? '📁' : '📄';
+                    console.log(`  🚨 ORPHAN FOUND: ${type} ID:${itemId} - Item was deleted during rename!`);
+                }
+            }
+            
+            if (orphanIds.length > 0) {
+                console.log(`❌ BUG DETECTED: Found ${orphanIds.length} orphaned items after folder rename!`);
+                console.log(`Expected to update ${itemsMap.size} items, but ${orphanIds.length} were not properly updated.`);
+            } else {
+                console.log(`✅ SUCCESS: All ${itemsMap.size} items were properly renamed, no orphans found.`);
+            }
+            
+        } else {
+            console.log(`Folder ${folderName} does not exist, nothing to rename`);
+        }
+        
+        console.log('=== RENAME FOLDER TEST COMPLETED ===');
+        
+    } catch (error) {
+        console.log('=== RENAME FOLDER TEST FAILED ===');
+        console.error('Error during folder rename test:', error);
+        // Don't throw the error - we want tests to continue even if rename fails
     }
 }

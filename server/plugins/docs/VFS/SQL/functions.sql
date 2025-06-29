@@ -585,20 +585,20 @@ BEGIN
     -- If it's a directory, update all children's parent paths
     IF is_dir THEN
         -- Build the old and new paths for child updates
-        -- Normalize path format for consistent handling
-        IF old_parent_path = '' OR old_parent_path = '/' THEN
-            old_path := '/' || old_filename;
+        -- Handle empty string (root) vs non-empty parent paths correctly
+        IF old_parent_path = '' THEN
+            old_path := old_filename;
         ELSE
             old_path := old_parent_path || '/' || old_filename;
         END IF;
         
-        IF new_parent_path = '' OR new_parent_path = '/' THEN
-            new_path := '/' || new_filename;
+        IF new_parent_path = '' THEN
+            new_path := new_filename;
         ELSE
             new_path := new_parent_path || '/' || new_filename;
         END IF;
         
-        -- Simple child path update - just one statement
+        -- Update all children's parent paths
         UPDATE vfs_nodes
         SET 
             parent_path = CASE
