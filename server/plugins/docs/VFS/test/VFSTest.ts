@@ -51,6 +51,9 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await testEnsurePath(owner_id);
 
+    await resetTestEnvironment();
+    await testSetPublic(owner_id);
+
     // Test search functionality
     // await pgdbTestSearch();
 
@@ -58,7 +61,6 @@ export async function pgdbTest(): Promise<void> {
     await resetTestEnvironment();
     await dumpTableStructure(owner_id);
 }
-
 export async function dumpTableStructure(owner_id: number): Promise<void> {
     await printFolderStructure(owner_id);
     await listAllVfsNodes();
@@ -911,6 +913,175 @@ async function testEnsurePath(owner_id: number): Promise<void> {
     } catch (error) {
         console.log('=== VFS_ENSURE_PATH TEST FAILED ===');
         console.error('Error during vfs_ensure_path test:', error);
+        // Don't throw the error - we want tests to continue
+    }
+}
+async function testSetPublic(owner_id: number): Promise<void> {
+    try {
+        console.log(`=== TESTING VFS_SET_PUBLIC ===`);
+        
+        // Test 1: Test setting a root-level folder to public recursively
+        const rootPath = '';
+        const folderName = '0001_test-structure';
+        
+        console.log(`1. Testing vfs_set_public on root-level folder: '${folderName}' (recursive)`);
+        
+        // First, collect all items that should be affected by the recursive set_public operation
+        const folderFullPath = rootPath ? `${rootPath}/${folderName}` : folderName;
+        
+        // Collect all items that should be affected (the folder itself and all its descendants)
+        const allItemsToUpdate = await pgdb.query(`
+            SELECT id, parent_path, filename, is_directory, is_public 
+            FROM vfs_nodes 
+            WHERE doc_root_key = $1 
+            AND (
+                (parent_path = $2 AND filename = $3) OR  -- The folder itself
+                parent_path LIKE $4                      -- All descendants
+            )
+            ORDER BY parent_path, filename
+        `, testRootKey, rootPath, folderName, `${folderFullPath}%`);
+        
+        console.log(`Found ${allItemsToUpdate.rows.length} items that should be affected by recursive set_public:`);
+        const itemsMap = new Map<number, any>();
+        let privateCount = 0;
+        
+        allItemsToUpdate.rows.forEach((item: any) => {
+            itemsMap.set(item.id, item);
+            const type = item.is_directory ? '📁' : '📄';
+            const visibility = item.is_public ? 'PUBLIC' : 'PRIVATE';
+            console.log(`  ${type} ID:${item.id} - ${item.parent_path}/${item.filename} (${visibility})`);
+            if (!item.is_public) privateCount++;
+        });
+        
+        console.log(`Currently ${privateCount} items are private and should become public.`);
+        
+        // Perform the recursive set_public operation
+        console.log('Performing recursive set_public to make folder and all contents public...');
+        const result = await pgdb.query(
+            'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+            owner_id, rootPath, folderName, true, true, testRootKey  // recursive = true, is_public = true
+        );
+        
+        console.log(`Set_public operation result: ${result.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`Diagnostic: ${result.rows[0].diagnostic}`);
+        
+        // Now check for items that weren't properly updated
+        console.log('Checking for items that were not properly updated...');
+        const orphanIds: number[] = [];
+        
+        for (const [itemId, itemData] of itemsMap) {
+            const currentRecord = await pgdb.query(
+                'SELECT is_public FROM vfs_nodes WHERE id = $1',
+                itemId
+            );
+            
+            if (currentRecord.rows.length > 0) {
+                const current = currentRecord.rows[0];
+                
+                // All items should now be public
+                if (!current.is_public) {
+                    orphanIds.push(itemId);
+                    const type = itemData.is_directory ? '📁' : '📄';
+                    console.log(`  🚨 ORPHAN FOUND: ${type} ID:${itemId} - Still private: ${itemData.parent_path}/${itemData.filename}`);
+                }
+            } else {
+                // Item was deleted somehow - that's also a problem
+                orphanIds.push(itemId);
+                const type = itemData.is_directory ? '📁' : '📄';
+                console.log(`  🚨 ORPHAN FOUND: ${type} ID:${itemId} - Item was deleted during set_public!`);
+            }
+        }
+        
+        if (orphanIds.length > 0) {
+            console.log(`❌ BUG DETECTED: Found ${orphanIds.length} items that were not properly updated by recursive set_public!`);
+            console.log(`Expected to update ${itemsMap.size} items, but ${orphanIds.length} were not properly updated.`);
+        } else {
+            console.log(`✅ SUCCESS: All ${itemsMap.size} items were properly updated to public visibility.`);
+        }
+        
+        // Test 2: Test setting back to private (should also work recursively)
+        console.log('\n2. Testing vfs_set_public to make folder private again (recursive)...');
+        
+        const result2 = await pgdb.query(
+            'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+            owner_id, rootPath, folderName, false, true, testRootKey  // recursive = true, is_public = false
+        );
+        
+        console.log(`Second set_public operation result: ${result2.rows[0].success ? 'Success' : 'Failed'}`);
+        console.log(`Diagnostic: ${result2.rows[0].diagnostic}`);
+        
+        // Check that all items are now private again
+        console.log('Checking that all items are now private again...');
+        const stillPublicIds: number[] = [];
+        
+        for (const [itemId, itemData] of itemsMap) {
+            const currentRecord = await pgdb.query(
+                'SELECT is_public FROM vfs_nodes WHERE id = $1',
+                itemId
+            );
+            
+            if (currentRecord.rows.length > 0) {
+                const current = currentRecord.rows[0];
+                
+                // All items should now be private
+                if (current.is_public) {
+                    stillPublicIds.push(itemId);
+                    const type = itemData.is_directory ? '📁' : '📄';
+                    console.log(`  🚨 STILL PUBLIC: ${type} ID:${itemId} - Still public: ${itemData.parent_path}/${itemData.filename}`);
+                }
+            }
+        }
+        
+        if (stillPublicIds.length > 0) {
+            console.log(`❌ BUG DETECTED: Found ${stillPublicIds.length} items that are still public after setting to private!`);
+        } else {
+            console.log(`✅ SUCCESS: All ${itemsMap.size} items were properly updated to private visibility.`);
+        }
+        
+        // Test 3: Test non-recursive operation on a single file
+        console.log('\n3. Testing vfs_set_public on a single file (non-recursive)...');
+        
+        const testFilePath = '0001_test-structure/0001_one';
+        const testFileName = '0001_file1.md';
+        
+        // Check current visibility
+        const beforeSingle = await pgdb.query(
+            'SELECT is_public FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 AND filename = $3',
+            testRootKey, testFilePath, testFileName
+        );
+        
+        if (beforeSingle.rows.length > 0) {
+            console.log(`File ${testFileName} is currently ${beforeSingle.rows[0].is_public ? 'public' : 'private'}`);
+            
+            // Set it to public (non-recursive)
+            const result3 = await pgdb.query(
+                'SELECT * FROM vfs_set_public($1, $2, $3, $4, $5, $6)',
+                owner_id, testFilePath, testFileName, true, false, testRootKey  // recursive = false, is_public = true
+            );
+            
+            console.log(`Single file set_public result: ${result3.rows[0].success ? 'Success' : 'Failed'}`);
+            console.log(`Diagnostic: ${result3.rows[0].diagnostic}`);
+            
+            // Check it's now public
+            const afterSingle = await pgdb.query(
+                'SELECT is_public FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 AND filename = $3',
+                testRootKey, testFilePath, testFileName
+            );
+            
+            if (afterSingle.rows[0].is_public) {
+                console.log(`✅ SUCCESS: Single file is now public as expected.`);
+            } else {
+                console.log(`❌ FAILED: Single file is still private after set_public operation.`);
+            }
+        } else {
+            console.log(`⚠️ SKIPPED: Test file ${testFileName} not found.`);
+        }
+        
+        console.log('=== VFS_SET_PUBLIC TEST COMPLETED ===\n');
+        
+    } catch (error) {
+        console.log('=== VFS_SET_PUBLIC TEST FAILED ===');
+        console.error('Error during vfs_set_public test:', error);
         // Don't throw the error - we want tests to continue
     }
 }

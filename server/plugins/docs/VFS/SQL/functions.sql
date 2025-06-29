@@ -1027,9 +1027,9 @@ BEGIN
     -- If it's a directory and recursive flag is true, update all children
     IF is_dir AND recursive THEN
         -- Build the full path for child updates
-        -- Normalize path format for consistent handling
-        IF parent_path_arg = '' OR parent_path_arg = '/' THEN
-            full_path := '/' || filename_arg;
+        -- Handle empty string (root) vs non-empty parent paths correctly
+        IF parent_path_arg = '' THEN
+            full_path := filename_arg;
         ELSE
             full_path := parent_path_arg || '/' || filename_arg;
         END IF;
