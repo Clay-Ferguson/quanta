@@ -192,19 +192,19 @@ class DocService {
        
         // Clean up path by removing double slashes
         const pathName = req.path.replace("//", "/");
-        
         try {
             // Extract the folder path from the URL after the API prefix
             // Example: "/api/docs/render/docs/folder" -> "/folder"
             // todo-1: this string repacement is super ugly. Do something better.
             const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
-            const treeFolder = decodeURIComponent(rawTreeFolder);
+            let treeFolder = decodeURIComponent(rawTreeFolder);
             
             // Extract the pullup parameter from query string
             const pullup = req.query.pullup as string; 
             
             // Get the appropriate file system implementation
             const ifs = docUtil.getFileSystem(req.params.docRootKey);
+            treeFolder = ifs.normalizePath(treeFolder); // Normalize the path to ensure consistent formatting
             
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
@@ -214,10 +214,14 @@ class DocService {
                 return;
             }
 
-            // Validate that tree folder parameter was provided
-            if (!treeFolder) {
-                res.status(400).json({ error: 'Tree folder parameter is required' });
-                return;
+            // Use regex to check if treeFolder starts with pattern "NNNN_" where 4 is a numeric digit
+            const ordinalPattern = /^\d{4}_/;
+            // If treeFolder does not start with an ordinal, we call "resolveNonOrdinalPath" to convert it to a real path.
+            if (!ordinalPattern.test(treeFolder)) {
+                // console.log(`treeFolder [${treeFolder}] does not start with ordinal, resolving non-ordinal path `);
+                treeFolder = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, treeFolder, ifs) || "";
+                // console.log(`Resolved non-ordinal path to [${treeFolder}]`);  
+                treeFolder = ifs.normalizePath(treeFolder); // Normalize the path after resolution
             }
 
             // Construct the absolute path to the target directory
@@ -249,13 +253,17 @@ class DocService {
 
             // Generate the tree structure
             const treeNodes: TreeNode[] = await this.getTreeNodes(user_id, absolutePath, pullup==="true", root, ifs);
-            
             // Send the tree data as JSON response
             const response: TreeRender_Response = { 
                 user_id, 
                 rootNode: info.node,
-                treeNodes };
+                treeNodes,
+                treeFolder
+            };
             res.json(response);
+
+            // JSON pretty print the response
+            // console.log(`Tree response for [${absolutePath}]\n`, JSON.stringify(response, null, 2));
         } catch (error) {
             // Handle any errors that occurred during tree rendering
             svrUtil.handleError(error, res, 'Failed to render tree');
@@ -399,15 +407,17 @@ class DocService {
             return;
         }
         return runTrans(async () => {
-            // console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
+            console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
                 // Extract parameters from request body
-                const { treeFolder, insertAfterNode, docRootKey } = req.body;
+                const { insertAfterNode, docRootKey } = req.body;
+                let {treeFolder} = req.body;
                 let {fileName} = req.body;
                 fileName = svrUtil.fixName(fileName); // Ensure valid file name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
+                treeFolder = ifs.normalizePath(treeFolder); // Normalize the path to ensure consistent formatting
             
                 // Resolve and validate document root
                 const root = config.getPublicFolderByKey(docRootKey).path;
@@ -428,7 +438,7 @@ class DocService {
                 // Verify parent directory exists and is accessible
                 ifs.checkFileAccess(absoluteParentPath, root); 
                 if (!await ifs.exists(absoluteParentPath)) {
-                    res.status(404).json({ error: 'Parent directory not found' });
+                    res.status(404).json({ error: `Parent directory not found [${absoluteParentPath}]` });
                     return;
                 }
 

@@ -22,7 +22,7 @@ export interface GlobalState {
     // page history so we can go back (we generally don's support going forward tho)
     pages?: Array<string>; 
     
-    userName?: string;
+    userName?: string; // todo-0: remove this, and other props we can get from userProfile instead
     fullSizeImage?: {src: string | null, name: string} | null;
     appInitialized?: boolean;
     userDescription?: string;

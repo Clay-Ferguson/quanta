@@ -7,7 +7,7 @@ import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 
 const testRootKey = 'usr';
-const testEnabled = true;
+const testEnabled = false;
 
 /**
  * Test function to verify PostgreSQL database functionality

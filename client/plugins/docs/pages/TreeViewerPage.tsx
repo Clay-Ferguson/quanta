@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt, faHome } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -19,6 +19,7 @@ import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes
 import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
+import { docsGoHome } from '../DocsUtils';
 
 declare const PAGE: string;
 declare const DESKTOP_MODE: boolean;
@@ -571,6 +572,15 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
             >
                 <FontAwesomeIcon icon={faGear} className="h-5 w-5" />
             </button>
+
+            {!DESKTOP_MODE && 
+                <button 
+                    onClick={() => docsGoHome(gs)}
+                    className="btn-icon"
+                    title="Home"
+                >
+                    <FontAwesomeIcon icon={faHome} className="h-5 w-5" />
+                </button>}
 
             {DESKTOP_MODE && gs.docsRootType==='lfs' && 
                 <button 
@@ -1134,15 +1144,25 @@ export default function TreeViewerPage() {
         try {
             // setIsLoading(true);
             setError(null);
-            // console.log(`Refreshing tree for folder "${folder}" with rootKey="${gs.docsRootKey}"...`);
+            // console.log(`Refreshing tree for folder [${folder}] with rootKey="[${gs.docsRootKey}]`);
             const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
+            // console.log(`DocsFolder server response: ${treeResponse!.treeFolder}`);
             
             // Update user_id from the response if it's provided
             if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
                 gs.userProfile!.userId = treeResponse.user_id;
                 await idb.setItem(DBKeys.userId, treeResponse.user_id);
-                gd({ type: 'setUserProfile', payload: { userProfile: gs.userProfile } });
+                gd({ type: 'setUserProfile', payload: { 
+                    userProfile: gs.userProfile, 
+                    docsFolder: treeResponse.treeFolder } });
+            }
+            else {
+                // ensure docsFolder is what we got back from the server
+                if (treeResponse?.treeFolder) {
+                    gd({ type: 'setDocsFolder', payload: {
+                        docsFolder: treeResponse.treeFolder} });
+                }
             }
 
             // JSON pretty print the entire tree response
