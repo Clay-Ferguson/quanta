@@ -56,7 +56,7 @@ class AppUsers {
      * @param userDescription A description or bio text for the user
      * @param userAvatar The user's avatar image as a base64-encoded file interface, or null if no avatar
      */
-    saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null) => {
+    saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
         const _gs = gd({ type: `setUserInfo`, payload: { 
             userName, userDescription, userAvatar
         }});
@@ -73,16 +73,23 @@ class AppUsers {
                 avatar: userAvatar
             };
             const ret = await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
-            // pretty print the response
             if (ret) {
-                // Save id to IndexedDB for future reference
-                if (ret.user_id) {
-                    _gs.userProfile!.userId = ret.user_id;
-                    await idb.setItem(DBKeys.userId, ret.user_id);
-                    gd({ type: 'setUserProfile', payload: _gs });
+                // console log a JSON pretty print of the response
+                // console.log("User Info Save Response: ", JSON.stringify(ret, null, 2));
+
+                // pretty print the response
+                if (ret.ok) {
+                    // Save id to IndexedDB for future reference
+                    if (ret.user_id) {
+                        _gs.userProfile!.userId = ret.user_id;
+                        await idb.setItem(DBKeys.userId, ret.user_id);
+                        gd({ type: 'setUserProfile', payload: _gs });
+                    }
                 }
             }
+            return ret && ret.ok ? true : false;
         }
+        return false;
     }
 
     /**

@@ -130,8 +130,8 @@ export default function SettingsPage() {
             userAvatar = gs.userAvatar
         }
 
-        await appUsers.saveUserInfo(userName, userDescription, userAvatar);
-        if (showConfirm) {
+        const success = await appUsers.saveUserInfo(userName, userDescription, userAvatar);
+        if (success && showConfirm) {
             await alertModal("Profile information saved successfully!");
         }
     };
@@ -147,9 +147,8 @@ export default function SettingsPage() {
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
                 {!gs.userName && ( 
                     <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
-                        <h2 className="text-2xl font-bold text-blue-300 mb-2">Welcome to Quanta Chat!</h2>
                         <p className="text-lg text-gray-200">
-                            Please enter a username below to get started.  
+                            Enter a User Name below to get started. No password is required. We use a Public Cryptographic Key to identify you.
                         </p>
                     </div>
                 )} 
@@ -206,7 +205,7 @@ export default function SettingsPage() {
                                         onChange={(e) => setUserName(e.target.value)}
                                         className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
                                                 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Enter your username"
+                                        placeholder="Enter your User Name"
                                     />
                                 </div>
                                 

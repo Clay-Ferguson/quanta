@@ -23,6 +23,7 @@ import { docsGoHome } from '../DocsUtils';
 
 declare const PAGE: string;
 declare const DESKTOP_MODE: boolean;
+declare const ADMIN_PUBLIC_KEY: string;
 
 interface ColumnMarkdownRendererProps {
     content: string;
@@ -1149,19 +1150,21 @@ export default function TreeViewerPage() {
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
             // console.log(`DocsFolder server response: ${treeResponse!.treeFolder}`);
             
+            if (treeResponse) {
             // Update user_id from the response if it's provided
-            if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
+                if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
                 gs.userProfile!.userId = treeResponse.user_id;
                 await idb.setItem(DBKeys.userId, treeResponse.user_id);
                 gd({ type: 'setUserProfile', payload: { 
                     userProfile: gs.userProfile, 
                     docsFolder: treeResponse.treeFolder } });
-            }
-            else {
+                }
+                else {
                 // ensure docsFolder is what we got back from the server
-                if (treeResponse?.treeFolder) {
-                    gd({ type: 'setDocsFolder', payload: {
-                        docsFolder: treeResponse.treeFolder} });
+                    if (treeResponse?.treeFolder) {
+                        gd({ type: 'setDocsFolder', payload: {
+                            docsFolder: treeResponse.treeFolder} });
+                    }
                 }
             }
 
@@ -1221,6 +1224,9 @@ export default function TreeViewerPage() {
     if (lastPathPart) {
         lastPathPart = formatDisplayName(lastPathPart);
     }
+
+    // show parent button if we're the admin or if the current folder is not a folder in the root.
+    const showParentButton = DESKTOP_MODE || ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey || gs.docsFolder?.indexOf('/') !== -1;
     
     // Determine width class based on viewWidth setting
     const getWidthClass = () => {
@@ -1249,7 +1255,7 @@ export default function TreeViewerPage() {
                         isLoading={isLoading} 
                     />
                     
-                    {gs.docsFolder && gs.docsFolder.length > 1 && 
+                    {showParentButton && gs.docsFolder && gs.docsFolder.length > 1 && 
                         <button 
                             onClick={() => handleParentClick(gs)}
                             className="p-2 bg-gray-600 text-white rounded-md flex items-center justify-center"

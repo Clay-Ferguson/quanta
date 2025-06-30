@@ -5,7 +5,6 @@ import { gs } from "./GlobalState";
 
 class HttpClientUtil {
     httpPost = async (url: string, obj: any) => {
-        // encode the url
         url = encodeURI(url);
 
         const res = await fetch(url, {
@@ -48,7 +47,6 @@ class HttpClientUtil {
             return null;
         }
 
-        let response: TResponse | null = null;
         try {
             const isFormData = body instanceof FormData;
             const headers = await this.buildSecureHeaders(url, _gs.keyPair!, isFormData);
@@ -73,25 +71,24 @@ class HttpClientUtil {
             
             url = encodeURI(url);
             const res = await fetch(url, opts); 
-            // // pretty print the response object using formatted JSON
+            const response = await res.json();
             // console.log(`>>>> RAW Response from ${url}:`, JSON.stringify(res, null, 2));
 
-            if (res.ok) {
-                response = await res.json();
-            }
-            else {
-                const errorData = await res.json();
-                const msg = `Failed to post to ${url}: ${errorData.error || 'Unknown error'}`;
+            if (!res.ok) {
+                const msg = `Failed to post to ${url}: ${response.error || 'Unknown error'}`;
                 console.error(msg);
 
-                // Show a less frightening error message to the user
-                await alertModal("An error occurred while processing your request. Please try again later.");
+                // Show the actual error message to the user &&&
+                await alertModal(response.error || 'An error occurred while processing your request. Please try again later.');
                 return null;
             }
+            return response;
         } catch (error) {
             console.error(`Error posting to ${url}:`, error);
+            // Show the actual error message to the user &&&
+            await alertModal('An error occurred while processing your request. Please try again later.');
+            return null;
         }
-        return response;
     }
     
     // todo-1: all calls to this can now remove 'publicKey' from the body of the post, but be careful

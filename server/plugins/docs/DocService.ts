@@ -8,6 +8,7 @@ import { IFS } from "./IFS/IFS.js";
 import { runTrans } from "../../Transactional.js";
 import fs from 'fs';
 import path from 'path';
+import pgdb from "../../PGDB.js";
 const { exec } = await import('child_process');
 
 /**
@@ -205,6 +206,18 @@ class DocService {
             // Get the appropriate file system implementation
             const ifs = docUtil.getFileSystem(req.params.docRootKey);
             treeFolder = ifs.normalizePath(treeFolder); // Normalize the path to ensure consistent formatting
+
+            if (process.env.POSTGRES_HOST) {
+                if (treeFolder.trim()=== '' || treeFolder === '/') {
+                    if (user_id!=pgdb.adminProfile!.id) {
+                        // If treeFolder is empty or root, we return the admin profile's root node
+                        // This is a security measure to prevent unauthorized access to the admin's root
+                        console.warn(`Unauthorized access attempt by user ${user_id} to root node.`);
+                        res.status(403).json({ error: 'Access denied' });
+                        return;
+                    }
+                }
+            }
             
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;

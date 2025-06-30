@@ -104,7 +104,19 @@ class ServerUtil {
      */
     handleError = (error: unknown, res: Response, message: string): void => {
         console.error(`ERROR: ${message}`, error);
-        res.status(500).json({ error: message });
+        message = error instanceof Error ? error.message : message;
+        
+        // Only set status and send response if it hasn't been sent already and no response is in progress
+        if (!res.headersSent && !res.writableEnded) {
+            // Only set 500 status if no status has been set yet (default is 200)
+            if (res.statusCode === 200) {
+                res.status(500);
+            }
+            res.json({ error: message });
+        }
+        else {
+            console.warn(`Response already processed - headersSent: ${res.headersSent}, writableEnded: ${res.writableEnded}, status: ${res.statusCode}`);
+        }
     }
 
     /**

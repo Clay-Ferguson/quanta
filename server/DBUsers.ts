@@ -41,6 +41,7 @@ class DBUsers {
                 res.status(500).json({ error: 'Failed to save user information' });
             }
         } catch (error) {
+            console.error('Error saving user profile:', error);
             svrUtil.handleError(error, res, 'Failed to save user profile');
         }
     }
@@ -138,6 +139,7 @@ class DBUsers {
      */
     saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
         try {
+            // console.log(`Saving user info for public key: ${userProfile.publicKey} with name: ${userProfile.name}`);
             const adminPubKey = config.get("adminPublicKey");
             if (userProfile.publicKey.trim() === adminPubKey) {
                 if (userProfile.name !== 'admin') {
@@ -149,9 +151,21 @@ class DBUsers {
             }
 
             if (!userProfile.publicKey) {
-                console.error('Cannot save user info without a public key');
-                return false;
+                // todo-0: we need a way for ALL of thes throws to be logged.
+                throw new Error('Cannot save user info without a public key');
             }
+
+            // Check if username is already taken by a different user
+            const existingUser = await pgdb.get(
+                'SELECT pub_key FROM user_info WHERE user_name = $1 AND pub_key != $2',
+                userProfile.name,
+                userProfile.publicKey
+            );
+
+            if (existingUser) {
+                throw new Error(`Username '${userProfile.name}' is already taken by another user.`);
+            }
+
             let avatarBinaryData: Buffer | null = null;
         
             // Extract binary data from data URL if avatar exists
@@ -194,7 +208,7 @@ class DBUsers {
             return true;
         } catch (error) {
             console.error('Error saving user info:', error);
-            return false;
+            throw error;
         }
     }
 

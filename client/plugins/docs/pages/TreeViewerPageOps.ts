@@ -679,7 +679,7 @@ export const openItemInFileSystem = async (gs: DocsGlobalState, action: "edit" |
 
         const response = await httpClientUtil.secureHttpPost('/api/docs/file-system-open', requestBody);
         
-        if (!response.success) {
+        if (!response || !response.success) {
             console.error('Error response from server:', response);
             await alertModal("Failed to open item in file system. Please try again.");
         }
