@@ -40,7 +40,7 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
             
             {gs.headerExpanded && 
              <LogoBlockComp clazz="flex-shrink-0 mb-2 md:mb-0" 
-                 subText={!gs.chatConnected && gs.userName ? `Hi ${gs.userName}` : ''}
+                 subText={!gs.chatConnected && gs.userProfile!.name ? `Hi ${gs.userProfile!.name}` : ''}
                  pluginTitle={pluginTitle}
              />}
             
@@ -64,7 +64,7 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
                                 
                                     <div className="flex gap-2 w-full sm:w-auto">
                                         <button 
-                                            disabled={!gs.userName || !roomName}
+                                            disabled={!gs.userProfile!.name || !roomName}
                                             onClick={() => appRooms.connect(null, null, roomName)}
                                             className="btn-green w-full sm:w-auto"
                                         >
@@ -82,7 +82,7 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
                             ) : (
                                 <>
                                     <div className="flex flex-col w-full sm:w-auto">
-                                        <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userName}</span></span>
+                                        <span className="text-sm text-gray-300">User: <span className="text-blue-400 font-medium">{gs.userProfile!.name}</span></span>
                                         <span className="text-sm text-gray-300">Room: <span className="text-purple-400 font-medium">{`${gs.chatRoom} (${gs.chatParticipants!.size} others)`}</span></span>
                                     </div>
                                 
@@ -142,11 +142,11 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
                     >
                         <FontAwesomeIcon icon={faQuestionCircle} className="h-5 w-5" />
                     </button>}
-                    {!gs.headerExpanded && gs.chatConnected && gs.userName && 
+                    {!gs.headerExpanded && gs.chatConnected && gs.userProfile!.name && 
                 <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`${gs.chatRoom} (${gs.chatParticipants!.size} others)`}</span>}
 
-                    {!gs.headerExpanded && !gs.chatConnected && gs.userName && 
-                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userName}`}</span>}
+                    {!gs.headerExpanded && !gs.chatConnected && gs.userProfile!.name && 
+                <span className="ml-2 mt-1 font-semibold text-lg whitespace-nowrap">{`Hi, ${gs.userProfile!.name}`}</span>}
 
                     {gs.chatConnected && <button 
                         onClick={toggleHeaderExpand}

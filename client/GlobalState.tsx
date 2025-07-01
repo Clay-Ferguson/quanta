@@ -22,11 +22,13 @@ export interface GlobalState {
     // page history so we can go back (we generally don's support going forward tho)
     pages?: Array<string>; 
     
-    userName?: string; // todo-0: remove this, and other props we can get from userProfile instead
     fullSizeImage?: {src: string | null, name: string} | null;
     appInitialized?: boolean;
+
+    // todo-0: Description and Avatar can be used from UserProfile, so we can remove these from here.
     userDescription?: string;
     userAvatar?: FileBase64Intf | null;
+
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile;
     modalMessage?: string | null;
@@ -42,7 +44,6 @@ export interface GlobalState {
 const initialState: GlobalState = {
     keyPair: { privateKey: '', publicKey: '' },
     pages: [PAGE], 
-    userName: '', 
     fullSizeImage: null,
     appInitialized: false,
     userDescription: '',

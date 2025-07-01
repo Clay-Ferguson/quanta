@@ -28,14 +28,14 @@ export type ChatMessageIntf = SignableObject & {
 
 export type UserProfileCompact = {
     id?: number;
-    name: string;
-    publicKey: string;
+    name?: string;
+    publicKey?: string;
 }
 
 export type UserProfile = UserProfileCompact & {
     userId?: number | null; // will be null if not set
-    description: string;
-    avatar: FileBase64Intf | null;
+    description?: string;
+    avatar?: FileBase64Intf | null;
     signature?: string; // will be null if not signed
 }
 

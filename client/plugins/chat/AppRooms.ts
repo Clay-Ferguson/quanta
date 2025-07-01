@@ -6,6 +6,7 @@ import { ChatPageNames, gd, gs } from "./ChatTypes.ts"
 import {idb} from '../../IndexedDB.ts';
 import appMessages from "./AppMessages.ts";
 import { rtc } from "./WebRTC.ts";
+import { GlobalState } from "../../GlobalState.tsx";
 
 declare const PAGE: string;
 
@@ -189,7 +190,7 @@ class AppRooms {
          */
     connect = async (userName: string | null, keyPair: KeyPairHex | null, roomName: string) => {
         let _gs = gs();
-        userName = userName || _gs.userName!;
+        userName = userName || _gs.userProfile!.name!;
         keyPair = keyPair || _gs.keyPair!;
     
         _gs = gd({ type: 'connect', payload: { 
@@ -209,8 +210,9 @@ class AppRooms {
         await this.setRoomAndUserName(roomName, userName!);
             
         const chatRoomHistory: RoomHistoryItem[] = await appRooms.updateRoomHistory(roomName);
+        (gs as GlobalState).userProfile!.name = userName!; // Update global state with user name
         gd({ type: 'connect', payload: { 
-            userName,
+            userProfile: (gs as GlobalState).userProfile,
             chatRoom: roomName,
             chatMessages: messages,
             chatConnected: true,
@@ -249,8 +251,9 @@ class AppRooms {
      * @param userName - The user's display name
      */
     setRoomAndUserName = async (roomName: string, userName: string, ) => {
+        (gs as GlobalState).userProfile!.name = userName; // Update global state with user name
         gd({ type: `setRoomAndUser`, payload: { 
-            chatRoom: roomName, userName
+            chatRoom: roomName, userProfile:  (gs as GlobalState).userProfile
         }});
         // Save the keyPair to IndexedDB
         await idb.setItem(DBKeys.chatRoom, roomName);

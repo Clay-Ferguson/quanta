@@ -103,7 +103,7 @@ export class AppMessages {
     sendMessage = async (message: string, selectedFiles: any) => {
         if (message || selectedFiles.length > 0) {
             let _gs = gs();
-            const msg: ChatMessage = this.createMessage(message, _gs.userName!, selectedFiles);
+            const msg: ChatMessage = this.createMessage(message, _gs.userProfile!.name!, selectedFiles);
                 
             if (_gs.keyPair && _gs.keyPair!.publicKey && _gs.keyPair!.privateKey) {   
                 try {

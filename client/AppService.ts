@@ -187,7 +187,8 @@ export class AppService {
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
 
         const state: GlobalState = {
-            userName,
+            userProfile: {
+                name: userName || ''},
             userDescription,
             userAvatar,
             headerExpanded

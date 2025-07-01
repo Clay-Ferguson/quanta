@@ -12,7 +12,7 @@ export async function docsGoHome(gs: DocsGlobalState): Promise<void> {
         app.goToPage(PageNames.settings)
     }
     else {
-        gs.docsFolder = "/"+gs.userName || ''; 
+        gs.docsFolder = "/"+gs.userProfile!.name || ''; 
         gd({ type: 'docsGoHome', payload: gs });
     }
 }

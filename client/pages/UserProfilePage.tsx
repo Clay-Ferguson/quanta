@@ -107,7 +107,7 @@ export default function UserProfilePage() {
                                     <h1 className="text-2xl font-bold text-white mb-2">{profileData.name || "Unnamed User"}</h1>
                                     <div className="bg-gray-700 p-2 rounded text-sm text-gray-300 overflow-hidden">
                                         <div className="font-semibold mb-1">Public Key:</div>
-                                        <HexKeyComp hexKey={profileData.publicKey} />
+                                        <HexKeyComp hexKey={profileData.publicKey!} />
                                     </div>
                                 </div>
                             </div>
@@ -143,7 +143,7 @@ export default function UserProfilePage() {
                     <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 
-                                onClick={() => appUsers.blockUser(profileData.publicKey)}
+                                onClick={() => appUsers.blockUser(profileData.publicKey!)}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors duration-200"
                             >
                             Block User

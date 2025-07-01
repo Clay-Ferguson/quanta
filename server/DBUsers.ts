@@ -141,7 +141,7 @@ class DBUsers {
         try {
             // console.log(`Saving user info for public key: ${userProfile.publicKey} with name: ${userProfile.name}`);
             const adminPubKey = config.get("adminPublicKey");
-            if (userProfile.publicKey.trim() === adminPubKey) {
+            if (userProfile.publicKey!.trim() === adminPubKey) {
                 if (userProfile.name !== 'admin') {
                     // todo-0: Going into Admin User Profile, we can try to chagne the admin name to sometthing else
                     // and this error correctly catches it, but errors like this don't get shown to the UI in an acceptable way.

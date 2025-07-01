@@ -17,10 +17,10 @@ export default function RoomMembersComp() {
     const sortedParticipants: any[] = gs.chatParticipants ? Array.from(gs.chatParticipants.values()).sort((a, b) => a.name.localeCompare(b.name)) : [];
 
     // let's add ourselves as the first member in the list
-    if (gs.keyPair && gs.userName) {
+    if (gs.keyPair && gs.userProfile!.name) {
         sortedParticipants.unshift({
             publicKey: gs.keyPair.publicKey,
-            name: gs.userName,
+            name: gs.userProfile!.name,
             avatar: gs.userAvatar ? gs.userAvatar.data : null
         });
     }

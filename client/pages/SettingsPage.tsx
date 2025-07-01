@@ -68,8 +68,8 @@ export default function SettingsPage() {
 
     useEffect(() => {
         // Initialize the userName from global state when component mounts
-        if (gs.userName) {
-            setUserName(gs.userName);
+        if (gs.userProfile!.name) {
+            setUserName(gs.userProfile!.name);
         }
         
         // Initialize userDescription from global state
@@ -82,7 +82,7 @@ export default function SettingsPage() {
             setAvatarPreview(gs.userAvatar.data);
         }        
     }, 
-    [gs.userName, gs.userDescription, gs.userAvatar]);
+    [gs.userProfile, gs.userDescription, gs.userAvatar]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -130,7 +130,7 @@ export default function SettingsPage() {
             userAvatar = gs.userAvatar
         }
 
-        const success = await appUsers.saveUserInfo(userName, userDescription, userAvatar);
+        const success = await appUsers.saveUserInfo(gs, userName, userDescription, userAvatar);
         if (success && showConfirm) {
             await alertModal("Profile information saved successfully!");
         }
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
-                {!gs.userName && ( 
+                {!gs.userProfile!.name && ( 
                     <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
                         <p className="text-lg text-gray-200">
                             Enter a User Name below to get started. No password is required. We use a Public Cryptographic Key to identify you.

@@ -37,7 +37,7 @@ export default function UserProfileChatComp({ profileData }: UserProfileChatComp
                         <button
                             onClick={() => addContact({
                                 name: profileData.name || "Unnamed User",
-                                publicKey: profileData.publicKey
+                                publicKey: profileData.publicKey!
                             })}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors duration-200"
                         >

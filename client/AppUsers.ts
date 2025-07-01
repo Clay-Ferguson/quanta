@@ -6,7 +6,7 @@ import { DBKeys, PageNames } from "./AppServiceTypes";
 import { alertModal } from "./components/AlertModalComp";
 import { confirmModal } from "./components/ConfirmModalComp";
 import { promptModal } from "./components/PromptModalComp";
-import { gd, gs } from "./GlobalState";
+import { gd, GlobalState, gs } from "./GlobalState";
 import { httpClientUtil } from "./HttpClientUtil";
 import { idb } from "./IndexedDB";
 
@@ -56,9 +56,10 @@ class AppUsers {
      * @param userDescription A description or bio text for the user
      * @param userAvatar The user's avatar image as a base64-encoded file interface, or null if no avatar
      */
-    saveUserInfo = async (userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
+    saveUserInfo = async (gs: GlobalState, userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
+        gs.userProfile!.name = userName;
         const _gs = gd({ type: `setUserInfo`, payload: { 
-            userName, userDescription, userAvatar
+            userProfile: gs.userProfile, userDescription, userAvatar
         }});
         await idb.setItem(DBKeys.userName, userName);
         await idb.setItem(DBKeys.userDescription, userDescription);

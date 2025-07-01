@@ -17,7 +17,7 @@ declare const DOC_ROOT_KEY: string;
 export default function PageRouter() {
     const gs = useGlobalState();
     const topPage = gs.pages![gs.pages!.length - 1];
-    console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userName);
+    console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userProfile!.name);
 
     // Show loading indicator while app is initializing
     if (!gs.appInitialized) {

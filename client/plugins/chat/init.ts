@@ -74,7 +74,7 @@ class ChatClientPlugin implements IClientPlugin {
     }
 
     getRoute(gs: ChatGlobalState, pageName: string) {
-        if (!gs.userName) {
+        if (!gs.userProfile!.name) {
             return React.createElement(SettingsPage);
         }
 

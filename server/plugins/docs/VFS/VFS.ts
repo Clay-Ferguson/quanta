@@ -521,7 +521,7 @@ class VFS implements IFS {
         const rootKey = "usr";
 
         // Throw an error if 'userProfile.name' is not a valid filename containing only alphanumeric characters and underscores.
-        if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name)) {
+        if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name!)) {
             throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
         }
 

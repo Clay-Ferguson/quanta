@@ -38,8 +38,8 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
 
     const getDisplayName = (msg: ChatMessage) => {
         // If the message is from us, return our name.
-        if (msg.sender === gs.userName) {
-            return gs.userName;
+        if (msg.sender === gs.userProfile!.name) {
+            return gs.userProfile!.name;
         } 
         // If the sender is in our contact list, use their alias. Otherwise, use their public key.
         const contact = contactsByPublicKey.get(msg.publicKey!);
@@ -51,7 +51,7 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
 
     const isTrusted = (msg: ChatMessage) => {
         // If the message is from us, return true.
-        if (msg.sender === gs.userName) {
+        if (msg.sender === gs.userProfile!.name) {
             return true;
         } 
         // If the sender is in our contact list, return true. Otherwise, return false.
@@ -80,10 +80,10 @@ export default function MessagesComp({ id, tag, messages }: MainCompProps) {
                     return (
                         <div 
                             key={'message-'+msg.id} 
-                            className={`${msg.sender === gs.userName ? 'bg-gray-700 border-l-4 ' 
+                            className={`${msg.sender === gs.userProfile!.name ? 'bg-gray-700 border-l-4 ' 
                                 : 'bg-gray-800 border-l-4 '}
                                 ${msg.state!==MessageStates.SAVED ? 'border-red-500' : 
-                            msg.sender === gs.userName ? 'border-blue-500' : 
+                            msg.sender === gs.userProfile!.name ? 'border-blue-500' : 
                                 'border-transparent'
                         } p-3 rounded-md shadow-md flex flex-col`}
                         >
