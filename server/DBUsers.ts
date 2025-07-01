@@ -1,7 +1,7 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./PGDB.js";
 import { Request, Response } from 'express';
-import { AuthenticatedRequest, svrUtil } from "./ServerUtil.js";
+import { AuthenticatedRequest, handleError, svrUtil, throwError } from "./ServerUtil.js";
 import { config } from "./Config.js";
 
 /**
@@ -16,8 +16,7 @@ class DBUsers {
      */
     saveUserProfile = async (req: Request<any, any, UserProfile>, res: Response): Promise<void> => {
         if (!(req as AuthenticatedRequest).validSignature) {
-            res.status(401).json({ error: 'Invalid or missing signature' });
-            return;
+            throwError('Invalid or missing signature', res)
         }
 
         const userProfile: UserProfile = req.body;
@@ -25,24 +24,21 @@ class DBUsers {
 
         // Check to see that the publicKey we validated in the header matches the one in the body.
         if (publicKey !== userProfile.publicKey) {
-            res.status(400).json({ error: 'Public key in header does not match public key in body' });
-            return;
+            throwError('Public key in header does not match public key in body', res);
         }
 
         try {
             if (!userProfile.publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
+                throwError('Public key is required', res);
             }
             const success = await this.saveUserInfo(userProfile); 
             if (success) {
                 res.json({ success: true, user_id: userProfile.id });
             } else {
-                res.status(500).json({ error: 'Failed to save user information' });
+                throwError('Failed to save user information', res);
             }
         } catch (error) {
-            console.error('Error saving user profile:', error);
-            svrUtil.handleError(error, res, 'Failed to save user profile');
+            throw handleError(error, res, 'Failed to save user profile');
         }
     }
 
@@ -252,7 +248,7 @@ class DBUsers {
             // Send the binary image data
             res.send(binaryData);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve avatar');
+            handleError(error, res, 'Failed to retrieve avatar');
         }
     }    
 
@@ -275,7 +271,7 @@ class DBUsers {
                 res.status(404).json({ error: 'User information not found' });
             }
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve user profile');
+            handleError(error, res, 'Failed to retrieve user profile');
         }
     }
 

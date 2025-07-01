@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { svrUtil } from "../../../ServerUtil.js";
+import { handleError } from "../../../ServerUtil.js";
 import { config } from "../../../Config.js";
 import pgdb from '../../../PGDB.js';
 
@@ -91,7 +91,7 @@ class DocVFS {
             
         } catch (error) {
             console.error('VFS search error:', error);
-            svrUtil.handleError(error, res, 'Failed to perform VFS search');
+            handleError(error, res, 'Failed to perform VFS search');
         }
     }
 }

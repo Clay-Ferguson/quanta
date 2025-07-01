@@ -10,6 +10,8 @@ import { gd, GlobalState, gs } from "./GlobalState";
 import { httpClientUtil } from "./HttpClientUtil";
 import { idb } from "./IndexedDB";
 
+declare const DESKTOP_MODE: boolean;
+
 /**
  * AppUsers class manages user-related operations and data persistence in the Quanta Chat application.
  * 
@@ -35,9 +37,13 @@ class AppUsers {
      * @param publicKey The public key of the user whose profile should be displayed
      */
     showUserProfile = async (publicKey: string) => {
+        console.warn("AppUsers.showUserProfile: This method is currently disabled.");
+        return;
         // set page to userprofile 
         const _gs = gs();
         app.setTopPage(_gs, PageNames.userProfile);
+        // todo-1: Wow this was a bad mistake. We were setting publicKey for some user that might not even be us, and putting it into our global state.
+        //         For now I'm completely removing the 'Preview' button from the settings page, until I can come back to this, and do it right.
         _gs.userProfile = {userId: null, name: '', publicKey, description: '', avatar: null};
         gd({ type: 'setUserProfile', payload: _gs});
     }
@@ -67,6 +73,12 @@ class AppUsers {
         await idb.setItem(DBKeys.userDescription, userDescription);
         await idb.setItem(DBKeys.userAvatar, userAvatar);
 
+        if (DESKTOP_MODE) {
+            // In desktop mode, we don't save to server, just return true
+            console.log("User Info Saved Locally in Desktop Mode: ", JSON.stringify(_gs.userProfile, null, 2));
+            return true;
+        }
+
         // Save user info to server if saving to server is enabled
         if (_gs.keyPair?.publicKey) {
             const userProfile: UserProfile = {
@@ -78,10 +90,9 @@ class AppUsers {
             const ret = await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
             if (ret) {
                 // console log a JSON pretty print of the response
-                // console.log("User Info Save Response: ", JSON.stringify(ret, null, 2));
 
                 // pretty print the response
-                if (ret.ok) {
+                if (ret.success) {
                     // Save id to IndexedDB for future reference
                     if (ret.user_id) {
                         _gs.userProfile!.userId = ret.user_id;
@@ -89,7 +100,7 @@ class AppUsers {
                         gd({ type: 'setUserProfile', payload: _gs });
                     }
                 }
-            }
+            }  
             return ret && ret.ok ? true : false;
         }
         return false;

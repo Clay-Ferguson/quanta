@@ -1,7 +1,7 @@
 import { TreeNode } from "../../../common/types/CommonTypes.js";
 import { Request, Response } from 'express';
 import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
-import { AuthenticatedRequest, svrUtil } from "../../ServerUtil.js";
+import { AuthenticatedRequest, handleError, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
@@ -279,7 +279,7 @@ class DocService {
             // console.log(`Tree response for [${absolutePath}]\n`, JSON.stringify(response, null, 2));
         } catch (error) {
             // Handle any errors that occurred during tree rendering
-            svrUtil.handleError(error, res, 'Failed to render tree');
+            handleError(error, res, 'Failed to render tree');
         }
     }
  
@@ -505,7 +505,7 @@ class DocService {
                 });
             } catch (error) {
                 // Handle any errors during file creation
-                svrUtil.handleError(error, res, 'Failed to create file');
+                handleError(error, res, 'Failed to create file');
                 throw error;
             }
         });
@@ -618,7 +618,7 @@ class DocService {
                 });
             } catch (error) {
             // Handle any errors during folder creation
-                svrUtil.handleError(error, res, 'Failed to create folder');
+                handleError(error, res, 'Failed to create folder');
                 throw error;
             }
         });
@@ -930,7 +930,7 @@ class DocService {
             });
             
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to perform search');
+            handleError(error, res, 'Failed to perform search');
         }
     }
 
@@ -1257,7 +1257,7 @@ class DocService {
             });
             
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to perform simple search');
+            handleError(error, res, 'Failed to perform simple search');
         }
     }
 }

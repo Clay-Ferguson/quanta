@@ -72,14 +72,11 @@ class HttpClientUtil {
             url = encodeURI(url);
             const res = await fetch(url, opts); 
             const response = await res.json();
-            // console.log(`>>>> RAW Response from ${url}:`, JSON.stringify(res, null, 2));
+            // console.log(`>>>> RAW Response from ${url}:`, JSON.stringify(response, null, 2));
 
             if (!res.ok) {
-                const msg = `Failed to post to ${url}: ${response.error || 'Unknown error'}`;
-                console.error(msg);
-
-                // Show the actual error message to the user &&&
-                await alertModal(response.error || 'An error occurred while processing your request. Please try again later.');
+                console.error(`Failed to post to ${url}: error=${response.error} errorMessage=${response.errorMessage}`);
+                await alertModal(response.errorMessage || 'An error occurred while processing your request. Please try again later.');
                 return null;
             }
             return response;

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { svrUtil } from "../../ServerUtil.js";
+import { handleError, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -135,7 +135,7 @@ class DocBinary {
             
         } catch (error) {
             // Handle any errors that occur during image serving
-            svrUtil.handleError(error, res, 'Failed to serve image');
+            handleError(error, res, 'Failed to serve image');
         }
     }
 
@@ -347,7 +347,7 @@ class DocBinary {
     
         } catch (error) {
             // Handle any top-level errors in the upload process
-            svrUtil.handleError(error, res, 'Failed to upload files');
+            handleError(error, res, 'Failed to upload files');
         }
     }
     

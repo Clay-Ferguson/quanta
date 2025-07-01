@@ -15,6 +15,44 @@ export interface AuthenticatedRequest extends Request {
     validSignature?: boolean; // Indicates if the request has a valid signature
 }
 
+export function throwError(message: string, response: Response | null = null): never {
+    console.error(`${message}`);
+    const error = new Error(message);
+    (error as any).errorMessage = message; // Custom property to store user-friendly message
+    (error as any).logged = true; // Custom property to indicate this error has been logged
+    if (response && !response.headersSent && !response.writableEnded) {
+        response.status(500);
+        response.json({ errorMessage: message });
+    }
+    throw error;
+}
+
+/**
+ * Centralized error handling method for all controller endpoints
+ * @param error - The error object or message
+ * @param res - Express response object
+ * @param message - Custom error message to include in the response, that must be appropriate for user to see
+ */
+export function handleError(error: unknown, res: Response, message: string): any {
+    if (error instanceof Error) {
+        if (!(error as any).logged) {
+            console.error(message, error);
+            (error as any).logged = true; // Custom property to indicate this error has been logged
+        }
+        console.error(message);
+    }
+        
+    // Only set status and send response if it hasn't been sent already and no response is in progress
+    if (res && !res.headersSent && !res.writableEnded) {
+        res.status(500);
+        res.json({ errorMessage: message, error: (error as any).message });
+    }
+
+    // return the error in case we want to rethrow.
+    return error;
+}
+
+
 /**
  * Interface for server plugins that can be loaded and managed by ServerUtil
  */
@@ -94,29 +132,6 @@ class ServerUtil {
             console.log(`ENV VAR: ${name}==[${value}]`);
         }
         return value;
-    }
-
-    /**
-     * Centralized error handling method for all controller endpoints
-     * @param error - The error object or message
-     * @param res - Express response object
-     * @param message - Custom error message to include in the response
-     */
-    handleError = (error: unknown, res: Response, message: string): void => {
-        console.error(`ERROR: ${message}`, error);
-        message = error instanceof Error ? error.message : message;
-        
-        // Only set status and send response if it hasn't been sent already and no response is in progress
-        if (!res.headersSent && !res.writableEnded) {
-            // Only set 500 status if no status has been set yet (default is 200)
-            if (res.statusCode === 200) {
-                res.status(500);
-            }
-            res.json({ error: message });
-        }
-        else {
-            console.warn(`Response already processed - headersSent: ${res.headersSent}, writableEnded: ${res.writableEnded}, status: ${res.statusCode}`);
-        }
     }
 
     /**
@@ -223,7 +238,7 @@ class ServerUtil {
                 item: item
             });
         } catch (error) {
-            this.handleError(error, res, 'Error processing admin command');
+            handleError(error, res, 'Error processing admin command');
         }
     }
 

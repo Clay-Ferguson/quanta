@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { svrUtil } from "../../ServerUtil.js";
+import { handleError } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { IFS } from './IFS/IFS.js';
 import vfs from './VFS/VFS.js';
@@ -464,7 +464,7 @@ class DocUtil {
     
         } catch (error) {
             // Handle any errors that occur during the process
-            svrUtil.handleError(error, res, 'Failed to open item in file system');
+            handleError(error, res, 'Failed to open item in file system');
         }
     }
 

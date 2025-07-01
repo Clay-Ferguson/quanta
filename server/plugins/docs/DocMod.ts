@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { svrUtil } from "../../ServerUtil.js";
+import { handleError, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
@@ -196,7 +196,7 @@ class DocMod {
                 }
             } catch (error) {
                 // Handle any errors that occurred during the save operation
-                svrUtil.handleError(error, res, 'Failed to save file');
+                handleError(error, res, 'Failed to save file');
 
                 // RETHROW! Or else transaction will not rollback
                 throw error; // Re-throw the error for further handling if needed
@@ -299,7 +299,7 @@ class DocMod {
                 res.json({ success: true, message: 'Folder renamed successfully' });
             } catch (error) {
             // Handle any errors that occurred during the rename operation
-                svrUtil.handleError(error, res, 'Failed to rename folder');
+                handleError(error, res, 'Failed to rename folder');
                 throw error;
             }
         });
@@ -430,7 +430,7 @@ class DocMod {
                     });
                 }
             } catch (error) {
-                svrUtil.handleError(error, res, 'Failed to delete file or folder');
+                handleError(error, res, 'Failed to delete file or folder');
                 throw error;
             }
         });
@@ -583,7 +583,7 @@ class DocMod {
                 });
             } catch (error) {
             // Handle any errors that occurred during the move operation
-                svrUtil.handleError(error, res, 'Failed to move file or folder');
+                handleError(error, res, 'Failed to move file or folder');
                 throw error;
             }
         });
@@ -657,7 +657,7 @@ class DocMod {
                     });
                 }
             } catch (error) {
-                svrUtil.handleError(error, res, 'Failed to set public status');
+                handleError(error, res, 'Failed to set public status');
                 throw error;
             }
         });
@@ -906,7 +906,7 @@ class DocMod {
                     message: `Successfully pasted ${pastedCount} of ${pasteItems.length} items`
                 });
             } catch (error) {
-                svrUtil.handleError(error, res, 'Failed to paste items');
+                handleError(error, res, 'Failed to paste items');
                 throw error;
             }
         });
@@ -1058,7 +1058,7 @@ class DocMod {
         
             } catch (error) {
             // Handle any errors that occurred during the join operation
-                svrUtil.handleError(error, res, 'Failed to join files');
+                handleError(error, res, 'Failed to join files');
                 throw error;
             }
         });
@@ -1209,7 +1209,7 @@ class DocMod {
                     folderName: newFolderName
                 });
             } catch (error) {
-                svrUtil.handleError(error, res, 'Failed to convert file to folder');
+                handleError(error, res, 'Failed to convert file to folder');
                 throw error;
             }
         });

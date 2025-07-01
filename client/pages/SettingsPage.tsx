@@ -15,6 +15,8 @@ import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
 
+// declare const DESKTOP_MODE: boolean;
+
 async function clear() {
     await idb.clear();
     console.log("Cleared IndexedDB");
@@ -109,10 +111,14 @@ export default function SettingsPage() {
         }
     };
     
-    const previewUserInfo = async () => {
-        await saveUserInfo(false);
-        appUsers.showUserProfile(gs.keyPair!.publicKey);
-    };
+    // const previewUserInfo = async () => {
+    //     console.log(`previewUserInfo (button click): gs.userProfile=${JSON.stringify(gs.userProfile, null, 2)}`);
+
+    //     await saveUserInfo(false);
+
+    //     console.log(`before showUserProfile: gs.userProfile=${JSON.stringify(gs.userProfile, null, 2)}`);
+    //     appUsers.showUserProfile(gs.keyPair!.publicKey);
+    // };
 
     const saveUserInfo = async (showConfirm: boolean) => {
         let userAvatar = null;
@@ -145,9 +151,6 @@ export default function SettingsPage() {
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
-                {/* todo-0: Somehow when we use the "Preview" button we end up seeing this message, which is incorrect, but indicates somehow 'name' is not being set.
-                            And also once this happens the back button is broke too. Does nothing.
-                */}
                 {!gs.userProfile!.name && ( 
                     <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
                         <p className="text-lg text-gray-200">
@@ -231,12 +234,13 @@ export default function SettingsPage() {
                         </div>
                         
                         <div className="flex justify-end">
-                            <button 
+                            {/* todo-1: temporarily disabled, due to a design flaw. Related to viewing OTHER users' profiles, not your own.
+                            {!DESKTOP_MODE && <button 
                                 className="btn-primary mr-2"
                                 onClick={previewUserInfo}
                             >
                                 Preview
-                            </button>
+                            </button>} */}
                             <button 
                                 className="btn-primary"
                                 onClick={() => saveUserInfo(true)}

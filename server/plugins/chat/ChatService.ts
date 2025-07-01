@@ -6,7 +6,7 @@ import { dbUsers } from "../../DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
 import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../../../common/types/EndpointTypes.js";
-import { svrUtil } from "../../ServerUtil.js";
+import { handleError } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
@@ -45,7 +45,7 @@ class ChatService {
             const ret: GetMessageIdsForRoom_Response = {messageIds}
             res.json(ret);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve message IDs');
+            handleError(error, res, 'Failed to retrieve message IDs');
         }
     }
 
@@ -81,7 +81,7 @@ class ChatService {
             // Send the binary data
             res.send(attachment.data);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve attachment'); 
+            handleError(error, res, 'Failed to retrieve attachment'); 
         }
     }
     
@@ -108,7 +108,7 @@ class ChatService {
             const response: GetMessageHistory_Response = {messages};
             res.json(response);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve message history');
+            handleError(error, res, 'Failed to retrieve message history');
         }
     } 
 
@@ -124,7 +124,7 @@ class ChatService {
             const response: GetRoomInfo_Response = { rooms };
             res.json(response);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve room information');
+            handleError(error, res, 'Failed to retrieve room information');
         }
     }
 
@@ -154,7 +154,7 @@ class ChatService {
                 res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
             }
         } catch (error) {
-            svrUtil.handleError(error, res, 'Server error while attempting to delete room');
+            handleError(error, res, 'Server error while attempting to delete room');
         }
     }
 
@@ -170,7 +170,7 @@ class ChatService {
             const response: GetRecentAttachments_Response = { attachments };
             res.json(response);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve recent attachments');
+            handleError(error, res, 'Failed to retrieve recent attachments');
         }
     }
 
@@ -185,7 +185,7 @@ class ChatService {
             await dbRoom.createTestData();
             res.json({ success: true, message: 'Test data created successfully' });
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to create test data');
+            handleError(error, res, 'Failed to create test data');
         }
     }
 
@@ -221,7 +221,7 @@ class ChatService {
                 res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
             }
         } catch (error) {
-            svrUtil.handleError(error, res, 'Server error while attempting to delete message');
+            handleError(error, res, 'Server error while attempting to delete message');
         }
     }
 
@@ -252,7 +252,7 @@ class ChatService {
             });
     
         } catch (error) {
-            svrUtil.handleError(error, res, 'Server error while attempting to block user');
+            handleError(error, res, 'Server error while attempting to block user');
         }
     }
 
@@ -276,7 +276,7 @@ class ChatService {
                 res.status(404).json({ error: 'Attachment not found or could not be deleted' });
             }
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to delete attachment');
+            handleError(error, res, 'Failed to delete attachment');
         }
     }
 
@@ -304,7 +304,7 @@ class ChatService {
             const response: GetMessagesByIds_Response = { messages };
             res.json(response);
         } catch (error) {
-            svrUtil.handleError(error, res, 'Failed to retrieve messages by IDs');
+            handleError(error, res, 'Failed to retrieve messages by IDs');
         }
     }
 
@@ -328,7 +328,7 @@ class ChatService {
             res.json({ allOk: req.body.messages.length === numSaved});
         }
         catch (error) {
-            svrUtil.handleError(error, res, 'Failed to save messages');
+            handleError(error, res, 'Failed to save messages');
         }
     }
 }
