@@ -90,7 +90,7 @@ class PGDB {
                 description: 'Admin user',
                 publicKey: adminPubKey
             };  
-            await dbUsers.saveUserInfo(defaultAdminProfile);
+            await dbUsers.saveUserInfo(defaultAdminProfile, null);
 
             // now read it back.
             this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);

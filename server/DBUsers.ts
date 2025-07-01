@@ -31,7 +31,7 @@ class DBUsers {
             if (!userProfile.publicKey) {
                 throwError('Public key is required', res);
             }
-            const success = await this.saveUserInfo(userProfile); 
+            const success = await this.saveUserInfo(userProfile, res); 
             if (success) {
                 res.json({ success: true, user_id: userProfile.id });
             } else {
@@ -133,16 +133,13 @@ class DBUsers {
      * @returns A Promise resolving to true if the save operation was successful, false otherwise, and if the record was saved
      *          the side effect of setting the ID on the 'userProfile' object will have occurred.
      */
-    saveUserInfo = async (userProfile: UserProfile): Promise<boolean> => {
+    saveUserInfo = async (userProfile: UserProfile, res: Response | null): Promise<boolean> => {
         try {
             // console.log(`Saving user info for public key: ${userProfile.publicKey} with name: ${userProfile.name}`);
             const adminPubKey = config.get("adminPublicKey");
             if (userProfile.publicKey!.trim() === adminPubKey) {
                 if (userProfile.name !== 'admin') {
-                    // todo-0: Going into Admin User Profile, we can try to chagne the admin name to sometthing else
-                    // and this error correctly catches it, but errors like this don't get shown to the UI in an acceptable way.
-                    // so we need a universal way to handle errors like this, which DO have a message we WANT users to see.
-                    throw new Error('Cannot change admin user name.');
+                    throwError('Cannot change admin user name.', res);
                 }
             }
 
