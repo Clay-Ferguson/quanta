@@ -183,15 +183,15 @@ export class AppService {
         // console.log("Restoring saved values from IndexedDB");
         const name: string= await idb.getItem(DBKeys.userName);
         const description: string = await idb.getItem(DBKeys.userDescription);
-        const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
+        const avatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
 
         const state: GlobalState = {
             userProfile: {
                 name: name || '',
                 description: description || '',
+                avatar,
             },
-            userAvatar,
             headerExpanded
         };
 

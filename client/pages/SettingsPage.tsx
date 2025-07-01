@@ -78,11 +78,11 @@ export default function SettingsPage() {
         }
         
         // Initialize avatar preview if available
-        if (gs.userAvatar) {
-            setAvatarPreview(gs.userAvatar.data);
+        if (gs.userProfile!.avatar) {
+            setAvatarPreview(gs.userProfile!.avatar.data);
         }        
     }, 
-    [gs.userProfile, gs.userAvatar]);
+    [gs.userProfile]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -125,9 +125,9 @@ export default function SettingsPage() {
             if (avatarPreview) {
                 URL.revokeObjectURL(avatarPreview);
             }
-        } else if (gs.userAvatar) {
+        } else if (gs.userProfile!.avatar) {
             // Create a new clean object with just the base properties
-            userAvatar = gs.userAvatar
+            userAvatar = gs.userProfile!.avatar
         }
 
         const success = await appUsers.saveUserInfo(gs, userName, userDescription, userAvatar);

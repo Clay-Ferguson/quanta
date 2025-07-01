@@ -21,7 +21,7 @@ export default function RoomMembersComp() {
         sortedParticipants.unshift({
             publicKey: gs.keyPair.publicKey,
             name: gs.userProfile!.name,
-            avatar: gs.userAvatar ? gs.userAvatar.data : null
+            avatar: gs.userProfile?.avatar ? gs.userProfile.avatar.data : null
         });
     }
     

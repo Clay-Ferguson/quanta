@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { PanelKeys } from './AppServiceTypes';
-import { FileBase64Intf, KeyPairHex, UserProfile } from '../common/types/CommonTypes';
+import { KeyPairHex, UserProfile } from '../common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 
@@ -25,9 +25,6 @@ export interface GlobalState {
     fullSizeImage?: {src: string | null, name: string} | null;
     appInitialized?: boolean;
 
-    // todo-0: Description and Avatar can be used from UserProfile, so we can remove these from here.
-    userAvatar?: FileBase64Intf | null;
-
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile;
     modalMessage?: string | null;
@@ -45,7 +42,6 @@ const initialState: GlobalState = {
     pages: [PAGE], 
     fullSizeImage: null,
     appInitialized: false,
-    userAvatar: null,
     userProfile: {name: '', publicKey: '', description: ''} as UserProfile, // Default to empty object until set by user profile loading
     modalMessage: null,
     showModalButton: true,
