@@ -232,7 +232,8 @@ CREATE OR REPLACE FUNCTION vfs_write_text_file(
     filename_param TEXT,
     content_data TEXT,
     root_key TEXT,
-    content_type_param TEXT DEFAULT 'text/plain'
+    content_type_param TEXT DEFAULT 'text/plain',
+    is_public_param BOOLEAN DEFAULT FALSE
 ) 
 RETURNS INTEGER AS $$
 DECLARE
@@ -261,7 +262,8 @@ BEGIN
         content_type,
         size_bytes,
         created_time,
-        modified_time
+        modified_time,
+        is_public
     ) VALUES (
         owner_id_arg,
         root_key,
@@ -274,7 +276,8 @@ BEGIN
         content_type_param,
         file_size,
         NOW(),
-        NOW()
+        NOW(),
+        is_public_param
     )
     ON CONFLICT (doc_root_key, parent_path, filename)
     DO UPDATE SET 
@@ -301,7 +304,8 @@ CREATE OR REPLACE FUNCTION vfs_write_binary_file(
     filename_param TEXT,
     content_data BYTEA,
     root_key TEXT,
-    content_type_param TEXT DEFAULT 'application/octet-stream'
+    content_type_param TEXT DEFAULT 'application/octet-stream',
+    is_public_param BOOLEAN DEFAULT FALSE
 ) 
 RETURNS INTEGER AS $$
 DECLARE
@@ -330,7 +334,8 @@ BEGIN
         content_type,
         size_bytes,
         created_time,
-        modified_time
+        modified_time,
+        is_public
     ) VALUES (
         owner_id_arg,
         root_key,
@@ -343,7 +348,8 @@ BEGIN
         content_type_param,
         file_size,
         NOW(),
-        NOW()
+        NOW(),
+        is_public_param
     )
     ON CONFLICT (doc_root_key, parent_path, filename)
     DO UPDATE SET 
@@ -639,7 +645,8 @@ CREATE OR REPLACE FUNCTION vfs_mkdir(
     parent_path_param TEXT,
     dirname_param TEXT,
     root_key TEXT,
-    recursive_flag BOOLEAN DEFAULT FALSE
+    recursive_flag BOOLEAN DEFAULT FALSE,
+    is_public_arg BOOLEAN DEFAULT FALSE
 ) 
 RETURNS INTEGER AS $$
 DECLARE
@@ -672,7 +679,8 @@ BEGIN
         content_type,
         size_bytes,
         created_time,
-        modified_time
+        modified_time,
+        is_public
     ) VALUES (
         owner_id_arg,
         root_key,
@@ -685,7 +693,8 @@ BEGIN
         'directory',
         0,
         NOW(),
-        NOW()
+        NOW(),
+        is_public_arg
     ) RETURNING id INTO dir_id;
     
     RETURN dir_id;

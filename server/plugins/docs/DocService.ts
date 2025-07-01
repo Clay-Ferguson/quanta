@@ -449,15 +449,15 @@ class DocService {
                 const absoluteParentPath = ifs.pathJoin(root, treeFolder);
 
                 // Verify parent directory exists and is accessible
+                const info: any = {};
                 ifs.checkFileAccess(absoluteParentPath, root); 
-                if (!await ifs.exists(absoluteParentPath)) {
+                if (!await ifs.exists(absoluteParentPath, info)) {
                     res.status(404).json({ error: `Parent directory not found [${absoluteParentPath}]` });
                     return;
                 }
 
                 // Calculate insertion ordinal based on insertAfterNode
                 let insertOrdinal = 0; // Default: insert at top (ordinal 0)
-
                 if (insertAfterNode && insertAfterNode.trim() !== '') {
                     console.log(`Create file "${fileName}" below node: ${insertAfterNode}`);
                 
@@ -494,7 +494,7 @@ class DocService {
                 }
 
                 // Create the new file with empty content
-                await ifs.writeFile(owner_id, newFilePath, '', 'utf8');
+                await ifs.writeFileEx(owner_id, newFilePath, '', 'utf8', info.node.is_public);
                 //console.log(`File created successfully: ${newFilePath}`);
             
                 // Send success response with the created filename
@@ -572,8 +572,9 @@ class DocService {
                 const absoluteParentPath = ifs.pathJoin(root, treeFolder);
 
                 // Verify parent directory exists and is accessible
+                const info: any = {};
                 ifs.checkFileAccess(absoluteParentPath, root);
-                if (!await ifs.exists(absoluteParentPath)) {
+                if (!await ifs.exists(absoluteParentPath, info)) {
                     res.status(404).json({ error: 'Parent directory not found' });
                     return;
                 }
@@ -605,7 +606,7 @@ class DocService {
                 const newFolderPath = ifs.pathJoin(absoluteParentPath, newFolderName);
 
                 // Create the directory (recursive option ensures parent directories exist)
-                await ifs.mkdir(owner_id, newFolderPath, { recursive: true });
+                await ifs.mkdirEx(owner_id, newFolderPath, { recursive: true }, info.node.is_public);
 
                 console.log(`Folder created successfully: ${newFolderPath}`);
             

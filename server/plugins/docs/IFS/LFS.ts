@@ -29,7 +29,10 @@ class LFS implements IFS {
             await fs.promises.access(path, fs.constants.F_OK);
             if (info) {
                 const stat = await this.stat(path);
-                info.node = {is_directory: stat.is_directory} as TreeNode;
+                info.node = {
+                    is_directory: stat.is_directory,
+                    is_public: false
+                } as TreeNode;
             }
             return true;
         } catch {
@@ -58,6 +61,11 @@ class LFS implements IFS {
             return await fs.promises.readFile(path, encoding);
         }
         return await fs.promises.readFile(path);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async writeFileEx(owner_id: number, path: string, data: string | Buffer, encoding: BufferEncoding, _is_public: boolean): Promise<void> {
+        return this.writeFile(owner_id, path, data, encoding);
     }
 
     async writeFile(owner_id: number, path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
@@ -111,6 +119,11 @@ class LFS implements IFS {
     }
 
     async mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void> {
+        this.mkdirEx(owner_id, path, options, false);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async mkdirEx(owner_id: number, path: string, options?: { recursive?: boolean }, is_public?: boolean): Promise<void> {
         path = this.normalize(path);
         await fs.promises.mkdir(path, options);
     }

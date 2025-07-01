@@ -188,8 +188,8 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
         
         // Insert a test file record using our PostgreSQL function
         const result = await pgdb.query(
-            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6) as file_id',
-            pgdb.adminProfile!.id, testParentPath, testFilename, testContent.toString('utf8'), testRootKey, testContentType
+            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7) as file_id',
+            pgdb.adminProfile!.id, testParentPath, testFilename, testContent.toString('utf8'), testRootKey, testContentType, false
         );
         
         const fileId = result.rows[0].file_id;
@@ -316,22 +316,22 @@ async function testPathOperations(): Promise<void> {
         
         // Create each level manually
         await pgdb.query(
-            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-            pgdb.adminProfile!.id, basePath, '0011_deep', testRootKey, false
+            'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+            pgdb.adminProfile!.id, basePath, '0011_deep', testRootKey, false, false
         );
         console.log('   Created 0011_deep directory');
         
         const deepPath1 = basePath + '/0011_deep';
         await pgdb.query(
-            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-            pgdb.adminProfile!.id, deepPath1, '0001_nested', testRootKey, false
+            'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+            pgdb.adminProfile!.id, deepPath1, '0001_nested', testRootKey, false, false
         );
         console.log('   Created 0001_nested directory');
         
         const deepPath2 = deepPath1 + '/0001_nested';
         await pgdb.query(
-            'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-            pgdb.adminProfile!.id, deepPath2, '0001_final', testRootKey, false
+            'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+            pgdb.adminProfile!.id, deepPath2, '0001_final', testRootKey, false, false
         );        
         console.log('   Created 0001_final directory');
         
@@ -353,8 +353,8 @@ async function testPathOperations(): Promise<void> {
         console.log('3. Testing file creation in deep path...');
         const finalDeepPath = deepPath2 + '/0001_final';
         await pgdb.query(
-            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6)',
-            pgdb.adminProfile!.id, finalDeepPath, '0001_deep-file.txt', 'File in deep nested path', testRootKey, 'text/plain'
+            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7) as file_id',
+            pgdb.adminProfile!.id, finalDeepPath, '0001_deep-file.txt', 'File in deep nested path', testRootKey, 'text/plain', false
         );
         console.log('   Created file in deep nested path');
         
@@ -384,8 +384,8 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         console.log('1. Testing invalid filename format (missing ordinal)...');
         try {
             await pgdb.query(
-                'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6)',
-                pgdb.adminProfile!.id, testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown'
+                'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7)',
+                pgdb.adminProfile!.id, testPath, 'invalid-filename.md', 'test', testRootKey, 'text/markdown', false
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -408,8 +408,8 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         console.log('3. Testing directory creation with invalid name...');
         try {
             await pgdb.query(
-                'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-                pgdb.adminProfile!.id, testPath, 'invalid-dirname', testRootKey, false
+                'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+                pgdb.adminProfile!.id, testPath, 'invalid-dirname', testRootKey, false, false
             );
             console.log('   **** ERROR ****: Should have failed but did not!');
             failCount++;
@@ -458,8 +458,8 @@ async function testErrorHandling(owner_id: number): Promise<void> {
         if (existingFolder) {
             try {
                 await pgdb.query(
-                    'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-                    pgdb.adminProfile!.id, testPath, existingFolder.filename, testRootKey, false
+                    'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+                    pgdb.adminProfile!.id, testPath, existingFolder.filename, testRootKey, false, false
                 );
                 console.log('   **** ERROR ****: Should have failed but did not!');
                 failCount++;
@@ -586,8 +586,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
 
         console.log('Writing test file with searchable content...');
         await pgdb.query(
-            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6) as file_id',
-            pgdb.adminProfile!.id, testPath, testFileName, searchContent, testRootKey, 'text/markdown'
+            'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7) as file_id',
+            pgdb.adminProfile!.id, testPath, testFileName, searchContent, testRootKey, 'text/markdown', false
         );
 
         // Test 1: Basic substring search (MATCH_ANY mode)

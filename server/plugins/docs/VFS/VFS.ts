@@ -215,6 +215,10 @@ class VFS implements IFS {
     }
 
     async writeFile(owner_id: number, fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
+        return await this.writeFileEx(owner_id, fullPath, data, encoding || 'utf8', false);
+    }
+
+    async writeFileEx(owner_id: number, fullPath: string, data: string | Buffer, encoding: BufferEncoding, is_public: boolean): Promise<void> {
         try {
             const { parentPath, filename } = this.parsePath(fullPath);
             
@@ -237,8 +241,8 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT vfs_write_binary_file($1, $2, $3, $4, $5, $6)',
-                    owner_id, parentPath, filename, content, rootKey, contentType
+                    'SELECT vfs_write_binary_file($1, $2, $3, $4, $5, $6, $7)',
+                    owner_id, parentPath, filename, content, rootKey, contentType, is_public
                 );
             } else {
                 // Handle text files
@@ -250,8 +254,8 @@ class VFS implements IFS {
                 }
                 
                 await pgdb.query(
-                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6)',
-                    owner_id, parentPath, filename, textContent, rootKey, contentType
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7)',
+                    owner_id, parentPath, filename, textContent, rootKey, contentType, is_public
                 );
             }
         } catch (error) {
@@ -403,6 +407,11 @@ class VFS implements IFS {
     }
 
     async mkdir(owner_id: number, fullPath: string, options?: { recursive?: boolean }): Promise<void> {
+        // Call the extended version with is_public set to false
+        return await this.mkdirEx(owner_id, fullPath, options, false);
+    }
+
+    async mkdirEx(owner_id: number, fullPath: string, options?: { recursive?: boolean }, is_public?: boolean): Promise<void> {
         try {
             const { parentPath, filename } = this.parsePath(fullPath);
             
@@ -425,8 +434,8 @@ class VFS implements IFS {
             }
             
             await pgdb.query(
-                'SELECT vfs_mkdir($1, $2, $3, $4, $5)',
-                owner_id, parentPath, finalFilename, rootKey, options?.recursive || false
+                'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6)',
+                owner_id, parentPath, finalFilename, rootKey, options?.recursive || false, is_public
             );
         } catch (error) {
             console.error('VFS.mkdir error:', error);

@@ -120,8 +120,8 @@ export async function createFolderStructure(): Promise<void> {
             
             console.log(`Creating root folder: ${fullFolderName}`);
             await pgdb.query(
-                'SELECT vfs_mkdir($1, $2, $3, $4, $5) as folder_id',
-                pgdb.adminProfile!.id, rootPath, fullFolderName, testRootKey, false
+                'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6) as folder_id',
+                pgdb.adminProfile!.id, rootPath, fullFolderName, testRootKey, false, false
             );
             
             // Now create contents inside this folder
@@ -135,8 +135,8 @@ export async function createFolderStructure(): Promise<void> {
                 const fileContent = Buffer.from(`# File ${j} in ${folderName}\n\nThis is test file ${j} inside folder ${folderName}.`);
                 
                 await pgdb.query(
-                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6) as file_id',
-                    pgdb.adminProfile!.id, currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown'
+                    'SELECT vfs_write_text_file($1, $2, $3, $4, $5, $6, $7) as file_id',
+                    pgdb.adminProfile!.id, currentFolderPath, fileName, fileContent.toString('utf8'), testRootKey, 'text/markdown', false
                 );
             }
             
@@ -147,8 +147,8 @@ export async function createFolderStructure(): Promise<void> {
                 const subfolderName = `${subfolderOrdinal}_subfolder${k - 3}`;
                 
                 await pgdb.query(
-                    'SELECT vfs_mkdir($1, $2, $3, $4, $5) as subfolder_id',
-                    pgdb.adminProfile!.id, currentFolderPath, subfolderName, testRootKey, false
+                    'SELECT vfs_mkdir($1, $2, $3, $4, $5, $6) as subfolder_id',
+                    pgdb.adminProfile!.id, currentFolderPath, subfolderName, testRootKey, false, false
                 );
             }
         }

@@ -251,17 +251,18 @@ class DocBinary {
                     const finalFilePath = path.join(absoluteFolderPath, finalFileName);
     
                     try {
-                    // Validate file access permissions
+                        // Validate file access permissions
                         ifs.checkFileAccess(finalFilePath, root);
                             
                         // Prevent overwriting existing files
-                        if (await ifs.exists(finalFilePath)) {
+                        const info: any = {};
+                        if (await ifs.exists(finalFilePath), info) {
                             console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                             continue;
                         }
                             
                         // Write the file data to disk
-                        await ifs.writeFile(owner_id, finalFilePath, file.data);
+                        await ifs.writeFileEx(owner_id, finalFilePath, file.data, 'utf8', info.is_public);
                         savedCount++;
                         console.log(`Uploaded file saved: ${finalFilePath}`);
                     } 
