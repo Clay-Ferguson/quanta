@@ -181,21 +181,22 @@ export class AppService {
      */
     restoreSavedValues = async () => {
         // console.log("Restoring saved values from IndexedDB");
-        const userName: string= await idb.getItem(DBKeys.userName);
-        const userDescription: string = await idb.getItem(DBKeys.userDescription);
+        const name: string= await idb.getItem(DBKeys.userName);
+        const description: string = await idb.getItem(DBKeys.userDescription);
         const userAvatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
 
         const state: GlobalState = {
             userProfile: {
-                name: userName || ''},
-            userDescription,
+                name: name || '',
+                description: description || '',
+            },
             userAvatar,
             headerExpanded
         };
 
         // if no username we send to settings page.
-        if (!userName) {
+        if (!name) {
             state.pages?.push(PageNames.settings);
         }
         await this.callPlugins('restoreSavedValues', state);

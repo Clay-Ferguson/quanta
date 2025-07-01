@@ -53,7 +53,7 @@ export default function ChatSettingsPageComp() {
         if (gs.chatDaysOfHistory !== undefined) {
             setChatDaysOfHistory(gs.chatDaysOfHistory.toString());
         }
-    }, [gs.userProfile, gs.userDescription, gs.userAvatar, gs.chatSaveToServer, gs.chatDaysOfHistory]);
+    }, [gs.userProfile, gs.userAvatar, gs.chatSaveToServer, gs.chatDaysOfHistory]);
     
 
     return (                

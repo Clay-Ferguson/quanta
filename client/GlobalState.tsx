@@ -26,7 +26,6 @@ export interface GlobalState {
     appInitialized?: boolean;
 
     // todo-0: Description and Avatar can be used from UserProfile, so we can remove these from here.
-    userDescription?: string;
     userAvatar?: FileBase64Intf | null;
 
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
@@ -46,7 +45,6 @@ const initialState: GlobalState = {
     pages: [PAGE], 
     fullSizeImage: null,
     appInitialized: false,
-    userDescription: '',
     userAvatar: null,
     userProfile: {name: '', publicKey: '', description: ''} as UserProfile, // Default to empty object until set by user profile loading
     modalMessage: null,

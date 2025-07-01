@@ -73,8 +73,8 @@ export default function SettingsPage() {
         }
         
         // Initialize userDescription from global state
-        if (gs.userDescription) {
-            setUserDescription(gs.userDescription);
+        if (gs.userProfile!.description) {
+            setUserDescription(gs.userProfile!.description);
         }
         
         // Initialize avatar preview if available
@@ -82,7 +82,7 @@ export default function SettingsPage() {
             setAvatarPreview(gs.userAvatar.data);
         }        
     }, 
-    [gs.userProfile, gs.userDescription, gs.userAvatar]);
+    [gs.userProfile, gs.userAvatar]);
 
     const togglePrivateKey = () => {
         setShowPrivateKey(!showPrivateKey);
@@ -145,6 +145,9 @@ export default function SettingsPage() {
                 </div>
             </header>
             <div id="settingsContent" className="flex-grow overflow-y-auto p-4 bg-gray-900">
+                {/* todo-0: Somehow when we use the "Preview" button we end up seeing this message, which is incorrect, but indicates somehow 'name' is not being set.
+                            And also once this happens the back button is broke too. Does nothing.
+                */}
                 {!gs.userProfile!.name && ( 
                     <div className="mb-6 p-5 bg-blue-500/20 border-l-4 border-blue-500 rounded-md">
                         <p className="text-lg text-gray-200">

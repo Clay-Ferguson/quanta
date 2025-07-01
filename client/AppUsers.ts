@@ -58,8 +58,9 @@ class AppUsers {
      */
     saveUserInfo = async (gs: GlobalState, userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
         gs.userProfile!.name = userName;
+        gs.userProfile!.description = userDescription;
         const _gs = gd({ type: `setUserInfo`, payload: { 
-            userProfile: gs.userProfile, userDescription, userAvatar
+            userProfile: gs.userProfile, userAvatar
         }});
         await idb.setItem(DBKeys.userName, userName);
         await idb.setItem(DBKeys.userDescription, userDescription);
