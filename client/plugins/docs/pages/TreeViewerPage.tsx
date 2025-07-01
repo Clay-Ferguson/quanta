@@ -1142,6 +1142,7 @@ export default function TreeViewerPage() {
         if (!folder.startsWith('/')) {
             folder = `/${folder}`;
         }
+        // console.log(`Re-rendering tree for folder: ${folder} with rootKey: ${gs.docsRootKey}`);
         try {
             // setIsLoading(true);
             setError(null);
@@ -1159,7 +1160,7 @@ export default function TreeViewerPage() {
                     }});
                 }
             }
-            // console.log(`Refreshing tree for folder [${folder}] with rootKey="[${gs.docsRootKey}]`);
+            // console.log(`Refreshing tree for folder [${folder}] with rootKey=[${gs.docsRootKey}]`);
             const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
             // console.log(`DocsFolder server response: ${treeResponse!.treeFolder}`);

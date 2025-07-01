@@ -207,6 +207,7 @@ class DocService {
             // Get the appropriate file system implementation
             const ifs = docUtil.getFileSystem(req.params.docRootKey);
             treeFolder = ifs.normalizePath(treeFolder); // Normalize the path to ensure consistent formatting
+            // console.log(`Normalized treeFolder: [${treeFolder}]`);
 
             if (process.env.POSTGRES_HOST) {
                 if (treeFolder.trim()=== '' || treeFolder === '/') {
@@ -226,18 +227,21 @@ class DocService {
                 return;
             }
 
+            const slashFreeTreeFolder = treeFolder.replace(/^\//, ''); // Remove leading slashes
             // Use regex to check if treeFolder starts with pattern "NNNN_" where 4 is a numeric digit
             const ordinalPattern = /^\d{4}_/;
             // If treeFolder does not start with an ordinal, we call "resolveNonOrdinalPath" to convert it to a real path.
-            if (!ordinalPattern.test(treeFolder)) {
-                // console.log(`treeFolder [${treeFolder}] does not start with ordinal, resolving non-ordinal path `);
-                treeFolder = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, treeFolder, ifs) || "";
-                // console.log(`Resolved non-ordinal path to [${treeFolder}]`);  
-                treeFolder = ifs.normalizePath(treeFolder); // Normalize the path after resolution
+            if (!ordinalPattern.test(slashFreeTreeFolder)) {
+                // console.log(`treeFolder [${slashFreeTreeFolder}] does not start with ordinal, resolving non-ordinal path `);
+                treeFolder = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, slashFreeTreeFolder, ifs) || "";
+                // console.log(`Resolved non-ordinal path to [${slashFreeTreeFolder}]`);  
+                treeFolder = ifs.normalizePath(slashFreeTreeFolder); // Normalize the path after resolution
+                // console.log(`Normalized resolved treeFolder: [${treeFolder}]`);
             }
 
             // Construct the absolute path to the target directory
             const absolutePath = ifs.pathJoin(root, treeFolder);
+            // console.log(`Absolute path for tree render: [${absolutePath}]`);
 
             const info: any = {};
             // Verify the target directory exists

@@ -34,6 +34,7 @@ export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
         curFolder = ''; // If we're at root, we want to start with an empty string
     }
     const newFolder = `${curFolder}/${folderName}`;
+    // console.log(`Navigating to folder: [${newFolder}]`);
         
     // Clear selections and highlighted folder when navigating to a new folder
     gd({ type: 'setTreeFolder', payload: { 
