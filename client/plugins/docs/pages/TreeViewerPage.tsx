@@ -1145,6 +1145,20 @@ export default function TreeViewerPage() {
         try {
             // setIsLoading(true);
             setError(null);
+            if (!DESKTOP_MODE) {
+                if (folder=== '/' || folder === '') {
+                    folder = "/"+gs.userProfile!.name || 'admin/public';
+                    if (gs.userProfile && gs.userProfile.name) {
+                        console.log(`Setting docsFolder to root for user ${gs.userProfile?.name}`);
+                    }
+                    else {
+                        console.log(`Setting docsFolder to public/admin. No user profile saved.`);
+                    }
+                    gd({ type: 'setUserProfile', payload: { 
+                        docsFolder: folder
+                    }});
+                }
+            }
             // console.log(`Refreshing tree for folder [${folder}] with rootKey="[${gs.docsRootKey}]`);
             const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});

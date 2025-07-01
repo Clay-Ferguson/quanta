@@ -444,8 +444,6 @@ class VFS implements IFS {
     }
 
     // File/directory manipulation
-    // todo-0: There's a bug in this rename where it's not recursively renaming. Specifically when calle because a user changed their username, that's
-    //         how we discovered this bug.
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
         if (!this.validPath(newPath)) {
             throw new Error(`Invalid new path: ${newPath}. Only alphanumeric characters and underscores`);
@@ -491,7 +489,6 @@ class VFS implements IFS {
             
             if (stats.is_directory) {
                 // Use vfs_rmdir for directories
-                // todo-0: currently we have a bug where ofphans are left after a folder delete.
                 pgdb.logEnabled = true; // Enable logging for debugging
                 await pgdb.query(
                     'SELECT vfs_rmdir($1, $2, $3, $4)',
@@ -531,7 +528,6 @@ class VFS implements IFS {
         const existingNodes = await this.readdirByOwner(userProfile.id, "");
         if (existingNodes && existingNodes.length > 0) {
             const node = existingNodes[0];
-            // todo-0: what we NEED to do here is simply rename the folder, preserving it's ordinal, so that it matches the new user name.
             const ordinalPrefix = node.name.split('_')[0]; // Get the ordinal prefix from the first node
             // Get the substring to the right of the "_" in node.name
             const nameSuffix = node.name.split('_').slice(1).join('_'); // Join the rest of the name after the ordinal prefix

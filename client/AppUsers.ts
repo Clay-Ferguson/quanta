@@ -63,26 +63,20 @@ class AppUsers {
      * @param userAvatar The user's avatar image as a base64-encoded file interface, or null if no avatar
      */
     saveUserInfo = async (gs: GlobalState, userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
-        gs.userProfile!.name = userName;
-        gs.userProfile!.description = userDescription;
-        gs.userProfile!.avatar = userAvatar;
-        const _gs = gd({ type: `setUserInfo`, payload: { 
-            userProfile: gs.userProfile
-        }});
-        await idb.setItem(DBKeys.userName, userName);
-        await idb.setItem(DBKeys.userDescription, userDescription);
-        await idb.setItem(DBKeys.userAvatar, userAvatar);
-
+       
         if (DESKTOP_MODE) {
             // In desktop mode, we don't save to server, just return true
-            console.log("User Info Saved Locally in Desktop Mode: ", JSON.stringify(_gs.userProfile, null, 2));
+            console.log("User Info Saved Locally in Desktop Mode: ", JSON.stringify(gs.userProfile, null, 2));
+            await idb.setItem(DBKeys.userName, userName);
+            await idb.setItem(DBKeys.userDescription, userDescription);
+            await idb.setItem(DBKeys.userAvatar, userAvatar);
             return true;
         }
 
         // Save user info to server if saving to server is enabled
-        if (_gs.keyPair?.publicKey) {
+        if (gs.keyPair?.publicKey) {
             const userProfile: UserProfile = {
-                publicKey: _gs.keyPair!.publicKey,
+                publicKey: gs.keyPair!.publicKey,
                 name: userName,
                 description: userDescription,
                 avatar: userAvatar
@@ -92,16 +86,23 @@ class AppUsers {
                 // console log a JSON pretty print of the response
 
                 // pretty print the response
-                if (ret.success) {
-                    // Save id to IndexedDB for future reference
-                    if (ret.user_id) {
-                        _gs.userProfile!.userId = ret.user_id;
-                        await idb.setItem(DBKeys.userId, ret.user_id);
-                        gd({ type: 'setUserProfile', payload: _gs });
-                    }
+                if (ret.success && ret.user_id) {
+                    console.log("Success! User Info Saved to Server: ", JSON.stringify(ret, null, 2));
+
+                    gs.userProfile!.userId = ret.user_id;
+                    gs.userProfile!.name = userName;
+                    gs.userProfile!.description = userDescription;
+                    gs.userProfile!.avatar = userAvatar;
+                
+                    await idb.setItem(DBKeys.userId, ret.user_id);
+                    await idb.setItem(DBKeys.userName, userName);
+                    await idb.setItem(DBKeys.userDescription, userDescription);
+                    await idb.setItem(DBKeys.userAvatar, userAvatar);
+                   
+                    gd({ type: 'setUserProfile', payload: gs });
+                    return true;
                 }
             }  
-            return ret && ret.ok ? true : false;
         }
         return false;
     }

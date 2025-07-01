@@ -144,8 +144,7 @@ class DBUsers {
             }
 
             if (!userProfile.publicKey) {
-                // todo-0: we need a way for ALL of thes throws to be logged.
-                throw new Error('Cannot save user info without a public key');
+                throwError('Cannot save user info without a public key', res);
             }
 
             // Check if username is already taken by a different user
@@ -156,7 +155,7 @@ class DBUsers {
             );
 
             if (existingUser) {
-                throw new Error(`Username '${userProfile.name}' is already taken by another user.`);
+                throwError(`Username '${userProfile.name}' is already taken by another user.`, res);
             }
 
             let avatarBinaryData: Buffer | null = null;

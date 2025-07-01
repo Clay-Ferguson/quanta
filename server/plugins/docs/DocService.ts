@@ -1,7 +1,7 @@
 import { TreeNode } from "../../../common/types/CommonTypes.js";
 import { Request, Response } from 'express';
 import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
-import { AuthenticatedRequest, handleError, svrUtil } from "../../ServerUtil.js";
+import { AuthenticatedRequest, handleError, svrUtil, throwError } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { IFS } from "./IFS/IFS.js";
@@ -197,6 +197,7 @@ class DocService {
             // Extract the folder path from the URL after the API prefix
             // Example: "/api/docs/render/docs/folder" -> "/folder"
             // todo-1: this string repacement is super ugly. Do something better.
+            // console.log(`Tree Render Request=[${pathName}]`);
             const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
             let treeFolder = decodeURIComponent(rawTreeFolder);
             
@@ -212,9 +213,7 @@ class DocService {
                     if (user_id!=pgdb.adminProfile!.id) {
                         // If treeFolder is empty or root, we return the admin profile's root node
                         // This is a security measure to prevent unauthorized access to the admin's root
-                        console.warn(`Unauthorized access attempt by user ${user_id} to root node.`);
-                        res.status(403).json({ error: 'Access denied' });
-                        return;
+                        throwError(`Unauthorized access attempt by user ${user_id} to root node.`);
                     }
                 }
             }
