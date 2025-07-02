@@ -831,7 +831,7 @@ function TreeNodeComponent({
     // Check if this is the highlighted file that we jumped to from search
     // Compare the stripped names (without ordinal prefix) for exact match
     const isHighlightedFile = !isFolder && gs.docsHighlightedFileName && 
-        stripOrdinal(node.name) === gs.docsHighlightedFileName;
+        node.name === gs.docsHighlightedFileName;
     
     // Determine the border class based on whether this is highlighted
     const getBorderClass = () => {
