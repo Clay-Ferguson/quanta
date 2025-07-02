@@ -257,7 +257,8 @@ class DocBinary {
                             
                         // Prevent overwriting existing files
                         const info: any = {};
-                        if (await ifs.exists(finalFilePath), info) {
+                        const exists = await ifs.exists(finalFilePath, info);
+                        if (exists) {
                             console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                             continue;
                         }

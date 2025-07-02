@@ -118,7 +118,7 @@ class DocMod {
                     
                     // Verify the original file exists before attempting rename
                     if (await ifs.exists(absoluteFilePath)) {
-                    // Prevent overwriting existing files
+                        // Prevent overwriting existing files
                         if (await ifs.exists(newAbsoluteFilePath)) {
                             res.status(409).json({ error: 'A file with the new name already exists' });
                             return;
