@@ -5,6 +5,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
 import pgdb from "../../PGDB.js";
+import { fixName } from '../../../common/CommonUtils.js';
 
 /**
  * DocMod - Document Modification Service
@@ -236,7 +237,7 @@ class DocMod {
                 // Extract request parameters
                 const { oldFolderName, treeFolder, docRootKey } = req.body;
                 let {newFolderName} = req.body;
-                newFolderName = svrUtil.fixName(newFolderName); // Ensure valid folder name
+                newFolderName = fixName(newFolderName); // Ensure valid folder name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
@@ -1116,7 +1117,7 @@ class DocMod {
                 // Extract request parameters
                 const { filename, remainingContent, treeFolder, docRootKey } = req.body;
                 let { folderName } = req.body;
-                folderName = svrUtil.fixName(folderName); // Ensure no leading/trailing whitespace
+                folderName = fixName(folderName); // Ensure no leading/trailing whitespace
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);

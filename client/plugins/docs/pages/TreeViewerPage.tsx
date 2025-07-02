@@ -16,7 +16,7 @@ import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditC
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
-import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime } from '../../../../common/CommonUtils';
+import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime, stripFileExtension } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
 import { docsGoHome } from '../DocsUtils';
@@ -168,16 +168,52 @@ function EditFile({
     handleCancelClick, 
     contentTextareaRef 
 }: EditFileProps) {
+    /**
+     * Prepares a filename for editing by stripping both ordinal prefix and extension
+     * This needs to be defined outside useEffect to avoid lint warnings
+     */
+    const prepareFilenameForEditing = useCallback((filename: string): string => {
+        // First strip the ordinal prefix
+        const nameWithoutOrdinal = stripOrdinal(filename);
+        // Then strip the extension
+        return stripFileExtension(nameWithoutOrdinal);
+    }, []);
+    
     // Use local state for content to avoid sluggish updates on every keystroke
     const [localContent, setLocalContent] = useState(gs.docsEditNode?.content || '');
+    
+    // Use local state for filename to initialize with current filename when editing
+    // We need to track the current node to know when we're switching to a different file
+    const [currentNodeName, setCurrentNodeName] = useState<string | null>(gs.docsEditNode?.name || null);
+    const [localFileName, setLocalFileName] = useState(
+        gs.docsNewFileName || 
+        (gs.docsEditNode?.name ? prepareFilenameForEditing(gs.docsEditNode.name) : '')
+    );
 
-    // Update local content when editing a different node
+    // Update local content and filename only when switching to a different node
     useEffect(() => {
         setLocalContent(gs.docsEditNode?.content || '');
-    }, [gs.docsEditNode]);
+        
+        // Only update the filename when we're switching to a different node
+        const newNodeName = gs.docsEditNode?.name || null;
+        if (newNodeName !== currentNodeName) {
+            setLocalFileName(
+                gs.docsNewFileName || 
+                (gs.docsEditNode?.name ? prepareFilenameForEditing(gs.docsEditNode.name) : '')
+            );
+            setCurrentNodeName(newNodeName);
+        }
+    }, [gs.docsEditNode, gs.docsNewFileName, currentNodeName, prepareFilenameForEditing]);
 
     const handleLocalContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setLocalContent(event.target.value);
+    };
+
+    const handleLocalFileNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newFileName = event.target.value;
+        setLocalFileName(newFileName);
+        // Also update the global state for consistency
+        handleFileNameChange(event);
     };
 
     const handleInsertTime = () => {
@@ -237,8 +273,8 @@ function EditFile({
         <div>
             <input
                 type="text"
-                value={gs.docsNewFileName || ''}
-                onChange={handleFileNameChange}
+                value={localFileName}
+                onChange={handleLocalFileNameChange}
                 className="w-full mb-3 p-2 bg-gray-800 border border-gray-600 text-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Filename (optional)"
             />

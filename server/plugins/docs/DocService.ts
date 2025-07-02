@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import pgdb from "../../PGDB.js";
 const { exec } = await import('child_process');
+import { fixName, getFilenameExtension } from '../../../common/CommonUtils.js';
 
 /**
  * Service class for handling document management operations in the docs plugin.
@@ -354,7 +355,7 @@ class DocService {
             else {
                 file.fsChildren = false; // Files do not have children
                 // Process files based on their extension
-                const ext = svrUtil.getFilenameExtension(file.name).toLowerCase();
+                const ext = getFilenameExtension(file.name).toLowerCase();
                     
                 // IMAGE FILE
                 if (['.png', '.jpeg', '.jpg'].includes(ext)) {
@@ -429,7 +430,7 @@ class DocService {
                 const { insertAfterNode, docRootKey } = req.body;
                 let {treeFolder} = req.body;
                 let {fileName} = req.body;
-                fileName = svrUtil.fixName(fileName); // Ensure valid file name
+                fileName = fixName(fileName); // Ensure valid file name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);
@@ -484,7 +485,7 @@ class DocService {
             
                 // Auto-add .md extension if no extension is provided
                 let finalFileName = newFileName;
-                if (!svrUtil.getFilenameExtension(fileName)) {
+                if (!getFilenameExtension(fileName)) {
                     finalFileName = `${newFileName}.md`;
                 }
             
@@ -553,7 +554,7 @@ class DocService {
                 // Extract parameters from request body
                 const { treeFolder, insertAfterNode, docRootKey } = req.body;
                 let {folderName} = req.body;
-                folderName = svrUtil.fixName(folderName); // Ensure valid folder name
+                folderName = fixName(folderName); // Ensure valid folder name
             
                 // Get the appropriate file system implementation
                 const ifs = docUtil.getFileSystem(docRootKey);

@@ -7,7 +7,7 @@ import { httpClientUtil } from "../../../HttpClientUtil";
 import { DBKeys } from "../../../AppServiceTypes";
 import { idb } from "../../../IndexedDB";
 import { util } from "../../../Util";
-import { stripOrdinal } from "../../../../common/CommonUtils";
+import { getFilenameExtension, stripOrdinal } from "../../../../common/CommonUtils";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: boolean;
@@ -427,19 +427,29 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
     if (gs.docsEditNode) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
-        const newFileName = gs.docsNewFileName || stripOrdinal(originalName);
+        let newFileName = gs.docsNewFileName || stripOrdinal(originalName);
+        
+        const originalExtension  = getFilenameExtension(originalName);
+        
+        // If the user hasn't specified an extension in their new filename, use the original extension
+        // or default to .md if there was no original extension
+        if (!newFileName.includes('.')) {
+            if (originalExtension) {
+                // Don't add the extension if we're dealing with a special file like .gitignore
+                if (originalName !== originalExtension) {
+                    newFileName += originalExtension;
+                }
+            } else {
+                newFileName += '.md'; // Default extension
+            }
+        }
             
         // Extract the numeric prefix from the original file name
         const underscoreIdx = originalName.indexOf('_');
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
         // Create the new full file name with the numeric prefix, and replace spaces and dashes with underscores to create a valid file name
-        let newFullFileName = numericPrefix + newFileName.replace(/[ -]/g, '_');
-
-        // if newFullName doesn't have a file any extension at all, add '.md' to it
-        if (!newFullFileName.includes('.')) {
-            newFullFileName += '.md';
-        }
+        const newFullFileName = numericPrefix + newFileName.replace(/[ -]/g, '_');
 
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 

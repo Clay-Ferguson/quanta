@@ -16,6 +16,30 @@ export function formatDateTime(timestamp: number): string {
     });
 }
 
+/**
+ * Strips the file extension from a filename
+ */
+export function stripFileExtension(filename: string): string {
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1) return filename; // No extension
+    return filename.substring(0, lastDotIndex);
+};
+
+export function fixName(name: string): string {
+    // Replace any invalid characters with an underscore
+    return name.replace(/[^a-zA-Z0-9_. -]/g, '_');
+}   
+    
+export function getFilenameExtension(fullPath: string): string {
+    // All we do is find the last dot and return the subtring including the dot.
+    const lastDotIndex = fullPath.lastIndexOf('.');
+    if (lastDotIndex === -1 || lastDotIndex === fullPath.length - 1) {
+        // No extension found or dot is the last character
+        return '';
+    }
+    return fullPath.substring(lastDotIndex);
+}
+
 export function formatDisplayName(name: string) {
     name = stripOrdinal(name);
     const endsWithUnderscore = name.endsWith('_');

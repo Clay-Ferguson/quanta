@@ -5,6 +5,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
 import pgdb from '../../PGDB.js';
+import { fixName } from '../../../common/CommonUtils.js';
 
 /**
  * DocBinary class handles binary file operations for the docs plugin
@@ -242,7 +243,7 @@ class DocBinary {
                 let savedCount = 0;
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    file.name = svrUtil.fixName(file.name); // Ensure valid file name
+                    file.name = fixName(file.name); // Ensure valid file name
                     const ordinal = insertOrdinal + i;
                         
                     // Create zero-padded ordinal prefix (e.g., "0001", "0002")

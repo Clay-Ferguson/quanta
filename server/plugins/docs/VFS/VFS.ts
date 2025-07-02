@@ -3,6 +3,7 @@ import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
 import { TreeNode, UserProfileCompact } from '../../../../common/types/CommonTypes.js';
 import { svrUtil } from '../../../ServerUtil.js';
+import { getFilenameExtension } from '../../../../common/CommonUtils.js';
 
 const rootKey = "usr"; // Default root key for VFS, can be changed based on configuration
 
@@ -223,7 +224,7 @@ class VFS implements IFS {
             const { parentPath, filename } = this.parsePath(fullPath);
             
             // Determine if this is a binary file based on extension
-            const ext = svrUtil.getFilenameExtension(filename).toLowerCase();
+            const ext = getFilenameExtension(filename).toLowerCase();
 
             // todo-1: What we need instead of this is an 'isTextFile' because it's a shorter list and everythin else is binary.
             const isBinary = this.isBinaryFile(ext);

@@ -103,21 +103,6 @@ class ServerUtil {
         return /^[a-zA-Z0-9_. -]+$/.test(name);
     }
 
-    public fixName(name: string): string {
-        // Replace any invalid characters with an underscore
-        return name.replace(/[^a-zA-Z0-9_. -]/g, '_');
-    }   
-    
-    public getFilenameExtension(fullPath: string): string {
-        // All we do is find the last dot and return the subtring including the dot.
-        const lastDotIndex = fullPath.lastIndexOf('.');
-        if (lastDotIndex === -1 || lastDotIndex === fullPath.length - 1) {
-            // No extension found or dot is the last character
-            return '';
-        }
-        return fullPath.substring(lastDotIndex);
-    }
-
     /**
      * Retrieves and validates an environment variable
      * @param name - The name of the environment variable to retrieve
