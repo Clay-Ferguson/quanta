@@ -105,7 +105,7 @@ class HttpClientUtil {
         // Build the signature base
         let sigBase = '';
         sigBase += `"@method": post\n`;
-        sigBase += `"@target-uri": ${window.location.origin}${url}\n`;
+        sigBase += `"@target-uri": ${window.location.origin}${encodeURI(url)}\n`;
         sigBase += `"@created": ${created}`;
         
         // Only include content-type in signature for JSON requests

@@ -137,7 +137,7 @@ class HttpServerUtil {
                 } else if (component === 'content-type') {
                     sigBase += `"content-type": ${req.get('content-type')}\n`;
                 }
-            // Add other components as needed
+                // Add other components as needed
             }
         
             // Remove trailing newline if present
