@@ -13,6 +13,6 @@ plugins:
 # Public folders configuration - array of folder objects with name and path
 public-folders:
   - name: "Doc Root"
-    key: "root"
+    key: "usr"
     path: "/home/clay/ferguson/A-doc-root"
-    
+    # Accessable at: http://localhost:8000/doc/usr
