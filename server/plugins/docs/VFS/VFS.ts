@@ -77,8 +77,17 @@ class VFS implements IFS {
     async exists(fullPath: string, info: any=null): Promise<boolean> {
         // if a non-info object was passed the caller needs additional info so we run getNodeByName
         // which returns the whole record.
-        // console.log('VFS.exists:', fullPath, 'info:', info);
+        // console.log(`VFS.exists: fullPath[${fullPath}] info: [${info}]`);
+        fullPath = this.normalizePath(fullPath);
+        // console.log(`normalied fullPath[${fullPath}]`);
+
         if (info) {
+            if (fullPath === '') {
+                console.log("Is Root folder. Returning fake node.");
+                // Special case for root directory
+                info.node = { is_directory: true, is_public: false } as TreeNode; // Root directory has no database row
+                return true; // Root directory always exists
+            }
             const node: TreeNode | null = await this.getNodeByName(fullPath);
             if (node) {
                 info.node = node; // Attach the node to the info object

@@ -70,6 +70,7 @@ class HttpClientUtil {
             }
             
             url = encodeURI(url);
+            // console.log(`>>>> Fetch ${url}:`, JSON.stringify(opts, null, 2));
             const res = await fetch(url, opts); 
             const response = await res.json();
             // console.log(`>>>> RAW Response from ${url}:`, JSON.stringify(response, null, 2));

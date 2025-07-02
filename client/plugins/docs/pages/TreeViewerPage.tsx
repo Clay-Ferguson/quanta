@@ -1184,13 +1184,15 @@ export default function TreeViewerPage() {
             setError(null);
             if (!DESKTOP_MODE) {
                 if (folder=== '/' || folder === '') {
-                    folder = "/"+gs.userProfile!.name || 'admin/public';
                     if (gs.userProfile && gs.userProfile.name) {
                         console.log(`Setting docsFolder to root for user ${gs.userProfile?.name}`);
+                        folder = "/"+gs.userProfile!.name; 
                     }
                     else {
                         console.log(`Setting docsFolder to public/admin. No user profile saved.`);
+                        folder = "/admin/public";
                     }
+                    // console.log(`Setting docsFolder to [${folder}]`);
                     gd({ type: 'setUserProfile', payload: { 
                         docsFolder: folder
                     }});
@@ -1202,7 +1204,7 @@ export default function TreeViewerPage() {
             // console.log(`DocsFolder server response: ${treeResponse!.treeFolder}`);
             
             if (treeResponse) {
-            // Update user_id from the response if it's provided
+                // Update user_id from the response if it's provided
                 if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
                 gs.userProfile!.userId = treeResponse.user_id;
                 await idb.setItem(DBKeys.userId, treeResponse.user_id);

@@ -79,11 +79,6 @@ export default function SearchViewPage() {
     }, []);
     
     const handleSearch = async () => {
-        if (!gs.docsSearch?.trim()) {
-            await alertModal('Please enter a search query');
-            return;
-        }
-        
         // todo-1: implement VFS binary search ? some day.
         if (gs.docsRootType === 'vfs' && !gs.docsSearchTextOnly) {
             await alertModal('Binary search is not supported for VFS. Please enable "Text Only" search mode.');
@@ -91,7 +86,7 @@ export default function SearchViewPage() {
         }
 
         setIsSearching(true);
-        const search = gs.docsSearch.trim();
+        const search = gs.docsSearch?.trim();
         try {
             const searchFolder = gs.docsFolder || '/';
             const endpoint = gs.docsRootType === 'vfs' ? '/api/docs/search-vfs' : 
@@ -359,7 +354,7 @@ export default function SearchViewPage() {
                         
                         <button 
                             onClick={handleSearch}
-                            disabled={isSearching || !gs.docsSearch?.trim()}
+                            disabled={isSearching}
                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed ml-4"
                         >
                             {isSearching ? 'Searching...' : 'Search'}

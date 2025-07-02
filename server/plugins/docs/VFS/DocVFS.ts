@@ -16,6 +16,12 @@ class DocVFS {
      * - MATCH_ANY: Finds files containing any search terms (OR logic)
      * - MATCH_ALL: Finds files containing all search terms (AND logic)
      * 
+     * Empty Query Handling:
+     * - Empty, null, or undefined queries are treated as "match everything"
+     * - Automatically converts to REGEX mode with pattern ".*" to match all content
+     * - Returns file-level results only (no line-by-line content)
+     * - Useful for browsing all VFS content in a directory structure
+     * 
      * Features:
      * - PostgreSQL native text search for better performance
      * - File-level results (no line numbers)
@@ -24,7 +30,7 @@ class DocVFS {
      * - Consistent API with existing search endpoints
      */
     searchVFSFiles = async (req: Request<any, any, {  
-        query: string; 
+        query?: string; 
         treeFolder: string; 
         docRootKey: string; 
         searchMode?: string,
@@ -33,14 +39,18 @@ class DocVFS {
         console.log("VFS Document Search Request");
         try {
             // Extract and validate parameters
-            const { query, treeFolder, docRootKey, searchMode = 'MATCH_ANY', requireDate = false, searchOrder = 'MOD_TIME' } = req.body;
+            const { treeFolder, docRootKey, requireDate = false, searchOrder = 'MOD_TIME' } = req.body;
+            let { query, searchMode = 'MATCH_ANY' } = req.body;
             
-            // Validate required parameters
-            if (!query || typeof query !== 'string') {
-                res.status(400).json({ error: 'Query string is required' });
-                return;
+            // Handle empty, null, or undefined query as "match everything"
+            const isEmptyQuery = !query || query.trim() === '';
+            if (isEmptyQuery) {
+                query = '.*'; // Regex pattern that matches any content
+                searchMode = 'REGEX'; // Force REGEX mode for match-all behavior
+                console.log('Empty query detected in VFS search, using match-all pattern for file-level results');
             }
             
+            // Validate required parameters
             if (!treeFolder || typeof treeFolder !== 'string') {
                 res.status(400).json({ error: 'Tree folder is required' });
                 return;

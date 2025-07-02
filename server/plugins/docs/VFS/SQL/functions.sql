@@ -818,6 +818,11 @@ $$ LANGUAGE plpgsql;
 -- Searches through text content in non-binary files
 -- Supports REGEX, MATCH_ANY, and MATCH_ALL search modes
 -- Optionally filters by timestamp requirements
+-- 
+-- Empty Query Handling:
+-- - Empty, null, or undefined queries are treated as "match everything"
+-- - Automatically converts to REGEX mode with pattern ".*" to match all content
+-- - Returns file-level results for all text files in the specified path
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_search_text(
     -- todo-1: need owner_id_arg here (standard security), and call 'pgdb.authId(id)' with id before we get here.
@@ -842,7 +847,17 @@ DECLARE
     term TEXT;
     where_clause TEXT := '';
     order_clause TEXT := '';
+    is_empty_query BOOLEAN;
 BEGIN
+    -- Handle empty, null, or undefined query as "match everything"
+    is_empty_query := (search_query IS NULL OR trim(search_query) = '');
+    
+    IF is_empty_query THEN
+        -- For empty queries, we'll match all files without content filtering
+        search_query := '.*';  -- This won't be used but kept for consistency
+        search_mode := 'REGEX';  -- Force REGEX mode but we'll handle it specially
+    END IF;
+    
     -- Build the base WHERE clause
     -- Handle root path search specially
     IF search_path = '/' THEN
@@ -860,14 +875,15 @@ BEGIN
         where_clause := where_clause || format(' AND content_text ~* %L', date_regex);
     END IF;
     
-    -- Build search condition based on mode
-    IF search_mode = 'REGEX' THEN
-        -- REGEX mode: use the query as-is as a regex pattern
-        where_clause := where_clause || format(' AND content_text ~* %L', search_query);
-        
-    ELSIF search_mode = 'MATCH_ANY' THEN
-        -- MATCH_ANY mode: split query into terms and search for any term (OR logic)
-        -- Simple word splitting on whitespace, handling quoted phrases
+    -- Build search condition based on mode (skip content filtering for empty queries)
+    IF NOT is_empty_query THEN
+        IF search_mode = 'REGEX' THEN
+            -- REGEX mode: use the query as-is as a regex pattern
+            where_clause := where_clause || format(' AND content_text ~* %L', search_query);
+            
+        ELSIF search_mode = 'MATCH_ANY' THEN
+            -- MATCH_ANY mode: split query into terms and search for any term (OR logic)
+            -- Simple word splitting on whitespace, handling quoted phrases
         SELECT string_to_array(
             regexp_replace(
                 regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
@@ -889,28 +905,27 @@ BEGIN
                 where_clause := where_clause || format('content_text ILIKE %L', '%' || search_terms[i] || '%');
             END LOOP;
             where_clause := where_clause || ')';
+        END IF;        ELSIF search_mode = 'MATCH_ALL' THEN
+            -- MATCH_ALL mode: split query into terms and search for all terms (AND logic)
+            SELECT string_to_array(
+                regexp_replace(
+                    regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
+                    '\s+', ' ', 'g'
+                ), 
+                ' '
+            ) INTO search_terms;
+            
+            -- Remove empty terms
+            search_terms := array_remove(search_terms, '');
+            
+            IF array_length(search_terms, 1) > 0 THEN
+                -- Build AND condition for all terms match
+                FOR i IN 1..array_length(search_terms, 1) LOOP
+                    where_clause := where_clause || format(' AND content_text ILIKE %L', '%' || search_terms[i] || '%');
+                END LOOP;
+            END IF;
         END IF;
-        
-    ELSIF search_mode = 'MATCH_ALL' THEN
-        -- MATCH_ALL mode: split query into terms and search for all terms (AND logic)
-        SELECT string_to_array(
-            regexp_replace(
-                regexp_replace(search_query, '"([^"]*)"', '\1', 'g'), 
-                '\s+', ' ', 'g'
-            ), 
-            ' '
-        ) INTO search_terms;
-        
-        -- Remove empty terms
-        search_terms := array_remove(search_terms, '');
-        
-        IF array_length(search_terms, 1) > 0 THEN
-            -- Build AND condition for all terms match
-            FOR i IN 1..array_length(search_terms, 1) LOOP
-                where_clause := where_clause || format(' AND content_text ILIKE %L', '%' || search_terms[i] || '%');
-            END LOOP;
-        END IF;
-    END IF;
+    END IF;  -- End of NOT is_empty_query condition
     
     -- Build ORDER BY clause
     IF search_order = 'MOD_TIME' THEN
