@@ -1,4 +1,4 @@
-import { TreeNode } from "../../../common/types/CommonTypes.js";
+import { ANON_USER_ID, TreeNode } from "../../../common/types/CommonTypes.js";
 import { Request, Response } from 'express';
 import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
 import { AuthenticatedRequest, handleError, svrUtil, throwError } from "../../ServerUtil.js";
@@ -113,9 +113,7 @@ class DocService {
             ifs.checkFileAccess(currentPath, root);
             
             // Read directory contents to find matching folders
-            // todo-1: this can be calling the vfs_read_names instead so it's not getting content, only what it needs.
             const entries = await ifs.readdir(owner_id, currentPath);
-            // console.log(`  Found ${entries.length} entries in directory: ${currentPath}`);
             
             // Search for folder that matches the non-ordinal name
             let matchedFolder: string | null = null;
@@ -191,20 +189,16 @@ class DocService {
      * @param res - Express response object for JSON tree data
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
-    treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
+    treeRender = async (req: Request<{ docRootKey: string; 0: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
         let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
         if (!user_id) {
-            user_id = -1; // -1 is ANON. todo-0: put this in a constant variable
+            user_id = ANON_USER_ID;
         }                   
        
-        // Clean up path by removing double slashes
-        const pathName = req.path.replace("//", "/");
         try {
-            // Extract the folder path from the URL after the API prefix
-            // Example: "/api/docs/render/docs/folder" -> "/folder"
-            // todo-1: this string repacement is super ugly. Do something better.
-            //console.log(`Tree Render Request. pathName=[${pathName}]`);
-            const rawTreeFolder = pathName.replace(`/api/docs/render/${req.params.docRootKey}`, '') || "/"
+            // Extract the folder path from the wildcard part of the URL
+            // The wildcard (*) in the route captures everything after docRootKey and stores it in req.params[0]
+            const rawTreeFolder = req.params[0] || "/";
             let treeFolder = decodeURIComponent(rawTreeFolder);
             
             // Extract the pullup parameter from query string
@@ -228,7 +222,6 @@ class DocService {
             // Resolve the document root path from the provided key
             const root = config.getPublicFolderByKey(req.params.docRootKey).path;
             if (!root) {
-                // todo-1: this kind of error is not having something displayed to user and just results in a blank page
                 res.status(500).json({ error: 'bad root' });
                 return;
             }
@@ -324,7 +317,7 @@ class DocService {
         ifs.checkFileAccess(absolutePath, root); 
         
         // Read the directory contents
-        let fileNodes = await ifs.readdirEx(owner_id, absolutePath);
+        let fileNodes = await ifs.readdirEx(owner_id, absolutePath, true);
 
         // This filters out hidden files and system files
         fileNodes = fileNodes.filter(file => !file.name.startsWith('.') && !file.name.startsWith('_'));
@@ -363,23 +356,14 @@ class DocService {
                     // Image files: store relative path for URL construction
                     file.type = 'image';
                     // If filePath starts with root, strip the root part to get relative path
-                    // todo-1: need to verify this path stipping of 'root' didn't break VFS!
                     // console.log(`Processing image file: [${filePath}] under root [${root}]`);
                     const relativePath = filePath.startsWith(root) ? filePath.substring(root.length) : filePath;
-                    // console.log(`Relative image path: ${relativePath}`);
                     file.url = relativePath; // Use absolute path for image display 
                 } 
                 // TEXT FILE
                 else if (['.md', '.txt'].includes(ext)) {
                     // Text files: read and store content
                     file.type = 'text';
-                    try {
-                        file.content = await ifs.readFile(owner_id, filePath, 'utf8') as string;
-                    } catch (error) {
-                        console.warn(`Could not read file ${filePath} as text:`, error);
-                        // file.content = '';
-                        file.type = 'unknown';
-                    }
                 } 
                 // BINAY FILE
                 else {

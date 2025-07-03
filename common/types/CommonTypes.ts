@@ -1,3 +1,5 @@
+export const ANON_USER_ID = -1;
+
 export type KeyPairHex = {
     privateKey: string;
     publicKey: string

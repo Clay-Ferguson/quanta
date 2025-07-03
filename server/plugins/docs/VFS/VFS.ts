@@ -130,7 +130,7 @@ class VFS implements IFS {
             name: row.filename, 
             createTime: row.created_time,
             modifyTime: row.modified_time,
-            content: row.content,
+            content: row.content_text,  // Fixed: was row.text_content, now row.content_text
         } as TreeNode;
     }
 
@@ -234,8 +234,6 @@ class VFS implements IFS {
             
             // Determine if this is a binary file based on extension
             const ext = getFilenameExtension(filename).toLowerCase();
-
-            // todo-1: What we need instead of this is an 'isTextFile' because it's a shorter list and everythin else is binary.
             const isBinary = this.isBinaryFile(ext);
             
             // Determine content type based on file extension
@@ -352,19 +350,17 @@ class VFS implements IFS {
         }
     }
 
-    // Special version with no 'LFS' equivalent called only from Docs plugin
-    async readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]> {
+    async readdirEx(owner_id: number, fullPath: string, loadContent: boolean): Promise<TreeNode[]> {
         try {
             const relativePath = this.normalizePath(fullPath);
             
             const rootContents = await pgdb.query(
-                'SELECT * FROM vfs_readdir($1, $2, $3)',
-                pgdb.authId(owner_id), relativePath, rootKey
+                'SELECT * FROM vfs_readdir($1, $2, $3, $4)',
+                pgdb.authId(owner_id), relativePath, rootKey, loadContent
             );
             // print formatted JSON of the rootContents
             // console.log(`VFS.readdirEx contents for ${fullPath}:`, JSON.stringify(rootContents.rows, null, 2));
             const treeNodes = rootContents.rows.map((row: any) => {
-                // Convert PostgreSQL row to TreeNode format
                 return this.convertToTreeNode(row);
             });
             return treeNodes;

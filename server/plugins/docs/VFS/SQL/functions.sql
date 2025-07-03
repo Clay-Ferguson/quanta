@@ -6,11 +6,13 @@
 -- Equivalent to fs.readdirSync() - lists directory contents
 -- Returns files/folders in ordinal order with their metadata
 -- Uses filename prefix for ordinal ordering instead of separate ordinal column
+-- Optional include_content parameter includes content_text column when true
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_readdir(
     owner_id_arg INTEGER,
     dir_path TEXT,
-    root_key TEXT
+    root_key TEXT,
+    include_content BOOLEAN DEFAULT FALSE
 ) 
 RETURNS TABLE(
     owner_id INTEGER,
@@ -20,26 +22,49 @@ RETURNS TABLE(
     size_bytes BIGINT,
     content_type VARCHAR(100),
     created_time TIMESTAMP WITH TIME ZONE,
-    modified_time TIMESTAMP WITH TIME ZONE
+    modified_time TIMESTAMP WITH TIME ZONE,
+    content_text TEXT
 ) AS $$
 BEGIN
-    RETURN QUERY
-    SELECT 
-        n.owner_id,
-        n.is_public,
-        n.filename,
-        n.is_directory,
-        n.size_bytes,
-        n.content_type,
-        n.created_time,
-        n.modified_time
-    FROM vfs_nodes n
-    WHERE 
-        n.doc_root_key = root_key 
-        AND n.parent_path = dir_path
-        AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
-    ORDER BY 
-        n.filename ASC;
+    IF include_content THEN
+        RETURN QUERY
+        SELECT 
+            n.owner_id,
+            n.is_public,
+            n.filename,
+            n.is_directory,
+            n.size_bytes,
+            n.content_type,
+            n.created_time,
+            n.modified_time,
+            n.content_text
+        FROM vfs_nodes n
+        WHERE 
+            n.doc_root_key = root_key 
+            AND n.parent_path = dir_path
+            AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
+        ORDER BY 
+            n.filename ASC;
+    ELSE
+        RETURN QUERY
+        SELECT 
+            n.owner_id,
+            n.is_public,
+            n.filename,
+            n.is_directory,
+            n.size_bytes,
+            n.content_type,
+            n.created_time,
+            n.modified_time,
+            NULL::TEXT as content_text
+        FROM vfs_nodes n
+        WHERE 
+            n.doc_root_key = root_key 
+            AND n.parent_path = dir_path
+            AND (owner_id_arg=0 OR n.owner_id = owner_id_arg OR n.is_public = TRUE) 
+        ORDER BY 
+            n.filename ASC;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 

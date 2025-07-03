@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import open from 'open';
 import path from 'path';
 import { Application } from "express";
-import { UserProfileCompact } from '../common/types/CommonTypes.js';
+import { ANON_USER_ID, UserProfileCompact } from '../common/types/CommonTypes.js';
 
 export interface IAppContext {
     app: Application; // Express application instance
@@ -88,7 +88,7 @@ class ServerUtil {
 
     /* Gets the appropriate owner_id to use for processing a request and null if we should not process the request */
     public getOwnerId = (req: Request, res: Response): number | null => {
-        let owner_id: number | undefined = -1;
+        let owner_id: number | undefined = ANON_USER_ID;
         if (process.env.POSTGRES_HOST) {
             owner_id = (req as AuthenticatedRequest).userProfile?.id;
             if (!owner_id) {

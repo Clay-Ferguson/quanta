@@ -6,6 +6,7 @@ import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
 import pgdb from '../../PGDB.js';
 import { fixName } from '../../../common/CommonUtils.js';
+import { ANON_USER_ID } from '../../../common/types/CommonTypes.js';
 
 /**
  * DocBinary class handles binary file operations for the docs plugin
@@ -41,7 +42,7 @@ class DocBinary {
      * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
-        let owner_id = -1;
+        let owner_id = ANON_USER_ID;
         if (process.env.POSTGRES_HOST) {
             // todo-1: tree render is not yet converted to a secure get request, so we use admin profile for now
             owner_id = pgdb.adminProfile!.id!; 

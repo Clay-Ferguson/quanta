@@ -32,7 +32,7 @@ export interface IFS {
 
     // Directory operations
     readdir(owner_id: number, path: string): Promise<string[]>;
-    readdirEx(owner_id: number, fullPath: string): Promise<TreeNode[]>;
+    readdirEx(owner_id: number, fullPath: string, loadContent: boolean): Promise<TreeNode[]>;
     mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void>;
     mkdirEx(owner_id: number, path: string, options?: { recursive?: boolean }, is_public?: boolean): Promise<void>;
 

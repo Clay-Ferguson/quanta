@@ -83,7 +83,7 @@ class LFS implements IFS {
         return await fs.promises.readdir(path);
     }
 
-    async readdirEx(owner_id: number, path: string): Promise<TreeNode[]> {
+    async readdirEx(owner_id: number, path: string, loadContent: boolean): Promise<TreeNode[]> {
         try {
             path = this.normalize(path);
             const rootContents = await fs.promises.readdir(path, { withFileTypes: true });
@@ -101,11 +101,20 @@ class LFS implements IFS {
             const statsResults = await Promise.all(statPromises);
 
             const treeNodes = statsResults.map(({ dirent, stat }) => {
+                let content: string | null = null;
+                if (loadContent && dirent.isFile()) {
+                    const filePath = this.pathJoin(path, dirent.name);
+                    try {
+                        content = fs.readFileSync(filePath, 'utf8');
+                    } catch (error) {
+                        console.warn(`Could not read file ${filePath} as text:`, error);
+                    }}
                 return {
                     is_directory: dirent.isDirectory(),
                     name: dirent.name,
                     createTime: stat.birthtime.getTime(),
-                    modifyTime: stat.mtime.getTime()
+                    modifyTime: stat.mtime.getTime(),
+                    content
                 } as TreeNode;
             });
             
