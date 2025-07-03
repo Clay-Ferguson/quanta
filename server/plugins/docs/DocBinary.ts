@@ -43,7 +43,7 @@ class DocBinary {
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
         let owner_id = -1;
         if (process.env.POSTGRES_HOST) {
-        // todo-1: tree render is not yet converted to a secure post request, so we use admin profile for now
+            // todo-1: tree render is not yet converted to a secure get request, so we use admin profile for now
             owner_id = pgdb.adminProfile!.id!; 
             if (!owner_id) {
                 res.status(401).json({ error: 'Unauthorized: User profile not found' });
@@ -77,9 +77,7 @@ class DocBinary {
             }
 
             // Construct the absolute path to the image file
-            // todo-1: I'm adding back th pathJoin here working in LFS, need to verify this didn't now break VFS!
             const absoluteImagePath = ifs.pathJoin(root, imagePath);
-            // console.log("Absolute Image Path:", absoluteImagePath);
 
             // Perform security check to ensure file is within allowed directory
             // and verify file exists
@@ -163,9 +161,8 @@ class DocBinary {
                     if (headerEnd === -1) continue;
     
                     // Split headers and body content
-                    // todo-1: slice is deprecated.
-                    const headers = part.slice(0, headerEnd).toString();
-                    const body = part.slice(headerEnd + 4);
+                    const headers = part.subarray(0, headerEnd).toString();
+                    const body = part.subarray(headerEnd + 4);
     
                     // Parse the Content-Disposition header to determine field type
                     const dispositionMatch = headers.match(/Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/);
@@ -181,7 +178,7 @@ class DocBinary {
                                 
                         files.push({
                             name: filename,
-                            data: body.slice(0, body.length - 2), // Remove trailing \r\n
+                            data: body.subarray(0, body.length - 2), // Remove trailing \r\n
                             type: contentType
                         });
                     } else {
@@ -386,7 +383,7 @@ class DocBinary {
     
             if (start > 0) {
                 // Extract the content between the previous boundary and current boundary
-                const part = buffer.slice(start, boundaryIndex);
+                const part = buffer.subarray(start, boundaryIndex);
                 if (part.length > 0) {
                     parts.push(part);
                 }
