@@ -89,9 +89,6 @@ class HttpClientUtil {
         }
     }
     
-    // todo-1: all calls to this can now remove 'publicKey' from the body of the post, but be careful
-    //         because some of the actual methods (might still rely on the body argument even though it's now not 
-    //         used in the signature generation).
     buildSecureHeaders = async (url: string, keyPair: KeyPairHex, isFormData: boolean = false): Promise<Record<string,string>> => {
         // Get the current timestamp in seconds
         const created = Math.floor(Date.now() / 1000);

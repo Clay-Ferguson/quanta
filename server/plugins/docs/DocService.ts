@@ -194,7 +194,7 @@ class DocService {
     treeRender = async (req: Request<{ docRootKey: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {
         let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
         if (!user_id) {
-            user_id = -1; // -1 is ANON.
+            user_id = -1; // -1 is ANON. todo-0: put this in a constant variable
         }                   
        
         // Clean up path by removing double slashes
@@ -238,19 +238,12 @@ class DocService {
             const ordinalPattern = /^\d{4}_/;
             // If treeFolder does not start with an ordinal, we call "resolveNonOrdinalPath" to convert it to a real path.
             if (!ordinalPattern.test(slashFreeTreeFolder)) {
-                //console.log(`treeFolder [${slashFreeTreeFolder}] does not start with ordinal, resolving non-ordinal path `);
                 treeFolder = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, slashFreeTreeFolder, ifs) || "";
-                // console.log(`Resolved non-ordinal path to [${treeFolder}]`);  
                 treeFolder = ifs.normalizePath(treeFolder); // Normalize the path after resolution
-                //console.log(`Normalized resolved treeFolder: [${treeFolder}]`);
             }
-            else {
-                // console.log(`treeFolder [${slashFreeTreeFolder}] starts with ordinal, no resolution needed`);
-            }
-
+        
             // Construct the absolute path to the target directory
             const absolutePath = ifs.pathJoin(root, treeFolder);
-            // console.log(`Absolute path for tree render: [${absolutePath}]`);
 
             const info: any = {};
             // Verify the target directory exists
@@ -374,7 +367,7 @@ class DocService {
                     // console.log(`Processing image file: [${filePath}] under root [${root}]`);
                     const relativePath = filePath.startsWith(root) ? filePath.substring(root.length) : filePath;
                     // console.log(`Relative image path: ${relativePath}`);
-                    file.content = relativePath; // Use absolute path for image display 
+                    file.url = relativePath; // Use absolute path for image display 
                 } 
                 // TEXT FILE
                 else if (['.md', '.txt'].includes(ext)) {
@@ -384,7 +377,7 @@ class DocService {
                         file.content = await ifs.readFile(owner_id, filePath, 'utf8') as string;
                     } catch (error) {
                         console.warn(`Could not read file ${filePath} as text:`, error);
-                        file.content = '';
+                        // file.content = '';
                         file.type = 'unknown';
                     }
                 } 
@@ -392,7 +385,7 @@ class DocService {
                 else {
                     // Binary/other files: don't load content
                     file.type = 'binary';
-                    file.content = '';
+                    // file.content = '';
                 }
             }
         }

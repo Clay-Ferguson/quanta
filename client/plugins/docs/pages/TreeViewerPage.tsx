@@ -813,12 +813,15 @@ function TreeNodeComponent({
     reRenderTree
 }: TreeNodeComponentProps) {
     const isImage = node.type === 'image';
-    // For images, node.content now contains the relative path from root
-    // todo-1: It's a bit ugly that we have to use node.content here, but it works for now
-    const imgSrc: string | null = isImage ? `/api/docs/images/${gs.docsRootKey}/${node.content}` : null;
-    
+    let imgSrc: string | null = null;
+    if (isImage) {
+        imgSrc =`/api/docs/images/${gs.docsRootKey}/${node.url}`;
+        // remove any double slashes
+        imgSrc = imgSrc.replace(/\/\//g, '/');
+    }
+
     // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
-    // this tool is used only to edit Markdown files and images, so we can ignore those cases.
+    // this app is used only to edit Markdown files and images, so we can ignore those cases.
     const isTextFile = node.type === 'text';
     const isFolder = node.type === 'folder';
     const isBinary = node.type === 'binary';

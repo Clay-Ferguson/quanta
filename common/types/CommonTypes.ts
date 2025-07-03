@@ -93,6 +93,7 @@ export type TreeNode = {
     is_directory?: boolean; 
     is_public?: boolean; // todo-1: I could possibly make this non-optional
     name: string; // filename
+    url?: string; // this will be the FULL url independent of currently viewed root, so we can show 'pull up' images in the tree easier.
     createTime: number;
     modifyTime: number;
     content: string;
