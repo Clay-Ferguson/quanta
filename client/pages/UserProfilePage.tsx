@@ -30,7 +30,7 @@ export default function UserProfilePage() {
     useEffect(() => util.resizeEffect(), []);
     useEffect(() => {
         const fetchUserProfile = async () => {
-            if (!gs.userProfile?.publicKey) {
+            if (!gs.displayUserProfile?.publicKey) {
                 setError("No public key provided");
                 setLoading(false);
                 return;
@@ -38,7 +38,7 @@ export default function UserProfilePage() {
     
             try {
                 setLoading(true);
-                const userProfile: UserProfile = await httpClientUtil.httpGet(`/api/users/${gs.userProfile.publicKey}/info`);
+                const userProfile: UserProfile = await httpClientUtil.httpGet(`/api/users/${gs.displayUserProfile.publicKey}/info`);
                 setProfileData(userProfile);
                 setError(null);
             } catch (err) {
@@ -50,7 +50,7 @@ export default function UserProfilePage() {
         };
     
         fetchUserProfile();
-    }, [gs.userProfile?.publicKey]);
+    }, [gs.displayUserProfile?.publicKey]);
 
     function getPluginsComponents(profileData: UserProfile): React.ReactElement[] {
         const components: React.ReactElement[] = [];

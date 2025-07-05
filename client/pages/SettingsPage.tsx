@@ -15,7 +15,7 @@ import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
 
-// declare const DESKTOP_MODE: boolean;
+declare const DESKTOP_MODE: boolean;
 
 async function clear() {
     await idb.clear();
@@ -111,14 +111,10 @@ export default function SettingsPage() {
         }
     };
     
-    // const previewUserInfo = async () => {
-    //     console.log(`previewUserInfo (button click): gs.userProfile=${JSON.stringify(gs.userProfile, null, 2)}`);
-
-    //     await saveUserInfo(false);
-
-    //     console.log(`before showUserProfile: gs.userProfile=${JSON.stringify(gs.userProfile, null, 2)}`);
-    //     appUsers.showUserProfile(gs.keyPair!.publicKey);
-    // };
+    const previewUserInfo = async () => {
+        await saveUserInfo(false);
+        appUsers.showUserProfile(gs.keyPair!.publicKey);
+    };
 
     const saveUserInfo = async (showConfirm: boolean) => {
         let userAvatar = null;
@@ -234,13 +230,12 @@ export default function SettingsPage() {
                         </div>
                         
                         <div className="flex justify-end">
-                            {/* todo-1: temporarily disabled, due to a design flaw. Related to viewing OTHER users' profiles, not your own.
                             {!DESKTOP_MODE && <button 
                                 className="btn-primary mr-2"
                                 onClick={previewUserInfo}
                             >
                                 Preview
-                            </button>} */}
+                            </button>}
                             <button 
                                 className="btn-primary"
                                 onClick={() => saveUserInfo(true)}

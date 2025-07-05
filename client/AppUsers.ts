@@ -37,14 +37,10 @@ class AppUsers {
      * @param publicKey The public key of the user whose profile should be displayed
      */
     showUserProfile = async (publicKey: string) => {
-        console.warn("AppUsers.showUserProfile: This method is currently disabled.");
-        return;
         // set page to userprofile 
         const _gs = gs();
         app.setTopPage(_gs, PageNames.userProfile);
-        // todo-1: Wow this was a bad mistake. We were setting publicKey for some user that might not even be us, and putting it into our global state.
-        //         For now I'm completely removing the 'Preview' button from the settings page, until I can come back to this, and do it right.
-        _gs.userProfile = {userId: null, name: '', publicKey, description: '', avatar: null};
+        _gs.displayUserProfile = {userId: null, name: '', publicKey, description: '', avatar: null};
         gd({ type: 'setUserProfile', payload: _gs});
     }
 

@@ -27,6 +27,7 @@ export interface GlobalState {
 
     // Note this userProfile is not necessarily OURS, but is just the one we are looking at
     userProfile?: UserProfile;
+    displayUserProfile?: UserProfile | null; // This is the user profile we are currently displaying, which may not be us, but some other user.
     modalMessage?: string | null;
     showModalButton?: boolean;
     confirmMessage?: string | null;

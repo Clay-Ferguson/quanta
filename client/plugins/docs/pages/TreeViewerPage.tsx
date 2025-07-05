@@ -997,7 +997,7 @@ function TreeNodeComponent({
                                 {!DESKTOP_MODE && node.is_public && node.owner_id == gs.userProfile!.userId && (
                                     <FontAwesomeIcon
                                         icon={faShareAlt}
-                                        className="text-green-400 h-5 w-5"
+                                        className="text-green-400 h-5 w-5 ml-2"
                                         title="This file is shared publicly"
                                     />
                                 )}
