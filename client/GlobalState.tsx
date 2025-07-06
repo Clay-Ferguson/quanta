@@ -129,10 +129,11 @@ function gd(action: GlobalAction): GlobalState {
       
     // First, update our local state ref with the expected new state
     if (globalStateRef && globalStateRef.current) {
-        globalStateRef.current = {
+        const newState = {
             ...globalStateRef.current,
             ...action.payload
         };
+        globalStateRef.current = newState;
     }
       
     // Then dispatch to React's state management

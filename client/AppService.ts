@@ -130,7 +130,7 @@ export class AppService {
                 console.log(`Calling plugin method: ${callback}`);
                 await func(payload);
             } catch (error) {
-                console.error(`Error calling plugin method ${callback}:`, error);
+                console.error(`Error calling plugin method ${callback} on plugin ${plugin.getKey()}:`, error);
             }
         }
     }
@@ -184,11 +184,13 @@ export class AppService {
         const name: string= await idb.getItem(DBKeys.userName);
         const description: string = await idb.getItem(DBKeys.userDescription);
         const avatar: FileBase64Intf = await idb.getItem(DBKeys.userAvatar);
+        const keyPair: KeyPairHex = await idb.getItem(DBKeys.keyPair);
         const headerExpanded: boolean = await idb.getItem(DBKeys.headerExpanded, true) === true;
 
         const state: GlobalState = {
             userProfile: {
                 name: name || '',
+                publicKey: keyPair?.publicKey || '',
                 description: description || '',
                 avatar,
             },

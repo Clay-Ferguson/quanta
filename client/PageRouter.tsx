@@ -7,8 +7,6 @@ import UserProfilePage from './pages/UserProfilePage.tsx';
 import LogViewerPage from './pages/LogViewerPage.tsx';
 import { pluginsArray } from './AppService.ts';
 
-declare const DOC_ROOT_KEY: string; 
-
 /**
  * Component to handle conditional page rendering based on the current page. This is a SPA and so we don't have the url updating controlling
  * which page is shown, but rather we use a global state variable to track which page is currently being shown, which is actually a stack of pages
@@ -17,7 +15,7 @@ declare const DOC_ROOT_KEY: string;
 export default function PageRouter() {
     const gs = useGlobalState();
     const topPage = gs.pages![gs.pages!.length - 1];
-    console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userProfile!.name);
+    // console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userProfile!.name);
 
     // Show loading indicator while app is initializing
     if (!gs.appInitialized) {
