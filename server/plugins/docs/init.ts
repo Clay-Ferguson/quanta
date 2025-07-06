@@ -85,6 +85,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, ssg.generateStaticSite);
 
         context.app.get('/doc/:docRootKey', context.serveIndexHtml("TreeViewerPage"));
+        context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
 
         if (defaultPlugin === "docs") {
             console.log('Docs plugin is the default plugin, serving index.html at root path(/).');
@@ -95,6 +96,7 @@ class DocsServerPlugin implements IServerPlugin {
     finishRoute(context: IAppContext) {
         console.log('finishRoute docs plugin...');
         if (defaultPlugin === "docs") {
+            // context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
             console.log('Docs plugin is the default plugin, serving index.html at root path(*).');
             context.app.get('*', context.serveIndexHtml("TreeViewerPage"));
         }

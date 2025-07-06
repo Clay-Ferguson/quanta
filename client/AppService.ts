@@ -127,7 +127,7 @@ export class AppService {
                     console.warn(`Plugin ${plugin.getKey()} does not have a method ${callback}.`);
                     continue;
                 }
-                console.log(`Calling plugin method: ${callback}`);
+                // console.log(`Calling plugin method: ${callback}`);
                 await func(payload);
             } catch (error) {
                 console.error(`Error calling plugin method ${callback} on plugin ${plugin.getKey()}:`, error);

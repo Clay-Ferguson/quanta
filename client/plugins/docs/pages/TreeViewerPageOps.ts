@@ -66,6 +66,7 @@ export const handleParentClick = (gs: DocsGlobalState) => {
     const curFolder = gs.docsFolder || '';
     // Remember the current folder name to scroll back to it after navigating up
     let folderToScrollTo: string | null = null;
+    // console.log(`Current folder: [${curFolder}]`);
     
     // Remove the last path segment to go up one level
     const lastSlashIdx = curFolder.lastIndexOf('/');
@@ -91,6 +92,7 @@ export const handleParentClick = (gs: DocsGlobalState) => {
         // If we're in a direct subfolder of root, go to root
         // Extract the folder name we're currently in
         folderToScrollTo = curFolder.substring(1); // Remove leading slash
+        // console.log(`Navigating to root folder: [/]`);
         
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 

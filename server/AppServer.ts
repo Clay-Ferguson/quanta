@@ -6,7 +6,6 @@ import { logInit } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
-import { docSvc } from './plugins/docs/DocService.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
@@ -61,17 +60,30 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         try {
             console.log(`Serving index.html for page: ${page}`);
 
-            let docPath: string | null = req.query.path as string || "";
-            if (docPath) {
-                // owner_id of 0 always has super powers.
-                const ifs = docUtil.getFileSystem(req.params.docRootKey);
-                docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath, ifs);
-                if (!docPath) {
-                    console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
-                    return res.status(404).send('Document not found');
-                }
-                console.log(`Resolved docPath: ${docPath}`);
+            // NOTE: We used to support 'path=' url parameter but now we just use the cleaner pure path approach
+            // let docPath: string | null = req.query.path as string || ""; 
+            // todo-1: Eventually I'll remove this code but keeping if for a short time.
+            // if (docPath) {
+            //     // owner_id of 0 always has super powers.
+            //     const ifs = docUtil.getFileSystem(req.params.docRootKey);
+            //     docPath = await docSvc.resolveNonOrdinalPath(0, req.params.docRootKey, docPath, ifs);
+            //     if (!docPath) {
+            //         console.error(`Failed to resolve docPath for ${req.params.docRootKey} and path ${docPath}`);
+            //         return res.status(404).send('Document not found');
+            //     }
+            //     console.log(`Resolved docPath: ${docPath}`);
+            // }
+            // else {
+            let docPath = '';
+            if (req.params.docRootKey && req.params[0]) {
+                // Example Url handled here:
+                //   http://localhost:8000/doc/usr/Quanta_User_Guide
+                //   From handler: context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
+                //   Where usr is the `:docRootKey` and Quanta_User_Guide is the wildcard `*` part of the URL.
+                docPath = req.params[0];
+                // console.log(`Using docPath from request params: [${docPath}]`);
             }
+            // }
 
             // use the docRootKey to get the file system type (vfs or lfs), by calling getFileSystemType
             let docRootType = "";

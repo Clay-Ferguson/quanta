@@ -83,7 +83,7 @@ class VFS implements IFS {
 
         if (info) {
             if (fullPath === '') {
-                console.log("Is Root folder. Returning fake node.");
+                // console.log("Is Root folder. Returning fake node.");
                 // Special case for root directory
                 info.node = { is_directory: true, is_public: false } as TreeNode; // Root directory has no database row
                 return true; // Root directory always exists
