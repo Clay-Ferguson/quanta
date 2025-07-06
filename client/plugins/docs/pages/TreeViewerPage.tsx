@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt, faHome, faLink } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -438,10 +438,27 @@ function ClickableBreadcrumb({ gs, rootNode }: ClickableBreadcrumbProps) {
                     {!DESKTOP_MODE && rootNode?.is_public && rootNode.owner_id==gs.userProfile!.userId && (
                         <FontAwesomeIcon
                             icon={faShareAlt}
-                            className="text-green-400 h-5 w-5"
+                            className="text-green-400 h-5 w-5 ml-2"
                             title="This folder is shared publicly"
                         />
                     )}
+                    <FontAwesomeIcon
+                        icon={faLink}
+                        className="text-white h-5 w-5 cursor-pointer ml-2 hover:text-gray-300 transition-colors"
+                        title="Copy URL to clipboard"
+                        onClick={() => {
+                            let folder = gs.docsFolder;
+                            if (folder?.indexOf('/') === 0) {
+                                folder = folder.substring(1); // Remove leading slash if present
+                            }
+                            const currentUrl = `/doc/${gs.docsRootKey}/${folder || '/'}`;
+                            navigator.clipboard.writeText(window.location.origin + currentUrl).then(() => {
+                                alertModal(`URL copied to clipboard: ${window.location.origin + currentUrl}`);
+                            }).catch(err => {
+                                console.error('Failed to copy URL to clipboard:', err);
+                            });
+                        }}
+                    />
                 </div>
             </div>
         </div>
@@ -958,7 +975,7 @@ function TreeNodeComponent({
                             <img 
                                 src={imgSrc!}
                                 alt={node.name}
-                                className={gs.docsNamesMode ? "max-w-[20%] h-auto rounded-lg shadow-lg pt-4 pb-4" : "border border-gray-600 max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"}
+                                className="border border-gray-600 max-w-full h-auto rounded-lg shadow-lg pt-4 pb-4"
                                 onClick={() => setFullSizeImage({src: imgSrc!, name: node.name})}
                                 onError={(e) => {
                                     const target = e.currentTarget;
@@ -1214,13 +1231,28 @@ export default function TreeViewerPage() {
             // console.log(`DocsFolder server response: ${treeResponse!.treeFolder}`);
             
             if (treeResponse) {
+                // ================================================
+                // Update browser URL to reflect the current folder
+                // ***** DO NOT DELETE *****
+                // This works perfectly to keep the URL updated with every folder change, but for now I just don't want this because it 
+                // is a very long URL in most cases. Instead of showing it always I'll just add a "link" icon to the breadcrumbs that
+                // will allow it to be copied to the clipboard.
+                // if (treeResponse.treeFolder) {
+                //     const newUrl = `/doc/${gs.docsRootKey}${folder}`;
+                //     console.log(`Updating browser URL to: ${newUrl}`);
+                //     if (window.location.pathname !== newUrl) {
+                //         window.history.replaceState({}, '', newUrl);
+                //     }
+                // }
+                //==================================================
+
                 // Update user_id from the response if it's provided
                 if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
-                gs.userProfile!.userId = treeResponse.user_id;
-                await idb.setItem(DBKeys.userId, treeResponse.user_id);
-                gd({ type: 'setUserProfile', payload: { 
-                    userProfile: gs.userProfile, 
-                    docsFolder: treeResponse.treeFolder } });
+                    gs.userProfile!.userId = treeResponse.user_id;
+                    await idb.setItem(DBKeys.userId, treeResponse.user_id);
+                    gd({ type: 'setUserProfile', payload: { 
+                        userProfile: gs.userProfile, 
+                        docsFolder: treeResponse.treeFolder } });
                 }
                 else {
                 // ensure docsFolder is what we got back from the server
