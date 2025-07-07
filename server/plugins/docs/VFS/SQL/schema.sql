@@ -1,5 +1,12 @@
+-- Enable UUID extension for generating UUIDs
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Enable trigram extension for better text search performance (if not already enabled)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TABLE IF NOT EXISTS vfs_nodes (
     id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT uuid_generate_v4() NOT NULL UNIQUE,
     owner_id INTEGER NOT NULL,
     doc_root_key VARCHAR(255) NOT NULL,
     parent_path TEXT NOT NULL,
@@ -23,14 +30,14 @@ CREATE TABLE IF NOT EXISTS vfs_nodes (
 
 CREATE INDEX IF NOT EXISTS idx_vfs_nodes_parent ON vfs_nodes(doc_root_key, parent_path);
 
+-- Index for UUID for fast lookups by UUID
+CREATE INDEX IF NOT EXISTS idx_vfs_nodes_uuid ON vfs_nodes(uuid);
+
 -- Index for binary flag to optimize queries
 CREATE INDEX IF NOT EXISTS idx_vfs_nodes_binary ON vfs_nodes(is_binary);
 
 -- Index for owner_id foreign key to optimize joins with user_info table
 CREATE INDEX IF NOT EXISTS idx_vfs_nodes_owner_id ON vfs_nodes(owner_id);
-
--- Enable trigram extension for better text search performance (if not already enabled)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- We don't need this, according to Claude AI, but it would be useful for older versions of Postgres or something maybe where 'pg_trgm' is not available.
 -- Fallback: Basic GIN index without trigrams (still faster than no index)
