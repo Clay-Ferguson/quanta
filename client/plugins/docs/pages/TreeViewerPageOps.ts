@@ -75,7 +75,6 @@ export const handleParentClick = (gs: DocsGlobalState) => {
         folderToScrollTo = curFolder.substring(lastSlashIdx + 1);
         const parentFolder = curFolder.substring(0, lastSlashIdx);
         // console.log(`Navigating to parent folder: [${parentFolder}]`);
-        
         // Clear selections when navigating to parent and set highlighted folder (without ordinal prefix for matching)
         gd({ type: 'setTreeFolder', payload: { 
             docsFolder: parentFolder,

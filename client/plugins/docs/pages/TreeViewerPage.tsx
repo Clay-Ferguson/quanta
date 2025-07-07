@@ -507,6 +507,7 @@ function ViewWidthDropdown({ gs }: ViewWidthDropdownProps) {
 
 interface TopRightCompsProps {
     gs: DocsGlobalState;
+    rootNode: TreeNode;
     itemsAreSelected: boolean | undefined;
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
@@ -517,20 +518,22 @@ interface TopRightCompsProps {
 /**
  * Component for rendering the admin controls in the top right of the header
  */
-function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightCompsProps) {
+function TopRightComps({ gs, rootNode, itemsAreSelected, reRenderTree, treeNodes, setTreeNodes, isLoading }: TopRightCompsProps) {
     const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
+    const isOurRootNode = rootNode && rootNode.owner_id === gs.userProfile?.userId;
 
     return (
         <div className="flex items-center gap-2">
-            <label className="flex items-center cursor-pointer">
-                <input 
-                    type="checkbox"
-                    checked={gs.docsEditMode || false}
-                    onChange={async () => await handleEditModeToggle(gs)}
-                    className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
-            </label>
+            {isOurRootNode &&
+                <label className="flex items-center cursor-pointer">
+                    <input 
+                        type="checkbox"
+                        checked={gs.docsEditMode || false}
+                        onChange={async () => await handleEditModeToggle(gs)}
+                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-300">Edit</span>
+                </label>}
             <label className="flex items-center cursor-pointer">
                 <input 
                     type="checkbox"
@@ -549,7 +552,7 @@ function TopRightComps({ gs, itemsAreSelected, reRenderTree, treeNodes, setTreeN
                 />
                 <span className="ml-2 text-sm font-medium text-gray-300">Names</span>
             </label>
-            {gs.docsEditMode && 
+            {gs.docsEditMode && isOurRootNode && 
                 <div className="flex items-center space-x-2">
                     {itemsAreSelected && 
                         <button 
@@ -832,6 +835,7 @@ function TreeNodeComponent({
     contentTextareaRef,
     reRenderTree
 }: TreeNodeComponentProps) {
+    const isOurNode = node.owner_id === gs.userProfile?.userId;
     const isImage = node.type === 'image';
     let imgSrc: string | null = null;
     if (isImage) {
@@ -885,7 +889,7 @@ function TreeNodeComponent({
     return (
         <div id={validId} key={validId}>
             <div className={getBorderClass()}>
-                {gs.docsEditMode && 
+                {gs.docsEditMode && isOurNode &&
                     <div className="flex-shrink-0 pt-1">
                         <input
                             type="checkbox"
@@ -909,7 +913,7 @@ function TreeNodeComponent({
                                         {new Date(node.modifyTime).toLocaleDateString()}
                                     </span>
                                 </>}
-                            {gs.docsEditMode && 
+                            {gs.docsEditMode && isOurNode && 
                                 <EditIcons 
                                     node={node} 
                                     index={index} 
@@ -1049,14 +1053,14 @@ function TreeNodeComponent({
                                     {formatDisplayName(node.name)}
                                 </span>
                             </div>
-                            {gs.docsEditMode && 
+                            {gs.docsEditMode && isOurNode &&
                                 <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
                             }
                         </div>
                     }
                 </div>
             </div>
-            {gs.docsEditMode && 
+            {gs.docsEditMode && isOurNode &&
                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} />
             }
         </div>
@@ -1228,6 +1232,7 @@ export default function TreeViewerPage() {
                     }});
                 }
             }
+
             // console.log(`Refreshing tree for folder [${folder}] with rootKey=[${gs.docsRootKey}]`);
             const url = `/api/docs/render/${gs.docsRootKey}${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
             const treeResponse: TreeRender_Response | null = await httpClientUtil.secureHttpPost(url, {});
@@ -1269,9 +1274,12 @@ export default function TreeViewerPage() {
             // JSON pretty print the entire tree response
             // console.log('Tree response:', JSON.stringify(treeResponse, null, 2));
         
-            if (treeResponse && treeResponse.treeNodes) {
+            if (treeResponse) {
                 setTreeNodes(treeResponse.treeNodes);
                 setRootNode(treeResponse.rootNode);
+                if (!treeResponse.rootNode) {
+                    throw new Error('Root node is missing in the tree response');
+                }
                 return treeResponse.treeNodes;
             }
             else {
@@ -1287,7 +1295,7 @@ export default function TreeViewerPage() {
         finally {
             // setIsLoading(false);
         }
-    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey, gs.userProfile]);
+    }, [gs.docsEditMode, gs.docsFolder, gs.docsRootKey, gs.userProfile, gs.keyPair?.publicKey]);
 
     useEffect(() => {
         const fetchTree = async () => {
@@ -1310,6 +1318,7 @@ export default function TreeViewerPage() {
     useEffect(() => scrollEffects.effect(elmRef), []);
 
     const itemsAreSelected = gs.docsSelItems && gs.docsSelItems?.size > 0;
+    const isOurRootNode = rootNode!=null && rootNode!.owner_id === gs.userProfile?.userId;
     
     // Filter out cut items by comparing full paths
     const currentFolder = gs.docsFolder || '/';
@@ -1346,6 +1355,7 @@ export default function TreeViewerPage() {
                     
                     <TopRightComps 
                         gs={gs} 
+                        rootNode={rootNode!}
                         itemsAreSelected={itemsAreSelected} 
                         reRenderTree={reRenderTree} 
                         treeNodes={treeNodes} 
@@ -1380,7 +1390,7 @@ export default function TreeViewerPage() {
                         <div className="mt-4">
                             <ClickableBreadcrumb gs={gs} rootNode={rootNode}/>
 
-                            {gs.docsEditMode && (
+                            {gs.docsEditMode && isOurRootNode && (
                                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={null} filteredTreeNodes={filteredTreeNodes} />
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
