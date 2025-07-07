@@ -46,7 +46,7 @@ export type GetMessagesByIds_Response = {
 }
 
 export type TreeRender_Response = {
-    user_id: number;
+    user_id: number | null;
     treeNodes: TreeNode[];
     rootNode: TreeNode;
     treeFolder?: string; // Returns proper ordinal path for root node being viewed.

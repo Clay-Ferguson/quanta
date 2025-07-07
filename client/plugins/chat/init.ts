@@ -74,7 +74,8 @@ class ChatClientPlugin implements IClientPlugin {
     }
 
     getRoute(gs: ChatGlobalState, pageName: string) {
-        if (!gs.userProfile!.name) {
+        // If user has no saved name yet and is trying to go to chat page, send them to Settings Page instead.
+        if (!gs.userProfile!.name && pageName === ChatPageNames.quantaChat) {
             return React.createElement(SettingsPage);
         }
 

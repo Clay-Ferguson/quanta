@@ -15,7 +15,7 @@ import { pluginsArray } from './AppService.ts';
 export default function PageRouter() {
     const gs = useGlobalState();
     const topPage = gs.pages![gs.pages!.length - 1];
-    // console.log('PageRouter, topPage:'+topPage+" DOC_ROOT_KEY:"+DOC_ROOT_KEY+" gs.userName:"+gs.userProfile!.name);
+    // console.log('PageRouter, topPage:'+topPage+" gs.userName:"+gs.userProfile!.name);
 
     // Show loading indicator while app is initializing
     if (!gs.appInitialized) {
@@ -25,7 +25,7 @@ export default function PageRouter() {
     // first let any of the plugins handle the page routing. If a plugin returns a component, we use that.
     for (const plugin of pluginsArray) {
         if (plugin.getRoute) {
-            // console.log(`PageRouter: checking plugin ${plugin.name} for route for page: ${topPage}`);
+            // console.log(`PageRouter: checking plugin ${plugin.getKey()} for route for page: ${topPage}`);
             const comp = plugin.getRoute(gs, topPage);
             if (comp) {
                 // console.log(`PageRouter: routing to page: ${topPage}`);

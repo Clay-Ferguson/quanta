@@ -1221,7 +1221,7 @@ export default function TreeViewerPage() {
                         }
                     }
                     else {
-                        // todo-0: we need to document this behaviour where we default users to the public folder, expecting it to exist.
+                        // todo-1: we need to document this behaviour where we default users to the public folder, expecting it to exist.
                         console.log(`Setting docsFolder to public/admin. No user profile saved.`);
                         folder = "/admin/public";
                     }
@@ -1256,17 +1256,18 @@ export default function TreeViewerPage() {
 
                 // Update user_id from the response if it's provided
                 if (treeResponse?.user_id && treeResponse.user_id !== gs.userProfile!.userId) {
-                    gs.userProfile!.userId = treeResponse.user_id;
                     await idb.setItem(DBKeys.userId, treeResponse.user_id);
                     gd({ type: 'setUserProfile', payload: { 
-                        userProfile: gs.userProfile, 
-                        docsFolder: treeResponse.treeFolder } });
+                        userProfile: {...gs.userProfile, userId: treeResponse.user_id }, 
+                        docsFolder: treeResponse.treeFolder } 
+                    });
                 }
                 else {
-                // ensure docsFolder is what we got back from the server
+                    // ensure docsFolder is what we got back from the server, because it might have been changed by the server
                     if (treeResponse?.treeFolder) {
                         gd({ type: 'setDocsFolder', payload: {
-                            docsFolder: treeResponse.treeFolder} });
+                            docsFolder: treeResponse.treeFolder} 
+                        });
                     }
                 }
             }

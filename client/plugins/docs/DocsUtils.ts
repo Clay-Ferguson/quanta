@@ -8,7 +8,7 @@ export async function docsGoHome(gs: DocsGlobalState): Promise<void> {
     gs.pages = [DocsPageNames.treeViewer];
     const userId = await idb.getItem(DBKeys.userId);
     if (!userId) {
-        alertModal(`You do not have a User Profile saved yet. Please enter at least a user name on the page that followes.`);
+        alertModal(`You do not have a User Profile saved yet. Please enter at least a user name.`);
         app.goToPage(PageNames.settings)
     }
     else {

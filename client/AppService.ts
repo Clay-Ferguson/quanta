@@ -197,10 +197,6 @@ export class AppService {
             headerExpanded
         };
 
-        // if no username we send to settings page.
-        if (!name) {
-            state.pages?.push(PageNames.settings);
-        }
         await this.callPlugins('restoreSavedValues', state);
         gd({ type: 'restoreSavedValues', payload: state});
     }

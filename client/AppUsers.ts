@@ -85,10 +85,12 @@ class AppUsers {
                 if (ret.success && ret.user_id) {
                     console.log("Success! User Info Saved to Server: ", JSON.stringify(ret, null, 2));
 
-                    gs.userProfile!.userId = ret.user_id;
-                    gs.userProfile!.name = userName;
-                    gs.userProfile!.description = userDescription;
-                    gs.userProfile!.avatar = userAvatar;
+                    gs.userProfile = {...gs.userProfile,
+                        userId: ret.user_id,
+                        name: userName,
+                        description: userDescription,
+                        avatar: userAvatar
+                    };
                 
                     await idb.setItem(DBKeys.userId, ret.user_id);
                     await idb.setItem(DBKeys.userName, userName);

@@ -266,7 +266,7 @@ class DocService {
             const treeNodes: TreeNode[] = await this.getTreeNodes(user_id, absolutePath, pullup==="true", root, ifs);
             // Send the tree data as JSON response
             const response: TreeRender_Response = { 
-                user_id, 
+                user_id: user_id == ANON_USER_ID ? null : user_id,
                 rootNode: info.node,
                 treeNodes,
                 treeFolder
