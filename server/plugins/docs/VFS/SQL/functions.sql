@@ -416,7 +416,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -----------------------------------------------------------------------------------------------------------
--- Function: vfs_get_node_by_name
+-- Function: vfs_get_node_by_name 
 -- Similar to vfs_exists but returns the entire node row if found, or null if not found
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_get_node_by_name(
@@ -426,6 +426,7 @@ CREATE OR REPLACE FUNCTION vfs_get_node_by_name(
 ) 
 RETURNS TABLE(
     id INTEGER,
+    uuid UUID,
     owner_id INTEGER,
     doc_root_key VARCHAR(255),
     parent_path TEXT,
@@ -444,6 +445,7 @@ BEGIN
     RETURN QUERY
     SELECT 
         n.id,
+        n.uuid,
         n.owner_id,
         n.doc_root_key,
         n.parent_path,
@@ -1115,5 +1117,46 @@ BEGIN
                            filename_arg,
                            CASE WHEN is_public_arg THEN 'public' ELSE 'private' END) AS diagnostic;
     END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_get_node_by_uuid
+-- Gets a VFS node by its UUID, returning the node data including full path reconstruction
+-- Used for UUID-based navigation to get the docPath for a specific node
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_get_node_by_uuid(
+    uuid_arg UUID,
+    root_key TEXT
+) 
+RETURNS TABLE(
+    owner_id INTEGER,
+    is_public BOOLEAN,
+    filename VARCHAR(255),
+    is_directory BOOLEAN,
+    size_bytes BIGINT,
+    content_type VARCHAR(100),
+    created_time TIMESTAMP WITH TIME ZONE,
+    modified_time TIMESTAMP WITH TIME ZONE,
+    parent_path TEXT,
+    content_text TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        n.owner_id,
+        n.is_public,
+        n.filename,
+        n.is_directory,
+        n.size_bytes,
+        n.content_type,
+        n.created_time,
+        n.modified_time,
+        n.parent_path,
+        n.content_text
+    FROM vfs_nodes n
+    WHERE 
+        n.uuid = uuid_arg
+        AND n.doc_root_key = root_key;
 END;
 $$ LANGUAGE plpgsql;

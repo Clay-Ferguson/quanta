@@ -91,6 +91,7 @@ export type AttachmentInfo = {
 }
 
 export type TreeNode = {
+    uuid?: string; // unique identifier for the node, used for VFS
     owner_id?: number; // owner user ID, if applicable
     is_directory?: boolean; 
     is_public?: boolean; // todo-1: I could possibly make this non-optional

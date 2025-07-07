@@ -203,6 +203,11 @@ class LFS implements IFS {
 
         return "/"+normalizedPath;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public getItemByID(uuid: string, rootKey: string): Promise<{ node: TreeNode | null; docPath: string }> {
+        throw new Error('LFS does not support getItemByID.');
+    }
 }
 
 const lfs = new LFS();

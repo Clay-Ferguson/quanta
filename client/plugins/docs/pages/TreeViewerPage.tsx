@@ -447,11 +447,14 @@ function ClickableBreadcrumb({ gs, rootNode }: ClickableBreadcrumbProps) {
                         className="text-white h-5 w-5 cursor-pointer ml-2 hover:text-gray-300 transition-colors"
                         title="Copy URL to clipboard"
                         onClick={() => {
-                            let folder = gs.docsFolder;
+                            let folder = gs.docsFolder; 
                             if (folder?.indexOf('/') === 0) {
                                 folder = folder.substring(1); // Remove leading slash if present
                             }
-                            const currentUrl = `/doc/${gs.docsRootKey}/${folder || '/'}`;
+
+                            // DO NOT DELETE: This was the old URL format that used folder names (works just fine but we use UUID instead)
+                            // const currentUrl = `/doc/${gs.docsRootKey}/${folder || '/'}`;
+                            const currentUrl = `/doc/${gs.docsRootKey}/id/${rootNode!.uuid}`;
                             navigator.clipboard.writeText(window.location.origin + currentUrl).then(() => {
                                 alertModal(`URL copied to clipboard: ${window.location.origin + currentUrl}`);
                             }).catch(err => {

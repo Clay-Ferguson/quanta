@@ -85,6 +85,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, ssg.generateStaticSite);
 
         context.app.get('/doc/:docRootKey', context.serveIndexHtml("TreeViewerPage"));
+        context.app.get('/doc/:docRootKey/id/:uuid', context.serveIndexHtml("TreeViewerPage"));
         context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
 
         if (defaultPlugin === "docs") {

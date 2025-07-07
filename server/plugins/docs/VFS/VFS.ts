@@ -124,6 +124,7 @@ class VFS implements IFS {
         }
         // Convert PostgreSQL row to TreeNode format
         return {
+            uuid: row.uuid,  // Add the UUID field
             owner_id: row.owner_id,
             is_public: row.is_public,
             is_directory: row.is_directory,
@@ -604,6 +605,43 @@ class VFS implements IFS {
             }
         }
         return true; // All parts are valid
+    }
+
+    /**
+     * Get a node by its UUID and return the TreeNode with constructed docPath
+     * @param uuid - The UUID of the node to retrieve
+     * @param rootKey - The root key for the VFS (defaults to "usr")
+     * @returns The TreeNode with docPath constructed from parent_path and filename, or null if not found
+     */
+    async getItemByID(uuid: string, rootKey: string = "usr"): Promise<{ node: TreeNode | null; docPath: string }> {
+        try {
+            const result = await pgdb.query(
+                'SELECT * FROM vfs_get_node_by_uuid($1, $2)',
+                uuid, rootKey
+            );
+            
+            if (result.rows.length === 0) {
+                return { node: null, docPath: '' };
+            }
+            
+            const row = result.rows[0];
+            const node = this.convertToTreeNode(row);
+            
+            // Construct the docPath from parent_path and filename
+            let docPath: string;
+            if (row.parent_path === '' || row.parent_path === '/') {
+                // If parent_path is empty or root, docPath is just the filename
+                docPath = row.filename;
+            } else {
+                // Combine parent_path and filename with proper path separator
+                docPath = this.pathJoin(row.parent_path, row.filename);
+            }
+            
+            return { node, docPath };
+        } catch (error) {
+            console.error('VFS.getItemByID error:', error);
+            return { node: null, docPath: '' };
+        }
     }
 }
 
