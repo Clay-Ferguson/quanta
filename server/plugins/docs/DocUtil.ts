@@ -22,6 +22,18 @@ const { exec } = await import('child_process');
  * operations are restricted to allowed root directories.
  */
 class DocUtil {
+    getPathByUUID = async (uuid: string, docRootKey: string): Promise<string | null> => {        
+        const ifs = docUtil.getFileSystem(docRootKey!);
+        const result = await ifs.getItemByID(uuid, docRootKey);
+        if (result.node) {
+            // console.log(`Found VFS item by UUID: ${uuid} -> docPath: ${result.docPath}`);
+            return result.docPath;
+                           
+        } else {
+            console.log(`VFS item not found for UUID: ${uuid}`);
+        }
+        return null;
+    }
     /**
      * Factory method to create the appropriate file system implementation based on root configuration.
      * Returns either LFS (Linux File System) for "lfs" type or VFS (Virtual File System) for "vfs" type.

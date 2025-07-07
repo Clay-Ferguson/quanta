@@ -68,29 +68,9 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
 
             let docPath = '';
             if (req.params.uuid) {
-                // todo-0: create a utility method called getDocPathByUUID for this little block
-                console.log(`Request has UUID: ${req.params.uuid}`);
-                
-                // If it's VFS, use the VFS getItemByID method to get the docPath
-                if (docRootType === 'vfs') {
-                    try {
-                        const ifs = docUtil.getFileSystem(req.params.docRootKey!);
-                        const result = await ifs.getItemByID(req.params.uuid, req.params.docRootKey);
-                        if (result.node) {
-                            docPath = result.docPath;
-                            console.log(`Found VFS item by UUID: ${req.params.uuid} -> docPath: ${docPath}`);
-                        } else {
-                            console.log(`VFS item not found for UUID: ${req.params.uuid}`);
-                        }
-                    } catch (error) {
-                        console.error('Error getting VFS item by UUID:', error);
-                    }
-                } else {
-                    console.log(`UUID lookup not supported for file system type: ${docRootType}`);
-                }
+                docPath = await docUtil.getPathByUUID(req.params.uuid, req.params.docRootKey) || '';
             }
             else {
-
                 if (req.params.docRootKey && req.params[0]) {
                 // Example Url handled here:
                 //   http://localhost:8000/doc/usr/Quanta_User_Guide
