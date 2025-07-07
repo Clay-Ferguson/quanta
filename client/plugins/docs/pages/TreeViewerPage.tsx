@@ -1265,7 +1265,7 @@ export default function TreeViewerPage() {
 
             // JSON pretty print the entire tree response
             // console.log('Tree response:', JSON.stringify(treeResponse, null, 2));
-                
+        
             if (treeResponse && treeResponse.treeNodes) {
                 setTreeNodes(treeResponse.treeNodes);
                 setRootNode(treeResponse.rootNode);

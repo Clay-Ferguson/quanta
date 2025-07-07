@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 interface SharingDialogProps {
     title?: string;
-    reRenderTree?: () => void; // Callback to re-render the tree after sharing action   
+    reRenderTree: () => void; // Callback to re-render the tree after sharing action   
 }
 
 /**
@@ -13,7 +13,7 @@ interface SharingDialogProps {
  */
 export default function SharingDialog({ 
     title = "Sharing Options", 
-    reRenderTree = () => { /* no-op */ }
+    reRenderTree
 }: SharingDialogProps) {
     const gs = useGlobalState();
     const [recursive, setRecursive] = useState(true);
