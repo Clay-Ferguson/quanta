@@ -2,7 +2,7 @@ import { config } from "../../Config.js";
 import { httpServerUtil } from "../../HttpServerUtil.js";
 import { chatSvc } from "./ChatService.js";
 import { rtc } from "./WebRTCServer.js";
-import { IAppContext, IServerPlugin } from "../../ServerUtil.js";
+import { IAppContext, IServerPlugin, asyncHandler } from "../../ServerUtil.js";
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -53,20 +53,20 @@ class ChatServerPlugin implements IServerPlugin {
     }
 
     private initRoutes(context: IAppContext) {
-        context.app.get('/api/rooms/:roomId/message-ids', chatSvc.getMessageIdsForRoom);
-        context.app.get('/api/attachments/:attachmentId', chatSvc.serveAttachment);
-        context.app.get('/api/messages', chatSvc.getMessageHistory);
+        context.app.get('/api/rooms/:roomId/message-ids', asyncHandler(chatSvc.getMessageIdsForRoom));
+        context.app.get('/api/attachments/:attachmentId', asyncHandler(chatSvc.serveAttachment));
+        context.app.get('/api/messages', asyncHandler(chatSvc.getMessageHistory));
 
-        context.app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRoomInfo);
-        context.app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteRoom);
-        context.app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, chatSvc.getRecentAttachments);
-        context.app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, chatSvc.createTestData);
-        context.app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, chatSvc.blockUser);
+        context.app.post('/api/admin/get-room-info', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.getRoomInfo));
+        context.app.post('/api/admin/delete-room', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.deleteRoom));
+        context.app.post('/api/admin/get-recent-attachments', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.getRecentAttachments));
+        context.app.post('/api/admin/create-test-data', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.createTestData));
+        context.app.post('/api/admin/block-user', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.blockUser));
 
-        context.app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, chatSvc.deleteAttachment);
-        context.app.post('/api/rooms/:roomId/get-messages-by-id', chatSvc.getMessagesByIds);
-        context.app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, chatSvc.sendMessages); 
-        context.app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, chatSvc.deleteMessage); 
+        context.app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.deleteAttachment));
+        context.app.post('/api/rooms/:roomId/get-messages-by-id', asyncHandler(chatSvc.getMessagesByIds));
+        context.app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, asyncHandler(chatSvc.sendMessages)); 
+        context.app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, asyncHandler(chatSvc.deleteMessage)); 
 
         // We serve the index.html page for the chat plugin at the root path, if 'chat' is the default plugin.
         // NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when

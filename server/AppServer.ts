@@ -4,13 +4,24 @@ import https from 'https';
 import http from 'http';
 import { logInit } from './ServerLogger.js';
 import { config } from './Config.js'; 
-import { svrUtil } from './ServerUtil.js';
+import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
 
 logInit();
+
+// Global error handlers to prevent server crashes
+process.on('uncaughtException', (error: Error) => {
+    console.error('UNCAUGHT EXCEPTION - Server will continue running:', error);
+    console.error('Stack trace:', error.stack);
+});
+
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+    console.error('UNHANDLED PROMISE REJECTION:', reason);
+    console.error('Promise:', promise);
+});
 
 // this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
 const HOST = config.get("host"); 
@@ -28,6 +39,41 @@ if (process.env.POSTGRES_HOST) {
 const app = express();
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+// Global error handling middleware for Express
+app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
+    console.error('EXPRESS ERROR HANDLER:', err);
+    console.error('Request URL:', req.url);
+    console.error('Request method:', req.method);
+    console.error('Stack trace:', err.stack);
+
+    // Don't send response if headers are already sent
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    // Send appropriate error response
+    const isApiRequest = req.url.startsWith('/api/');
+    if (isApiRequest) {
+        res.status(500).json({
+            error: 'Internal server error',
+            message: 'An unexpected error occurred while processing your request',
+            success: false
+        });
+    } else {
+        const errorHtml = `
+            <html>
+                <head><title>Server Error</title></head>
+                <body>
+                    <h1>Server Error</h1>
+                    <p>An unexpected error occurred while processing your request. Please try again later.</p>
+                    <p>Error ID: ${Date.now()}</p>
+                </body>
+            </html>
+        `;
+        res.status(500).contentType('text/html').send(errorHtml);
+    }
+});
 
 // Add HTTP to HTTPS redirect if using HTTPS
 if (SECURE === 'y') {
@@ -116,10 +162,10 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
     });
 };
 
-app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, svrUtil.runAdminCommand); 
-app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, dbUsers.saveUserProfile); 
-app.get('/api/users/:pubKey/info', dbUsers.getUserProfileReq);
-app.get('/api/users/:pubKey/avatar', dbUsers.serveAvatar);
+app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(svrUtil.runAdminCommand)); 
+app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, asyncHandler(dbUsers.saveUserProfile)); 
+app.get('/api/users/:pubKey/info', asyncHandler(dbUsers.getUserProfileReq));
+app.get('/api/users/:pubKey/avatar', asyncHandler(dbUsers.serveAvatar));
 
 if (process.env.POSTGRES_HOST) {
     // NOTE: This MUST be called before 'initPlugins'

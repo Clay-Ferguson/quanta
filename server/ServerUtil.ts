@@ -1,4 +1,4 @@
-import { Response, Request } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { spawn } from 'child_process';
 import open from 'open';
 import path from 'path';
@@ -52,6 +52,29 @@ export function handleError(error: unknown, res: Response, message: string): any
     return error;
 }
 
+/**
+ * Async wrapper for Express route handlers to ensure all errors are caught and handled properly
+ * This prevents unhandled promise rejections from crashing the server
+ * @param fn - The async route handler function
+ * @returns Express route handler with error handling
+ */
+export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) {
+    return (req: any, res: Response, next: NextFunction) => {
+        Promise.resolve(fn(req, res, next)).catch((error) => {
+            console.error('ASYNC HANDLER ERROR:', error);
+            console.error('Request URL:', req.url);
+            console.error('Request method:', req.method);
+            
+            // Use our existing error handler
+            handleError(error, res, 'An unexpected error occurred');
+            
+            // Also call next to trigger Express error middleware
+            if (next) {
+                next(error);
+            }
+        });
+    };
+}
 
 /**
  * Interface for server plugins that can be loaded and managed by ServerUtil
