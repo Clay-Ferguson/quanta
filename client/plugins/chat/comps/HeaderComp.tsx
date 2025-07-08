@@ -36,7 +36,7 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
     }, [gs.chatRoom]);
     
     return (
-        <header className={`app-header flex flex-col md:flex-row md:items-center ${gs.headerExpanded ? 'p-3' : 'p-0'} gap-3`}>
+        <header className={`app-header flex flex-col md:flex-row md:items-center p-1 gap-3`}>
             
             {gs.headerExpanded && 
              <LogoBlockComp clazz="flex-shrink-0 mb-2 md:mb-0" 
@@ -48,7 +48,7 @@ export default function HeaderComp({ pluginTitle }: HeaderCompProps) {
                 
                 <div className="flex-grow">
                     {gs.headerExpanded && 
-                        <div id="roomSection" className="border border-gray-600 rounded px-3 py-2 bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-fit">
+                        <div id="roomSection" className="border border-gray-600 pl-2 rounded bg-gray-700/50 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-fit">
                             {!gs.chatConnected ? (
                                 <>
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
