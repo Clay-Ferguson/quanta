@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import pgdb from "../../PGDB.js";
 const { exec } = await import('child_process');
-import { fixName, getFilenameExtension } from '../../../common/CommonUtils.js';
+import { fixName, getFilenameExtension, isImageExt } from '../../../common/CommonUtils.js';
 
 /**
  * Service class for handling document management operations in the docs plugin.
@@ -330,7 +330,6 @@ class DocService {
 
             // DIRECTORY
             if (file.is_directory) {
-                file.type = 'folder'; // Set type to folder
                 // Handle pullup folders: folders ending with '_' get their contents inlined
                 if (pullup && file.name.endsWith('_')) {
                     // Recursively get tree nodes for this pullup folder
@@ -352,25 +351,13 @@ class DocService {
                 const ext = getFilenameExtension(file.name).toLowerCase();
                     
                 // IMAGE FILE
-                if (['.png', '.jpeg', '.jpg'].includes(ext)) {
+                if (isImageExt(ext)) {
                     // Image files: store relative path for URL construction
-                    file.type = 'image';
                     // If filePath starts with root, strip the root part to get relative path
                     // console.log(`Processing image file: [${filePath}] under root [${root}]`);
                     const relativePath = filePath.startsWith(root) ? filePath.substring(root.length) : filePath;
                     file.url = relativePath; // Use absolute path for image display 
                 } 
-                // TEXT FILE
-                else if (['.md', '.txt'].includes(ext)) {
-                    // Text files: read and store content
-                    file.type = 'text';
-                } 
-                // BINAY FILE
-                else {
-                    // Binary/other files: don't load content
-                    file.type = 'binary';
-                    // file.content = '';
-                }
             }
         }
         return fileNodes;

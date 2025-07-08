@@ -1,4 +1,44 @@
 
+export function isImageFile(filename: string): boolean {
+    const ext = getFilenameExtension(filename);
+    return isImageExt(ext);
+}
+
+export function isTextFile(filename: string): boolean {
+    const ext = getFilenameExtension(filename);
+    return isTextFileExt(ext);
+}
+
+export function isImageExt(extension: string): boolean {
+    // Check if the extension is one of the common image formats
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+    return imageExtensions.includes(extension.toLowerCase());
+}
+
+export function isTextFileExt(extension: string): boolean {
+    // Check if the extension is one of the common text formats
+    const textExtensions = ['.md', '.txt', '.json', '.js', '.ts', '.html', '.css', '.xml', '.csv'];
+    return textExtensions.includes(extension.toLowerCase());
+}
+
+export function getImageContentType(filename: string): string {
+    const ext = getFilenameExtension(filename).toLowerCase();
+    switch (ext) {
+    case '.png':
+        return 'image/png';
+    case '.gif':
+        return 'image/gif';
+    case '.bmp':
+        return 'image/bmp';
+    case '.webp':
+        return 'image/webp';
+    case '.jpg':
+    case '.jpeg':
+    default:
+        return 'image/jpeg';
+    }
+}
+
 // Format timestamp to readable date
 export function formatDate(timestamp: number): string {
     return new Date(timestamp).toLocaleString();

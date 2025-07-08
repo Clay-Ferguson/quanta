@@ -16,7 +16,7 @@ import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditC
 import { idb } from '../../../IndexedDB';
 import { app } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
-import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime, stripFileExtension } from '../../../../common/CommonUtils';
+import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime, stripFileExtension, isTextFile, isImageFile } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
 import SharingDialog from '../SharingDialog';
 import { docsGoHome } from '../DocsUtils';
@@ -339,9 +339,9 @@ interface EditIconsProps {
  * Component for rendering edit icons (Edit, Delete, Move Up, Move Down, Paste Into Folder)
  */
 function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRenderTree, showEditButton = true, containerClass = "flex items-center gap-2 ml-4" }: EditIconsProps) {
-    const isImage = node.type === 'image';
-    const isFolder = node.type === 'folder';
-    const isBinary = node.type === 'binary';
+    const isImage = isImageFile(node.name);
+    const isFolder = node.is_directory;
+    const isBinary = !isImage && !isFolder && !isTextFile(node.name);
     const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
 
     return (
@@ -579,7 +579,7 @@ function TopRightComps({ gs, rootNode, itemsAreSelected, reRenderTree, treeNodes
                         Delete
                         </button>}
                     {!hasCutItems && gs.docsSelItems && gs.docsSelItems.size >= 2 && 
-                     (Array.from(gs.docsSelItems) as TreeNode[]).every(node => node.type === 'text') && 
+                     (Array.from(gs.docsSelItems) as TreeNode[]).every(node => isTextFile(node.name)) && 
                         <button 
                             onClick={() => onJoin(gs, reRenderTree)}
                             className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
@@ -836,7 +836,7 @@ function TreeNodeComponent({
     reRenderTree
 }: TreeNodeComponentProps) {
     const isOurNode = node.owner_id === gs.userProfile?.userId;
-    const isImage = node.type === 'image';
+    const isImage = isImageFile(node.name);
     let imgSrc: string | null = null;
     if (isImage) {
         imgSrc =`/api/docs/images/${gs.docsRootKey}/${node.url}`;
@@ -844,11 +844,9 @@ function TreeNodeComponent({
         imgSrc = imgSrc.replace(/\/\//g, '/');
     }
 
-    // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
-    // this app is used only to edit Markdown files, so we can ignore other cases.
-    const isTextFile = node.type === 'text';
-    const isFolder = node.type === 'folder';
-    const isBinary = node.type === 'binary';
+    const textFile = isTextFile(node.name);
+    const isFolder = node.is_directory;
+    const isBinary = !isImage && !isFolder && !textFile;
 
     // Check if this is the highlighted folder that we came up from
     // Compare the stripped names (without ordinal prefix) for exact match
@@ -996,7 +994,7 @@ function TreeNodeComponent({
                         </div>
                     }
                     
-                    {isTextFile && (gs.docsEditNode === node ? 
+                    {textFile && (gs.docsEditNode === node ? 
                         <EditFile 
                             gs={gs} 
                             reRenderTree={reRenderTree}
@@ -1167,7 +1165,7 @@ export default function TreeViewerPage() {
 
     // Focus the content textarea when starting to edit a file
     useEffect(() => {
-        if (gs.docsEditNode && gs.docsEditNode.type !== 'folder' && contentTextareaRef.current) {
+        if (gs.docsEditNode && !gs.docsEditNode.is_directory && contentTextareaRef.current) {
             // Use setTimeout to ensure the textarea is rendered before focusing
             setTimeout(() => {
                 contentTextareaRef.current?.focus();

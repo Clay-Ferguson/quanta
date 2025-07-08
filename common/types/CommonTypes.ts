@@ -100,7 +100,6 @@ export type TreeNode = {
     createTime: number;
     modifyTime: number;
     content: string;
-    type: string; // <--- this is obsolete and will eventually be removed, use 'is_directory' and/or file extension instead
     children?: TreeNode[] | null; // subdirectories or files (pullups only)
     fsChildren?: boolean; // true if this node has children in the file system
 }

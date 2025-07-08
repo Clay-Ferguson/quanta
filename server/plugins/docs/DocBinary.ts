@@ -5,7 +5,7 @@ import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
 import pgdb from '../../PGDB.js';
-import { fixName } from '../../../common/CommonUtils.js';
+import { fixName, getImageContentType, isImageExt } from '../../../common/CommonUtils.js';
 import { ANON_USER_ID } from '../../../common/types/CommonTypes.js';
 
 /**
@@ -98,33 +98,13 @@ class DocBinary {
 
             // Validate file extension against supported image formats
             const ext = path.extname(absoluteImagePath).toLowerCase();
-            if (!['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.webp'].includes(ext)) {
+            if (!isImageExt(ext)) {
                 res.status(400).json({ error: 'File is not a supported image format' });
                 return;
             }
 
             // Determine the appropriate MIME type based on file extension
-            let contentType = 'image/jpeg'; // Default fallback
-            switch (ext) {
-            case '.png':
-                contentType = 'image/png';
-                break;
-            case '.gif':
-                contentType = 'image/gif';
-                break;
-            case '.bmp':
-                contentType = 'image/bmp';
-                break;
-            case '.webp':
-                contentType = 'image/webp';
-                break;
-            case '.jpg':
-            case '.jpeg':
-            default:
-                contentType = 'image/jpeg';
-                break;
-            }
-
+            const contentType = getImageContentType(ext);
             // Set HTTP headers for optimal image delivery
             res.setHeader('Content-Type', contentType);
             res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours

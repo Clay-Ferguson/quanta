@@ -7,14 +7,14 @@ import { httpClientUtil } from "../../../HttpClientUtil";
 import { DBKeys } from "../../../AppServiceTypes";
 import { idb } from "../../../IndexedDB";
 import { util } from "../../../Util";
-import { getFilenameExtension, stripOrdinal } from "../../../../common/CommonUtils";
+import { getFilenameExtension, isImageFile, isTextFile, stripOrdinal } from "../../../../common/CommonUtils";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: boolean;
 
 export const handleCancelClick = (gs: DocsGlobalState) => {
     // Clear editing state without saving
-    if (gs.docsEditNode?.type === 'folder') {
+    if (gs.docsEditNode?.is_directory) {
         gd({ type: 'clearFolderEditingState', payload: { 
             docsEditNode: null,
             docsNewFolderName: null
@@ -209,7 +209,7 @@ export const handleEditClick = (node: TreeNode) => {
     // For folders, we're doing rename functionality
     // Strip the numeric prefix from the folder name for editing
     const nameWithoutPrefix = stripOrdinal(node.name);   
-    if (node.type === 'folder') {
+    if (node.is_directory) {
         gd({ type: 'setFolderEditingState', payload: { 
             docsEditNode: node,
             docsNewFolderName: nameWithoutPrefix
@@ -239,7 +239,7 @@ const deleteFileOrFolderOnServer = async (gs: DocsGlobalState, fileOrFolderName:
 
 export const handleDeleteClick = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, node: TreeNode, index: number) => {        
     // Show confirmation dialog
-    const confirmText = node.type === 'folder' 
+    const confirmText = node.is_directory
         ? `Delete the folder "${stripOrdinal(node.name)}"?`
         : `Delete the file "${stripOrdinal(node.name)}"?`;
             
@@ -255,7 +255,7 @@ export const handleDeleteClick = async (gs: DocsGlobalState, treeNodes: TreeNode
         const updatedNodes = treeNodes.filter((_: any, i: any) => i !== index);
         setTreeNodes(updatedNodes);
             
-        console.log(`${node.type === 'folder' ? 'Folder' : 'File'} deleted successfully:`, node.name);
+        console.log(`${node.is_directory ? 'Folder' : 'File'} deleted successfully:`, node.name);
     } catch (error) {
         console.error('Error deleting:', error);
     }
@@ -286,7 +286,7 @@ const moveFileOrFolder = async (gs: DocsGlobalState, treeNodes: TreeNode[], setT
                 if (treeNode.name === response.oldName1) {
                     // Update the name and also update content if it's an image (content contains file path)
                     const updatedNode = { ...treeNode, name: response.newName1 };
-                    if (treeNode.type === 'image' && treeNode.content) {
+                    if (isImageFile(treeNode.name) && treeNode.content) {
                         // Update the file path in content to reflect the new filename
                         updatedNode.content = treeNode.content.replace(response.oldName1, response.newName1);
                     }
@@ -294,7 +294,7 @@ const moveFileOrFolder = async (gs: DocsGlobalState, treeNodes: TreeNode[], setT
                 } else if (treeNode.name === response.oldName2) {
                     // Update the name and also update content if it's an image (content contains file path)
                     const updatedNode = { ...treeNode, name: response.newName2 };
-                    if (treeNode.type === 'image' && treeNode.content) {
+                    if (isImageFile(treeNode.name) && treeNode.content) {
                         // Update the file path in content to reflect the new filename
                         updatedNode.content = treeNode.content.replace(response.oldName2, response.newName2);
                     }
@@ -771,7 +771,7 @@ export const onJoin = async (gs: DocsGlobalState, reRenderTree: any) => {
     }
 
     // Filter selected items to only include files (not folders)
-    const selectedFiles = Array.from(gs.docsSelItems).filter(node => node.type === 'text');
+    const selectedFiles = Array.from(gs.docsSelItems).filter(node => isTextFile(node.name));
     
     if (selectedFiles.length < 2) {
         await alertModal("At least 2 text files must be selected to join them.");
