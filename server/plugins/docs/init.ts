@@ -92,6 +92,7 @@ class DocsServerPlugin implements IServerPlugin {
             console.log('Docs plugin is the default plugin, serving index.html at root path(/).');
             context.app.get('/', context.serveIndexHtml("TreeViewerPage"));
         }
+        context.app.get('/docs', context.serveIndexHtml("TreeViewerPage"));
     }
 
     finishRoute(context: IAppContext) {

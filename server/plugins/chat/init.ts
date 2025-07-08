@@ -80,10 +80,13 @@ class ChatServerPlugin implements IServerPlugin {
     // convert these to IAppContext
     finishRoute(context: IAppContext) {
         console.log('finishRoute chat plugin...');
+
         if (defaultPlugin === "chat") {
             console.log('Chat plugin is the default plugin, serving index.html at root path(*).');
-            context.app.get('*', context.serveIndexHtml("QuantaChatPage"));
+            context.app.get('/', context.serveIndexHtml("QuantaChatPage"));
         }
+
+        context.app.get('/chat', context.serveIndexHtml("QuantaChatPage"));
     }
 
     async notify(server: any): Promise<void> {
