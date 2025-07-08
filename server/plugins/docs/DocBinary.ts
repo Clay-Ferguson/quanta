@@ -140,7 +140,7 @@ class DocBinary {
     }
 
     onUploadEnd = async (owner_id: number, chunks: any, boundary: any, res: Response): Promise<void> => {
-        return runTrans(async () => {
+        await runTrans(async () => {
             try {
             // Combine all chunks into a single buffer for parsing
                 const buffer = Buffer.concat(chunks);

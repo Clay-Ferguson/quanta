@@ -845,7 +845,7 @@ function TreeNodeComponent({
     }
 
     // todo-1: Eventually we can handle the case where a file is neither an image nor a text file (like PDF, etc.), but for now
-    // this app is used only to edit Markdown files and images, so we can ignore those cases.
+    // this app is used only to edit Markdown files, so we can ignore other cases.
     const isTextFile = node.type === 'text';
     const isFolder = node.type === 'folder';
     const isBinary = node.type === 'binary';

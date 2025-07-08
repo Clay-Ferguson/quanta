@@ -777,7 +777,7 @@ class WebRTC {
                         console.log(`Successfully sent message to ${publicKey}`);
                         sent = true;
                     } catch (err) {
-                        // todo-1: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
+                        // todo-2: we could use a timer here, and attempt to call 'send' one more time, in a few seconds.
                         console.log(`Error sending to ${publicKey}: ${err}`);
                     }
                 }

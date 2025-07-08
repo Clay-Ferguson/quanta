@@ -47,8 +47,8 @@ export type User = {
 }
 
 export type ChatMessage = ChatMessageIntf & {
-    sigVersion?: string; // todo-1: need to put this in the base class and have stored on server as well.
-    sigOk?: boolean; // signature valid, regardless of presence in our Contact List
+    sigVersion?: string; 
+    sigOk?: boolean; 
 }
 
 export type RoomInfo = {
@@ -94,7 +94,7 @@ export type TreeNode = {
     uuid?: string; // unique identifier for the node, used for VFS
     owner_id?: number; // owner user ID, if applicable
     is_directory?: boolean; 
-    is_public?: boolean; // todo-1: I could possibly make this non-optional
+    is_public?: boolean; 
     name: string; // filename
     url?: string; // this will be the FULL url independent of currently viewed root, so we can show 'pull up' images in the tree easier.
     createTime: number;

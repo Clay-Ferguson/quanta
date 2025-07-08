@@ -55,12 +55,13 @@ class DocMod {
      * @param res - Express response object for sending results
      * @returns Promise<void> - Resolves when operation completes
      */
-    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, res: Response): Promise<void> => {
+    saveFile = async (req: Request<any, any, { filename: string; content: string; treeFolder: string; newFileName?: string, docRootKey?: string, split?: boolean }>, 
+        res: Response): Promise<void> => {
         const owner_id = svrUtil.getOwnerId(req, res);
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             try {
                 // Extract request parameters
                 const { filename, content, treeFolder, docRootKey, split } = req.body;
@@ -231,7 +232,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             console.log("Rename Folder Request");
             try {
                 // Extract request parameters
@@ -328,12 +329,13 @@ class DocMod {
      * @param res - Express response object for sending results
      * @returns Promise<void> - Resolves when operation completes
      */
-    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): Promise<void> => {
+    deleteFileOrFolder = async (req: Request<any, any, { fileOrFolderName?: string; fileNames?: string[]; treeFolder: string, docRootKey: string }>, res: Response): 
+    Promise<void> => {
         const owner_id = svrUtil.getOwnerId(req, res);
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             console.log("Delete File or Folder Request");
             try {
             // Extract request parameters
@@ -470,7 +472,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             // Console log a pretty print of test request parameters
             // console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
         
@@ -595,7 +597,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             try {
                 // Extract request parameters
                 const { is_public, filename, docRootKey } = req.body;
@@ -699,7 +701,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             try {
                 const { targetFolder, pasteItems, docRootKey, targetOrdinal } = req.body;
     
@@ -953,7 +955,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             try {
             // Extract request parameters
                 const { filenames, treeFolder, docRootKey } = req.body;
@@ -1111,7 +1113,7 @@ class DocMod {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             console.log("Make Folder Request");
             try {
                 // Extract request parameters

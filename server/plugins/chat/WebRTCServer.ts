@@ -390,7 +390,7 @@ export default class WebRTCServer {
      */
     persist = async (data: WebRTCBroadcast) => {
         if (data.room && data.message) {
-            // todo-1: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
+            // todo-2: here, for now we only verify the signature of the message, not the broadcast object, but we will eventually check both.
             const sigOk = await crypt.verifySignature(data.message, canon.canonical_ChatMessage);
             if (!sigOk) {
                 console.error("Signature verification failed for message:", data.message);

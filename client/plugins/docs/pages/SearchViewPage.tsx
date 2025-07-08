@@ -79,7 +79,7 @@ export default function SearchViewPage() {
     }, []);
     
     const handleSearch = async () => {
-        // todo-1: implement VFS binary search ? some day.
+        // todo-2: implement VFS binary search ? some day.
         if (gs.docsRootType === 'vfs' && !gs.docsSearchTextOnly) {
             await alertModal('Binary search is not supported for VFS. Please enable "Text Only" search mode.');
             return;

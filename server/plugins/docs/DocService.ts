@@ -408,7 +408,7 @@ class DocService {
         if (owner_id==null) {
             return;
         }
-        return runTrans(async () => {
+        await runTrans(async () => {
             console.log(`Create File Request: ${JSON.stringify(req.body, null, 2)}`);
             try {
                 // Extract parameters from request body
@@ -533,7 +533,7 @@ class DocService {
             return;
         }
 
-        return runTrans(async () => {
+        await runTrans(async () => {
             console.log("Create Folder Request");
             try {
                 // Extract parameters from request body

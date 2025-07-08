@@ -22,7 +22,7 @@ class PGDB {
     private pool: Pool | null = null;
     private isInitialized: boolean = false;
 
-    // todo-1: admin panel needs to be able to flip this on/off
+    // todo-2: admin panel needs to be able to flip this on/off
     public logEnabled: boolean = false; 
     public adminProfile: UserProfileCompact | null = null;
 

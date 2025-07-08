@@ -485,7 +485,7 @@ const saveToServer = async (gs: DocsGlobalState, filename: string, content: stri
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
         if (!response) {
             alertModal("Error saving file to server. Please try again later.");
-            // todo-1: force a refresh of tree? so it doesn't display as if the editing was successful
+            // todo-0: force a refresh of tree? so it doesn't display as if the editing was successful
         }
     } catch (error) {
         console.error('Error saving file to server:', error);
