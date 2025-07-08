@@ -424,7 +424,7 @@ export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node:
     }
 };
 
-export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, content: string) => {
+export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: () => void, content: string) => {
     if (gs.docsEditNode) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
@@ -468,12 +468,12 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
 
         // Save to server with a delay to ensure UI updates first
         setTimeout(() => {
-            saveToServer(gs, gs.docsEditNode!.name, content, newFullFileName);
+            saveToServer(gs, gs.docsEditNode!.name, reRenderTree, content, newFullFileName);
         }, 500);
     }
 };
 
-const saveToServer = async (gs: DocsGlobalState, filename: string, content: string, newFileName?: string) => {
+const saveToServer = async (gs: DocsGlobalState, filename: string, reRenderTree: () => void, content: string, newFileName?: string) => {
     try {
         const requestBody = {
             filename,
@@ -484,8 +484,8 @@ const saveToServer = async (gs: DocsGlobalState, filename: string, content: stri
         };
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
         if (!response) {
+            reRenderTree();
             alertModal("Error saving file to server. Please try again later.");
-            // todo-0: force a refresh of tree? so it doesn't display as if the editing was successful
         }
     } catch (error) {
         console.error('Error saving file to server:', error);

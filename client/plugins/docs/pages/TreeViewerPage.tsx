@@ -288,7 +288,7 @@ function EditFile({
             />
             <div className="flex gap-2 mt-2 mb-3">
                 <button
-                    onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes, localContent)}
+                    onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                     Save
