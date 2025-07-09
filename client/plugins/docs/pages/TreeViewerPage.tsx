@@ -440,28 +440,28 @@ function ClickableBreadcrumb({ gs, rootNode }: ClickableBreadcrumbProps) {
                             icon={faShareAlt}
                             className="text-green-400 h-5 w-5 ml-2"
                             title="This folder is shared publicly"
-                        />
-                    )}
-                    <FontAwesomeIcon
-                        icon={faLink}
-                        className="text-white h-5 w-5 cursor-pointer ml-2 hover:text-gray-300 transition-colors"
-                        title="Copy URL to clipboard"
-                        onClick={() => {
-                            let folder = gs.docsFolder; 
-                            if (folder?.indexOf('/') === 0) {
-                                folder = folder.substring(1); // Remove leading slash if present
-                            }
+                        />)}
+                    {!DESKTOP_MODE && 
+                        <FontAwesomeIcon
+                            icon={faLink}
+                            className="text-white h-5 w-5 cursor-pointer ml-2 hover:text-gray-300 transition-colors"
+                            title="Copy URL to clipboard"
+                            onClick={() => {
+                                let folder = gs.docsFolder; 
+                                if (folder?.indexOf('/') === 0) {
+                                    folder = folder.substring(1); // Remove leading slash if present
+                                }
 
-                            // DO NOT DELETE: This was the old URL format that used folder names (works just fine but we use UUID instead)
-                            // const currentUrl = `/doc/${gs.docsRootKey}/${folder || '/'}`;
-                            const currentUrl = `/doc/${gs.docsRootKey}/id/${rootNode!.uuid}`;
-                            navigator.clipboard.writeText(window.location.origin + currentUrl).then(() => {
-                                alertModal(`URL copied to clipboard: ${window.location.origin + currentUrl}`);
-                            }).catch(err => {
-                                console.error('Failed to copy URL to clipboard:', err);
-                            });
-                        }}
-                    />
+                                // DO NOT DELETE: This was the old URL format that used folder names (works just fine but we use UUID instead)
+                                // const currentUrl = `/doc/${gs.docsRootKey}/${folder || '/'}`;
+                                const currentUrl = `/doc/${gs.docsRootKey}/id/${rootNode!.uuid}`;
+                                navigator.clipboard.writeText(window.location.origin + currentUrl).then(() => {
+                                    alertModal(`URL copied to clipboard: ${window.location.origin + currentUrl}`);
+                                }).catch(err => {
+                                    console.error('Failed to copy URL to clipboard:', err);
+                                });
+                            }}
+                        />}
                 </div>
             </div>
         </div>
@@ -650,7 +650,7 @@ function TopRightComps({ gs, rootNode, itemsAreSelected, reRenderTree, treeNodes
                                 treeFolder: gs.docsFolder,
                                 docRootKey: gs.docsRootKey 
                             });
-                            if (!response || !response.success) {
+                            if (!response) {
                                 throw new Error(response?.message || "SSG failed");
                             }
                             alertModal("Static Site Generate Complete.");

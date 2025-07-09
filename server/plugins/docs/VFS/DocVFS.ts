@@ -90,7 +90,6 @@ class DocVFS {
             
             // Send successful response in the same format as searchTextFiles
             res.json({ 
-                success: true, 
                 message: `VFS search completed for query: "${query}". Found ${results.length} matching files.`,
                 query: query,
                 searchPath: treeFolder,

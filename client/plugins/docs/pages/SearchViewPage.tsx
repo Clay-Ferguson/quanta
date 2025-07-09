@@ -101,7 +101,7 @@ export default function SearchViewPage() {
                 searchOrder: gs.docsSearchOrder || 'MOD_TIME'
             }) as any;
             
-            if (response && response.success) {
+            if (response) {
                 // pretty print the search results using formatted JSON
                 console.log('Search results:', JSON.stringify(response.results, null, 2));
                 gd({ type: 'setSearchResults', payload: { 

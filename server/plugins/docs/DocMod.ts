@@ -181,20 +181,20 @@ class DocMod {
                         
                         // Report successful splitting operation
                         console.log(`File split into ${parts.length} parts successfully`);
-                        res.json({ success: true, message: `File split into ${parts.length} parts successfully` });
+                        res.json({ message: `File split into ${parts.length} parts successfully` });
                     } else {
                     // No split delimiter found - save as single file
                         await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                         console.log(`File saved successfully: ${finalFilePath}`);
 
                         // todo-1: we should be consistent across the HTTP endpoints and just let 200 code mean success=true, and not have 'success' property
-                        res.json({ success: true, message: 'File saved successfully (no split delimiter found)' });
+                        res.json({ message: 'File saved successfully (no split delimiter found)' });
                     }
                 } else {
                 // Standard save operation without content splitting
                     await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
-                    res.json({ success: true, message: 'File saved successfully' });
+                    res.json({ message: 'File saved successfully' });
                 }
             } catch (error) {
                 // Handle any errors that occurred during the save operation
@@ -282,7 +282,7 @@ class DocMod {
 
                 // Handle no-op case where names are identical
                 if (oldFolderName === newFolderName) {
-                    res.json({ success: true, message: 'Folder name is unchanged' });
+                    res.json({ message: 'Folder name is unchanged' });
                     return;
                 }
 
@@ -298,7 +298,7 @@ class DocMod {
                 await ifs.rename(owner_id, oldAbsolutePath, newAbsolutePath);
             
                 console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
-                res.json({ success: true, message: 'Folder renamed successfully' });
+                res.json({ message: 'Folder renamed successfully' });
             } catch (error) {
             // Handle any errors that occurred during the rename operation
                 handleError(error, res, 'Failed to rename folder');
@@ -419,14 +419,13 @@ class DocMod {
                 // Single item mode - return simple response for backward compatibility
                     if (deletedCount === 1) {
                         const message = itemsToDelete[0].includes('.') ? 'File deleted successfully' : 'Folder deleted successfully';
-                        res.json({ success: true, message });
+                        res.json({ message });
                     } else {
                         res.status(500).json({ error: errors[0] || 'Failed to delete item' });
                     }
                 } else {
                 // Multiple items mode - return detailed response
                     res.json({ 
-                        success: true, 
                         deletedCount, 
                         errors: errors.length > 0 ? errors : undefined,
                         message: `Successfully deleted ${deletedCount} of ${itemsToDelete.length} items` 
@@ -474,7 +473,7 @@ class DocMod {
         }
         await runTrans(async () => {
             // Console log a pretty print of test request parameters
-            // console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
+            console.log(`Move Up/Down Request: arguments = ${JSON.stringify(req.body, null, 2)}`);
         
             try {
             // Extract request parameters
@@ -501,7 +500,7 @@ class DocMod {
 
                 // Verify the parent directory exists
                 if (!await ifs.exists(absoluteParentPath)) {
-                    res.status(404).json({ error: 'Parent directory not found' });
+                    res.status(404).json({ error: `Parent directory not found: ${absoluteParentPath}` });
                     return;
                 }
 
@@ -517,21 +516,21 @@ class DocMod {
                 // Locate the target file/folder in the ordered list
                 const currentIndex = numberedFiles.findIndex(file => file === filename);
                 if (currentIndex === -1) {
-                    res.status(404).json({ error: 'File not found in directory' });
+                    res.status(404).json({ error: `File not found in directory: ${filename}` });
                     return;
                 }
 
                 // Calculate the target position for the ordinal swap
                 let targetIndex: number;
                 if (direction === 'up') {
-                // Check if already at the top of the list
+                    // Check if already at the top of the list
                     if (currentIndex === 0) {
                         res.status(400).json({ error: 'File is already at the top' });
                         return;
                     }
                     targetIndex = currentIndex - 1;
                 } else { // direction === 'down'
-                // Check if already at the bottom of the list
+                    // Check if already at the bottom of the list
                     if (currentIndex === numberedFiles.length - 1) {
                         res.status(400).json({ error: 'File is already at the bottom' });
                         return;
@@ -577,7 +576,6 @@ class DocMod {
             
                 // Return detailed information about the swap for UI updates
                 res.json({ 
-                    success: true, 
                     message: 'Files moved successfully',
                     oldName1: currentFile,
                     newName1: newCurrentName,
@@ -643,7 +641,6 @@ class DocMod {
                     if (success) {
                         console.log(`Successfully set visibility to ${is_public ? 'public' : 'private'}: ${diagnostic}`);
                         res.json({ 
-                            success: true, 
                             message: diagnostic 
                         });
                     } else {
@@ -655,7 +652,6 @@ class DocMod {
                     // Future implementation could add this via extended attributes or similar
                     console.log(`LFS mode doesn't support visibility settings, returning success without changes`);
                     res.json({ 
-                        success: true, 
                         message: `Visibility settings are only supported in PostgreSQL mode` 
                     });
                 }
@@ -902,7 +898,6 @@ class DocMod {
     
                 // Return response
                 res.json({
-                    success: pastedCount > 0,
                     pastedCount,
                     totalItems: pasteItems.length,
                     errors: errors.length > 0 ? errors : undefined,
@@ -1053,7 +1048,6 @@ class DocMod {
         
                 // Return success response with operation details
                 res.json({ 
-                    success: true, 
                     message: `Successfully joined ${fileData.length} files into ${firstFile.filename}`,
                     joinedFile: firstFile.filename,
                     deletedFiles: deletedFiles
@@ -1207,7 +1201,6 @@ class DocMod {
 
                 // Return success response with conversion details
                 res.json({ 
-                    success: true, 
                     message: `File "${filename}" converted to folder "${newFolderName}" successfully${remainingContent && remainingContent.trim().length > 0 ? ' with remaining content saved as 0001_file.md' : ''}`,
                     folderName: newFolderName
                 });

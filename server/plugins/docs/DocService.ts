@@ -475,7 +475,6 @@ class DocService {
             
                 // Send success response with the created filename
                 res.json({ 
-                    success: true, 
                     message: 'File created successfully',
                     fileName: finalFileName 
                 });
@@ -588,7 +587,6 @@ class DocService {
             
                 // Send success response with the created folder name
                 res.json({ 
-                    success: true, 
                     message: 'Folder created successfully',
                     folderName: newFolderName 
                 });
@@ -775,7 +773,6 @@ class DocService {
                     if (error.code === 1) {
                         console.log('No matches found for search query');
                         res.json({ 
-                            success: true, 
                             message: `No matches found for query: "${query}"`,
                             query: query,
                             results: []
@@ -1011,7 +1008,6 @@ class DocService {
                 
                 // Send successful response
                 res.json({ 
-                    success: true, 
                     message: `Search completed for query: "${query}". Found ${cleanResults.length} matches.`,
                     query: query,
                     searchPath: treeFolder,
@@ -1260,7 +1256,6 @@ class DocService {
                     
                     // Send successful response
                     res.json({ 
-                        success: true, 
                         message: `Simple search completed for query: "${query}". Found ${cleanResults.length} matches.`,
                         query: query,
                         searchPath: treeFolder,

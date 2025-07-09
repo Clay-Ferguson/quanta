@@ -33,7 +33,7 @@ class DBUsers {
             }
             const success = await this.saveUserInfo(userProfile, res); 
             if (success) {
-                res.json({ success: true, user_id: userProfile.id });
+                res.json({ user_id: userProfile.id });
             } else {
                 throwError('Failed to save user information', res);
             }

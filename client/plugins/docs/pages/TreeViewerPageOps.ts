@@ -333,7 +333,7 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
         console.log('File creation response:', JSON.stringify(response, null, 2));
             
         // Refresh the tree view to show the new file
-        if (response && response.success) {
+        if (response) {
             console.log("Waiting a second before querying to re-render tree...");
             // Automatically start editing the newly created file
             setTimeout(async () => {
@@ -412,7 +412,7 @@ export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node:
         const response = await httpClientUtil.secureHttpPost('/api/docs/folder/create', requestBody);
 
         // Refresh the tree view to show the new folder
-        if (response && response.success) {
+        if (response) {
             await reRenderTree();
             // Scroll to the newly created folder
             if (response.folderName) {
@@ -654,7 +654,7 @@ export const onDelete = async (gs: DocsGlobalState, treeNodes: TreeNode[], setTr
             docRootKey: gs.docsRootKey
         });
             
-        if (response && response.success) {
+        if (response) {
             // Remove the deleted nodes from the UI
             const remainingNodes = treeNodes.filter((node: any) => !gs.docsSelItems!.has(node));
             setTreeNodes(remainingNodes);
@@ -691,7 +691,7 @@ export const openItemInFileSystem = async (gs: DocsGlobalState, action: "edit" |
 
         const response = await httpClientUtil.secureHttpPost('/api/docs/file-system-open', requestBody);
         
-        if (!response || !response.success) {
+        if (!response) {
             console.error('Error response from server:', response);
             await alertModal("Failed to open item in file system. Please try again.");
         }
@@ -751,8 +751,7 @@ const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: s
             split: true
         };
         const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
-        
-        if (response && response.success) {
+        if (response) {
             await reRenderTree();
             await alertModal(response.message || 'File split successfully');
         } else {
@@ -801,7 +800,7 @@ export const onJoin = async (gs: DocsGlobalState, reRenderTree: any) => {
             docRootKey: gs.docsRootKey
         });
             
-        if (response && response.success) {
+        if (response) {
             // Clear the selections
             gd({ type: 'setSelectedTreeItems', payload: { 
                 docsSelItems: new Set<TreeNode>()
@@ -844,7 +843,7 @@ export const uploadAttachment = async (gs: DocsGlobalState, reRenderTree: any, n
         // Upload files to server
         const response = await httpClientUtil.secureHttpPost('/api/docs/upload', formData);
 
-        if (response && response.success) {
+        if (response) {
             // Refresh the tree view to show the new files
             await reRenderTree();
             
@@ -954,7 +953,7 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
             
             const response = await httpClientUtil.secureHttpPost('/api/docs/make-folder', requestBody);
             
-            if (response && response.success) {
+            if (response) {
                 // Clear editing state (like cancel)
                 gd({ type: 'clearFileEditingState', payload: { 
                     docsEditNode: null,

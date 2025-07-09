@@ -34,7 +34,6 @@ class SSGService {
             const rootConfig = config.getPublicFolderByKey(docRootKey);
             if (!rootConfig || !rootConfig.path) {
                 res.status(400).json({ 
-                    success: false, 
                     error: `Invalid docRootKey: ${docRootKey}` 
                 });
                 return;
@@ -53,7 +52,6 @@ class SSGService {
             // Verify the path exists
             if (!fs.existsSync(absolutePath)) {
                 res.status(404).json({ 
-                    success: false, 
                     error: `Path not found: ${absolutePath}` 
                 });
                 return;
@@ -71,7 +69,6 @@ class SSGService {
             this.generateDoc(absolutePath, options);
             
             res.json({ 
-                success: true, 
                 message: `SSG generation completed for folder: ${treeFolder}`,
                 treeFolder: treeFolder,
                 docRootKey: docRootKey,
@@ -81,7 +78,6 @@ class SSGService {
         } catch (error) {
             console.error('SSG Error:', error);
             res.status(500).json({ 
-                success: false, 
                 error: 'Failed to generate static site' 
             });
         }

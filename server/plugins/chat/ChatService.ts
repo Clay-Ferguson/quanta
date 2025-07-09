@@ -151,7 +151,7 @@ class ChatService {
                 const response: DeleteRoom_Response = { message: `Room "${roomName}" deleted successfully` };
                 res.json(response);
             } else {
-                res.status(404).json({ success: false, error: `Room "${roomName}" not found or could not be deleted` });
+                res.status(404).json({ error: `Room "${roomName}" not found or could not be deleted` });
             }
         } catch (error) {
             handleError(error, res, 'Server error while attempting to delete room');
@@ -183,7 +183,7 @@ class ChatService {
         try {
             console.log('Admin request: Creating test data');
             await dbRoom.createTestData();
-            res.json({ success: true, message: 'Test data created successfully' });
+            res.json({ message: 'Test data created successfully' });
         } catch (error) {
             handleError(error, res, 'Failed to create test data');
         }
@@ -201,7 +201,6 @@ class ChatService {
         
             if (!messageId) {
                 res.status(400).json({ 
-                    success: false, 
                     error: 'Message ID is required' 
                 });
                 return;
@@ -216,9 +215,9 @@ class ChatService {
             rtc.sendDeleteMessage(roomName, messageId, publicKey);
         
             if (success) {
-                res.json({ success: true, message: `Message "${messageId}" deleted successfully` });
+                res.json({ message: `Message "${messageId}" deleted successfully` });
             } else {
-                res.status(404).json({ success: false, error: `Message "${messageId}" not found or could not be deleted` });
+                res.status(404).json({ error: `Message "${messageId}" not found or could not be deleted` });
             }
         } catch (error) {
             handleError(error, res, 'Server error while attempting to delete message');
@@ -236,7 +235,6 @@ class ChatService {
             
             if (!publicKey) {
                 res.status(400).json({ 
-                    success: false, 
                     error: 'Missing pub_key parameter' 
                 });
                 return;
@@ -247,7 +245,6 @@ class ChatService {
             await dbUsers.blockUser(publicKey);
                     
             res.json({ 
-                success: true, 
                 message: `User was blocked successfully.` 
             });
     
@@ -270,9 +267,7 @@ class ChatService {
             }
             const success = await dbAttachments.deleteAttachmentById(attachmentId);
                 
-            if (success) {
-                res.json({ success: true });
-            } else {
+            if (!success) {
                 res.status(404).json({ error: 'Attachment not found or could not be deleted' });
             }
         } catch (error) {

@@ -241,7 +241,6 @@ class ServerUtil {
             
             // For now, just pretty print the item object and return success
             res.json({ 
-                success: true, 
                 message: `Command received: ${item.cmd}`,
                 item: item
             });

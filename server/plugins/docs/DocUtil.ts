@@ -467,7 +467,6 @@ class DocUtil {
                 } else {
                     console.log(`Successfully opened ${isDirectory ? 'folder' : 'file'}: ${absoluteItemPath}`);
                     res.json({ 
-                        success: true, 
                         message: `${isDirectory ? 'Folder' : 'File'} opened in file system`,
                         itemType: isDirectory ? 'folder' : 'file'
                     });

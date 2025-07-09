@@ -78,28 +78,23 @@ class AppUsers {
                 avatar: userAvatar
             };
             const ret = await httpClientUtil.secureHttpPost<UserProfile, any>('/api/users/info', userProfile);
-            if (ret) {
-                // console log a JSON pretty print of the response
+            if (ret && ret.user_id) {
+                console.log("Success! User Info Saved to Server: ", JSON.stringify(ret, null, 2));
 
-                // pretty print the response
-                if (ret.success && ret.user_id) {
-                    console.log("Success! User Info Saved to Server: ", JSON.stringify(ret, null, 2));
-
-                    gs.userProfile = {...gs.userProfile,
-                        userId: ret.user_id,
-                        name: userName,
-                        description: userDescription,
-                        avatar: userAvatar
-                    };
+                gs.userProfile = {...gs.userProfile,
+                    userId: ret.user_id,
+                    name: userName,
+                    description: userDescription,
+                    avatar: userAvatar
+                };
                 
-                    await idb.setItem(DBKeys.userId, ret.user_id);
-                    await idb.setItem(DBKeys.userName, userName);
-                    await idb.setItem(DBKeys.userDescription, userDescription);
-                    await idb.setItem(DBKeys.userAvatar, userAvatar);
+                await idb.setItem(DBKeys.userId, ret.user_id);
+                await idb.setItem(DBKeys.userName, userName);
+                await idb.setItem(DBKeys.userDescription, userDescription);
+                await idb.setItem(DBKeys.userAvatar, userAvatar);
                    
-                    gd({ type: 'setUserProfile', payload: gs });
-                    return true;
-                }
+                gd({ type: 'setUserProfile', payload: gs });
+                return true;
             }  
         }
         return false;

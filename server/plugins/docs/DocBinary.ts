@@ -254,7 +254,6 @@ class DocBinary {
     
                 // Send success response with upload statistics
                 res.json({ 
-                    success: true, 
                     message: `Successfully uploaded ${savedCount} file(s)`,
                     uploadedCount: savedCount
                 });

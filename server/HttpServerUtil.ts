@@ -217,7 +217,6 @@ class HttpServerUtil {
         if (!timestamp || !signature) {
             console.error('Missing authentication parameters');
             res.status(401).json({ 
-                success: false, 
                 error: 'Unauthorized: Missing authentication parameters' 
             });
             return;
@@ -232,7 +231,6 @@ class HttpServerUtil {
             if (isNaN(reqTime)) {
                 console.error('Invalid timestamp format');
                 res.status(401).json({ 
-                    success: false, 
                     error: 'Unauthorized: Invalid timestamp' 
                 });
                 return;
@@ -243,7 +241,6 @@ class HttpServerUtil {
             if (curTime - reqTime > fiveMinutes) {
                 console.error('Request timestamp too old');
                 res.status(401).json({ 
-                    success: false, 
                     error: 'Unauthorized: Request expired' 
                 });
                 return;
@@ -253,7 +250,6 @@ class HttpServerUtil {
             if (!ADMIN_PUBLIC_KEY) {
                 console.error('Admin public key not set');
                 res.status(401).json({ 
-                    success: false, 
                     error: 'Server configuration error: Admin public key not set' 
                 });
                 return;
@@ -271,7 +267,6 @@ class HttpServerUtil {
             if (!isValid) {
                 console.error('Invalid admin signature');
                 res.status(401).json({ 
-                    success: false, 
                     error: 'Unauthorized: Invalid signature' 
                 });
                 return;
@@ -282,7 +277,6 @@ class HttpServerUtil {
         } catch (error) {
             console.error('Error verifying admin signature:', error);
             res.status(401).json({ 
-                success: false, 
                 error: 'Unauthorized: Authentication failed' 
             });
             return;

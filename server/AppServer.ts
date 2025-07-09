@@ -58,7 +58,6 @@ app.use((err: Error, req: Request, res: Response, next: express.NextFunction) =>
         res.status(500).json({
             error: 'Internal server error',
             message: 'An unexpected error occurred while processing your request',
-            success: false
         });
     } else {
         const errorHtml = `
