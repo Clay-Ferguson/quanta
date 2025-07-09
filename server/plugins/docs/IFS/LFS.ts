@@ -84,7 +84,7 @@ class LFS implements IFS {
     }
 
     async readdirEx(owner_id: number, path: string, loadContent: boolean): Promise<TreeNode[]> {
-        try {
+        try { 
             path = this.normalize(path);
             const rootContents = await fs.promises.readdir(path, { withFileTypes: true });
 
@@ -99,8 +99,24 @@ class LFS implements IFS {
             });
 
             const statsResults = await Promise.all(statPromises);
+            let nextOrdinal = 0;
 
             const treeNodes = statsResults.map(({ dirent, stat }) => {
+                // remove all files that start with "_" or "." using treeNodes.filter
+                if (dirent.name.startsWith('_') || dirent.name.startsWith('.')) {
+                    return null; // Skip this file
+                }
+
+                // If the dirent.name doesn't start with an ordinal (NNNN_) we rename the file immediately and the set
+                if (!/^\d{4}_/.test(dirent.name)) {
+                    nextOrdinal++;
+                    const newName = `${String(nextOrdinal).padStart(4, '0')}_${dirent.name}`;
+                    const oldPath = this.pathJoin(path, dirent.name);
+                    const newPath = this.pathJoin(path, newName);
+                    fs.renameSync(oldPath, newPath);
+                    dirent.name = newName;
+                }
+
                 let content: string | null = null;
                 if (loadContent && dirent.isFile()) {
                     const filePath = this.pathJoin(path, dirent.name);
@@ -117,10 +133,13 @@ class LFS implements IFS {
                     content
                 } as TreeNode;
             });
-            
+
+            // Filter out any null entries (skipped files) and ensure proper typing
+            const filteredNodes: TreeNode[] = treeNodes.filter((node): node is TreeNode => node !== null);
+
             // Sort by filename (case-insensitive)
-            treeNodes.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-            return treeNodes;
+            filteredNodes.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+            return filteredNodes;
         } catch (error) {
             console.error('LFS.readdirEx error:', error);
             throw error;
