@@ -58,7 +58,7 @@ class SSGService {
             }
             
             // Call the generateDoc method with default options suitable for SSG
-            // todo-1: make user able to set these on the UI
+            // todo-2: make user able to set these on the UI
             const options = {
                 includeFileNames: false,
                 includeSeparatorLines: true,

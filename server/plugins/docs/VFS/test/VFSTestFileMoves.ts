@@ -111,8 +111,7 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
             console.log(`  ${index + 1}. ${row.filename} (${row.is_directory ? 'folder' : 'file'})`);
         });
         
-        // todo-1: Need to explicily read both files (involved in this name swap) and make sure the content has essentially swapped for test to really pass
-        
+        // todo-2: Need to explicily read both files (involved in this name swap) and make sure the content has essentially swapped for test to really pass
         console.log('=== FILE MOVE TEST COMPLETED SUCCESSFULLY ===\n');
         
     } catch (error) {

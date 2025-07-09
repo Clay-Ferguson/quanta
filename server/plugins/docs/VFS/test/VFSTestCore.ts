@@ -199,13 +199,6 @@ export async function checkInitialFolderStructureTest(owner_id: number): Promise
         );
         console.log(`Maximum ordinal in root: ${maxOrdinal.rows[0].max_ordinal}`);
 
-        // Test getting ordinal from a specific filename
-        const ordinalResult = await pgdb.query(
-            'SELECT vfs_get_ordinal_from_name($1, $2, $3) as ordinal',
-            '0003_three', rootPath, testRootKey
-        );
-        console.log(`Ordinal of '0003_three': ${ordinalResult.rows[0].ordinal}`);
-
         console.log('=== PGDB Folder Structure Test Completed Successfully ===');
         
     } catch (error) {

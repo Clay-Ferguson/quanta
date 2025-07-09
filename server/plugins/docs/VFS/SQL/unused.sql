@@ -3,10 +3,44 @@
 -- ************
 
 -----------------------------------------------------------------------------------------------------------
+-- Function: vfs_get_ordinal_from_name
+-- Equivalent to DocUtil.getOrdinalFromName() - extracts ordinal from filename prefix
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_get_ordinal_from_name(
+    filename_param TEXT,
+    parent_path_param TEXT,
+    root_key TEXT
+) 
+RETURNS INTEGER AS $$
+DECLARE
+    file_ordinal INTEGER;
+BEGIN
+    -- First check if file exists
+    IF NOT EXISTS (
+        SELECT 1 FROM vfs_nodes
+        WHERE 
+            doc_root_key = root_key
+            AND parent_path = parent_path_param
+            AND filename = filename_param
+    ) THEN
+        RAISE EXCEPTION 'File not found: %', filename_param;
+    END IF;
+    
+    -- Extract ordinal from filename prefix - filename MUST have ordinal prefix
+    IF filename_param ~ '^[0-9]+_' THEN
+        file_ordinal := substring(filename_param FROM '^([0-9]+)_')::INTEGER;
+    ELSE
+        RAISE EXCEPTION 'Invalid file name format: %. All filenames must have ordinal prefix format "NNNN_filename" where N is a digit.', filename_param;
+    END IF;
+    
+    RETURN file_ordinal;
+END;
+$$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
 -- Function: vfs_shift_ordinals_down
 -- Equivalent to DocUtil.shiftOrdinalsDown() - creates space for new files by incrementing ordinals
 -- This renames files to change their ordinal prefixes, just like the filesystem version
--- todo-1: not currently used (yet)
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_shift_ordinals_down(
     slots_to_add INTEGER,
@@ -123,7 +157,6 @@ $$ LANGUAGE plpgsql;
 -- Function: vfs_insert_file_at_ordinal
 -- Helper function to insert a new file at a specific ordinal position
 -- Automatically shifts existing files down if needed and creates proper ordinal filename
--- todo-1: not used yet except for in some test cases
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_insert_file_at_ordinal(
     parent_path_param TEXT,
@@ -209,7 +242,6 @@ $$ LANGUAGE plpgsql;
 -----------------------------------------------------------------------------------------------------------
 -- Function: vfs_is_directory
 -- Helper function to check if a path is a directory
--- todo-1: not used yet except for in some test cases
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_is_directory(
     parent_path_param TEXT,

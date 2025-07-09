@@ -417,19 +417,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
         
-        console.log('4. Testing ordinal extraction from invalid filename...');
-        try {
-            await pgdb.query(
-                'SELECT vfs_get_ordinal_from_name($1, $2, $3)',
-                'no-ordinal-file.md', testPath, testRootKey
-            );
-            console.log('   **** ERROR ****: Should have failed but did not!');
-            failCount++;
-        } catch (error: any) {
-            console.log('   All Ok. Expected error occurred:', error.message);
-        }
-        
-        console.log('5. Testing deletion of non-existent file...');
+        console.log('4. Testing deletion of non-existent file...');
         try {
             await pgdb.query(
                 'SELECT vfs_unlink($1, $2, $3, $4)',
@@ -441,7 +429,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
             console.log('   All Ok. Expected error occurred:', error.message);
         }
         
-        console.log('6. Testing duplicate directory creation...');
+        console.log('4. Testing duplicate directory creation...');
         // First, let's see what actually exists in the test directory
         const dirContents = await pgdb.query(
             'SELECT * FROM vfs_readdir($1, $2, $3)',
