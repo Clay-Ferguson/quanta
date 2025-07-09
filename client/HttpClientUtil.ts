@@ -83,7 +83,7 @@ class HttpClientUtil {
             return response;
         } catch (error) {
             console.error(`Error posting to ${url}:`, error);
-            // Show the actual error message to the user &&&
+            // Show the actual error message to the user
             await alertModal('An error occurred while processing your request. Please try again later.');
             return null;
         }

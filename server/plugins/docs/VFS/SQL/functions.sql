@@ -816,7 +816,7 @@ $$ LANGUAGE plpgsql;
 -- - Returns file-level results for all text files in the specified path
 -----------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vfs_search_text(
-    -- todo-1: need owner_id_arg here (standard security), and call 'pgdb.authId(id)' with id before we get here.
+    owner_id_arg INTEGER,
     search_query TEXT,
     search_path TEXT,
     root_key TEXT,
@@ -939,9 +939,11 @@ BEGIN
             n.modified_time,
             n.created_time
         FROM vfs_nodes n 
-        WHERE %s
+        WHERE %s AND (%s=0 OR n.owner_id = %s OR n.is_public = TRUE) 
         %s', 
         where_clause, 
+        owner_id_arg,
+        owner_id_arg,
         order_clause
     );
 END;

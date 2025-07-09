@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { handleError } from "../../../ServerUtil.js";
+import { AuthenticatedRequest, handleError } from "../../../ServerUtil.js";
 import { config } from "../../../Config.js";
 import pgdb from '../../../PGDB.js';
+import { ANON_USER_ID } from '../../../../common/types/CommonTypes.js';
 
 class DocVFS {
     /**
@@ -38,6 +39,11 @@ class DocVFS {
         searchOrder?: string }>, res: Response): Promise<void> => {
         console.log("VFS Document Search Request");
         try {
+            let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
+            if (!user_id) {
+                user_id = ANON_USER_ID;
+            } 
+
             // Extract and validate parameters
             const { treeFolder, docRootKey, requireDate = false, searchOrder = 'MOD_TIME' } = req.body;
             let { query, searchMode = 'MATCH_ANY' } = req.body;
@@ -78,8 +84,8 @@ class DocVFS {
             
             // Call the PostgreSQL search function
             const searchResult = await pgdb.query(
-                'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-                query, treeFolder, docRootKey, searchMode, requireDate, searchOrder
+                'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+                user_id, query, treeFolder, docRootKey, searchMode, requireDate, searchOrder
             );
             
             // Transform results to match the expected format (file-level results without line numbers)

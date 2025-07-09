@@ -416,7 +416,7 @@ class DocService {
                 }
 
                 // Validate required parameters
-                if (!fileName || !treeFolder) {
+                if (!fileName) {
                     res.status(400).json({ error: 'File name and treeFolder are required' });
                     return;
                 }

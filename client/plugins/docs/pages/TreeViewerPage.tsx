@@ -616,14 +616,13 @@ function TopRightComps({ gs, rootNode, itemsAreSelected, reRenderTree, treeNodes
                 <FontAwesomeIcon icon={faSync} className="h-5 w-5" />
             </button>
 
-            {DESKTOP_MODE &&
-                <button 
-                    onClick={() => app.goToPage(DocsPageNames.searchView)}
-                    className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
-                    title="Search documents"
-                >
-                    <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
-                </button>}
+            <button 
+                onClick={() => app.goToPage(DocsPageNames.searchView)}
+                className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                title="Search documents"
+            >
+                <FontAwesomeIcon icon={faSearch} className="h-5 w-5" />
+            </button>
 
             <button 
                 onClick={() => app.goToPage(PageNames.settings)}

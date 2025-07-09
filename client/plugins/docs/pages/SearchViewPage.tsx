@@ -19,20 +19,21 @@ interface SearchResult {
 interface SearchResultItemProps {
     filePath: string;
     fileResults: SearchResult[];
-    onFileClick: (filePath: string) => void;
+    onFileClick: (filePath: string, vfsType: string) => void;
+    vfsType: string;
 }
 
 /**
  * SearchResultItem component for displaying individual search result items
  */
-function SearchResultItem({ filePath, fileResults, onFileClick }: SearchResultItemProps) {
+function SearchResultItem({ filePath, fileResults, onFileClick, vfsType }: SearchResultItemProps) {
     const fileName = filePath.split('/').pop() || filePath;
     const isFolder = !fileName.includes('.');
     
     return (
         <div 
             className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
-            onClick={() => onFileClick(filePath)}
+            onClick={() => onFileClick(filePath, vfsType)}
         >
             <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'}`}>
                 {formatFullPath(filePath)}
@@ -89,8 +90,14 @@ export default function SearchViewPage() {
         const search = gs.docsSearch?.trim();
         try {
             const searchFolder = gs.docsFolder || '/';
-            const endpoint = gs.docsRootType === 'vfs' ? '/api/docs/search-vfs' : 
-                (gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries');
+            let endpoint = null;
+            if (gs.docsRootType === 'vfs') {
+                // todo-2: do we support 'docsSearchTextOnly' for VFS?
+                endpoint = '/api/docs/search-vfs'; 
+            }
+            else {
+                endpoint = (gs.docsSearchTextOnly ? '/api/docs/search-text' : '/api/docs/search-binaries');
+            }
 
             const response = await httpClientUtil.secureHttpPost(endpoint, {
                 query: search,
@@ -131,7 +138,7 @@ export default function SearchViewPage() {
         }
     };
     
-    const fileClicked = (filePath: string) => { 
+    const fileClicked = (filePath: string, vfsType: string) => { 
         // Parse the file path to extract the folder path and filename
         // Note: filePath is relative to the searchOriginFolder where the search was performed
         const lastSlashIndex = filePath.lastIndexOf('/');
@@ -148,7 +155,7 @@ export default function SearchViewPage() {
             if (searchRootFolder === '/') {
                 searchRootFolder = ''; // Convert root to empty string for proper joining
             }
-            const targetFolderPath = `${searchRootFolder}/${relativeFolderPath}`;
+            const targetFolderPath = vfsType=="vfs" ? relativeFolderPath  : `${searchRootFolder}/${relativeFolderPath}`;
                         
             // Set the tree folder in global state and clear selections
             gd({ type: 'setTreeFolder', payload: { 
@@ -394,6 +401,7 @@ export default function SearchViewPage() {
                                         filePath={filePath}
                                         fileResults={groupedResults[filePath]}
                                         onFileClick={fileClicked}
+                                        vfsType={gs.docsRootType!}
                                     />
                                 ))}
                             </div>
