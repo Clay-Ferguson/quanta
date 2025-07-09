@@ -22,7 +22,7 @@ class HttpServerUtil {
      * @param next - Express next function to continue to the next middleware
      * @returns Promise<void> 
      */
-    verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => { // &&&
+    verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
         // get publicKey from request headers
         const publicKey = req.headers['public-key'] as string;
         if (!publicKey) {

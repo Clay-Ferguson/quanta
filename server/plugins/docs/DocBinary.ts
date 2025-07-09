@@ -196,7 +196,13 @@ class DocBinary {
     
                 // Construct target folder path and validate permissions
                 const absoluteFolderPath = path.join(root, treeFolder);
+            
+                const parentInfo: any = {};
                 ifs.checkFileAccess(absoluteFolderPath, root);
+                if (!await ifs.exists(absoluteFolderPath, parentInfo)) {
+                    res.status(404).json({ error: 'Parent directory not found' });
+                    return;
+                }
     
                 // Determine the ordinal position for inserting new files
                 let insertOrdinal = 1; // Default to beginning if no position specified
@@ -237,8 +243,8 @@ class DocBinary {
                             console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                             continue;
                         }
-                        // Write the file data to disk
-                        await ifs.writeFileEx(owner_id, finalFilePath, file.data, 'utf8', false); // todo-0: Initial file upload always NOT public, but we could use parent folder to determine if shared or not.
+                        // Write the file data to disk (inheriting public access from parent)
+                        await ifs.writeFileEx(owner_id, finalFilePath, file.data, 'utf8', parentInfo.node.is_public);
                         savedCount++;
                         console.log(`Uploaded file saved: ${finalFilePath}`);
                     } 

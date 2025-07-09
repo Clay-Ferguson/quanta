@@ -547,9 +547,9 @@ class DocService {
                 const absoluteParentPath = ifs.pathJoin(root, treeFolder);
 
                 // Verify parent directory exists and is accessible
-                const info: any = {};
+                const parentInfo: any = {};
                 ifs.checkFileAccess(absoluteParentPath, root);
-                if (!await ifs.exists(absoluteParentPath, info)) {
+                if (!await ifs.exists(absoluteParentPath, parentInfo)) {
                     res.status(404).json({ error: 'Parent directory not found' });
                     return;
                 }
@@ -580,8 +580,8 @@ class DocService {
             
                 const newFolderPath = ifs.pathJoin(absoluteParentPath, newFolderName);
 
-                // Create the directory (recursive option ensures parent directories exist)
-                await ifs.mkdirEx(owner_id, newFolderPath, { recursive: true }, info.node.is_public);
+                // Create the directory (recursive option ensures parent directories exist, and we inherit `is_public` from parent.
+                await ifs.mkdirEx(owner_id, newFolderPath, { recursive: true }, parentInfo.node.is_public);
 
                 console.log(`Folder created successfully: ${newFolderPath}`);
             
