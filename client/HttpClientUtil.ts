@@ -141,6 +141,25 @@ class HttpClientUtil {
 
         return headers;
     }
+
+    makeSignedArgs = async (): Promise<any> => {
+        const _gs = gs();
+        if (!_gs.keyPair) {
+            console.error("No key pair available in GlobalState for secure HTTP post");
+            return '';
+        }
+        const timestamp = Date.now().toString();
+        const timestampAndKey = `${timestamp}-${_gs.keyPair.publicKey}`;
+
+        const sig = await crypt.signWithPrivateKey(timestampAndKey, _gs.keyPair);
+        if (!sig) {
+            console.error('Failed to sign the timestamp');
+            alert('Failed to authenticate. Please check your admin credentials.');
+            return '';
+        }
+        const args = `auth=${timestampAndKey}&signature=${sig}`;
+        return {args};
+    }
 }
 
 export const httpClientUtil = new HttpClientUtil();    

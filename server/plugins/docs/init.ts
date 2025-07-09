@@ -62,8 +62,7 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     private initRoutes(context: IAppContext) {
-        // todo-1: for now we don't have any security on attachments, and these files are accessed using admin authority
-        context.app.get('/api/docs/images/:docRootKey/*', asyncHandler(docBinary.serveDocImage));  
+        context.app.get('/api/docs/images/:docRootKey/*',httpServerUtil.verifyReqHTTPQuerySig, asyncHandler(docBinary.serveDocImage)); // &&&
 
         // For now we only allow admin to access the docs API
         context.app.post('/api/docs/render/:docRootKey/*', httpServerUtil.verifyReqHTTPSignatureAllowAnon, asyncHandler(docSvc.treeRender)); 
@@ -98,7 +97,6 @@ class DocsServerPlugin implements IServerPlugin {
     finishRoute(context: IAppContext) {
         console.log('finishRoute docs plugin...');
         if (defaultPlugin === "docs") {
-            // context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
             console.log('Docs plugin is the default plugin, serving index.html at root path(*).');
             context.app.get('*', context.serveIndexHtml("TreeViewerPage"));
         }

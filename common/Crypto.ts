@@ -189,32 +189,6 @@ class Crypto {
     }
     
     /**
-     * Opens the recent attachments page in a new tab with admin authentication.
-     * Creates a timestamp-based signature for secure access to admin endpoints.
-     * 
-     * DO NOT DELETE: This is no longer being used but this and the server-side code are being kept
-     * as a reference for how to implement admin authentication for HTTP GET requests. Also this method is specific
-     * to attachments and for that reason didn't belong in this class either, but we keep it for now.
-     * 
-     * @param keyPair - The admin key pair for authentication
-     */
-    openRecentAttachments = async (keyPair: KeyPairHex) => {
-        // Current timestamp
-        const timestamp = Date.now().toString();
-
-        const sig = await this.signWithPrivateKey(timestamp, keyPair);
-        if (!sig) {
-            console.error('Failed to sign the timestamp');
-            alert('Failed to authenticate. Please check your admin credentials.');
-            return;
-        }
-        const url = `/recent-attachments?timestamp=${timestamp}&signature=${sig}`;
-            
-        // Open in new tab
-        window.open(url, '_blank');
-    }
-
-    /**
      * Signs arbitrary string data with a private key and returns the signature as hexadecimal.
      * 
      * @param data - The string data to sign

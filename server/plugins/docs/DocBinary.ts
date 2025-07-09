@@ -4,7 +4,6 @@ import { handleError, svrUtil } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
 import { runTrans } from '../../Transactional.js';
-import pgdb from '../../PGDB.js';
 import { fixName, getImageContentType, isImageExt } from '../../../common/CommonUtils.js';
 import { ANON_USER_ID } from '../../../common/types/CommonTypes.js';
 
@@ -42,17 +41,15 @@ class DocBinary {
      * @returns Promise<void> - Resolves when the image is served or an error response is sent
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
-        let owner_id = ANON_USER_ID;
+        let owner_id: number | null = ANON_USER_ID;
         if (process.env.POSTGRES_HOST) {
-            // todo-1: tree render is not yet converted to a secure get request, so we use admin profile for now
-            owner_id = pgdb.adminProfile!.id!; 
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            owner_id = svrUtil.getOwnerId(req, res);
+            if (owner_id==null) {
                 return;
             }
         }
 
-        // console.log(">>>>>>> Serve Doc Image Request:", req.path);
+        // console.log(`>>>>>>> Serve Doc Image Request: [${req.path}] to userId ${owner_id}`);
         try {
             // Extract the relative image path from the request URL
             // Remove the API prefix and docRootKey to get the actual file path
@@ -122,7 +119,7 @@ class DocBinary {
     onUploadEnd = async (owner_id: number, chunks: any, boundary: any, res: Response): Promise<void> => {
         await runTrans(async () => {
             try {
-            // Combine all chunks into a single buffer for parsing
+                // Combine all chunks into a single buffer for parsing
                 const buffer = Buffer.concat(chunks);
                 const boundaryBuffer = Buffer.from(`--${boundary}`);
                         
@@ -240,9 +237,8 @@ class DocBinary {
                             console.error(`Target file already exists, skipping upload: ${finalFilePath}`);
                             continue;
                         }
-                            
                         // Write the file data to disk
-                        await ifs.writeFileEx(owner_id, finalFilePath, file.data, 'utf8', info.is_public);
+                        await ifs.writeFileEx(owner_id, finalFilePath, file.data, 'utf8', false); // todo-0: Initial file upload always NOT public, but we could use parent folder to determine if shared or not.
                         savedCount++;
                         console.log(`Uploaded file saved: ${finalFilePath}`);
                     } 

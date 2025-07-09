@@ -7,6 +7,7 @@ import { setFullSizeImage } from './ImageViewerComp';
 import yaml from 'js-yaml';
 import { httpClientUtil } from '../HttpClientUtil';
 import rehypeHighlight from 'rehype-highlight';
+import { signedArgs } from '../AppService';
 import 'highlight.js/styles/github-dark.css'; 
 
 declare const DOC_ROOT_KEY: string;
@@ -112,8 +113,7 @@ export default function Markdown({ markdownContent, docMode, basePath }: Markdow
         // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
         else if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
             // Transform relative paths to use the docs images API
-            imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}`;
-            // console.log(`Transformed image path: docRoot=[${DOC_ROOT_KEY}] / src=[${src}`);
+            imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}?${signedArgs.args}`;
         }
         return <img src={imgSrc} {...props} onClick={() => setFullSizeImage({src: imgSrc!, name: "Markdown image"})} />;
     };

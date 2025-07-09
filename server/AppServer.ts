@@ -87,9 +87,6 @@ if (SECURE === 'y') {
     });
 }
 
-// DO NOT DELETE. Keep this as an example of how to implement a secure GET endpoint
-// app.get('/recent-attachments', httpServerUtil.verifyAdminHTTPQuerySig, (req: any, res: any) => ...return some HTML);
-
 const plugins = config.get("plugins");
 // get commma delimited list of plugin 'key' values into a string
 const pluginKeys = plugins.map((plugin: any) => plugin.key).join(','); 

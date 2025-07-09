@@ -14,7 +14,7 @@ import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
 import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, handleMakeFolder, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
-import { app } from '../../../AppService';
+import { app, signedArgs } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
 import { formatDisplayName, stripOrdinal, createClickablePathComponents, formatDateTime, stripFileExtension, isTextFile, isImageFile } from '../../../../common/CommonUtils';
 import { alertModal } from '../../../components/AlertModalComp';
@@ -841,6 +841,9 @@ function TreeNodeComponent({
         imgSrc =`/api/docs/images/${gs.docsRootKey}/${node.url}`;
         // remove any double slashes
         imgSrc = imgSrc.replace(/\/\//g, '/');
+        if (signedArgs) {
+            imgSrc += `?${signedArgs.args}`;
+        }
     }
 
     const textFile = isTextFile(node.name);
@@ -1218,7 +1221,7 @@ export default function TreeViewerPage() {
                         }
                     }
                     else {
-                        // todo-1: we need to document this behaviour where we default users to the public folder, expecting it to exist.
+                        // todo-2: we need to document this behaviour where we default users to the public folder, expecting it to exist.
                         console.log(`Setting docsFolder to public/admin. No user profile saved.`);
                         folder = "/admin/public";
                     }

@@ -22,7 +22,7 @@ class HttpServerUtil {
      * @param next - Express next function to continue to the next middleware
      * @returns Promise<void> 
      */
-    verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => {
+    verifyReqHTTPSignature = async (req: Request, res: Response, next: any): Promise<void> => { // &&&
         // get publicKey from request headers
         const publicKey = req.headers['public-key'] as string;
         if (!publicKey) {
@@ -195,32 +195,33 @@ class HttpServerUtil {
      * Validates timestamp and signature query parameters against the admin public key.
      * 
      * Expected query parameters:
-     * - timestamp: Unix timestamp (in milliseconds) of when the request was created
-     * - signature: Hex-encoded signature of the timestamp
-     * 
-     * Validation includes:
-     * - Required parameters presence
-     * - Timestamp format validation
-     * - Timestamp freshness (within 5-minute window)
-     * - Admin public key availability
-     * - Signature verification against timestamp hash
-     * 
+     * - auth: Signed data formatted like be formatted like `${timestamp}-${publicKey}`
+     * - signature: Hex-encoded signature of the 'auth' text
+     *
      * @param req - Express request object containing timestamp and signature in query parameters
      * @param res - Express response object for sending error responses
      * @param next - Express next function to continue to the next middleware
      * @returns Promise<void>
      */
-    verifyAdminHTTPQuerySig = async (req: Request, res: Response, next: any): Promise<void> => {
-        const { timestamp, signature } = req.query;
+    verifyReqHTTPQuerySig = async (req: Request, res: Response, next: any): Promise<void> => {
+        if (!process.env.POSTGRES_HOST) {
+            // If Postgres is not available, skip signature verification
+            next();
+            return;
+        }
+        const { auth, signature } = req.query;
 
         // Validate required parameters
-        if (!timestamp || !signature) {
+        if (!auth || !signature) {
             console.error('Missing authentication parameters');
             res.status(401).json({ 
                 error: 'Unauthorized: Missing authentication parameters' 
             });
             return;
         }
+
+        // The 'auth' will be formatted like `${timestamp}-${publicKey}`
+        const [timestamp, publicKey] = (auth as string).split('-');
 
         try {
             // Make sure timestamp is not too old (e.g., 5 minutes)
@@ -245,24 +246,15 @@ class HttpServerUtil {
                 });
                 return;
             }
-    
-            // Verify the signature using the admin public key
-            if (!ADMIN_PUBLIC_KEY) {
-                console.error('Admin public key not set');
-                res.status(401).json({ 
-                    error: 'Server configuration error: Admin public key not set' 
-                });
-                return;
-            }
         
-            // Create the hash of the timestamp
-            const msgHash = crypt.getHashBytesOfString(timestamp.toString());
+            // Create the hash of the auth string
+            const msgHash = crypt.getHashBytesOfString(auth as string);
         
             // Convert the base64 signature to buffer
             const sigBuf = Buffer.from(signature.toString(), 'hex');
         
             // Use your existing verifySignatureBytes method
-            const isValid = await crypt.verifySignatureBytes(msgHash, sigBuf, ADMIN_PUBLIC_KEY);
+            const isValid = await crypt.verifySignatureBytes(msgHash, sigBuf, publicKey);
     
             if (!isValid) {
                 console.error('Invalid admin signature');
@@ -272,6 +264,14 @@ class HttpServerUtil {
                 return;
             }
     
+            if (process.env.POSTGRES_HOST) {
+                const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
+                if (userProfile) {
+                    // Store userProfile in the request object for use in downstream middleware and route handlers
+                    (req as AuthenticatedRequest).userProfile = userProfile;
+                }       
+            }
+
             // If signature is valid, proceed to the next middleware or route handler
             next();
         } catch (error) {

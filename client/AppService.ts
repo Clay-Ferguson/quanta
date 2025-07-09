@@ -3,6 +3,7 @@ import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
 import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
+import { httpClientUtil } from './HttpClientUtil.ts';
 
 // Vars are injected directly into HTML by server
 declare const PLUGINS: string;
@@ -13,6 +14,7 @@ declare const DEFAULT_PLUGIN: string;
  * Populated during the loadPlugins() phase of application initialization.
  */
 export const pluginsArray: IClientPlugin[] = [];
+export let signedArgs = {args: null}; 
 
 /**
  * Main application service that manages the lifecycle and state of the Quanta Chat application.
@@ -50,6 +52,16 @@ export class AppService {
                 keyPair
             }});
         }
+
+        // Create signedArgs which allows secure 'gets' and then use 'setInterval' to update it every 4 minutes
+        signedArgs = await httpClientUtil.makeSignedArgs();
+        setInterval(() => {
+            httpClientUtil.makeSignedArgs().then(args => {
+                signedArgs = args;
+            }).catch(error => {
+                console.error('Error updating signedArgs:', error);
+            });
+        }, 4 * 60 * 1000); // Update every 4 minutes
 
         gd({ type: 'setAppInitialized', payload: { 
             appInitialized: true
