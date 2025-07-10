@@ -855,6 +855,8 @@ function TreeNodeComponent({
     // Compare the stripped names (without ordinal prefix) for exact match
     const isHighlightedFile = !isFolder && gs.docsHighlightedFileName && 
         node.name === gs.docsHighlightedFileName;
+    const isAdmin = ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey;
+    const canMod = isOurNode || isAdmin;
     
     // Determine the border class based on whether this is highlighted
     const getBorderClass = () => {
@@ -885,7 +887,7 @@ function TreeNodeComponent({
     return (
         <div id={validId} key={validId}>
             <div className={getBorderClass()}>
-                {gs.docsEditMode && isOurNode &&
+                {gs.docsEditMode && canMod &&
                     <div className="flex-shrink-0 pt-1">
                         <input
                             type="checkbox"
@@ -909,7 +911,7 @@ function TreeNodeComponent({
                                         {new Date(node.modifyTime).toLocaleDateString()}
                                     </span>
                                 </>}
-                            {gs.docsEditMode && isOurNode && 
+                            {gs.docsEditMode && canMod && 
                                 <EditIcons 
                                     node={node} 
                                     index={index} 
@@ -1048,14 +1050,14 @@ function TreeNodeComponent({
                                     {formatDisplayName(node.name)}
                                 </span>
                             </div>
-                            {gs.docsEditMode && isOurNode &&
+                            {gs.docsEditMode && canMod &&
                                 <EditIcons node={node} index={index} numNodes={numNodes} gs={gs} treeNodes={treeNodes} setTreeNodes={setTreeNodes} reRenderTree={reRenderTree} />
                             }
                         </div>
                     }
                 </div>
             </div>
-            {gs.docsEditMode && isOurNode &&
+            {gs.docsEditMode && canMod &&
                 <InsertItemsRow gs={gs} reRenderTree={reRenderTree} node={node} />
             }
         </div>

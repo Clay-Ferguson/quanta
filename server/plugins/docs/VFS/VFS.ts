@@ -496,12 +496,10 @@ class VFS implements IFS {
             
             if (stats.is_directory) {
                 // Use vfs_rmdir for directories
-                pgdb.logEnabled = true; // Enable logging for debugging
                 await pgdb.query(
                     'SELECT vfs_rmdir($1, $2, $3, $4)',
                     pgdb.authId(owner_id), parentPath, filename, rootKey
                 );
-                pgdb.logEnabled = false; // Enable logging for debugging
             } else {
                 // Use vfs_unlink for files
                 await pgdb.query(
