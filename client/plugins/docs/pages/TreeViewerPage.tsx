@@ -151,7 +151,6 @@ interface EditFileProps {
     reRenderTree: () => Promise<TreeNode[]>;
     treeNodes: TreeNode[];
     setTreeNodes: React.Dispatch<React.SetStateAction<TreeNode[]>>;
-    handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleCancelClick: () => void;
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }
@@ -164,7 +163,6 @@ function EditFile({
     reRenderTree,
     treeNodes, 
     setTreeNodes, 
-    handleFileNameChange, 
     handleCancelClick, 
     contentTextareaRef 
 }: EditFileProps) {
@@ -212,8 +210,6 @@ function EditFile({
     const handleLocalFileNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newFileName = event.target.value;
         setLocalFileName(newFileName);
-        // Also update the global state for consistency
-        handleFileNameChange(event);
     };
 
     const handleInsertTime = () => {
@@ -288,7 +284,9 @@ function EditFile({
             />
             <div className="flex gap-2 mt-2 mb-3">
                 <button
-                    onClick={() => handleSaveClick(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
+                    onClick={() => {
+                        handleSaveClick(gs, treeNodes, setTreeNodes, reRenderTree, localContent, localFileName);
+                    }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                     Save
@@ -809,7 +807,6 @@ interface TreeNodeComponentProps {
     isNodeSelected: (node: TreeNode) => boolean;
     handleCancelClick: () => void;
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     formatDisplayName: (name: string) => string;
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
     reRenderTree: () => Promise<TreeNode[]>;
@@ -829,7 +826,6 @@ function TreeNodeComponent({
     isNodeSelected, 
     handleCancelClick, 
     handleFolderNameChange, 
-    handleFileNameChange, 
     formatDisplayName,
     contentTextareaRef,
     reRenderTree
@@ -1002,7 +998,6 @@ function TreeNodeComponent({
                             reRenderTree={reRenderTree}
                             treeNodes={treeNodes} 
                             setTreeNodes={setTreeNodes} 
-                            handleFileNameChange={handleFileNameChange} 
                             handleCancelClick={handleCancelClick} 
                             contentTextareaRef={contentTextareaRef} 
                         />
@@ -1081,7 +1076,6 @@ function renderTreeNodes(
     isNodeSelected: (node: TreeNode) => boolean, 
     handleCancelClick: () => void, 
     handleFolderNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
-    handleFileNameChange: (event: React.ChangeEvent<HTMLInputElement>) => void, 
     formatDisplayName: (name: string) => string, 
     contentTextareaRef: React.RefObject<HTMLTextAreaElement | null>, 
     reRenderTree: () => Promise<TreeNode[]>,
@@ -1103,7 +1097,6 @@ function renderTreeNodes(
                 isNodeSelected, 
                 handleCancelClick, 
                 handleFolderNameChange, 
-                handleFileNameChange, 
                 formatDisplayName, 
                 contentTextareaRef, 
                 reRenderTree,
@@ -1128,7 +1121,6 @@ function renderTreeNodes(
                     isNodeSelected={isNodeSelected}
                     handleCancelClick={handleCancelClick}
                     handleFolderNameChange={handleFolderNameChange}
-                    handleFileNameChange={handleFileNameChange}
                     formatDisplayName={formatDisplayName}
                     contentTextareaRef={contentTextareaRef}
                     reRenderTree={reRenderTree}
@@ -1183,12 +1175,6 @@ export default function TreeViewerPage() {
     const handleFolderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         gd({ type: 'setNewFolderName', payload: { 
             docsNewFolderName: event.target.value
-        }});
-    };
-
-    const handleFileNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        gd({ type: 'setNewFileName', payload: { 
-            docsNewFileName: event.target.value
         }});
     };
 
@@ -1396,7 +1382,7 @@ export default function TreeViewerPage() {
                             )}
                             {renderTreeNodes(filteredTreeNodes, gs, treeNodes, setTreeNodes, isNodeSelected, 
                                 () => handleCancelClick(gs), handleFolderNameChange, 
-                                handleFileNameChange, formatDisplayName, contentTextareaRef, reRenderTree)}
+                                formatDisplayName, contentTextareaRef, reRenderTree)}
                         </div>
                     )}
                     <div className="h-20"></div> {/* Empty div for bottom spacing */}

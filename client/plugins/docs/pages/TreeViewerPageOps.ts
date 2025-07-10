@@ -319,11 +319,10 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
     // if (!fileName || fileName.trim() === '') {
     //     return;
     // }
-    const fileName = "file";
         
     try {
         const requestBody = {
-            fileName: fileName,
+            fileName: "file",
             treeFolder: gs.docsFolder || '/',
             insertAfterNode: node ? node.name : '',
             docRootKey: gs.docsRootKey
@@ -358,7 +357,7 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
                     }});
                 }
                 else {
-                    console.error('Newly created file node not found in treeNodes:', fileName);
+                    console.error('Newly created file node not found in treeNodes:');
                 }
             }, 100);
         }
@@ -424,11 +423,11 @@ export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node:
     }
 };
 
-export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: () => void, content: string) => {
+export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setTreeNodes: any, reRenderTree: () => void, content: string, fileName: string) => {
     if (gs.docsEditNode) {
         // Get the original filename and new filename
         const originalName = gs.docsEditNode.name;
-        let newFileName = gs.docsNewFileName || stripOrdinal(originalName);
+        let newFileName = fileName || gs.docsNewFileName || stripOrdinal(originalName);
         
         const originalExtension  = getFilenameExtension(originalName);
         
@@ -450,7 +449,7 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
         // Create the new full file name with the numeric prefix, and replace spaces and dashes with underscores to create a valid file name
-        const newFullFileName = numericPrefix + newFileName.replace(/[ -]/g, '_');
+        const newFullFileName = numericPrefix + newFileName.replace(/[ ]/g, '_');
 
         // Find the node in treeNodes and update its content and name
         const updatedNodes = treeNodes.map(node => 
@@ -482,6 +481,7 @@ const saveToServer = async (gs: DocsGlobalState, filename: string, reRenderTree:
             newFileName: newFileName || filename,
             docRootKey: gs.docsRootKey
         };
+        // console.log('Saving file to server with request body:', requestBody);
         const response = await httpClientUtil.secureHttpPost('/api/docs/file/save', requestBody);
         if (!response) {
             reRenderTree();
