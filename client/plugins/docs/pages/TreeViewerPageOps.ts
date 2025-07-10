@@ -443,6 +443,11 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
                 newFileName += '.md'; // Default extension
             }
         }
+        else {
+            if (newFileName.trim().endsWith('.')) {
+                newFileName = newFileName.trim() + 'md';
+            }
+        }
             
         // Extract the numeric prefix from the original file name
         const underscoreIdx = originalName.indexOf('_');
