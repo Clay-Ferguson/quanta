@@ -482,7 +482,7 @@ const saveToServer = async (gs: DocsGlobalState, filename: string, reRenderTree:
             newFileName: newFileName || filename,
             docRootKey: gs.docsRootKey
         };
-        const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
+        const response = await httpClientUtil.secureHttpPost('/api/docs/file/save', requestBody);
         if (!response) {
             reRenderTree();
             alertModal("Error saving file to server. Please try again later.");
@@ -500,7 +500,7 @@ const renameFolderOnServer = async (gs: DocsGlobalState, oldFolderName: string, 
             treeFolder: gs.docsFolder || '/',
             docRootKey: gs.docsRootKey
         };
-        await httpClientUtil.secureHttpPost('/api/docs/rename-folder/', requestBody);
+        await httpClientUtil.secureHttpPost('/api/docs/folder/rename', requestBody);
     } catch (error) {
         console.error('Error renaming folder on server:', error);
     }
@@ -750,7 +750,7 @@ const serverSplitFile = async (gs: DocsGlobalState, filename: string, content: s
             docRootKey: gs.docsRootKey,
             split: true
         };
-        const response = await httpClientUtil.secureHttpPost('/api/docs/save-file/', requestBody);
+        const response = await httpClientUtil.secureHttpPost('/api/docs/file/save', requestBody);
         if (response) {
             await reRenderTree();
             await alertModal(response.message || 'File split successfully');
@@ -951,7 +951,7 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
                 docRootKey: gs.docsRootKey
             };
             
-            const response = await httpClientUtil.secureHttpPost('/api/docs/make-folder', requestBody);
+            const response = await httpClientUtil.secureHttpPost('/api/docs/folder/build', requestBody);
             
             if (response) {
                 // Clear editing state (like cancel)
