@@ -31,8 +31,8 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsNewFileName = null;
         gs.docsSelItems = new Set<TreeNode>();
         gs.docsCutItems = new Set<string>();
-        gs.docsRootKey = DOC_ROOT_KEY || 'usr'; // defined in config.yaml
-        gs.docsRootType = DOC_ROOT_TYPE || 'vfs'; // default to 'vfs' if not defined
+        gs.docsRootKey = DOC_ROOT_KEY;
+        gs.docsRootType = DOC_ROOT_TYPE;
         gs.docsViewWidth = 'medium';
         gs.docsSearch = '';
         gs.docsSearchResults = [];
@@ -45,7 +45,11 @@ class DocsClientPlugin implements IClientPlugin {
         gs.docsHighlightedFolderName = null;
 
         if (!DOC_ROOT_KEY) {
-            console.warn('DOC_ROOT_KEY is not defined in HTML rendered template. Using default "root" key for docs.');
+            console.error('DOC_ROOT_KEY is not defined in HTML rendered template.');
+        }
+
+        if (!DOC_ROOT_TYPE) {
+            console.error('DOC_ROOT_TYPE is not defined in HTML rendered template.');
         }
     }
 

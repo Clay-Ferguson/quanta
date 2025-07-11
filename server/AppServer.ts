@@ -101,19 +101,20 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         
         try {
             console.log(`Serving index.html for page: ${page}`);
+            const docRootKey = req.params?.docRootKey || 'usr';
 
             // Get the file system type first if we have a docRootKey
             let docRootType = "";
-            if (req.params.docRootKey) {
-                docRootType = await docUtil.getFileSystemType(req.params.docRootKey);
+            if (docRootKey) {
+                docRootType = await docUtil.getFileSystemType(docRootKey);
             }
 
             let docPath = '';
             if (req.params.uuid) {
-                docPath = await docUtil.getPathByUUID(req.params.uuid, req.params.docRootKey) || '';
+                docPath = await docUtil.getPathByUUID(req.params.uuid, docRootKey) || '';
             }
             else {
-                if (req.params.docRootKey && req.params[0]) {
+                if (docRootKey && req.params[0]) {
                 // Example Url handled here:
                 //   http://localhost:8000/doc/usr/Quanta_User_Guide
                 //   From handler: context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
@@ -132,7 +133,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
                 .replace('{{SECURE}}', SECURE)
                 .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
                 .replace(`{{PAGE}}`, page)
-                .replace('{{DOC_ROOT_KEY}}', req.params.docRootKey || "")
+                .replace('{{DOC_ROOT_KEY}}', docRootKey)
                 .replace('{{DOC_ROOT_TYPE}}', docRootType)
                 .replace('{{DOC_PATH}}', docPath)
                 .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))

@@ -227,7 +227,7 @@ export default function SearchViewPage() {
     return (
         <div className="page-container pt-safe">
             <header className="app-header">
-                <LogoBlockComp subText={`Search in ${gs.docsFolder}`}/>
+                <LogoBlockComp subText={`Search in ${formatFullPath(gs.docsFolder!)}`}/>
                 <div className="flex items-center space-x-4">
                     <BackButtonComp/>
                 </div>
