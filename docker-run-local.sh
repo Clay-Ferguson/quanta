@@ -35,11 +35,11 @@ if [ $? -eq 0 ]; then
     sudo chmod -R 755 ../quanta-volumes/local/pgadmin-data
     
     # Stop any existing containers
-    docker-compose -f docker-compose-local.yaml --env-file ../.env-quanta down 
+    docker-compose --env-file .env.local --env-file ../.env-quanta down 
     
     # Build and start the container
     echo "Starting application with Docker Compose..."
-    docker-compose -f docker-compose-local.yaml  --env-file ../.env-quanta up --build
+    docker-compose --env-file .env.local --env-file ../.env-quanta up --build
     
     echo "Quanta ended."
 else

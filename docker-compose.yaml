@@ -1,17 +1,16 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: postgres-local
+    container_name: postgres-${QUANTA_ENV:-local}
     environment:
       - POSTGRES_DB=quanta
       - POSTGRES_USER=quanta
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      # NOTE: Quanta volumes are stored one level up from the current directory
-      - ../quanta-volumes/local/postgres-data:/var/lib/postgresql/data/pgdata
+      - ${POSTGRES_DATA_PATH:-./postgres-data}:/var/lib/postgresql/data/pgdata
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U quanta -d quanta"]
@@ -23,7 +22,7 @@ services:
     # Example: Use `docker-compose --profile pgadmin ...` to enable this service
     profiles: ["pgadmin"]
     image: dpage/pgadmin4:latest
-    container_name: pgadmin-local
+    container_name: pgadmin-${QUANTA_ENV:-local}
     # Note: This is linux UserId:GroupID, and NOT related to port numbers
     user: "5050:5050"
     environment:
@@ -37,10 +36,9 @@ services:
       - GUNICORN_ACCESS_LOGFILE=/dev/null
       - PGADMIN_DISABLE_POSTFIX=True
     volumes:
-      # NOTE: Quanta volumes are stored one level up from the current directory
-      - ../quanta-volumes/local/pgadmin-data:/var/lib/pgadmin
+      - ${PGADMIN_DATA_PATH:-./pgadmin-data}:/var/lib/pgadmin
     ports:
-      - "5051:80"
+      - "${PGADMIN_PORT:-5050}:80"
     depends_on:
       - postgres
     restart: unless-stopped
@@ -48,19 +46,19 @@ services:
       driver: "none"
 
   quanta-app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
       args:
-        ENV: local
-    container_name: quanta-local
+        ENV: ${QUANTA_ENV:-local}
+    container_name: quanta-${QUANTA_ENV:-local}
     ports:
-      - "8008:8000"
+      - "${APP_PORT:-8000}:8000"
     volumes:
       # Mount document root if it exists
-      - /home/clay/ferguson/A-doc-root:/home/clay/ferguson/A-doc-root:ro
+      - ${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:ro
     environment:
-      - CONFIG_FILE=./docker-config-local.yaml
+      - CONFIG_FILE=./docker-config-${QUANTA_ENV:-local}.yaml
       - QUANTA_DEV=true
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres
