@@ -1,34 +1,36 @@
-# Quanta FS User Guide
+# Quanta User Guide
 
-The **Quanta FS** Extension is a powerful file system-based document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an actual file on the file system rather than in a monolithic document file. This extension provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) but using your file system itself for storage.
+**Quanta** is a powerful file system-based document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an actual file on the file system rather than a chunk of JSON in a monolithic document file like Jupyter uses. The app provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) but using your file system itself for storage.
 
 ## LFS vs VFS File Systems
 
-To control which files are accessible thru the app, we have a section in the `config-*.yaml` files named `public-folders` where the admin can define multiple file system `root`. Each root can be either a LFS (for Linux File System) or VFS (Virtual File System) type. 
+Technical notes about File System setup: This app can be run locally, as a web app, which accesses your file system directly and edits actual files, which is called an LFS setup (Local File System). However for a web server running online and hosting multiple users, you will need to use VFS configuration (Virtual File System), which relies on a Cloud-based virtual file system implemented entirely in Postgres and is only available in the Docker-Compose-based deployment
+
+To control which files are accessible thru the app, we have a section in the `config-*.yaml` files named `public-folders` where the admin can define multiple file system roots. Each root can be either a LFS (for Linux File System) or VFS (Virtual File System) type. 
 
 * `LFS` is only for single-user installations (i.e. running this app outside of docker, and on a person's computer like any other desktop software) 
 
-* `VFS` is still in an experimental (alpha) stage of development, and it will provide a multi-user website experience, similar to a cloud-based Jupyter Notebooks-like experience. (Technical Note: VFS is a File System implementation made up entirely of a single PostgreSQL table, and a set of PostgreSQL functions which emulate the `fs` NPM module's API entirely self-contained in Postgres! We don't provide full-coverage of all of the `fs` API because we don't need it, but we support basic functionns necessary to drive this app, like reading directories, reading/writeing files, renaming, deleting, etc.)
+* `VFS` provides a multi-user website experience, similar to a cloud-based Jupyter Notebooks. (Technical Note: VFS is a File System implementation made up entirely of a single PostgreSQL table, and a set of PostgreSQL functions which loosely emulates the `fs` NPM module's API entirely but self-contained in Postgres! We don't provide full-coverage of all of the `fs` API because we don't need it, but we support basic functionns necessary to drive this app, like reading directories, reading/writeing files, renaming, deleting, etc.)
 
-## IFS Interface - Technical Note
+### IFS Interface - Technical Note
 
 Note to software developers only: The genius of our `LFS/VFS` design is that we have a common interface `IFS` which is an abstraction layer hiding from the application code the need to know or care which file system is in use! We just have a polymorphic base-interface `IFS` which all the application code uses, in a way that makes it fully independent from which file system is controlling any given File System `root`.   
 
 ## File/Folder Ordinals
 
-The reason `Quanta FS` is able to use File Systems (i.e. files/folders) as the fundamental building blocks to hold Document Cell content in individual files (as in Jupyter-like Cells), is because Quanta handles the one ingredient what was always required to make this happen: Ordinals. The reason (I believe) no one has ever, used a folder structure as the primary storage system for arbitrary documents is simple: Folders don't have any inherent ordering. File Systems have always only been able to sort files alphabetically or by timestamps, but they have no inherent persistent ordering, in the way that paragraphs in a document are 'ordered'. Thus it has always been essentially impossible to make a "Cell-based" (as in Jupyter Cells) document system based on File Systems, until that problem is solved. The solution Quanta uses to solve this challenge is simply to automatically prefix files with an ordinal number like `0123_MyFile.md` or `0456_My_Folder`. We chose this approach rather than something like XATTRS in Linux so that our documents can be accessed, browsed, edited, completely outside of the Quanta system using any Markdown, or Text Editor, or File Explorer you have, because they all can sort by filename ordinals. This is a huge benefit because it means you're not locked into using Quanta forever, and there's always a way to view your content with a reasonable user experience on any system. It's only inside Quanta Application itself where you get a Jupyter-like exerience editing those same folder structures.
+The reason `Quanta` is able to use File Systems (i.e. files/folders) as the fundamental building blocks to hold Document Cell content in individual files (as in Jupyter-like Cells), is because Quanta uses the one ingredient what was always required to make this happen: Ordinals. The reason no one (afaik) has ever used a folder structure as the primary storage system for arbitrary documents, in this fine-grained way, is simple: Files/Folders don't have any inherent ordering. 
+
+File Systems have always only been able to sort files alphabetically or by timestamps, but they have no inherent persistent ordering, in the way that paragraphs in a document are 'ordered'. Thus it has always been essentially impossible to make a "Cell-based" (as in Jupyter Cells) document system based on File Systems, until that problem is solved. The solution Quanta uses to solve this challenge is simply to automatically prefix files with an ordinal number like `0123_MyFile.md` or `0456_My_Folder`. We chose this approach rather than something like XATTRS in Linux so that our documents can be accessed, browsed, edited, completely outside of the Quanta system using any Markdown, or Text Editor, or File Explorer you have, because they all can sort by filename ordinals. This is a huge benefit because it means you're not locked into using Quanta forever, and there's always a way to view your content with a reasonable user experience on any system. It's only inside Quanta Application itself where you get a Jupyter-like exerience editing those same folder structures.
 
 ## Standalone Features
 
-In `Desktop Mode` (running as a local browser app, and not as a website) Quanta Extension can run commands on the Operating System, and is only designed for local users running on their own machine, or perhaps an admin running on a server machine, but it not a multi-user web app. Security is done by crytographically signing requests by the browser which is expected to have a public key which matches the public key defined in 'adminPublicKey' of the config yaml.
+In `Desktop Mode` (running as a local browser app, and not as a website) Quanta can run commands on the Operating System, and is only designed for local users running on their own machine, or perhaps an admin running on a server machine, but it not a multi-user web app. Security is done by crytographically signing requests by the browser which is expected to have a public key which matches the public key defined in 'adminPublicKey' of the config yaml.
+
+TODO: proivde screenshot and more detail about the `command runner` capability.
 
 ## Getting Started
 
-Quanta presents your files and folders as a unified document view. Each file in a folder is displayed as a separate section/cell, creating the appearance of one continuous document while maintaining individual file organization.
-
-## System Requirements
-
-This extension assumes the server will be running in a Linux environment, and has only been tested on Ubuntu. The search function uses 'grep' on the OS level, and also for searching binary files (namely PDFs) it requires the `pdfgrep` utility to have been installed on the machine.
+Using Quanta is much like browsing a File System, except that the content itself is being presented to you rather than just filenames. So Quanta is like a Wiki, or Document Editor/Publisher in that regard. Quanta presents your files and folders as a unified document view that you can browse around in. Each file in a folder is displayed as a separate section/cell, creating the appearance of one continuous document while maintaining individual file organization. At any given time you'll be viewing the content of a folder, but you'll be seeing all the markdown of all the files in that folder presented to you as a big editable document. So in the sense that you can edit online content this is similar to a Wiki.
 
 ### Navigation
 
@@ -239,17 +241,3 @@ The **Generate Static Site** button (cube icon) creates a static HTML version of
 - File extensions are automatically added (.md for text files) if not specified
 - Avoid special characters that might cause issues with file systems
 
-## Troubleshooting
-
-### Common Issues
-- **Can't see edit controls**: Ensure Edit Mode is enabled via the header checkbox
-- **Files appear out of order**: The system maintains automatic ordering via numeric prefixes
-- **Upload not working**: Ensure you have proper permissions and the file types are supported
-- **Search not finding content**: Try different search modes or check that you're in the correct folder
-
-### Error Recovery
-- **Accidental deletions**: There is no undo for deletions - use caution
-- **Lost changes**: Always save your work before navigating away
-- **Cut operations**: Use "Undo Cut" if you change your mind about moving items
-
-Quanta provides a powerful yet intuitive way to manage your content, combining the flexibility of a file system with the convenience of a unified document interface.

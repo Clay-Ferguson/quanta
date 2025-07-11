@@ -1,19 +1,20 @@
 # Quanta Platform Developer Guide
 
-*Note: The official name for the Quanta File System viewer/editor is "Quanta FS" but we almost always refer to it simply as "Quanta", although this is admittedly confusing because Quanta is the same name as the platform itself.*
+*Note: `Quanta` is the name of the primary plugin as well as the name of the platform itself, so whever it's not obvious from context we'll use the terminology `Quanta App` or `Quanta Plugin` vs `Quanta Platform`*
 
 ## Overview
 
-Quanta is a modern React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications.
+Quanta Platform is a React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications.
 
 The platform currently includes two main applications:
 
-- **Quanta FS (Docs)**: A filesystem-based document editor with Jupyter Notebook-style interface
-- **Callisto (Chat)**: A WebRTC-powered peer-to-peer chat application with optional server persistence
+- **Quanta**: A filesystem-based document editor with Jupyter Notebook-style interface
+- **Callisto**: A WebRTC-powered peer-to-peer chat application with optional server persistence
 
 ## Technology Stack
 
 ### Frontend Stack
+
 - **TypeScript**: Strongly typed JavaScript for better development experience
 - **React 19**: Modern React with hooks and functional components
 - **Vite**: Fast build tool and development server
@@ -26,7 +27,6 @@ The platform currently includes two main applications:
 - **Node.js + Express**: RESTful API server with middleware support
 - **TypeScript**: Consistent language across frontend and backend
 - **PostgreSQL**: Database for server-side persistence
-- **WebSocket (ws)**: Real-time communication for WebRTC signaling
 - **js-yaml**: Configuration management via YAML files
 
 ### Build & Development Tools
@@ -36,11 +36,13 @@ The platform currently includes two main applications:
 
 ## How to Run
 
+There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)
+
 We can run the app using either Docker or non-Docker deployments. We have the shell scripts named `run-*.sh` and `docker-run-*sh` in the project root which are somewhat self-explanatory. They end in `dev` for (development), `local` for a local deployment (non-server install), and `prod` for production servers which activate HTTPS support.
 
 Any configuration that uses PostgreSQL requires the Docker version becuause we're only setup to access PostgreSQL as a docker service.
 
-The platform consists entirely of one or more activated 'plugins' which make up the 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta FS`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always required Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres.
+When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always requires Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
 
 ## System Architecture
 
@@ -48,209 +50,66 @@ The platform consists entirely of one or more activated 'plugins' which make up 
 
 #### 1. Application Bootstrap
 
-**Client-Side Initialization (`client/main.tsx`)**:
-```typescript
-// React app initialization with global state management
-createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-        <GlobalStateProvider> 
-            <AppServiceConnector />
-            <PageRouter />
-            <AlertModalComp />
-            <ConfirmModalComp />
-            <PromptModalComp />
-        </GlobalStateProvider>
-    </StrictMode>
-);
+[Main client side entry point:](/client/main.tsx)
 
-// Delayed initialization ensures proper React state setup
-setTimeout(() => {
-    app.init();
-}, 250)
-```
+#### Server-Side Bootstrap 
 
-**Server-Side Bootstrap (`server/AppServer.ts`)**:
-```typescript
-// Express server with plugin architecture
-const app = express();
+To see how the app starts and runs look at the `scripts` in [package.json](/package.json)
 
-// Plugin initialization before route setup
-await svrUtil.initPlugins(plugins, {app, serveIndexHtml});
+The [Server Entry point](/server/AppServer.ts) is the main entry point of the server side code.
 
-// Static file serving
-app.use(express.static("./dist", { index: false }));
-
-// Plugin route finalization
-await svrUtil.finishRoutes(plugins, {app, serveIndexHtml});
-
-// Server startup with HTTPS/HTTP support
-const server = SECURE === 'y' ? https.createServer({key, cert}, app) : http.createServer(app);
-server.listen(PORT);
-
-// Plugin notification of server readiness
-await svrUtil.notifyPlugins(plugins, server);
-```
+When the app starts it will read from the Docker compose file of course, as well as the appropriate `config*.yaml` file. From these configs it will know what plugins are defined, and it will then initialize plugins.
 
 #### 2. Plugin Architecture
 
-The system uses a sophisticated plugin architecture that allows for modular application development:
+The system uses a plugin architecture that allows for modular application development:
 
-**Plugin Lifecycle**:
-1. **Loading**: Plugins are dynamically imported during application startup
-2. **Initialization**: Each plugin's `init()` method is called with shared context
-3. **Route Setup**: Plugins register their HTTP endpoints and page routes
-4. **Finalization**: Default routes and fallback handlers are established
-5. **Notification**: Plugins are notified when the server is fully ready
+**Server-side Plugin Lifecycle**:
 
-**Client Plugin Interface (`IClientPlugin`)**:
-```typescript
-interface IClientPlugin {
-    getKey(): string;                                    // Unique plugin identifier
-    init(context: any): Promise<void>;                   // Plugin initialization
-    notify(): Promise<void>;                             // Server ready notification
-    applyStateRules(gs: GlobalState): void;              // State validation rules
-    restoreSavedValues(gs: GlobalState): Promise<void>;  // State restoration
-    getRoute(gs: GlobalState, pageName: string): ReactElement | null; // Page routing
-    getSettingsPageComponent(): ReactElement | null;     // Settings UI component
-    getAdminPageComponent(): ReactElement | null;        // Admin UI component
-    getUserProfileComponent(profileData: UserProfile): ReactElement | null; // Profile UI
-    goToMainPage(): void;                                // Navigation handler
-}
-```
+Each plugin should have an `init.ts` file in it's plugin folder which contains a class that derives from `IServerPlugin`. This Server Plugin interface has lifecycle methods that the plugin needs to implement to integrate and activate itself during startup of the web app.
 
-**Server Plugin Interface (`IServerPlugin`)**:
-```typescript
-interface IServerPlugin {
-    init(context: any): void;        // Register routes and middleware
-    finishRoute(context: any): void; // Setup fallback routes
-    notify(server: any): void;       // Handle server startup notification
-}
-```
+In general Plugins are kept in separate dedicated subfolders on the client and on the server. For example, the `chat` plugin (called Callisto as it's product name) there's a `/client/plugins/chat` project folder for client code and a `/server/plugins/chat` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folders named `docs` is what contains the Quanta App/Plugin. The Quanta Plugin is called `docs` because it's primarily a File System-based document editor and wiki system.
 
-#### 3. State Management
+#### 3. ReactJS State Management
 
 **Global State Architecture**:
-```typescript
-// Centralized state with plugin extensibility
-interface GlobalState {
-    keyPair?: KeyPairHex;           // Cryptographic identity
-    pages?: Array<string>;          // Navigation stack
-    userName?: string;              // User identity
-    userAvatar?: FileBase64Intf;    // Profile image
-    headerExpanded?: boolean;       // UI state
-    collapsedPanels?: Set<string>;  // Panel visibility
-    devMode?: boolean;              // Development mode
-    // Plugin-specific state with key prefixes
-}
 
-// State management with React Context + Reducer
-const [state, dispatch] = useReducer(globalReducer, initialState);
-
-// Global accessor functions for non-React contexts
-function gs(): GlobalState { return globalStateRef.current; }
-function gd(action: GlobalAction): GlobalState { /* dispatch logic */ }
-```
+All state that's part of the core platform is kept in [GlobalState](/client/GlobalState.tsx)
 
 **Plugin State Extension**:
-```typescript
-// Plugins extend the global state interface
-interface ChatGlobalState extends GlobalState {
-    chatRoom?: string;
-    chatConnecting?: boolean;
-    chatMessages?: Array<ChatMessage>;
-    chatContacts?: Array<Contact>;
-}
 
-// Type-safe state access for plugins
-export function useGlobalState(): ChatGlobalState {
-    return useGlobalStateBase() as ChatGlobalState;
-}
-```
+Each plugin can also have it's own type-safe "view" of the Global State as well by adding properties into the global state like, for example the [ChatGlobalState](/client/plugins/chat/ChatTypes.ts). We rely on a naming-convention based way of allowing all plugins to share parts of the same global state simply by requiringn each plugin to use the `Plugin Key` (same as plugin folder name) as the prefix for all global variables for a given plugin, to avoid naming conflicts. This naming convention lets us keep the simplest possible architecture by still having just one single GlobalState even when multiple different independent plugins are sharing contributions to it.
 
 #### 4. HTTP API Architecture
 
+From the Client side the HTTP REST calls are made thru the [Client Side REST API](/client/HttpClientUtil.ts)
+
 **Authentication & Security**:
+
 - **RFC 9421 HTTP Message Signatures**: Cryptographic request signing
 - **Admin Authentication**: Server configuration-based admin access
 - **Request Authentication**: User public key-based request validation
 - **Timestamp Validation**: Request freshness verification (2-5 minute windows)
 
-**Middleware Stack**:
-```typescript
-// Admin-only endpoints
-app.post('/api/admin/create-room', httpServerUtil.verifyAdminHTTPSignature, handler);
-
-// User-authenticated endpoints  
-app.post('/api/rooms/:roomId/send-messages', httpServerUtil.verifyReqHTTPSignature, handler);
-
-// Public endpoints (no authentication)
-app.get('/api/rooms/:roomId/message-ids', handler);
-```
-
-**API Patterns**:
-- **RESTful Design**: Standard HTTP methods and status codes
-- **JSON Communication**: Structured request/response format
-- **Error Handling**: Centralized error response formatting
-- **File Uploads**: Multipart form data support for attachments
-
 #### 5. Data Persistence
 
 **Client-Side Storage (IndexedDB)**:
-```typescript
-// Structured key-value storage for offline capabilities
-class IndexedDB {
-    async init(dbName: string, storeName: string, version: number): Promise<void>
-    async setItem(key: string, value: any): Promise<void>
-    async getItem<T>(key: string, defaultValue?: T): Promise<T>
-    async removeItem(key: string): Promise<void>
-    async clear(): Promise<void>
-}
 
-// Common storage keys
-enum DBKeys {
-    keyPair = "keyPair",           // User cryptographic identity
-    userName = "userName",          // Display name
-    userAvatar = "userAvatar",     // Profile image
-    headerExpanded = "headerExpanded" // UI preferences
-}
-```
+Persistance on the browser is done entirely thru the [Browser Persistence API](/client/IndexedDB.ts)
 
 **Server-Side Storage (PostgreSQL)**:
-```typescript
-// Plugin-specific database managers
-class DBManager implements DBManagerIntf {
-    async get<T>(sql: string, ...params: any[]): Promise<T | undefined>
-    async all<T>(sql: string, ...params: any[]): Promise<T[]>  
-    async run(sql: string, ...params: any[]): Promise<any>
-}
 
-// Database schemas managed per plugin
-// Chat: rooms, messages, attachments, users, blocked_users
-// Docs: No database persistence (filesystem-based)
-```
+PostgreSQL DB is available for the Dockerized deployments. The key file for Postgres connections [PGDB.ts](/server/PGDB.ts). Search for files named `*.sql` do learn about database schemas. There is SQL to generate the platform core tables, as well as the ability for each Plugin to create tables of their own.
 
 #### 6. Real-Time Communication
+
+todo: We need to move this into 'Chat' plugin because it's not part of core platform.
 
 **WebRTC Integration**:
 - **Peer-to-Peer**: Direct browser-to-browser communication
 - **WebSocket Signaling**: Server-mediated connection establishment
 - **ICE/STUN/TURN**: NAT traversal and connection management
 - **Data Channels**: File transfer and messaging
-
-**WebSocket Architecture**:
-```typescript
-// Server-side WebSocket handling
-class WebRTCServer {
-    async init(host: string, port: string, server: any): Promise<void>
-    // Handle peer discovery, signaling, and room management
-}
-
-// Client-side WebRTC management  
-class WebRTC {
-    async connect(): Promise<void>
-    // Manage peer connections and data channels
-}
-```
 
 #### 7. Configuration Management
 
@@ -266,23 +125,14 @@ desktopMode: "y"
 
 plugins:
   - key: "chat"
-    name: "Callisto Chat"
+    name: "Callisto"
   - key: "docs" 
-    name: "Quanta Docs"
+    name: "Quanta"
 
 publicFolders:
   - key: "user-guide"
     name: "User Guide"
     path: "./public/docs"
-```
-
-**Runtime Configuration Access**:
-```typescript
-class Config {
-    get(keyPath: string): any                    // Get configuration value
-    getPublicFolderByKey(key: string): any      // Get folder configuration
-    getPublicFolders(): any[]                   // Get all public folders
-}
 ```
 
 ## Build System & Development
@@ -296,45 +146,12 @@ yarn install
 
 # Start development server (auto-reload)
 ./run-dev.sh
-# - Starts Vite dev server on port 5173
-# - Starts Express server with hot reload
-# - Enables source maps and debugging
 ```
 
 **Production Build**:
 ```bash
 # Build for production
-./run-prod.sh  
-# - TypeScript compilation
-# - Vite production build
-# - Asset optimization and minification
-# - HTTPS certificate handling
-```
-
-### Project Structure
-
-```
-quanta/
-├── client/                     # Frontend React application
-│   ├── components/            # Reusable UI components
-│   ├── pages/                 # Core application pages
-│   ├── plugins/               # Plugin implementations
-│   ├── styles/                # SCSS and Tailwind styles
-│   ├── AppService.ts          # Main application service
-│   ├── GlobalState.tsx        # State management
-│   └── main.tsx              # Application entry point
-├── server/                    # Backend Express application
-│   ├── plugins/              # Server-side plugin implementations
-│   ├── AppServer.ts          # Express server setup
-│   ├── Config.ts             # Configuration management
-│   └── HttpServerUtil.ts     # Authentication middleware
-├── common/                    # Shared TypeScript types
-│   ├── types/                # Interface definitions
-│   └── Crypto.ts            # Cryptographic utilities
-├── public/                    # Static assets and documentation
-├── dist/                      # Built application output
-├── config.yaml               # Runtime configuration
-└── package.json              # Dependencies and scripts
+./docker-run-prod.sh  
 ```
 
 ### Plugin Development
@@ -344,7 +161,7 @@ quanta/
 2. Implement plugin interfaces (`IClientPlugin`, `IServerPlugin`)
 3. Add plugin configuration to `config.yaml`
 4. Export plugin instances from `init.ts` files
-5. Implement plugin-specific routes, pages, and components
+5. Implement plugin-specific routes, pages, and components in `init.ts`
 
 **Plugin Isolation**:
 - **State Namespacing**: Use plugin key prefixes for global state variables
@@ -379,28 +196,6 @@ quanta/
 - **SQL Injection Prevention**: Parameterized queries throughout
 - **File Upload Security**: Type validation and size limits
 - **HTTPS Support**: TLS encryption for production deployments
-
-## Performance & Scalability
-
-### Client-Side Optimization
-
-**React Performance**:
-- **Functional Components**: Modern React patterns with hooks
-- **State Optimization**: Efficient global state management
-- **Code Splitting**: Plugin-based code organization
-- **Asset Optimization**: Vite's optimized build pipeline
-
-**Storage Efficiency**:
-- **IndexedDB**: Efficient client-side persistence
-- **Message Deduplication**: Smart message storage strategies
-- **Image Optimization**: Base64 encoding with size limits
-
-### Server-Side Efficiency
-
-**Network Efficiency**:
-- **WebRTC P2P**: Reduced server load through peer-to-peer communication
-- **HTTP/2 Support**: Modern protocol support
-- **Static Asset Serving**: Efficient file serving with caching
 
 ## Development Guidelines
 

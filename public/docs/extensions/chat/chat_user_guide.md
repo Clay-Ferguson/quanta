@@ -4,8 +4,6 @@
 
 The Callisto extension implements a Peer-to-Peer capable WebRTC-based Chat Web App.
 
-The purpose of **Callisto** is to be the simplest possible, yet full featured, chat app that can work for any small or medium sized group of people, while still using all modern web standards and technologies for a NodeJS-based app. The idea is that larger apps like Slack, for example, are much more complex than necessary, and not self-hosted. Callisto is something simple enough for any developer to deploy and has code that's arguably as simple as possible.
-
 ![Settings Page](img/chat-window.png)
 
 ## Features

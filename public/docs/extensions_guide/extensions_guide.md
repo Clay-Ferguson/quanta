@@ -1,5 +1,7 @@
 # Plugin Development Guide
 
+TODO: This entire document needs to be reviewed. It was AI Generated, and may be very outdated at this point.
+
 This guide provides comprehensive instructions for software developers on how to create and integrate new plugins (extensions) into the Quanta web application.
 
 ## Overview
@@ -17,9 +19,9 @@ Plugins are organized in two main directories:
 
 Each plugin has its own directory containing an `init.ts` file that exports the plugin implementation.
 
-In the folder structure below it's important to know that `chat` is the folder name (and extension identifier) for the Callisto Chat App, and `docs` is the folder name (and extension identifier) for the Quanta FS App. 
+In the folder structure below it's important to know that `chat` is the folder name (and extension identifier) for the Callisto Chat App, and `docs` is the folder name (and extension identifier) for the Quanta App. 
 
-You may wonder why `docs` was chosen as the extension name for a File Manager, and the reason is that indeed Quanta FS is more of a document editor than it is a file manager, because what it does that's unique is that it melds together the two concepts of 'file system' and 'document managers', in the same sort of way that Jupyter Notebooks is a melding together the concept of a cell-based spreadsheet and a document. Quanta FS is very similar to Jupyter Notebooks in this regard. However, importantly, Quanta FS uses individual files as it's 'cells' whereas Jupyter uses a single monolighic JSON file to hold 'cells' of content.
+You may wonder why `docs` was chosen as the extension name for a File Manager, and the reason is that indeed Quanta is more of a document editor than it is a file manager, because what it does that's unique is that it melds together the two concepts of 'file system' and 'document managers', in the same sort of way that Jupyter Notebooks is a melding together the concept of a cell-based spreadsheet and a document. Quanta is very similar to Jupyter Notebooks in this regard. However, importantly, Quanta uses individual files as it's 'cells' whereas Jupyter uses a single monolighic JSON file to hold 'cells' of content.
 
 Example structure:
 ```

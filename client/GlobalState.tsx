@@ -168,6 +168,5 @@ function AppServiceConnector() {
     return null; // This component doesn't render anything
 }
 
-
 // eslint-disable-next-line react-refresh/only-export-components
 export { GlobalStateProvider, useGlobalState, useGlobalDispatch, gs, gd, AppServiceConnector};
