@@ -341,19 +341,20 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
     const isFolder = node.is_directory;
     const isBinary = !isImage && !isFolder && !isTextFile(node.name);
     const hasCutItems = gs.docsCutItems && gs.docsCutItems.size > 0;
+    const editingNow: boolean = !!gs.docsEditNode;
 
     return (
         <div className={containerClass}>
-            {!hasCutItems && showEditButton && !isImage && !isBinary && 
-            <button 
-                onClick={(e) => { e.stopPropagation(); handleEditClick(node); }}
-                className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
-                title="Edit"
-            >
-                <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
-            </button>}
+            {!hasCutItems && !editingNow && showEditButton && !isImage && !isBinary && 
+                <button 
+                    onClick={(e) => { e.stopPropagation(); handleEditClick(node); }}
+                    className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
+                    title="Edit"
+                >
+                    <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
+                </button>}
 
-            {!hasCutItems && !isBinary &&
+            {!hasCutItems && !editingNow && !isBinary &&
             <button 
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(gs, treeNodes, setTreeNodes, node, index); }}
                 className="text-gray-400 hover:text-red-400 transition-colors p-0 border-0 bg-transparent"
@@ -362,7 +363,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                 <FontAwesomeIcon icon={faTrash} className="h-5 w-5" />
             </button>}
 
-            {!hasCutItems && index > 0 && 
+            {!hasCutItems && !editingNow && index > 0 &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveUpClick(gs, treeNodes, setTreeNodes, node); }}
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
@@ -371,7 +372,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     <FontAwesomeIcon icon={faArrowUp} className="h-5 w-5" />
                 </button>}
 
-            {!hasCutItems && index < numNodes - 1 &&
+            {!hasCutItems && !editingNow && index < numNodes - 1 &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleMoveDownClick(gs, treeNodes, setTreeNodes, node); }}
                     className="text-gray-400 hover:text-green-400 transition-colors p-0 border-0 bg-transparent"
@@ -380,7 +381,7 @@ function EditIcons({ node, index, numNodes, gs, treeNodes, setTreeNodes, reRende
                     <FontAwesomeIcon icon={faArrowDown} className="h-5 w-5" />
                 </button>}
 
-            {isFolder && hasCutItems &&
+            {isFolder && !editingNow && hasCutItems &&
                 <button 
                     onClick={(e) => { e.stopPropagation(); onPasteIntoFolder(gs, reRenderTree, node); }}
                     className="text-gray-400 hover:text-blue-400 transition-colors p-0 border-0 bg-transparent"
