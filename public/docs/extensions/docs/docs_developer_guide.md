@@ -36,10 +36,31 @@ Rather than password security, the entire Quanta Platform and all plugins use ex
 
 Currently we only allow sharing of files/folders to be either private or public. Private files/folders can only be viewed by their owner, and public items can be viewed by anyone.
 
+# Special Syntax
+
+Quanta uses primarily standard Markdown for renering content, but there is one piece of non-standard syntax which is for how to display information in a columnar layout. The way this is done is by simply putting `***` (three asterisks) all on line line to split up the content into columns.
 
 # Standalone Features
 
-In `Desktop Mode` (running as a local browser app, and not as a website) Quanta can run commands on the Operating System, and is only designed for local users running on their own machine, or perhaps an admin running on a server machine, but it not a multi-user web app. Security is done by crytographically signing requests by the browser which is expected to have a public key which matches the public key defined in 'adminPublicKey' of the config yaml.
+## Launcher Buttons
+
+In `Desktop Mode` (running as a local browser app, and not as an online website) Quanta can run commands on the Operating System, using a special markdown syntax that will render as clickable buttons allowing a Desktop Launcher to be created, which can be used as in interface to have a single-click way to run applications, utilities, or shell scripts on your local machine.
+
+Here's an example of the syntax:
+
+```menu
+- title: Notes
+  cmd: code
+  args: /home/clay/ferguson/notes.md
+ 
+- title: Calculator
+  link: file:///home/clay/ferguson/calc.html
+
+- title: Pick
+  bash: /home/clay/ferguson/A-PassApp/choose-pass-console.sh
+```
+
+As you can see in the above the way buttons are embedded into a page is by using Markdown `Fenced Code Block` syntax which contains YAML. The platform will automatically notice this is a `menu` type of code and render the buttons instead of the code. The first button (Notes) will show a button titled "Notes" which will run VSCode (code) with the argument. This means you can be in your web browser, and click this button and VSCode will open up on your machine. The "Calculator" button is similar but uses `link` to trigger your Operating System to open the link with the correct app based on it's filename extension. And lastly the `bash` command is demonstrated (the "Pick" button) showing how to run a shell script. 
 
 TODO: proivde screenshot and more detail about the `command runner` capability.
 
