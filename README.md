@@ -22,13 +22,15 @@ Currently there are two available plugins/extensions:
 
 # User Guides
 
-* [Callisto User Guide](./public/docs/extensions/chat/chat_user_guide.md)
-* [Quanta User Guide](./public/docs/extensions/docs/docs_user_guide.md)
+* [Callisto Plugin - User Guide](./public/docs/extensions/chat/chat_user_guide.md)
+* [Quanta Plugin - User Guide](./public/docs/extensions/docs/docs_user_guide.md)
 
 # Developer Guides
 
-* [Platform Guide](./public/docs/platform_guide/platform_guide.md)
-* [Extensions Guide](./public/docs/extensions_guide/extensions_guide.md)
+* [Platform - Developer Guide](./public/docs/platform_guide/platform_guide.md)
+* [Extensions - Developer Guide](./public/docs/extensions_guide/extensions_guide.md)
+* [Quanta Plugin - Developer Guide](./public/docs/extensions/docs/docs_developer_guide.md)
+
 
 ## Core Platform Tech Stack
 

@@ -6,12 +6,19 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE TABLE IF NOT EXISTS vfs_nodes (
     id SERIAL PRIMARY KEY,
+    -- Use UUID for unique identification of each file/folder
     uuid UUID DEFAULT uuid_generate_v4() NOT NULL UNIQUE,
+    --owner_id is the owner of this file/folder
     owner_id INTEGER NOT NULL,
+    -- doc_root_key is the key for the document root, allowing for multiple document roots
     doc_root_key VARCHAR(255) NOT NULL,
+    -- parent_path is the path to the parent directory, allowing for hierarchical structure
     parent_path TEXT NOT NULL,
+    -- filename is the name of the file or directory
     filename VARCHAR(255) NOT NULL,
+    -- is_directory indicates if this node is a directory or a file
     is_directory BOOLEAN NOT NULL DEFAULT FALSE,
+    -- is_public indicates if this node is publicly accessible
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
     
     -- Hybrid content storage
