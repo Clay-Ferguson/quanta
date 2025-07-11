@@ -50,7 +50,9 @@ services:
   quanta-app:
     build: 
       context: .
-      dockerfile: Dockerfile-local
+      dockerfile: Dockerfile
+      args:
+        ENV: local
     container_name: quanta-local
     ports:
       - "8008:8000"

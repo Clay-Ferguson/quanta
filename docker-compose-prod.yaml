@@ -48,7 +48,9 @@ services:
   quanta-app:
     build:
       context: .
-      dockerfile: Dockerfile-prod
+      dockerfile: Dockerfile
+      args:
+        ENV: prod
     container_name: quanta-prod
     ports:
       - "8000:8000"
