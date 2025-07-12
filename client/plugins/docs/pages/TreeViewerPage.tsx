@@ -212,6 +212,16 @@ function EditFile({
         setLocalFileName(newFileName);
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.ctrlKey && event.key === 's') {
+            event.preventDefault(); // Prevent browser's default save dialog
+            handleSaveClick(gs, treeNodes, setTreeNodes, reRenderTree, localContent, localFileName);
+        } else if (event.key === 'Escape') {
+            event.preventDefault(); // Prevent any default behavior
+            handleCancelClick();
+        }
+    };
+
     const handleInsertTime = () => {
         if (!contentTextareaRef.current) return;
         
@@ -278,6 +288,7 @@ function EditFile({
                 ref={contentTextareaRef}
                 value={localContent}
                 onChange={handleLocalContentChange}
+                onKeyDown={handleKeyDown}
                 rows={calculateRows()}
                 className="w-full p-3 bg-gray-800 border border-gray-600 text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter content here..."
