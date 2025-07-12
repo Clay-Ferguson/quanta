@@ -123,20 +123,20 @@ function EditFolder({
                 <div className="flex gap-2 mt-2 mb-3">
                     <button
                         onClick={() => handleRenameClick(gs, treeNodes, setTreeNodes)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                     Rename
                     </button>
                     {!DESKTOP_MODE && 
                         <button
                             onClick={handleShareClick}
-                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                         >
                         Share
                         </button>}
                     <button
                         onClick={handleCancelClick}
-                        className="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                     >
                     Cancel
                     </button>
