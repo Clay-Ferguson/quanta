@@ -19,7 +19,7 @@ export default function BackButtonComp() {
     return (
         <button 
             onClick={goBack}
-            className="p-2 bg-gray-500 text-white rounded-md flex items-center justify-center"
+            className="btn-secondary flex items-center justify-center"
             title="Back"
         >
             <FontAwesomeIcon icon={faArrowLeft} className="h-5 w-5 mr-1" />Back

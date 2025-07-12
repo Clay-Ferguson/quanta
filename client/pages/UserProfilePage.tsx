@@ -144,7 +144,7 @@ export default function UserProfilePage() {
                         {profileData && (
                             <button 
                                 onClick={() => appUsers.blockUser(profileData.publicKey!)}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors duration-200"
+                                className="btn-danger"
                             >
                             Block User
                             </button>

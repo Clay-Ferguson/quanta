@@ -57,19 +57,19 @@ export default function LogViewerPage() {
                     <div className="flex space-x-2">
                         <button 
                             onClick={refreshLogs} 
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                            className="btn-secondary"
                         >
                             Refresh
                         </button>
                         <button 
                             onClick={copyToClipboard} 
-                            className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                            className="btn-secondary"
                         >
                             Copy
                         </button>
                         <button 
                             onClick={clearLogs} 
-                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                            className="btn-danger"
                         >
                             Clear
                         </button>

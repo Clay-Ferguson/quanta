@@ -123,20 +123,20 @@ function EditFolder({
                 <div className="flex gap-2 mt-2 mb-3">
                     <button
                         onClick={() => handleRenameClick(gs, treeNodes, setTreeNodes)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="btn-primary"
                     >
                     Rename
                     </button>
                     {!DESKTOP_MODE && 
                         <button
                             onClick={handleShareClick}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                            className="btn-secondary"
                         >
                         Share
                         </button>}
                     <button
                         onClick={handleCancelClick}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                        className="btn-secondary"
                     >
                     Cancel
                     </button>
@@ -298,19 +298,19 @@ function EditFile({
                     onClick={() => {
                         handleSaveClick(gs, treeNodes, setTreeNodes, reRenderTree, localContent, localFileName);
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="btn-primary"
                 >
                     Save
                 </button>
                 <button 
                     onClick={() => handleSplitInline(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                    className="btn-secondary"
                 >
                     Split
                 </button>
                 <button 
                     onClick={() => handleMakeFolder(gs, treeNodes, setTreeNodes, reRenderTree, localContent)}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                    className="btn-secondary"
                 >
                     Make Folder
                 </button>
@@ -323,7 +323,7 @@ function EditFile({
                 </button>
                 <button
                     onClick={handleCancelClick}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                    className="btn-danger"
                 >
                     Cancel
                 </button>
