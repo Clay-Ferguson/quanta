@@ -15,4 +15,5 @@ public-folders:
   - name: "Doc Root"
     key: "usr"
     path: "/home/clay/ferguson/A-doc-root"
+    type: "lfs"  
     # Accessable at: http://localhost:8000/doc/usr
