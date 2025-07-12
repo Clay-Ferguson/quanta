@@ -379,17 +379,8 @@ export const createValidId = (itemName: string): string => {
 
 // Scroll to an item in the tree view by its name 
 export const scrollToItem = (itemName: string) => {
-    setTimeout(() => {
-        const validId = createValidId(itemName);
-        const element = document.getElementById(validId);
-        if (element) {
-            element.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center',
-                inline: 'nearest'
-            });
-        }
-    }, 250);
+    const validId = createValidId(itemName);
+    util.scrollToElementById(validId);
 };
 
 export const insertFolder = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {

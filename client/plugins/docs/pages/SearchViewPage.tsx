@@ -196,14 +196,7 @@ export default function SearchViewPage() {
         setTimeout(() => {
             // Create a valid HTML ID from the filename (similar to createValidId in TreeViewerPageOps)
             const validId = 'tree-' + fileName.replace(/[^a-zA-Z0-9_-]/g, '-');
-            const element = document.getElementById(validId);
-            if (element) {
-                element.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center',
-                    inline: 'nearest'
-                });
-            }
+            util.scrollToElementById(validId);
         }, 1000);
     };
     
