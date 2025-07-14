@@ -23,7 +23,7 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
     console.error('Promise:', promise);
 });
 
-// this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
+// this HOST will be 'localhost' or else if on prod 'quanta.wiki'
 const HOST = config.get("host"); 
 const PORT = config.get("port");
 const CLIENT_HOST = config.get("clientHost"); // This is the host for the web app, used in the client-side code

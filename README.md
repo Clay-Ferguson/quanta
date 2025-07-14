@@ -18,8 +18,6 @@ Currently there are two available plugins/extensions:
 1) Quanta: A File System-based document editor, with an interface similar to Jupyter Notebooks, which converts a folder structure into a browsable and editable documents.
 2) Callisto: A WebRTC-based chat app which can run in pure Peer-to-Peer mode or optinally use server-based storage to persist room messages.
 
-## [Try Callisto Now! --> https://chat.quanta.wiki](https://chat.quanta.wiki)
-
 # User Guides
 
 * [Callisto Plugin - User Guide](./public/docs/extensions/chat/chat_user_guide.md)

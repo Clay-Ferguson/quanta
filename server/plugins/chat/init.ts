@@ -12,7 +12,7 @@ import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// this HOST will be 'localhost' or else if on prod 'chat.quanta.wiki'
+// this HOST will be 'localhost' or else if on prod 'quanta.wiki'
 const HOST = config.get("host"); 
 const PORT = config.get("port");
 const defaultPlugin = config.get("defaultPlugin");
