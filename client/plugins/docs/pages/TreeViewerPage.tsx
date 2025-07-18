@@ -8,7 +8,7 @@ import { httpClientUtil } from '../../../HttpClientUtil';
 import { TreeRender_Response } from '../../../../common/types/EndpointTypes';
 import { TreeNode } from '../../../../common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt, faHome, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt, faSync, faPaste, faFolderOpen, faFile, faExclamationTriangle, faSearch, faCubes, faUpload, faFileUpload, faQuestionCircle, faClock, faGear, faShareAlt, faHome, faLink, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
@@ -106,7 +106,7 @@ function EditFolder({
                 }
             });
         };
-    }, []);
+    }, []); 
 
     // Handler for Share button
     const handleShareClick = () => {
@@ -216,6 +216,19 @@ function EditFile({
         (gs.docsEditNode?.name ? prepareFilenameForEditing(gs.docsEditNode.name) : '')
     );
 
+    // <speech>
+    // Speech recognition state
+    const [isListening, setIsListening] = useState(false);
+    const [shouldKeepListening, setShouldKeepListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+    const shouldKeepListeningRef = useRef(false);
+
+    // Keep the ref in sync with state
+    useEffect(() => {
+        shouldKeepListeningRef.current = shouldKeepListening;
+    }, [shouldKeepListening]);
+    // </speech>
+
     // Update local content and filename only when switching to a different node
     useEffect(() => {
         setLocalContent(gs.docsEditNode?.content || '');
@@ -230,6 +243,104 @@ function EditFile({
             setCurrentNodeName(newNodeName);
         }
     }, [gs.docsEditNode, gs.docsNewFileName, currentNodeName, prepareFilenameForEditing]);
+
+    // <speech>
+    // Initialize speech recognition - only create once
+    useEffect(() => {
+        if (!('webkitSpeechRecognition' in window)) {
+            console.warn('Speech recognition not supported in this browser');
+            return;
+        }
+
+        const recognition = new (window as any).webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+            // Auto-restart if allowed - use ref to avoid dependency
+            if (shouldKeepListeningRef.current) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error restarting speech recognition:', error);
+                    setShouldKeepListening(false);
+                }
+            }
+        };
+
+        recognition.onresult = (event: any) => {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    const transcript = event.results[i][0].transcript.trim();
+                    
+                    if (!contentTextareaRef.current) return;
+                    
+                    const textarea = contentTextareaRef.current;
+                    const cursorPosition = textarea.selectionStart;
+                    const selectionEnd = textarea.selectionEnd;
+                    
+                    // Get the current content from the textarea directly to ensure we have the latest
+                    const currentContent = textarea.value;
+                    
+                    // Insert transcript at cursor position, replacing any selected text
+                    const beforeCursor = currentContent.substring(0, cursorPosition);
+                    const afterCursor = currentContent.substring(selectionEnd);
+                    const insert = transcript + ' ';
+                    
+                    const newContent = beforeCursor + insert + afterCursor;
+                    
+                    // Update both the textarea value and local state
+                    textarea.value = newContent;
+                    setLocalContent(newContent);
+                    
+                    // Set cursor position after the inserted text
+                    const newCursorPosition = cursorPosition + insert.length;
+                    textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+                    textarea.focus();
+                }
+            }
+        };
+
+        recognitionRef.current = recognition;
+
+        // Cleanup on unmount
+        return () => {
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (error) {
+                    console.error('Error stopping speech recognition on cleanup:', error);
+                }
+            }
+        };
+    }, [contentTextareaRef]); // Only contentTextareaRef is stable and needed
+
+    // Stop listening when component unmounts or editing stops
+    useEffect(() => {
+        return () => {
+            // Cleanup when component unmounts
+            setShouldKeepListening(false);
+            shouldKeepListeningRef.current = false;
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (error) {
+                    console.error('Error stopping speech recognition on cleanup:', error);
+                }
+            }
+        };
+    }, []); // Empty dependency array - only run on mount/unmount
+    // </speech>
 
     const handleLocalContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setLocalContent(event.target.value);
@@ -291,6 +402,42 @@ function EditFile({
         }, 0);
     };
 
+    // <speech>
+    const handleSpeechToggle = () => {
+        if (!('webkitSpeechRecognition' in window)) {
+            alertModal('Speech recognition is not supported in this browser. Please use Google Chrome.');
+            return;
+        }
+
+        if (!recognitionRef.current) {
+            console.error('Speech recognition not initialized');
+            return;
+        }
+
+        if (shouldKeepListening) {
+            // Stop listening
+            setShouldKeepListening(false);
+            shouldKeepListeningRef.current = false;
+            try {
+                recognitionRef.current.stop();
+            } catch (error) {
+                console.error('Error stopping speech recognition:', error);
+            }
+        } else {
+            // Start listening
+            setShouldKeepListening(true);
+            shouldKeepListeningRef.current = true;
+            try {
+                recognitionRef.current.start();
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                setShouldKeepListening(false);
+                shouldKeepListeningRef.current = false;
+            }
+        }
+    };
+    // </speech>
+
     const calculateRows = () => {
         let min = 10;
         if (!localContent || localContent.length < 300) {
@@ -318,7 +465,11 @@ function EditFile({
                 onChange={handleLocalContentChange}
                 onKeyDown={handleKeyDown}
                 rows={calculateRows()}
-                className="w-full p-3 bg-gray-800 border border-gray-600 text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full p-3 bg-gray-800 border text-gray-200 font-mono resize-vertical focus:outline-none focus:ring-2 focus:border-transparent ${
+                    isListening 
+                        ? 'border-red-500 focus:ring-red-500' 
+                        : 'border-gray-600 focus:ring-blue-500'
+                }`}
                 placeholder="Enter content here..."
             />
             <div className="flex gap-2 mt-2 mb-3">
@@ -349,6 +500,15 @@ function EditFile({
                 >
                     <FontAwesomeIcon icon={faClock} className="h-5 w-5" />
                 </button>
+                {/* <speech> */}
+                <button 
+                    onClick={handleSpeechToggle}
+                    className={isListening ? "btn-danger" : "btn-icon"}
+                    title={isListening ? "Stop Speech Recognition" : "Start Speech Recognition"}
+                >
+                    <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="h-5 w-5" />
+                </button>
+                {/* </speech> */}
                 <button
                     onClick={handleCancelClick}
                     className="btn-danger"
