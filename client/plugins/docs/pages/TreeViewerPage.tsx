@@ -94,6 +94,20 @@ function EditFolder({
     handleFolderNameChange, 
     handleCancelClick 
 }: EditFolderProps) {
+    // Cleanup effect to clear edit node when component unmounts
+    useEffect(() => {
+        return () => {
+            // Clear the edit node when component is unmounted (e.g., user navigates away)
+            gd({ 
+                type: 'clearFolderEditingState', 
+                payload: { 
+                    docsEditNode: null,
+                    docsNewFolderName: null
+                }
+            });
+        };
+    }, []);
+
     // Handler for Share button
     const handleShareClick = () => {
         // Open sharing dialog with the current folder name
@@ -166,6 +180,20 @@ function EditFile({
     handleCancelClick, 
     contentTextareaRef 
 }: EditFileProps) {
+    // Cleanup effect to clear edit node when component unmounts
+    useEffect(() => {
+        return () => {
+            // Clear the edit node when component is unmounted (e.g., user navigates away)
+            gd({ 
+                type: 'clearFileEditingState', 
+                payload: { 
+                    docsEditNode: null,
+                    docsNewFileName: null
+                }
+            });
+        };
+    }, []);
+
     /**
      * Prepares a filename for editing by stripping both ordinal prefix and extension
      * This needs to be defined outside useEffect to avoid lint warnings
