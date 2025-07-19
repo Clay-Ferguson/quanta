@@ -62,7 +62,6 @@ class DocsServerPlugin implements IServerPlugin {
     }
 
     private initRoutes(context: IAppContext) {
-        // todo-0: This should be able to serve any binary not just images.
         context.app.get('/api/docs/images/:docRootKey/*',httpServerUtil.verifyReqHTTPQuerySig, asyncHandler(docBinary.serveDocImage)); 
 
         // For now we only allow admin to access the docs API

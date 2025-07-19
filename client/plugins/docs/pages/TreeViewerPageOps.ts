@@ -22,7 +22,8 @@ export const handleCancelClick = (gs: DocsGlobalState) => {
     } else {
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsNewFileName: null
+            docsNewFileName: null,
+            docsAutoStartSpeech: false
         }});
     }
 };
@@ -366,6 +367,41 @@ export const insertFile = async (gs: DocsGlobalState, reRenderTree: any, node: T
     }
 };
 
+export const insertFileWithSpeech = async (gs: DocsGlobalState, reRenderTree: any, node: TreeNode | null) => {
+    try {
+        const requestBody = {
+            fileName: "file",
+            treeFolder: gs.docsFolder || '/',
+            insertAfterNode: node ? node.name : '',
+            docRootKey: gs.docsRootKey
+        };
+        const response = await httpClientUtil.secureHttpPost('/api/docs/file/create', requestBody);
+        console.log('File creation response (with speech):', JSON.stringify(response, null, 2));
+            
+        // Refresh the tree view to show the new file
+        if (response) {
+            console.log("Waiting a second before querying to re-render tree...");
+            // Automatically start editing the newly created file with speech enabled
+            setTimeout(async () => {
+                const updatedNodes = await reRenderTree();
+                const newFileNode = updatedNodes.find((n: any) => n.name === response.fileName);
+                if (newFileNode) {
+                    gd({ type: 'setFileEditingState', payload: { 
+                        docsEditNode: newFileNode,
+                        docsNewFileName: '',
+                        docsAutoStartSpeech: true // Flag to auto-start speech recognition
+                    }});
+                }
+                else {
+                    console.error('Newly created file node not found in treeNodes:');
+                }
+            }, 100);
+        }
+    } catch (error) {
+        console.error('Error creating file with speech:', error);
+    }
+};
+
 // Helper function to create valid HTML IDs from item names
 export const createValidId = (itemName: string): string => {
     if (!itemName) {
@@ -458,7 +494,8 @@ export const handleSaveClick = (gs: DocsGlobalState, treeNodes: TreeNode[], setT
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsNewFileName: null
+            docsNewFileName: null,
+            docsAutoStartSpeech: false
         }});
 
         // Save to server with a delay to ensure UI updates first
@@ -726,7 +763,8 @@ export const handleSplitInline = (gs: DocsGlobalState, treeNodes: TreeNode[], se
         // Clear editing state
         gd({ type: 'clearFileEditingState', payload: { 
             docsEditNode: null,
-            docsNewFileName: null
+            docsNewFileName: null,
+            docsAutoStartSpeech: false
         }});
 
         // Save to server with split=true parameter with a delay to ensure UI updates first
@@ -953,7 +991,8 @@ export const handleMakeFolder = async (gs: DocsGlobalState, _treeNodes: TreeNode
                 // Clear editing state (like cancel)
                 gd({ type: 'clearFileEditingState', payload: { 
                     docsEditNode: null,
-                    docsNewFileName: null
+                    docsNewFileName: null,
+                    docsAutoStartSpeech: false
                 }});
                 
                 // Refresh the tree to show the new folder

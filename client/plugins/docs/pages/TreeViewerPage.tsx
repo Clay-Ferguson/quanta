@@ -12,7 +12,7 @@ import { faFolder, faEdit, faTrash, faArrowUp, faArrowDown, faPlus, faLevelUpAlt
 import { DBKeys, PageNames } from '../../../AppServiceTypes';
 import { setFullSizeImage } from '../../../components/ImageViewerComp';
 import ImageViewerComp from '../../../components/ImageViewerComp';
-import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, handleMakeFolder, insertFile, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
+import { handleCancelClick, handleCheckboxChange, handleDeleteClick, handleEditClick, handleEditModeToggle, handleFileClick, handleFolderClick, handleMetaModeToggle, handleNamesModeToggle, handleMoveDownClick, handleMoveUpClick, handleParentClick, handleRenameClick, handleSaveClick, handleSplitInline, handleMakeFolder, insertFile, insertFileWithSpeech, insertFolder, onCut, onUndoCut, onDelete, onJoin, onPaste, onPasteIntoFolder, openItemInFileSystem, createValidId, handleMasterCheckboxChange, getMasterCheckboxState, uploadAttachment, uploadFromClipboard } from './TreeViewerPageOps';
 import { idb } from '../../../IndexedDB';
 import { app, signedArgs } from '../../../AppService';
 import { useGlobalState, gd, DocsGlobalState, DocsPageNames } from '../DocsTypes';
@@ -188,7 +188,8 @@ function EditFile({
                 type: 'clearFileEditingState', 
                 payload: { 
                     docsEditNode: null,
-                    docsNewFileName: null
+                    docsNewFileName: null,
+                    docsAutoStartSpeech: false
                 }
             });
         };
@@ -324,6 +325,33 @@ function EditFile({
             }
         };
     }, [contentTextareaRef]); // Only contentTextareaRef is stable and needed
+
+    // Auto-start speech recognition if flag is set
+    useEffect(() => {
+        if (gs.docsAutoStartSpeech && recognitionRef.current && contentTextareaRef.current) {
+            // Clear the flag first to prevent repeated auto-starts
+            gd({ type: 'clearAutoStartSpeech', payload: { docsAutoStartSpeech: false }});
+            
+            // Check if speech recognition is supported
+            if (!('webkitSpeechRecognition' in window)) {
+                console.warn('Speech recognition not supported in this browser');
+                return;
+            }
+            
+            // Auto-start speech recognition
+            setShouldKeepListening(true);
+            shouldKeepListeningRef.current = true;
+            try {
+                recognitionRef.current.start();
+                // Focus the textarea to make it clear where the text will go
+                contentTextareaRef.current.focus();
+            } catch (error) {
+                console.error('Error auto-starting speech recognition:', error);
+                setShouldKeepListening(false);
+                shouldKeepListeningRef.current = false;
+            }
+        }
+    }, [gs.docsAutoStartSpeech, contentTextareaRef]);
 
     // Stop listening when component unmounts or editing stops
     useEffect(() => {
@@ -972,6 +1000,14 @@ function InsertItemsRow({ gs, reRenderTree, node = null, filteredTreeNodes = [] 
                         title="Upload from Clipboard"
                     >
                         <FontAwesomeIcon icon={faFileUpload} className="h-5 w-5" />
+                    </button>}
+                {!hasCutItems && 
+                    <button 
+                        onClick={() => insertFileWithSpeech(gs, reRenderTree, node)}
+                        className="text-gray-400 hover:text-orange-400 transition-colors p-1 border-0 bg-transparent"
+                        title="Create File with Voice Input"
+                    >
+                        <FontAwesomeIcon icon={faMicrophone} className="h-5 w-5" />
                     </button>}
                 {hasCutItems && (
                     <button 

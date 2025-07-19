@@ -33,6 +33,7 @@ export interface DocsGlobalState extends GlobalState {
     docsHighlightedFolderName?: string | null;
     docsHighlightedFileName?: string | null;
     docsShowSharingDialog?: boolean;
+    docsAutoStartSpeech?: boolean;
 }
 
 // =============================================
