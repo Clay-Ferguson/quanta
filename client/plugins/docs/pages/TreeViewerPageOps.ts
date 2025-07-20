@@ -874,8 +874,6 @@ export const uploadAttachment = async (gs: DocsGlobalState, reRenderTree: any, n
         formData.append('insertAfterNode', node ? node.name : '');
         formData.append('docRootKey', gs.docsRootKey || '');
 
-        console.log("************* insertAfterNode:", node ? node.name : '');
-
         // Upload files to server
         const response = await httpClientUtil.secureHttpPost('/api/docs/upload', formData);
 
