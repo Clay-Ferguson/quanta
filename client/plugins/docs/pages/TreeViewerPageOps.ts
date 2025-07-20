@@ -874,6 +874,8 @@ export const uploadAttachment = async (gs: DocsGlobalState, reRenderTree: any, n
         formData.append('insertAfterNode', node ? node.name : '');
         formData.append('docRootKey', gs.docsRootKey || '');
 
+        console.log("************* insertAfterNode:", node ? node.name : '');
+
         // Upload files to server
         const response = await httpClientUtil.secureHttpPost('/api/docs/upload', formData);
 
@@ -882,7 +884,7 @@ export const uploadAttachment = async (gs: DocsGlobalState, reRenderTree: any, n
             await reRenderTree();
             
             const uploadedCount = response.uploadedCount || files.length;
-            await alertModal(`Successfully uploaded ${uploadedCount} file(s).`);
+            console.log(`Successfully uploaded ${uploadedCount} file(s).`);
         } else {
             const errorMessage = response?.error || 'Unknown error occurred during upload';
             await alertModal(`Error uploading files: ${errorMessage}`);

@@ -205,10 +205,10 @@ class DocBinary {
                 }
     
                 // Determine the ordinal position for inserting new files
-                let insertOrdinal = 1; // Default to beginning if no position specified
+                let insertOrdinal = 0; // Default to beginning if no position specified
                 if (insertAfterNode) {
                     try {
-                    // Extract ordinal from the specified node and insert after it
+                        // Extract ordinal from the specified node and insert after it
                         insertOrdinal = docUtil.getOrdinalFromName(insertAfterNode) + 1;
                     } catch (error) {
                         console.warn(`Could not parse ordinal from insertAfterNode: ${insertAfterNode}, using default ordinal 1`, error);
