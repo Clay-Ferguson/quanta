@@ -103,7 +103,7 @@ export interface IServerPlugin {
 
 ### config.yaml Files
 
-The application supports multiple configuration files (e.g., `config-dev.yaml`, `config-prod.yaml`) that define:
+The application supports multiple configuration files (e.g., `config.yaml`, `config-prod.yaml`) that define:
 
 #### Default Plugin
 ```yaml

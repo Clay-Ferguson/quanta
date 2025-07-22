@@ -164,7 +164,7 @@ Please implement the abstraction layer interface in the existing `IFS.ts`, and t
 
 ### Step 5 (completed)
 
-Our system already has the ability to define multiple file system `roots` as you can see in `config-dev.yaml`. Each entry in the array under the `public-folders` variable of that config yaml represents a `root`. That config file has only one root right now. We will treat any `root` having a `type` entry equal to "lfs" as a Linux File System, in terms of our abstractionl layer, and "vfs" will indicate the PostgreSQL abstraction layer. So we'll have a factory method that uses this 'type' value to determine which abstraction to use in any function where were's accessing a real or virtual file system.
+Our system already has the ability to define multiple file system `roots` as you can see in `config.yaml`. Each entry in the array under the `public-folders` variable of that config yaml represents a `root`. That config file has only one root right now. We will treat any `root` having a `type` entry equal to "lfs" as a Linux File System, in terms of our abstractionl layer, and "vfs" will indicate the PostgreSQL abstraction layer. So we'll have a factory method that uses this 'type' value to determine which abstraction to use in any function where were's accessing a real or virtual file system.
 
 So let's start by working first only in `DocService.ts` `treeRender` method. So inside `DocService.ts` you can implement a factory pattern method to return either the imported `lfs` instance or `vfs` instance modules based on the `type` of the `root`. Then for now make use of this factory method only in the `treeRender` method and let's see if we can get that working where I can pull it up in the GUI! So for now it will be a trivial case of just mapping to the same functions it's already calling (in 'fs' module) but doing it thru the abstraction layer.
 
@@ -182,7 +182,7 @@ We ended up going through the entire `server/plugins/docs` source folder and con
 
 ### Step 7 (completed)
 
-In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config-dev.yaml` you can see we now have a `pgroot` root key. I only run this feature thru a docker deployment which you cannot do, so please don't try to run the code yourself to test it.
+In this step we will begin activating functions bit by bit over to where they can use 'VFS' (the Postgres-based File System). Before Step 7 we are in a state where nothing in `VFS.ts` is imlemented yet. From in `config.yaml` you can see we now have a `pgroot` root key. I only run this feature thru a docker deployment which you cannot do, so please don't try to run the code yourself to test it.
 
 Remember we did all our `functions.sql` testing inside of `PGDBTest.ts`, so if you need to you can open those files just for more general knowledge about VFS (Virtual File System, Postgres)
 

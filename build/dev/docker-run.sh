@@ -4,6 +4,12 @@
 
 # WARNING: You need to 'yarn install' before running this script!
 
+# Check if we're in the project root by looking for package.json
+if [ ! -f "./package.json" ]; then
+    echo "Error: package.json not found. Please run this script from the project root."
+    exit 1
+fi
+
 # remove package-lock.json if anything ever creates it. This app uses Yarn instead.
 rm -f package-lock.json
 rm -rf ./dist
@@ -35,13 +41,13 @@ if [ $? -eq 0 ]; then
     sudo chmod -R 755 ../quanta-volumes/dev/pgadmin-data
     
     # Stop any existing containers
-    # docker-compose --env-file .env.dev --env-file ../.env-quanta --profile pgadmin down 
-    docker-compose --env-file .env.dev --env-file ../.env-quanta down 
+    # docker-compose --env-file .env --env-file ../.env-quanta --profile pgadmin down 
+    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta down 
     
     # Build and start the container
     echo "Starting application with Docker Compose..."
-    # docker-compose --env-file .env.dev --env-file ../.env-quanta --profile pgadmin up --build
-    docker-compose --env-file .env.dev --env-file ../.env-quanta up --build
+    # docker-compose --env-file .env --env-file ../.env-quanta --profile pgadmin up --build
+    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta up --build
     
     echo "Quanta ended."
 else

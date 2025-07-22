@@ -11,11 +11,11 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --production --frozen-lockfile
 
-# Copy the built application
+# Copy the built application and configs
 COPY dist/ ./dist/
 
 # Copy configuration file based on environment
-COPY docker-config-${ENV}.yaml ./
+COPY build/${ENV}/docker-config.yaml ./
 
 # Create directory for database (will be mounted as volume)
 RUN mkdir -p /app/data
@@ -24,7 +24,7 @@ RUN mkdir -p /app/data
 EXPOSE 8000
 
 # Set default environment variables
-ENV CONFIG_FILE="./docker-config-${ENV}.yaml"
+ENV CONFIG_FILE="./docker-config.yaml"
 ENV NODE_ENV="production"
 
 # Start the application

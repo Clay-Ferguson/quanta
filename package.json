@@ -6,9 +6,10 @@
   "scripts": {
     "build:client": "tsc -b && vite build",
     "build:server": "tsc -p server/tsconfig.json && npm run copy:sql",
-    "copy:sql": "./copy-sql.sh",
+    "copy:sql": "./build/copy-sql.sh",
     "build": "yarn build:client && yarn build:server",
     "start": "node dist/server/AppServer.js",
+    "dev": "yarn build && yarn start",
     "postinstall": "[ -f package-lock.json ] && rm package-lock.json || true"
   },
   "dependencies": {

@@ -58,7 +58,7 @@ services:
       # Mount document root if it exists
       - ${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:ro
     environment:
-      - CONFIG_FILE=./docker-config-${QUANTA_ENV:-local}.yaml
+      - CONFIG_FILE=./docker-config.yaml
       - QUANTA_DEV=true
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres

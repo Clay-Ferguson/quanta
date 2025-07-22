@@ -115,7 +115,7 @@ todo: We need to move this into 'Chat' plugin because it's not part of core plat
 
 **YAML-Based Configuration**:
 ```yaml
-# config.yaml / config-dev.yaml
+# config.yaml / config.yaml
 host: "localhost"
 port: "8080" 
 secure: "n"
