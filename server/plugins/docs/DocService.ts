@@ -689,9 +689,6 @@ class DocService {
             }
 
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
-            
-            // Build grep command based on search mode and options
-            let cmd: string; 
 
             // Define timestamp regex for date filtering (optional)
             // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
@@ -701,70 +698,20 @@ class DocService {
             // Define file inclusion/exclusion patterns
             const include = '--include="*.md" --include="*.txt" --exclude="_*" --exclude=".*"';
             const chain = 'xargs -0 --no-run-if-empty';
-            
-            if (searchMode === 'REGEX') {
-                // REGEX MODE: Use query as-is as regex pattern
-                const escapedQuery = query.replace(/\\/g, '\\\\');
-                
-                if (isEmptyQuery) {
-                    // For empty queries, return file-level results only (no line numbers)
-                    if (dateRegex) {
-                        cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
-                    } else {
-                        cmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
-                    }
-                } else {
-                    // For non-empty queries, return line-by-line results
-                    if (dateRegex) {
-                        // Filter to files with timestamps, then search
-                        cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${escapedQuery}"`;
-                    } else {
-                        // Search all matching files
-                        cmd = `grep -rniH ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
-                    }
-                }
-            } else {
-                // MATCH_ANY / MATCH_ALL MODES: Parse search terms
-                const searchTerms = docUtil.parseSearchTerms(query);
+            let searchTerms: string[] = [];
+
+            if (searchMode !== 'REGEX') {
+                searchTerms = docUtil.parseSearchTerms(query);
                 
                 if (searchTerms.length === 0) {
                     res.status(400).json({ error: 'No valid search terms found' });
                     return;
                 }
-                
-                if (searchMode === 'MATCH_ANY') {
-                    // MATCH_ANY: Search for any of the terms (OR logic)
-                    const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                    const regexPattern = escapedTerms.join('|');
-                    
-                    if (dateRegex) {
-                        cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${regexPattern}"`;
-                    } else {
-                        cmd = `grep -rniH ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
-                    }
-                } else {
-                    // MATCH_ALL: Search for all terms (AND logic)
-                    const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                    
-                    if (dateRegex) {
-                        // Chain greps: files with timestamps → files with term1 → ... → files with termN → extract matches
-                        let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
-                        for (let i = 0; i < escapedTerms.length; i++) {
-                            baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
-                        }
-                        cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
-                    } else {
-                        // Chain greps: files with term1 → files with term2 → ... → extract matches
-                        let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
-                        for (let i = 1; i < escapedTerms.length; i++) {
-                            baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
-                        }
-                        cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
-                    }
-                }
             }
-            
-            console.log(`Executing grep command: ${cmd}`);
+
+            // Build grep command based on search mode and options
+            const cmd: string = this.getSearchCommand(searchMode, query, isEmptyQuery, dateRegex, include, absoluteSearchPath, chain, searchTerms);
+            console.log(`Executing search command: ${cmd}`);
             
             // Execute the grep command
             exec(cmd, (error, stdout, stderr) => {
@@ -789,7 +736,7 @@ class DocService {
                 }
                 
                 // Parse grep output and build results
-                const results = [];
+                const results: any[] = [];
                 const fileTimes = (orderByModTime || orderByDate) ? new Map<string, number>() : null;
                 
                 if (stdout.trim()) {
@@ -797,204 +744,16 @@ class DocService {
                     
                     if (isEmptyQuery) {
                         // For empty queries, stdout contains file paths only (one per line)
-                        for (const line of lines) {
-                            const filePath = line.trim();
-                            if (filePath) {
-                                const relativePath = path.relative(absoluteSearchPath, filePath);
-                                let timeVal: number | undefined;
-
-                                // Get file time for sorting if needed
-                                if (orderByModTime || orderByDate) {
-                                    if (fileTimes && !fileTimes.has(relativePath)) {
-                                        try {
-                                            let fileTime = null;
-                                            if (orderByModTime) {
-                                                // Use filesystem modification time
-                                                const stat = fs.statSync(filePath);
-                                                fileTime = stat.mtime.getTime();
-                                            } else {
-                                                // Extract embedded date from file content
-                                                const fileContent = fs.readFileSync(filePath, 'utf8');
-                                                const fileLines = fileContent.split('\n');
-                                                
-                                                // Find first line matching date pattern
-                                                let dateMatch = null;
-                                                for (const fileLine of fileLines) {
-                                                    const trimmedLine = fileLine.trim();
-                                                    const match = trimmedLine.match(/^\[(20[0-9]{2}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM))\]/);
-                                                    if (match) {
-                                                        dateMatch = match;
-                                                        break;
-                                                    }
-                                                }
-                                                
-                                                // Parse the embedded date
-                                                if (dateMatch) {
-                                                    const dateStr = dateMatch[1];
-                                                    const dateParts = dateStr.split(/\/|:|\s/);
-                                                    if (dateParts.length === 7) {
-                                                        const year = parseInt(dateParts[0], 10);
-                                                        const month = parseInt(dateParts[1], 10) - 1; // Zero-based months
-                                                        const day = parseInt(dateParts[2], 10);
-                                                        let hours = parseInt(dateParts[3], 10);
-                                                        const minutes = parseInt(dateParts[4], 10);
-                                                        const seconds = parseInt(dateParts[5], 10);
-                                                        const ampm = dateParts[6];
-                                                        
-                                                        // Convert to 24-hour format
-                                                        if (ampm === 'PM' && hours !== 12) {
-                                                            hours += 12;
-                                                        } else if (ampm === 'AM' && hours === 12) {
-                                                            hours = 0;
-                                                        }
-                                                        
-                                                        fileTime = new Date(year, month, day, hours, minutes, seconds).getTime();
-                                                    }
-                                                }
-                                            }
-
-                                            if (fileTime != null) {
-                                                fileTimes.set(relativePath, fileTime);
-                                                timeVal = fileTime;
-                                            }
-                                        } catch (error) {
-                                            console.warn(`Failed to get time for ${relativePath}:`, error);
-                                            // Fallback to current time
-                                            const fallbackTime = Date.now();
-                                            fileTimes.set(relativePath, fallbackTime);
-                                            timeVal = fallbackTime;
-                                        }
-                                    } else if (fileTimes) {
-                                        timeVal = fileTimes.get(relativePath);
-                                    }
-                                }
-                                
-                                // Build file-level result object (no line number or content)
-                                const result: any = {
-                                    file: relativePath,
-                                    line: -1, // Indicates file-level match
-                                    content: '' // Empty content for file-level matches
-                                };
-                                
-                                // Add time value for sorting (internal use)
-                                if ((orderByModTime || orderByDate) && timeVal !== undefined) {
-                                    result.timeVal = timeVal;
-                                }
-                                
-                                results.push(result);
-                            }
-                        }
+                        this.processResultLinesForEmptyQuery(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
                     } else {
                         // For non-empty queries, process line-by-line results as before
-                        for (const line of lines) {
-                            // Parse grep format: filename:line_number:content
-                            const match = line.match(/^([^:]+):(\d+):(.*)$/);
-                            if (match) {
-                                const [, filePath, lineNumber, content] = match;
-                                const relativePath = path.relative(absoluteSearchPath, filePath);
-                                let timeVal: number | undefined;
-
-                                // Get file time for sorting if needed
-                                if (orderByModTime || orderByDate) {
-                                    if (fileTimes && !fileTimes.has(relativePath)) {
-                                        try {
-                                            let fileTime = null;
-                                            if (orderByModTime) {
-                                                // Use filesystem modification time
-                                                const stat = fs.statSync(filePath);
-                                                fileTime = stat.mtime.getTime();
-                                            } else {
-                                                // Extract embedded date from file content
-                                                const fileContent = fs.readFileSync(filePath, 'utf8');
-                                                const fileLines = fileContent.split('\n');
-                                                
-                                                // Find first line matching date pattern
-                                                let dateMatch = null;
-                                                for (const fileLine of fileLines) {
-                                                    const trimmedLine = fileLine.trim();
-                                                    const match = trimmedLine.match(/^\[(20[0-9]{2}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM))\]/);
-                                                    if (match) {
-                                                        dateMatch = match;
-                                                        break;
-                                                    }
-                                                }
-                                                
-                                                // Parse the embedded date
-                                                if (dateMatch) {
-                                                    const dateStr = dateMatch[1];
-                                                    const dateParts = dateStr.split(/\/|:|\s/);
-                                                    if (dateParts.length === 7) {
-                                                        const year = parseInt(dateParts[0], 10);
-                                                        const month = parseInt(dateParts[1], 10) - 1; // Zero-based months
-                                                        const day = parseInt(dateParts[2], 10);
-                                                        let hours = parseInt(dateParts[3], 10);
-                                                        const minutes = parseInt(dateParts[4], 10);
-                                                        const seconds = parseInt(dateParts[5], 10);
-                                                        const ampm = dateParts[6];
-                                                        
-                                                        // Convert to 24-hour format
-                                                        if (ampm === 'PM' && hours !== 12) {
-                                                            hours += 12;
-                                                        } else if (ampm === 'AM' && hours === 12) {
-                                                            hours = 0;
-                                                        }
-                                                        
-                                                        fileTime = new Date(year, month, day, hours, minutes, seconds).getTime();
-                                                    }
-                                                }
-                                            }
-
-                                            if (fileTime != null) {
-                                                fileTimes.set(relativePath, fileTime);
-                                                timeVal = fileTime;
-                                            }
-                                        } catch (error) {
-                                            console.warn(`Failed to get time for ${relativePath}:`, error);
-                                            // Fallback to current time
-                                            const fallbackTime = Date.now();
-                                            fileTimes.set(relativePath, fallbackTime);
-                                            timeVal = fallbackTime;
-                                        }
-                                    } else if (fileTimes) {
-                                        timeVal = fileTimes.get(relativePath);
-                                    }
-                                }
-                                
-                                // Build line-level result object
-                                const result: any = {
-                                    file: relativePath,
-                                    line: parseInt(lineNumber),
-                                    content: content.trim()
-                                };
-                                
-                                // Add time value for sorting (internal use)
-                                if ((orderByModTime || orderByDate) && timeVal !== undefined) {
-                                    result.timeVal = timeVal;
-                                }
-                                
-                                results.push(result);
-                            }
-                        }
+                        this.processResultLines(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
                     }
                 }
                 
                 // Sort results if time-based ordering is requested
                 if (orderByModTime || orderByDate) {
-                    results.sort((a, b) => {
-                        // Primary: time (newest first)
-                        if (a.timeVal !== b.timeVal) {
-                            return b.timeVal - a.timeVal;
-                        }
-                        // Secondary: filename (alphabetical)
-                        if (a.file !== b.file) {
-                            return a.file.localeCompare(b.file);
-                        }
-                        // Tertiary: line number (ascending) - only for line-level results
-                        if (!isEmptyQuery && a.line !== b.line) {
-                            return a.line - b.line;
-                        }
-                        return 0;
-                    });
+                    this.sortResults(results, isEmptyQuery);
                 }
                 
                 // Clean results (remove internal timeVal property)
@@ -1119,7 +878,7 @@ class DocService {
             console.log(`Simple search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
             
             // Initialize command variables for parallel execution
-            let grepCmd: string = '';    // Command for text file search
+            let grepCmd: string = ''; // Command for text file search
             let pdfgrepCmd: string = ''; // Command for PDF file search
 
             // Define timestamp regex for date filtering (optional)
@@ -1356,6 +1115,264 @@ class DocService {
         } catch (error) {
             handleError(error, res, 'Failed to perform simple search');
         }
+    }
+
+    private sortResults(results: any[], isEmptyQuery: boolean) {
+        results.sort((a, b) => {
+            // Primary: time (newest first)
+            if (a.timeVal !== b.timeVal) {
+                return b.timeVal - a.timeVal;
+            }
+            // Secondary: filename (alphabetical)
+            if (a.file !== b.file) {
+                return a.file.localeCompare(b.file);
+            }
+            // Tertiary: line number (ascending) - only for line-level results
+            if (!isEmptyQuery && a.line !== b.line) {
+                return a.line - b.line;
+            }
+            return 0;
+        });
+    }
+
+    private processResultLines(lines: string[], absoluteSearchPath: string, orderByModTime: boolean, orderByDate: boolean, fileTimes: Map<string, number> | null, results: string[]) {
+        for (const line of lines) {
+            // Parse grep format: filename:line_number:content
+            const match = line.match(/^([^:]+):(\d+):(.*)$/);
+            if (match) {
+                const [, filePath, lineNumber, content] = match;
+                const relativePath = path.relative(absoluteSearchPath, filePath);
+                let timeVal: number | undefined;
+
+                // Get file time for sorting if needed
+                if (orderByModTime || orderByDate) {
+                    if (fileTimes && !fileTimes.has(relativePath)) {
+                        try {
+                            let fileTime = null;
+                            if (orderByModTime) {
+                                // Use filesystem modification time
+                                const stat = fs.statSync(filePath);
+                                fileTime = stat.mtime.getTime();
+                            } else {
+                                // Extract embedded date from file content
+                                const fileContent = fs.readFileSync(filePath, 'utf8');
+                                const fileLines = fileContent.split('\n');
+
+                                // Find first line matching date pattern
+                                let dateMatch = null;
+                                for (const fileLine of fileLines) {
+                                    const trimmedLine = fileLine.trim();
+                                    const match = trimmedLine.match(/^\[(20[0-9]{2}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM))\]/);
+                                    if (match) {
+                                        dateMatch = match;
+                                        break;
+                                    }
+                                }
+
+                                // Parse the embedded date
+                                if (dateMatch) {
+                                    const dateStr = dateMatch[1];
+                                    const dateParts = dateStr.split(/\/|:|\s/);
+                                    if (dateParts.length === 7) {
+                                        const year = parseInt(dateParts[0], 10);
+                                        const month = parseInt(dateParts[1], 10) - 1; // Zero-based months
+                                        const day = parseInt(dateParts[2], 10);
+                                        let hours = parseInt(dateParts[3], 10);
+                                        const minutes = parseInt(dateParts[4], 10);
+                                        const seconds = parseInt(dateParts[5], 10);
+                                        const ampm = dateParts[6];
+
+                                        // Convert to 24-hour format
+                                        if (ampm === 'PM' && hours !== 12) {
+                                            hours += 12;
+                                        } else if (ampm === 'AM' && hours === 12) {
+                                            hours = 0;
+                                        }
+
+                                        fileTime = new Date(year, month, day, hours, minutes, seconds).getTime();
+                                    }
+                                }
+                            }
+
+                            if (fileTime != null) {
+                                fileTimes.set(relativePath, fileTime);
+                                timeVal = fileTime;
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to get time for ${relativePath}:`, error);
+                            // Fallback to current time
+                            const fallbackTime = Date.now();
+                            fileTimes.set(relativePath, fallbackTime);
+                            timeVal = fallbackTime;
+                        }
+                    } else if (fileTimes) {
+                        timeVal = fileTimes.get(relativePath);
+                    }
+                }
+
+                // Build line-level result object
+                const result: any = {
+                    file: relativePath,
+                    line: parseInt(lineNumber),
+                    content: content.trim()
+                };
+
+                // Add time value for sorting (internal use)
+                if ((orderByModTime || orderByDate) && timeVal !== undefined) {
+                    result.timeVal = timeVal;
+                }
+
+                results.push(result);
+            }
+        }
+    }
+
+    private processResultLinesForEmptyQuery(lines: string[], absoluteSearchPath: string, orderByModTime: boolean, orderByDate: boolean, fileTimes: Map<string, number> | null, results: any[]) {
+        for (const line of lines) {
+            const filePath = line.trim();
+            if (filePath) {
+                const relativePath = path.relative(absoluteSearchPath, filePath);
+                let timeVal: number | undefined;
+
+                // Get file time for sorting if needed
+                if (orderByModTime || orderByDate) {
+                    if (fileTimes && !fileTimes.has(relativePath)) {
+                        try {
+                            let fileTime = null;
+                            if (orderByModTime) {
+                                // Use filesystem modification time
+                                const stat = fs.statSync(filePath);
+                                fileTime = stat.mtime.getTime();
+                            } else {
+                                // Extract embedded date from file content
+                                const fileContent = fs.readFileSync(filePath, 'utf8');
+                                const fileLines = fileContent.split('\n');
+
+                                // Find first line matching date pattern
+                                let dateMatch = null;
+                                for (const fileLine of fileLines) {
+                                    const trimmedLine = fileLine.trim();
+                                    const match = trimmedLine.match(/^\[(20[0-9]{2}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} (AM|PM))\]/);
+                                    if (match) {
+                                        dateMatch = match;
+                                        break;
+                                    }
+                                }
+
+                                // Parse the embedded date
+                                if (dateMatch) {
+                                    const dateStr = dateMatch[1];
+                                    const dateParts = dateStr.split(/\/|:|\s/);
+                                    if (dateParts.length === 7) {
+                                        const year = parseInt(dateParts[0], 10);
+                                        const month = parseInt(dateParts[1], 10) - 1; // Zero-based months
+                                        const day = parseInt(dateParts[2], 10);
+                                        let hours = parseInt(dateParts[3], 10);
+                                        const minutes = parseInt(dateParts[4], 10);
+                                        const seconds = parseInt(dateParts[5], 10);
+                                        const ampm = dateParts[6];
+
+                                        // Convert to 24-hour format
+                                        if (ampm === 'PM' && hours !== 12) {
+                                            hours += 12;
+                                        } else if (ampm === 'AM' && hours === 12) {
+                                            hours = 0;
+                                        }
+
+                                        fileTime = new Date(year, month, day, hours, minutes, seconds).getTime();
+                                    }
+                                }
+                            }
+
+                            if (fileTime != null) {
+                                fileTimes.set(relativePath, fileTime);
+                                timeVal = fileTime;
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to get time for ${relativePath}:`, error);
+                            // Fallback to current time
+                            const fallbackTime = Date.now();
+                            fileTimes.set(relativePath, fallbackTime);
+                            timeVal = fallbackTime;
+                        }
+                    } else if (fileTimes) {
+                        timeVal = fileTimes.get(relativePath);
+                    }
+                }
+
+                // Build file-level result object (no line number or content)
+                const result: any = {
+                    file: relativePath,
+                    line: -1, // Indicates file-level match
+                    content: '' // Empty content for file-level matches
+                };
+
+                // Add time value for sorting (internal use)
+                if ((orderByModTime || orderByDate) && timeVal !== undefined) {
+                    result.timeVal = timeVal;
+                }
+
+                results.push(result);
+            }
+        }
+    }
+
+    private getSearchCommand(searchMode: string, query: string, isEmptyQuery: boolean, dateRegex: string | null, include: string, absoluteSearchPath: string, chain: string, searchTerms: string[]) {
+        let cmd: string;
+        if (searchMode === 'REGEX') {
+            // REGEX MODE: Use query as-is as regex pattern
+            const escapedQuery = query.replace(/\\/g, '\\\\');
+
+            if (isEmptyQuery) {
+                // For empty queries, return file-level results only (no line numbers)
+                if (dateRegex) {
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                } else {
+                    cmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                }
+            } else {
+                // For non-empty queries, return line-by-line results
+                if (dateRegex) {
+                    // Filter to files with timestamps, then search
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${escapedQuery}"`;
+                } else {
+                    // Search all matching files
+                    cmd = `grep -rniH ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                }
+            }
+        } else {
+            if (searchMode === 'MATCH_ANY') {
+                // MATCH_ANY: Search for any of the terms (OR logic)
+                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const regexPattern = escapedTerms.join('|');
+
+                if (dateRegex) {
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${regexPattern}"`;
+                } else {
+                    cmd = `grep -rniH ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
+                }
+            } else {
+                // MATCH_ALL: Search for all terms (AND logic)
+                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+                if (dateRegex) {
+                    // Chain greps: files with timestamps → files with term1 → ... → files with termN → extract matches
+                    let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
+                    for (let i = 0; i < escapedTerms.length; i++) {
+                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                    }
+                    cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
+                } else {
+                    // Chain greps: files with term1 → files with term2 → ... → extract matches
+                    let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    for (let i = 1; i < escapedTerms.length; i++) {
+                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                    }
+                    cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
+                }
+            }
+        }
+        return cmd;
     }
 }
 
