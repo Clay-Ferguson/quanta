@@ -12,7 +12,7 @@ Note: In this document 'FS' refers to 'File System'. 'PGFS' means Postgres File 
 
 * We will be creating a Pluggable API which allows the existing document-manager plugin (i.e. the 'plugins/docs' folder files) to optionally be able to use a PostgreSQL database to hold file content rather than holding file content in an actual Linux FS. We'll create an abstraction layer around all FS access so that we can choose to either interact with a real Linux FS, or a 'virtual' Postgres-backed FS.
 
-* When the docs plugin loads, the DocServerPlugin (in `/server/plugins/docs/init.ts`) will detect if `process.env.POSTGRES_HOST` is set, and if so it sets it's `pgMode` (Postgres Mode) variable to 'true' indicating we're using the Postres-backed FS rather than a normal Linux FS. This is how we will determine which version of our FS abstraction layer to use.
+* When the docs plugin loads, the DocServerPlugin (in `/server/plugins/docs/plugin.ts`) will detect if `process.env.POSTGRES_HOST` is set, and if so it sets it's `pgMode` (Postgres Mode) variable to 'true' indicating we're using the Postres-backed FS rather than a normal Linux FS. This is how we will determine which version of our FS abstraction layer to use.
 
 * This will let us optionally turn the Quanta Plugin into an online cloud-based Document Manager. We will be keeping the "path" concept the same. That is, in the PGFS design we'll have both files and folders and they will have slash-delimited folder paths (just like any FS), and modification timestamps just like a real FS does. The `schema.sql` for this is alreacy created and is in `/server/plugins/docs/schema.sql`. We will continue to use ordinal prefixes on all filenames. We also have a first-pass rough draft if what the functions might look like in `server/plugins/docs/VFS/SQL/functions.sql`
 
@@ -152,7 +152,7 @@ We've successfully updated `functions.sql` to work with ordinals in file/folder 
 
 We will be writing a test for testing some of our `functions.sql` functions.
 
-We run the app (and tests) using `docker-run-dev.sh` which uses `docker-compose-dev.yaml` to start our app inside a docker conatiner alonside the Postgre DB. Inside `/server/plugins/docs/init.ts` we have a line  `await pgdbTest()` which runs the test inside `PGDBTest.ts`. I've partially created a `createFolderStructureTest` function for you in there, which I'd like for you to implement in this step. Please add the code to create a little folder structure with 5 folders in the root, named (0001_one.md, 0002_two.md, etc). Then inside each of those root level folders, create five files and five folders. So we'll have a little folder structure, that's two levels deep. That's all this test function will do. It will simply create that folder structure. By of calling the Postgres functions. 
+We run the app (and tests) using `docker-run-dev.sh` which uses `docker-compose-dev.yaml` to start our app inside a docker conatiner alonside the Postgre DB. Inside `/server/plugins/docs/plugin.ts` we have a line  `await pgdbTest()` which runs the test inside `PGDBTest.ts`. I've partially created a `createFolderStructureTest` function for you in there, which I'd like for you to implement in this step. Please add the code to create a little folder structure with 5 folders in the root, named (0001_one.md, 0002_two.md, etc). Then inside each of those root level folders, create five files and five folders. So we'll have a little folder structure, that's two levels deep. That's all this test function will do. It will simply create that folder structure. By of calling the Postgres functions. 
 
 ### Step 3 (completed)
 
@@ -245,7 +245,7 @@ We now have an `pgdbTestSearch` which successfully runs and tests our Postgres S
 
 Implement HTTP Endpoint Handler function now, for searching.
 
-In our docs plugin `init.ts`, I've already added this line:
+In our docs plugin `plugin.ts`, I've already added this line:
 
 ```
 app.post('/api/docs/search-vfs', httpServerUtil.verifyAdminHTTPSignature, docVFS.searchVFSFiles);

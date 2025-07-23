@@ -17,7 +17,7 @@ Plugins are organized in two main directories:
 - **Client-side plugins**: `client/plugins/`
 - **Server-side plugins**: `server/plugins/`
 
-Each plugin has its own directory containing an `init.ts` file that exports the plugin implementation.
+Each plugin has its own directory containing an `plugin.ts` file that exports the plugin implementation.
 
 In the folder structure below it's important to know that `chat` is the folder name (and extension identifier) for the Callisto Chat App, and `docs` is the folder name (and extension identifier) for the Quanta App. 
 
@@ -27,22 +27,22 @@ Example structure:
 ```
 client/plugins/
   ├── chat/
-  │   ├── init.ts
+  │   ├── plugin.ts
   │   ├── pages/
   │   ├── comps/
   │   └── ...
   └── docs/
-      ├── init.ts
+      ├── plugin.ts
       ├── pages/
       └── ...
 
 server/plugins/
   ├── chat/
-  │   ├── init.ts
+  │   ├── plugin.ts
   │   ├── ChatService.ts
   │   └── ...
   └── docs/
-      ├── init.ts
+      ├── plugin.ts
       ├── DocService.ts
       └── ...
 ```
@@ -133,7 +133,7 @@ The `key` field corresponds to the directory name and the value returned by `get
 
 ### Step 2: Implement Client Plugin
 
-Create `client/plugins/myplugin/init.ts`:
+Create `client/plugins/myplugin/plugin.ts`:
 
 ```typescript
 import React from 'react';
@@ -192,7 +192,7 @@ export const plugin = new MyClientPlugin();
 
 ### Step 3: Implement Server Plugin
 
-Create `server/plugins/myplugin/init.ts`:
+Create `server/plugins/myplugin/plugin.ts`:
 
 ```typescript
 import { IServerPlugin } from "../../ServerUtil.js";
@@ -391,7 +391,7 @@ Plugins communicate through:
 
 Here's a complete minimal plugin example:
 
-**Client (`client/plugins/example/init.ts`)**:
+**Client (`client/plugins/example/plugin.ts`)**:
 ```typescript
 import React from 'react';
 import { IClientPlugin } from "../../AppServiceTypes";
@@ -412,7 +412,7 @@ class ExampleClientPlugin implements IClientPlugin {
 export const plugin = new ExampleClientPlugin();
 ```
 
-**Server (`server/plugins/example/init.ts`)**:
+**Server (`server/plugins/example/plugin.ts`)**:
 ```typescript
 import { IServerPlugin } from "../../ServerUtil.js";
 

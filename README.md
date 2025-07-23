@@ -1,8 +1,10 @@
-# Quanta Project
+# Quanta Web Platform
 
-1) Quanta: A File Manager and Markdown Editor with an interface similar to Jupyter Notebooks, which converts a folder structure into a browsable and editable documents. [Quanta - User Guide](./public/docs/extensions/docs/docs_user_guide.md)
+Quanta is a web platform which currently has two separate apps:
 
-2) Callisto: A WebRTC-based messaging/chat app which can run in pure Peer-to-Peer mode or optinally use server-based storage to persist room messages. [Callisto - User Guide](./public/docs/extensions/chat/chat_user_guide.md) 
+**Quanta:** A File Manager and Markdown Editor with an interface similar to Jupyter Notebooks, which converts a folder structure into a browsable and editable documents. [Quanta - User Guide](./public/docs/extensions/docs/docs_user_guide.md)
+
+**Callisto:** A WebRTC-based messaging/chat app which can run in pure Peer-to-Peer mode or optinally use server-based storage to persist room messages. [Callisto - User Guide](./public/docs/extensions/chat/chat_user_guide.md) 
 
 This project packages together [the above] two applications (two separate plugins) which are usable either separately or together depending on how you want to configure the app. 
 

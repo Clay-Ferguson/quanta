@@ -153,11 +153,11 @@ class ServerUtil {
             console.warn('Plugins have already been initialized. Skipping initialization.');
             return;
         }
-        console.log('Initializing plugins...');
+        console.log('Initializing plugins (new)...');
         for (const plugin of plugins) {
             try {
                 console.log(`plugin: ${plugin.key}`);
-                const pluginModule = await import(`../server/plugins/${plugin.key}/init.js`);
+                const pluginModule = await import(`../server/plugins/${plugin.key}/plugin.js`);
                 const pluginInst = pluginModule.plugin;
                 if (pluginInst) {
                     await pluginInst.init(context); // Initialize the plugin

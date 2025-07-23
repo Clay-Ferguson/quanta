@@ -66,7 +66,7 @@ The system uses a plugin architecture that allows for modular application develo
 
 **Server-side Plugin Lifecycle**:
 
-Each plugin should have an `init.ts` file in it's plugin folder which contains a class that derives from `IServerPlugin`. This Server Plugin interface has lifecycle methods that the plugin needs to implement to integrate and activate itself during startup of the web app.
+Each plugin should have an `plugin.ts` file in it's plugin folder which contains a class that derives from `IServerPlugin`. This Server Plugin interface has lifecycle methods that the plugin needs to implement to integrate and activate itself during startup of the web app.
 
 In general Plugins are kept in separate dedicated subfolders on the client and on the server. For example, the `chat` plugin (called Callisto as it's product name) there's a `/client/plugins/chat` project folder for client code and a `/server/plugins/chat` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folders named `docs` is what contains the Quanta App/Plugin. The Quanta Plugin is called `docs` because it's primarily a File System-based document editor and wiki system.
 
@@ -160,8 +160,8 @@ yarn install
 1. Create plugin directories: `client/plugins/[name]/` and `server/plugins/[name]/`
 2. Implement plugin interfaces (`IClientPlugin`, `IServerPlugin`)
 3. Add plugin configuration to `config.yaml`
-4. Export plugin instances from `init.ts` files
-5. Implement plugin-specific routes, pages, and components in `init.ts`
+4. Export plugin instances from `plugin.ts` files
+5. Implement plugin-specific routes, pages, and components in `plugin.ts`
 
 **Plugin Isolation**:
 - **State Namespacing**: Use plugin key prefixes for global state variables

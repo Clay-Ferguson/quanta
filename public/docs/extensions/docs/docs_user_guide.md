@@ -1,4 +1,4 @@
-# Quanta User Guide
+# Quanta - User Guide
 
 **Quanta** is a powerful file system-based document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an actual file on the file system rather than a chunk of JSON in a monolithic document file like Jupyter uses. The app provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) but using your file system itself for storage.
 
