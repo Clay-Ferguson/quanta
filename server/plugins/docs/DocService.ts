@@ -874,12 +874,7 @@ class DocService {
                 res.status(404).json({ error: 'Search directory not found' });
                 return;
             }
-
             console.log(`Simple search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
-            
-            // Initialize command variables for parallel execution
-            let grepCmd: string = ''; // Command for text file search
-            let pdfgrepCmd: string = ''; // Command for PDF file search
 
             // Define timestamp regex for date filtering (optional)
             // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
@@ -903,81 +898,8 @@ class DocService {
                 }
             }
             
-            // Build search commands based on search mode
-            if (searchMode === 'REGEX') {
-                // REGEX MODE: Use query as regex pattern
-                const escapedQuery = query.replace(/\\/g, '\\\\');
-                
-                if (dateRegex) {
-                    // Search only timestamped files
-                    grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
-                    pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${escapedQuery}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                } else {
-                    // Search all files
-                    grepCmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
-                    pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${escapedQuery}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
-                }
-            } else if (searchMode === 'MATCH_ANY') {
-                // MATCH_ANY MODE: Find files with any search term
-                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                
-                if (searchTerms.length === 1) {
-                    // Single term: use simple string search for better compatibility
-                    if (dateRegex) {
-                        grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
-                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    } else {
-                        grepCmd = `grep -rl ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
-                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q "${escapedTerms[0]}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
-                    }
-                } else {
-                    // Multiple terms: use regex OR pattern
-                    const regexPattern = escapedTerms.join('|');
-                    if (dateRegex) {
-                        grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
-                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${regexPattern}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    } else {
-                        grepCmd = `grep -rl ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
-                        pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${regexPattern}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
-                    }
-                }
-            } else {
-                // MATCH_ALL MODE: Find files containing all search terms
-                const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                
-                if (dateRegex) {
-                    // Chain searches for timestamped files with all terms
-                    let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
-                    for (let i = 0; i < escapedTerms.length; i++) {
-                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
-                    }
-                    grepCmd = baseCommand;
-                    
-                    // PDF chain for timestamped files with all terms
-                    let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    for (let i = 0; i < escapedTerms.length; i++) {
-                        pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    }
-                    pdfgrepCmd = pdfBaseCommand;
-                } else {
-                    // Chain searches for files with all terms
-                    let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
-                    for (let i = 1; i < escapedTerms.length; i++) {
-                        baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
-                    }
-                    grepCmd = baseCommand;
-                    
-                    // PDF chain for files with all terms
-                    let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    for (let i = 1; i < escapedTerms.length; i++) {
-                        pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
-                    }
-                    pdfgrepCmd = pdfBaseCommand;
-                }
-            }
-
-            console.log(`Executing grep command: ${grepCmd}`);
-            console.log(`Executing pdfgrep command: ${pdfgrepCmd}`);
+            // Initialize command object for parallel execution
+            const searchCommands = this.getBinSearchCommands(searchMode, query, dateRegex, include, absoluteSearchPath, chain, searchTerms);
             
             // Execute both commands in parallel and combine results
             const allResults: any[] = [];
@@ -989,7 +911,7 @@ class DocService {
              * Process results when both search commands complete
              * Sorts and formats results for client response
              */
-            const processResults = () => {
+            function processResults() {
                 completedCommands++;
                 if (completedCommands === totalCommands) {
                     // Sort results by modification time if requested
@@ -1003,25 +925,25 @@ class DocService {
                             return a.file.localeCompare(b.file);
                         });
                     }
-                    
+
                     // Clean results (remove internal modTime property)
-                    const cleanResults = orderByModTime ? 
+                    const cleanResults = orderByModTime ?
                         allResults.map(result => ({
                             file: result.file,
                             line: result.line,
                             content: result.content
-                        })) : 
+                        })) :
                         allResults;
-                    
+
                     // Send successful response
-                    res.json({ 
+                    res.json({
                         message: `Simple search completed for query: "${query}". Found ${cleanResults.length} matches.`,
                         query: query,
                         searchPath: treeFolder,
                         results: cleanResults
                     });
                 }
-            };
+            }
             
             /**
              * Helper function to process search output and add results
@@ -1077,7 +999,7 @@ class DocService {
             };
             
             // Execute grep command for text files
-            exec(grepCmd, (error, stdout, stderr) => {
+            exec(searchCommands.grepCmd, (error, stdout, stderr) => {
                 if (error && error.code !== 1) {
                     console.error('Grep command error:', error);
                     // Continue processing; don't fail entire search for grep errors
@@ -1097,7 +1019,7 @@ class DocService {
             });
             
             // Execute pdfgrep command for PDF files
-            exec(pdfgrepCmd, (error, stdout, stderr) => {
+            exec(searchCommands.pdfgrepCmd, (error, stdout, stderr) => {
                 if (error && error.code !== 1) {
                     // PDF search failures are more common (missing pdfgrep, corrupt PDFs)
                     // Log as warning but continue
@@ -1115,6 +1037,89 @@ class DocService {
         } catch (error) {
             handleError(error, res, 'Failed to perform simple search');
         }
+    }
+
+    private getBinSearchCommands(searchMode: string, query: string, dateRegex: string | null, include: string, absoluteSearchPath: string, chain: string, searchTerms: string[]) {
+        const searchCommands = {
+            grepCmd: '', // Command for text file search
+            pdfgrepCmd: '' // Command for PDF file search
+        };
+        // Build search commands based on search mode
+        if (searchMode === 'REGEX') {
+            // REGEX MODE: Use query as regex pattern
+            const escapedQuery = query.replace(/\\/g, '\\\\');
+
+            if (dateRegex) {
+                // Search only timestamped files
+                searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${escapedQuery}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+            } else {
+                // Search all files
+                searchCommands.grepCmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
+                searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${escapedQuery}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+            }
+        } else if (searchMode === 'MATCH_ANY') {
+            // MATCH_ANY MODE: Find files with any search term
+            const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+            if (searchTerms.length === 1) {
+                // Single term: use simple string search for better compatibility
+                if (dateRegex) {
+                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
+                    searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                } else {
+                    searchCommands.grepCmd = `grep -rl ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                    searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q "${escapedTerms[0]}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+                }
+            } else {
+                // Multiple terms: use regex OR pattern
+                const regexPattern = escapedTerms.join('|');
+                if (dateRegex) {
+                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
+                    searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${regexPattern}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                } else {
+                    searchCommands.grepCmd = `grep -rl ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
+                    searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -exec sh -c 'if pdfgrep -q -e "${regexPattern}" "$1" 2>/dev/null; then echo "$1"; fi' sh {} \\;`;
+                }
+            }
+        } else {
+            // MATCH_ALL MODE: Find files containing all search terms
+            const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+            if (dateRegex) {
+                // Chain searches for timestamped files with all terms
+                let baseCommand = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}"`;
+                for (let i = 0; i < escapedTerms.length; i++) {
+                    baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                }
+                searchCommands.grepCmd = baseCommand;
+
+                // PDF chain for timestamped files with all terms
+                let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                for (let i = 0; i < escapedTerms.length; i++) {
+                    pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                }
+                searchCommands.pdfgrepCmd = pdfBaseCommand;
+            } else {
+                // Chain searches for files with all terms
+                let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
+                for (let i = 1; i < escapedTerms.length; i++) {
+                    baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
+                }
+                searchCommands.grepCmd = baseCommand;
+
+                // PDF chain for files with all terms
+                let pdfBaseCommand = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                for (let i = 1; i < escapedTerms.length; i++) {
+                    pdfBaseCommand += ` | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[i]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
+                }
+                searchCommands.pdfgrepCmd = pdfBaseCommand;
+            }
+        }
+
+        console.log(`Executing grep command: ${searchCommands.grepCmd}`);
+        console.log(`Executing pdfgrep command: ${searchCommands.pdfgrepCmd}`);
+        return searchCommands;
     }
 
     private sortResults(results: any[], isEmptyQuery: boolean) {
