@@ -1,6 +1,6 @@
-# Quanta Developer Guide
+# Quanta Docs Developer Guide
 
-This document contains technical information about Quanta (File System-based Wiki) written for the software developer audience. The Quanta app is a block-based document editor and cloud publishing app. You should read the [User Guide](./docs_user_guide.md) for a less technical overview of the app, describing the high-level features. Quanta (the App) is implemented as a plugin for the Quanta Platform. In this document when we say `Quanta` it's referring to the Quanta App itself, not the entire platform.
+This document contains technical information about Quanta Docs (File System-based Wiki) written for the software developer audience. The Quanta app is a block-based document editor and cloud publishing app. You should read the [User Guide](./docs_user_guide.md) for a less technical overview of the app, describing the high-level features. Quanta (the App) is implemented as a plugin for the Quanta Platform. In this document when we say `Quanta` it's referring to the Quanta App itself, not the entire platform.
 
 There are two ways this app can be deployed: 1) As a localhost app which edits file system files directly, an 2) As a Web App that runs in the cloud, using Docker, and uses a Virtual File System, to hold documents, which is implemented as Postgres Functions. These two types of file systems are called LFS and VFS recpectively. We sometimes refer to the 'localhost' deployment as `Desktop Mode` so keep in mind those two things are synonymous.
 

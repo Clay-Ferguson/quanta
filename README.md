@@ -12,14 +12,13 @@ Quanta is a React-based Web Platform with a plugin interface that allows differe
 *
 
 # Developer Guides
-
-* [Platform - Developer Guide](./public/docs/platform_guide/platform_guide.md)
-* [Extensions - Developer Guide](./public/docs/extensions_guide/extensions_guide.md)
-* [Quanta Plugin - Developer Guide](./public/docs/extensions/docs/docs_developer_guide.md)
+* [Core Platform](./public/docs/platform/platform_developer_guide.md)
+* [Extensions](./public/docs/extensions/extensions_developer_guide.md)
+* [Quanta Docs Plugin](./public/docs/extensions/docs/docs_developer_guide.md)
+* [Quanta Chat Plugin](./public/docs/extensions/chat/chat_developer_guide.md)
 
 
 ## Core Platform Tech Stack
-
 Quanta is designed to work well on both desktop browsers as well as mobile devices and uses the following technologies.
 
 ### Front End

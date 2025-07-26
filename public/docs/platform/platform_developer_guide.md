@@ -1,7 +1,7 @@
 # Quanta Platform Developer Guide
+This document explains the technical design of the Quanta `Core Platform` which is the common platform code that handles all non-plugin specific aspects. In other words, the code platform code is what manages the plugins and runs them, and provides the base layer framework for running applications as plugins.
 
 ## Overview
-
 Quanta is a React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications. The project currently packages together two separate plugins which make up the "Quanta" app, which consists of document editing and chat capabilitities. Each of the two plugins of course rely on a large amount of common `core platform` code and capabilities that are shared. 
 
 - **Quanta Docs Plugin**: A filesystem-based document editor with Jupyter Notebook-style interface
@@ -12,7 +12,6 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 ## Technology Stack
 
 ### Frontend Stack
-
 - **TypeScript**: Strongly typed JavaScript for better development experience
 - **React 19**: Modern React with hooks and functional components
 - **Vite**: Fast build tool and development server
@@ -33,7 +32,6 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 - **PostCSS + Autoprefixer**: CSS processing pipeline
 
 ## How to Run
-
 There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)
 
 We can run the app using either Docker or non-Docker deployments. We have the shell scripts named `run-*.sh` and `docker-run-*sh` in the project root which are somewhat self-explanatory. They end in `dev` for (development), `local` for a local deployment (non-server install), and `prod` for production servers which activate HTTPS support.
@@ -99,17 +97,7 @@ Persistance on the browser is done entirely thru the [Browser Persistence API](/
 
 PostgreSQL DB is available for the Dockerized deployments. The key file for Postgres connections [PGDB.ts](/server/PGDB.ts). Search for files named `*.sql` do learn about database schemas. There is SQL to generate the platform core tables, as well as the ability for each Plugin to create tables of their own.
 
-#### 6. Real-Time Communication
-
-todo: We need to move this into 'Chat' plugin because it's not part of core platform.
-
-**WebRTC Integration**:
-- **Peer-to-Peer**: Direct browser-to-browser communication
-- **WebSocket Signaling**: Server-mediated connection establishment
-- **ICE/STUN/TURN**: NAT traversal and connection management
-- **Data Channels**: File transfer and messaging
-
-#### 7. Configuration Management
+#### 6. Configuration Management
 
 **YAML-Based Configuration**:
 ```yaml
