@@ -86,6 +86,7 @@ export function formatDisplayName(name: string) {
 
     // Replace underscores and dashes with spaces
     name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
+    name = name.trim();
 
     // we preserve the display of the final underscore if it exists, because that's important for the user to see
     // becasue it represents a 'pullup'

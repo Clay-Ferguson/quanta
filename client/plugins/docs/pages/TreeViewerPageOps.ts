@@ -7,7 +7,7 @@ import { httpClientUtil } from "../../../HttpClientUtil";
 import { DBKeys } from "../../../AppServiceTypes";
 import { idb } from "../../../IndexedDB";
 import { util } from "../../../Util";
-import { getFilenameExtension, isImageFile, isTextFile, stripOrdinal } from "../../../../common/CommonUtils";
+import { formatDisplayName, getFilenameExtension, isImageFile, isTextFile, stripOrdinal } from "../../../../common/CommonUtils";
 
 declare const ADMIN_PUBLIC_KEY: string;
 declare const DESKTOP_MODE: boolean;
@@ -208,8 +208,9 @@ export const getMasterCheckboxState = (gs: DocsGlobalState, treeNodes: TreeNode[
 // Edit mode button handlers
 export const handleEditClick = (node: TreeNode) => {     
     // For folders, we're doing rename functionality
-    // Strip the numeric prefix from the folder name for editing
-    const nameWithoutPrefix = stripOrdinal(node.name);   
+    // Format the edit field as a friendly name, so user sees no ordinals and sees spaces instead of underscores
+    const nameWithoutPrefix = formatDisplayName(node.name);
+       
     if (node.is_directory) {
         gd({ type: 'setFolderEditingState', payload: { 
             docsEditNode: node,
