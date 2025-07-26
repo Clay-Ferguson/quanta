@@ -88,7 +88,6 @@ All server-side plugins must implement the `IServerPlugin` interface:
 ```typescript
 export interface IServerPlugin {
     init(context: any): void;
-    finishRoute(context: any): void;
     notify(server: any): void;
 }
 ```
@@ -96,7 +95,6 @@ export interface IServerPlugin {
 #### Method Descriptions
 
 - **`init(context)`**: Initializes the plugin with Express app instance and routing functions
-- **`finishRoute(context)`**: Sets up fallback routes after all plugins have been initialized
 - **`notify(server)`**: Called when server startup is complete, provides access to server instance
 
 ## Configuration
@@ -214,13 +212,6 @@ class MyServerPlugin implements IServerPlugin {
         // Serve your main page if this is the default plugin
         if (defaultPlugin === "myplugin") {
             app.get('/', serveIndexHtml("MyMainPage"));
-        }
-    }
-
-    finishRoute(context: any) {
-        // Set up fallback routes
-        if (defaultPlugin === "myplugin") {
-            context.app.get('*', context.serveIndexHtml("MyMainPage"));
         }
     }
 
@@ -349,7 +340,6 @@ app.post('/api/myplugin/user-action',
 2. **Client Plugin `init()`**: Initializes client-side state
 3. **Client Plugin `restoreSavedValues()`**: Restores persisted data
 4. **Client Plugin `notify()`**: Post-initialization notifications
-5. **Server Plugin `finishRoute()`**: Sets up fallback routes
 6. **Server Plugin `notify()`**: Server startup complete
 
 ### Plugin Communication
@@ -418,7 +408,6 @@ import { IServerPlugin } from "../../ServerUtil.js";
 
 class ExampleServerPlugin implements IServerPlugin {
     init(context: any) { console.log('Example server plugin init'); }
-    finishRoute(context: any) { }
     notify(server: any) { }
 }
 

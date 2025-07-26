@@ -97,14 +97,6 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.get('/docs', context.serveIndexHtml("TreeViewerPage"));
     }
 
-    finishRoute(context: IAppContext) {
-        console.log('finishRoute docs plugin...');
-        if (defaultPlugin === "docs") {
-            console.log('Docs plugin is the default plugin, serving index.html at root path(*).');
-            context.app.get('*', context.serveIndexHtml("TreeViewerPage"));
-        }
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async notify(server: any): Promise<void> {
     }

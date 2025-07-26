@@ -87,12 +87,6 @@ export interface IServerPlugin {
     init(context: IAppContext): void;
 
     /**
-     * Set up fallback routes after all plugins have been initialized
-     * @param context - Contains app (Express app instance) and serveIndexHtml function
-     */
-    finishRoute(context: IAppContext): void;
-
-    /**
      * Notify the plugin that server startup is complete
      * @param server - The server instance (for WebRTC or other server-level operations)
      */
@@ -168,18 +162,6 @@ class ServerUtil {
             } catch (error) {
                 console.error(`Error initializing plugin ${plugin.key}:`, error);
             }
-        }
-    }
-
-    /**
-     * Finish route setup for all initialized plugins
-     * This method is called after all plugins have been initialized to allow them to set up fallback routes
-     * @param context - Context object passed to each plugin's finishRoute method
-     */
-    finishRoutes = async (context: IAppContext) => {
-        console.log('Finishing plugin routes...');
-        for (const plugin of this.pluginsArray) {
-            plugin.finishRoute(context);
         }
     }
 

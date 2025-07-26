@@ -175,9 +175,6 @@ await svrUtil.initPlugins(plugins, {app, serveIndexHtml});
 // Serve static files from the dist directory, but disable index serving
 app.use(express.static("./dist", { index: false }));
 
-// Fallback for any other routes not handled above
-await svrUtil.finishRoutes({app, serveIndexHtml});
-
 let server = null;
 
 // PRODUCTION: run on 'https' with certificates

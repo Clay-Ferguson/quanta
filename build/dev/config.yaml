@@ -7,8 +7,11 @@ desktopMode: "y"
 defaultPlugin: "docs"
 
 plugins:
-  - name: "Quanta"
+  - name: "Quanta Docs"
     key: "docs"
+  # NOTE: We only can run chat with PosgreSQL, so that configuration requires the docker build, which uses 'docker-config.yaml', not this file.
+  # - name: "Quanta Chat"
+  #   key: "chat"
 
 # Public folders configuration - array of folder objects with name and path
 public-folders:

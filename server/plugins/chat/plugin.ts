@@ -66,21 +66,8 @@ class ChatServerPlugin implements IServerPlugin {
         context.app.post('/api/attachments/:attachmentId/delete', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(chatSvc.deleteAttachment));
         context.app.post('/api/rooms/:roomId/get-messages-by-id', asyncHandler(chatSvc.getMessagesByIds));
         context.app.post('/api/rooms/:roomId/send-messages',  httpServerUtil.verifyReqHTTPSignature, asyncHandler(chatSvc.sendMessages)); 
-        context.app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, asyncHandler(chatSvc.deleteMessage)); 
-
-        // We serve the index.html page for the chat plugin at the root path, if 'chat' is the default plugin.
-        // NOTE: This is a bit tricky because we're generating a closure function by making these calls here, when
-        // normally we would just pass the function reference directly.
-        if (defaultPlugin === "chat") {
-            console.log('Chat plugin is the default plugin, serving index.html at root path(/).');
-            context.app.get('/', context.serveIndexHtml("QuantaChatPage"));
-        }
-    }
-
-    // convert these to IAppContext
-    finishRoute(context: IAppContext) {
-        console.log('finishRoute chat plugin...');
-
+        context.app.post('/api/delete-message', httpServerUtil.verifyReqHTTPSignature, asyncHandler(chatSvc.deleteMessage));
+        
         if (defaultPlugin === "chat") {
             console.log('Chat plugin is the default plugin, serving index.html at root path(*).');
             context.app.get('/', context.serveIndexHtml("QuantaChatPage"));
