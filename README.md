@@ -1,16 +1,15 @@
 # Quanta Web Platform
 
-Quanta is a web platform which currently has two separate apps:
+Quanta is a File Manager and Markdown Editor (similar to Jupyter Notebooks and Obsidian), which can run either locally, where it directly uses local files, or as a cloud-based multi-user app where a `Virtual File System` is used. When deployed to the cloud you also get a 'chat room' feature where users can do realtime messaging. The Document-centric features and the Chat-related features are implemented in two separate plugins which can actually be used either together or independently.
 
-**Quanta:** A File Manager and Markdown Editor with an interface similar to Jupyter Notebooks, which converts a folder structure into a browsable and editable documents. [Quanta - User Guide](./public/docs/extensions/docs/docs_user_guide.md)
-
-**Callisto:** A WebRTC-based messaging/chat app which can run in pure Peer-to-Peer mode or optinally use server-based storage to persist room messages. [Callisto - User Guide](./public/docs/extensions/chat/chat_user_guide.md) 
-
-This project packages together [the above] two applications (two separate plugins) which are usable either separately or together depending on how you want to configure the app. 
+* [Quanta Docs - User Guide](./public/docs/extensions/docs/docs_user_guide.md)
+* [Quanta Chat - User Guide](./public/docs/extensions/chat/chat_user_guide.md) 
 
 # Quanta Web Platform
 
-Quanta is a React-based Web Platform with a plugin interface that allows different extensions (i.e. applications) to be created rapidly, by reusing most of the core platform code. There is a lot of boiler plate involved with creating a new Web Project from scratch and also a lot of code that will be common across all web apps. Quanta provides a solution for being able to ship products fast by simply implementing one or more plugins that define the custom pages and capabilities of a specific app, to create a finished product without having to rewrite the common kinds of boilerplate you find in all web apps. *The name **Quanta** can refer to the platform itself, as well as the Filesystem based document editor, because this editor was the initial reason for creating the platform.*
+Quanta is a React-based Web Platform with a plugin interface that allows different extensions (i.e. applications) to be created rapidly, by reusing most of the core platform code. There is a lot of boiler plate involved with creating a new Web Project from scratch and also a lot of code that will be common across all web apps. Quanta provides a solution for being able to ship products fast by simply implementing one or more plugins that define the custom pages and capabilities of a specific app, to create a finished product without having to rewrite the common kinds of boilerplate you find in all web apps. *The name **Quanta** can refer to the platform itself, as well as the Filesystem based document editor, because this editor was the initial reason for creating the platform.
+
+*
 
 # Developer Guides
 

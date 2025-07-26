@@ -19,7 +19,7 @@ Plugins are organized in two main directories:
 
 Each plugin has its own directory containing an `plugin.ts` file that exports the plugin implementation.
 
-In the folder structure below it's important to know that `chat` is the folder name (and extension identifier) for the Callisto Chat App, and `docs` is the folder name (and extension identifier) for the Quanta App. 
+In the folder structure below it's important to know that `chat` is the folder name (and extension identifier) for the Quanta Chat App, and `docs` is the folder name (and extension identifier) for the Quanta App. 
 
 You may wonder why `docs` was chosen as the extension name for a File Manager, and the reason is that indeed Quanta is more of a document editor than it is a file manager, because what it does that's unique is that it melds together the two concepts of 'file system' and 'document managers', in the same sort of way that Jupyter Notebooks is a melding together the concept of a cell-based spreadsheet and a document. Quanta is very similar to Jupyter Notebooks in this regard. However, importantly, Quanta uses individual files as it's 'cells' whereas Jupyter uses a single monolighic JSON file to hold 'cells' of content.
 
@@ -113,9 +113,9 @@ defaultPlugin: "chat"  # The plugin that loads by default
 #### Plugin Definitions
 ```yaml
 plugins:
-  - name: "Callisto"
+  - name: "Quanta Chat"
     key: "chat"
-  - name: "Quanta"
+  - name: "Quanta Docs"
     key: "docs"
 ```
 

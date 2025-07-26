@@ -8,9 +8,9 @@ desktopMode: "n"
 defaultPlugin: "chat"
 
 plugins:
-  - name: "Callisto"
+  - name: "Quanta Chat"
     key: "chat"
-  - name: "Quanta"
+  - name: "Quanta Docs"
     key: "docs"
 
 # Public folders configuration - array of folder objects with name and path

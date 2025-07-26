@@ -1,15 +1,13 @@
 # Quanta Platform Developer Guide
 
-*Note: `Quanta` is the name of the primary plugin as well as the name of the platform itself, so whever it's not obvious from context we'll use the terminology `Quanta App` or `Quanta Plugin` vs `Quanta Platform`*
-
 ## Overview
 
-Quanta Platform is a React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications.
+Quanta is a React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications. The project currently packages together two separate plugins which make up the "Quanta" app, which consists of document editing and chat capabilitities. Each of the two plugins of course rely on a large amount of common `core platform` code and capabilities that are shared. 
 
-The platform currently includes two main applications:
+- **Quanta Docs Plugin**: A filesystem-based document editor with Jupyter Notebook-style interface
+- **Quanta Chat Plugin**: A WebRTC-powered peer-to-peer chat application with optional server persistence
 
-- **Quanta**: A filesystem-based document editor with Jupyter Notebook-style interface
-- **Callisto**: A WebRTC-powered peer-to-peer chat application with optional server persistence
+The goal is that we can theoretically run the Docs and/or Chat plugins independently. That means we could run the Docs plugin without the Chat plugin and vice versa if the need ever arises. This is one reason why they are implemented as plugins, although an additional goal of creating the `core platform` itself is that we can create brand new applications from scratch just by using the core platform plus one or more plugins, just like we've done for Quanta.
 
 ## Technology Stack
 
@@ -64,11 +62,11 @@ When the app starts it will read from the Docker compose file of course, as well
 
 The system uses a plugin architecture that allows for modular application development:
 
-**Server-side Plugin Lifecycle**:
+**Plugins**:
 
 Each plugin should have an `plugin.ts` file in it's plugin folder which contains a class that derives from `IServerPlugin`. This Server Plugin interface has lifecycle methods that the plugin needs to implement to integrate and activate itself during startup of the web app.
 
-In general Plugins are kept in separate dedicated subfolders on the client and on the server. For example, the `chat` plugin (called Callisto as it's product name) there's a `/client/plugins/chat` project folder for client code and a `/server/plugins/chat` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folders named `docs` is what contains the Quanta App/Plugin. The Quanta Plugin is called `docs` because it's primarily a File System-based document editor and wiki system.
+In general Plugins are kept in separate dedicated subfolders on the client and on the server. For example, the `chat` plugin is in `/client/plugins/chat` project folder for client code and a `/server/plugins/chat` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folder named `docs` is what contains the Document editor plugin. 
 
 #### 3. ReactJS State Management
 
@@ -125,9 +123,9 @@ desktopMode: "y"
 
 plugins:
   - key: "chat"
-    name: "Callisto"
+    name: "Quanta Chat"
   - key: "docs" 
-    name: "Quanta"
+    name: "Quanta Docs"
 
 publicFolders:
   - key: "user-guide"

@@ -8,7 +8,7 @@ desktopMode: "n"
 defaultPlugin: "chat"
 
 plugins:
-  - name: "Callisto"
+  - name: "Quanta Chat"
     key: "chat"
  
 

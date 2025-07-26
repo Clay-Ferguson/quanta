@@ -1,8 +1,8 @@
-# Callisto User Guide
+# Quanta Chat User Guide
 
-## About Callisto
+## About Quanta Chat
 
-The Callisto extension implements a Peer-to-Peer capable WebRTC-based Chat Web App.
+The Quanta Chat extension implements a Peer-to-Peer capable WebRTC-based Chat Web App.
 
 ![Settings Page](img/chat-window.png)
 
