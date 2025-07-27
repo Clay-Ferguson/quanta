@@ -27,11 +27,6 @@ Thumbs.db
 # Documentation
 README.md
 
-# Database directories (mounted as volumes)
-postgres-data/
-pgadmin-data/
-data/
-
 # Other build tools
 .eslintrc*
 tsconfig*.json

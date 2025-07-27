@@ -45,6 +45,8 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 
 - **public**: Folder that is visible to web app (via URLs) at runtime, and also holds the `docs` folder which is where all technical and non-technical documentation can be found.
 
+- **build**: This is a generated folder used to hold the runtime files, which is generated during a build. You can safely delete this folder, and it's never checked into 'git'.
+
 ### Files
 
 - **tsconfig.*,vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.

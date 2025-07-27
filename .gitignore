@@ -5,6 +5,3 @@ dist/
 .vscode/
 package-lock.json
 
-# Database data directories
-pgadmin-data/
-postgres-data/
