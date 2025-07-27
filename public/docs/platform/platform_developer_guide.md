@@ -47,8 +47,6 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 
 ### Files
 
-- **index.html**: This is the main SPA page served by the app which hosts the root of the React App in the element with `id='root'`. Note that there's a script section where we inject any global variables that we need to have access to immediately without having to make a call to the server to get those values, which is done for performance and simplicity.
-
 - **tsconfig.*,vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.
 
 ## How to Run
