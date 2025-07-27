@@ -31,6 +31,26 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 - **ESLint**: Code linting with TypeScript support
 - **PostCSS + Autoprefixer**: CSS processing pipeline
 
+## Project Files & Folders
+
+### Folders
+
+- **build**: Shell scripts used to build/run the app for `localhost`, `dev`, and `prod` deployments some of which have docker and non-Docker scripts for running either inside or outside of Docker. Note that the "Chat" plugin can ONLY run inside Docker, because it relies on using PostgreSQL to hold chat messages and other things.
+
+- **server**: All server-side code, which is all in TypeScript, and runs an Express server.
+
+- **client**: All client-side code, which is all in TypeScript, and runs in Web Browsers mostly as a SPA (Single Page App)
+
+- **common**: Common code that is shared across both client and server. Note that we obviously cannot have any Express or server-side code in the common folder.
+
+- **public**: Folder that is visible to web app (via URLs) at runtime, and also holds the `docs` folder which is where all technical and non-technical documentation can be found.
+
+### Files
+
+- **index.html**: This is the main SPA page served by the app which hosts the root of the React App in the element with `id='root'`. Note that there's a script section where we inject any global variables that we need to have access to immediately without having to make a call to the server to get those values, which is done for performance and simplicity.
+
+- **tsconfig.*,vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.
+
 ## How to Run
 There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)
 
@@ -50,15 +70,13 @@ When you run the app it consists entirely of one or more activated 'plugins' whi
 
 #### Server-Side Bootstrap 
 
-To see how the app starts and runs look at the `scripts` in [package.json](/package.json)
+To see how the app starts and runs look at the `scripts` in [package.json](/package.json), but beware that the way we generally run the app is thru the scripts you'll find in the `build` folders (local, dev, proc).
 
-The [Server Entry point](/server/AppServer.ts) is the main entry point of the server side code.
-
-When the app starts it will read from the Docker compose file of course, as well as the appropriate `config*.yaml` file. From these configs it will know what plugins are defined, and it will then initialize plugins.
+The [Server Entry point](/server/AppServer.ts) is the main entry point of the server side code, which runs the Express Web App.
 
 #### 2. Plugin Architecture
 
-The system uses a plugin architecture that allows for modular application development:
+The system uses a plugin architecture that allows for modular application development. When the app starts it will read from the Docker compose file of course (for docker deploys), or else the appropriate `config*.yaml` file. From these configs it will know what plugins are defined, and it will then initialize plugins.
 
 **Plugins**:
 
@@ -97,47 +115,21 @@ Persistance on the browser is done entirely thru the [Browser Persistence API](/
 
 PostgreSQL DB is available for the Dockerized deployments. The key file for Postgres connections [PGDB.ts](/server/PGDB.ts). Search for files named `*.sql` do learn about database schemas. There is SQL to generate the platform core tables, as well as the ability for each Plugin to create tables of their own.
 
-#### 6. Configuration Management
-
-**YAML-Based Configuration**:
-```yaml
-# config.yaml / config.yaml
-host: "localhost"
-port: "8080" 
-secure: "n"
-adminPublicKey: "..."
-defaultPlugin: "chat"
-desktopMode: "y"
-
-plugins:
-  - key: "chat"
-    name: "Quanta Chat"
-  - key: "docs" 
-    name: "Quanta Docs"
-
-publicFolders:
-  - key: "user-guide"
-    name: "User Guide"
-    path: "./public/docs"
-```
-
-## Build System & Development
-
 ### Development Workflow
 
 **Development Server**:
+Run this from the project folder! (as current directory)
+
 ```bash
 # Install dependencies
 yarn install
 
-# Start development server (auto-reload)
-./run-dev.sh
-```
+# Start a development server (for non-docker run)
+./build/dev/build-and-start.sh
 
-**Production Build**:
-```bash
-# Build for production
-./docker-run-prod.sh  
+--OR--
+# Start development server (for docker)
+./build/dev/docker-run.sh
 ```
 
 ### Plugin Development
@@ -154,6 +146,8 @@ yarn install
 - **Route Isolation**: Each plugin manages its own HTTP endpoints
 - **Component Separation**: Plugin-specific UI components and pages
 - **Database Isolation**: Separate database managers per plugin
+
+For more, about plugins see: [Extensions](./public/docs/extensions/extensions_developer_guide.md)
 
 ## Security Architecture
 
@@ -210,5 +204,3 @@ yarn install
 - **Namespace Conventions**: Use plugin key as prefix for all global state variables
 - **Local State**: Prefer local component state when global state isn't needed
 - **Persistence Strategy**: Use IndexedDB for user data, server storage for shared data
-
-This architecture provides a solid foundation for building modern web applications with plugin extensibility, strong security, and excellent developer experience. The plugin system allows for rapid development of new features while maintaining code organization and system stability.
