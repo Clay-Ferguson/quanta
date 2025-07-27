@@ -93,7 +93,7 @@ const pluginKeys = plugins.map((plugin: any) => plugin.key).join(',');
 console.log(`Plugins loaded: ${pluginKeys}`);
 
 const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
-    fs.readFile("./dist/index.html", 'utf8', async (err, data) => {
+    fs.readFile("./dist/server/index.html", 'utf8', async (err, data) => {
         if (err) {
             console.error('Error reading index.html:', err);
             return res.status(500).send('Error loading page');

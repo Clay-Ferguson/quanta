@@ -10,6 +10,12 @@ if (!isDev) {
     console.log("PRODUCTION BUILD");
     config = {
         plugins: [react()],
+        root: '.', // Keep root at project level
+        build: {
+            rollupOptions: {
+                input: './server/index.html' // Use index.html from server folder
+            }
+        },
         css: {
             preprocessorOptions: {
                 scss: {
@@ -25,6 +31,7 @@ else {
     console.log("DEVELOPMENT BUILD")
     config = {
         plugins: [react()],
+        root: '.', // Keep root at project level
         css: {
             preprocessorOptions: {
                 scss: {
@@ -41,6 +48,7 @@ else {
             // Disable chunk size warnings
             chunkSizeWarningLimit: 10000,
             rollupOptions: {
+                input: './server/index.html', // Use index.html from server folder
                 preserveEntrySignatures: 'strict',
                 output: {
                     // Preserve module structure
