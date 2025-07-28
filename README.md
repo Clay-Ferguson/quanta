@@ -25,6 +25,7 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 * Vite Builder
 * Yarn Package Manager
 * Browser persistence thru JS IndexedDB
+* Jest+Supertest Testing
 
 ### Back End
 * NodeJS Express Server 
@@ -33,3 +34,6 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 
 ## How to Build+Run
 Linux shell scripts named like `/build/dev/build-and-start.sh` are how we build/run outside of Docker. The `/build/dev/docker-run.sh` scripts are how we run via docker. This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
+
+## Unit Testing 
+See [TESTING.md](/TESTING.md)

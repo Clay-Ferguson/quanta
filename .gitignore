@@ -2,6 +2,14 @@
 node_modules/
 dist/
 
+# IDE
 .vscode/
+
+# Package managers
 package-lock.json
+
+# Testing
+coverage/
+*.log
+.nyc_output/
 
