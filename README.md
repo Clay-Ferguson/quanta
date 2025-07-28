@@ -19,7 +19,6 @@ Quanta is a React-based Web Platform with a plugin interface that allows differe
 Quanta is designed to work well on both desktop browsers as well as mobile devices and uses the following technologies.
 
 ### Front End
-
 * TypeScript
 * ReactJS
 * TailwindCSS + SCSS
@@ -28,11 +27,9 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 * Browser persistence thru JS IndexedDB
 
 ### Back End
-
 * NodeJS Express Server 
 * Server-side DB PostgreSQL
 * Deployed via Docker Compose
 
 ## How to Build+Run
-
 Linux shell scripts named like `/build/dev/build-and-start.sh` are how we build/run outside of Docker. The `/build/dev/docker-run.sh` scripts are how we run via docker. This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
