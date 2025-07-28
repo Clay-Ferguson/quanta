@@ -93,3 +93,11 @@ interface DocsGlobalState extends GlobalState {
 - Message signing for chat integrity
 - Public key-based user identification
 - Admin key configuration for elevated privileges
+
+## Unit Testing
+
+We use 'Jest' for testing  and we have our test cases in the 'test' folder. See file [TESTING.md](./TESTING.md) for details how we do unit tests. 
+
+# Coding Tips
+
+- Always use `import` statements for modules, avoid `require`.

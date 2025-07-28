@@ -9,7 +9,7 @@ import { runTrans } from "../../Transactional.js";
 import fs from 'fs';
 import path from 'path';
 import pgdb from "../../PGDB.js";
-const { exec } = await import('child_process');
+import { exec } from 'child_process';
 import { fixName, getFilenameExtension, isImageExt } from '../../../common/CommonUtils.js';
 
 /**
@@ -650,8 +650,6 @@ class DocService {
             // Extract and validate parameters
             const { treeFolder, docRootKey, requireDate, searchOrder = 'MOD_TIME' } = req.body;
             let { query, searchMode = 'MATCH_ANY' } = req.body;
-            const orderByModTime = searchOrder === 'MOD_TIME';
-            const orderByDate = searchOrder === 'DATE';
             
             // Handle empty, null, or undefined query as "match everything"
             const isEmptyQuery = !query || query.trim() === '';
@@ -690,93 +688,150 @@ class DocService {
 
             console.log(`Search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
 
-            // Define timestamp regex for date filtering (optional)
-            // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
-            const dateRegex: string | null = requireDate ? 
-                "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
-
-            // Define file inclusion/exclusion patterns
-            const include = '--include="*.md" --include="*.txt" --exclude="_*" --exclude=".*"';
-            const chain = 'xargs -0 --no-run-if-empty';
-            let searchTerms: string[] = [];
-
-            if (searchMode !== 'REGEX') {
-                searchTerms = docUtil.parseSearchTerms(query);
-                
-                if (searchTerms.length === 0) {
-                    res.status(400).json({ error: 'No valid search terms found' });
-                    return;
-                }
-            }
-
-            // Build grep command based on search mode and options
-            const cmd: string = this.getSearchCommand(searchMode, query, isEmptyQuery, dateRegex, include, absoluteSearchPath, chain, searchTerms);
-            console.log(`Executing search command: ${cmd}`);
-            
-            // Execute the grep command
-            exec(cmd, (error, stdout, stderr) => {
-                if (error) {
-                    // Exit code 1 means no matches (not an error)
-                    if (error.code === 1) {
-                        console.log('No matches found for search query');
-                        res.json({ 
-                            message: `No matches found for query: "${query}"`,
-                            query: query,
-                            results: []
-                        });
+            // Call the extracted core search method
+            this.performTextSearch(
+                query,
+                searchMode,
+                isEmptyQuery,
+                requireDate,
+                searchOrder,
+                absoluteSearchPath,
+                ifs,
+                (error, searchResults) => {
+                    if (error) {
+                        if (error.type === 'validation') {
+                            res.status(400).json({ error: error.message });
+                        } else if (error.type === 'no_matches') {
+                            res.json({
+                                message: `No matches found for query: "${query}"`,
+                                query: query,
+                                results: []
+                            });
+                        } else {
+                            console.error('Search error:', error);
+                            res.status(500).json({ error: 'Search command failed' });
+                        }
                         return;
-                    }                    
-                    console.error('Grep command error:', error);
-                    res.status(500).json({ error: 'Search command failed' });
-                    return;
-                }
-                
-                if (stderr) {
-                    console.warn('Grep stderr:', stderr);
-                }
-                
-                // Parse grep output and build results
-                const results: any[] = [];
-                const fileTimes = (orderByModTime || orderByDate) ? new Map<string, number>() : null;
-                
-                if (stdout.trim()) {
-                    const lines = stdout.trim().split('\n');
-                    
-                    if (isEmptyQuery) {
-                        // For empty queries, stdout contains file paths only (one per line)
-                        this.processResultLinesForEmptyQuery(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
-                    } else {
-                        // For non-empty queries, process line-by-line results as before
-                        this.processResultLines(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
                     }
+
+                    // Send successful response
+                    res.json({
+                        message: `Search completed for query: "${query}". Found ${searchResults!.length} matches.`,
+                        query: query,
+                        searchPath: treeFolder,
+                        results: searchResults
+                    });
                 }
-                
-                // Sort results if time-based ordering is requested
-                if (orderByModTime || orderByDate) {
-                    this.sortResults(results, isEmptyQuery);
-                }
-                
-                // Clean results (remove internal timeVal property)
-                const cleanResults = (orderByModTime || orderByDate) ? 
-                    results.map(result => ({
-                        file: result.file,
-                        line: result.line,
-                        content: result.content
-                    })) : 
-                    results;
-                
-                // Send successful response
-                res.json({ 
-                    message: `Search completed for query: "${query}". Found ${cleanResults.length} matches.`,
-                    query: query,
-                    searchPath: treeFolder,
-                    results: cleanResults
-                });
-            });
+            );
             
         } catch (error) {
             handleError(error, res, 'Failed to perform search');
         }
+    }
+
+    /**
+     * Core text search functionality extracted for unit testing and reusability.
+     * 
+     * This method performs the actual grep-based search operation without HTTP-specific dependencies.
+     * It can be called directly from unit tests or other contexts where web request/response handling
+     * is not needed.
+     * 
+     * @param query - The search query string
+     * @param searchMode - Search mode: 'REGEX', 'MATCH_ANY', or 'MATCH_ALL'
+     * @param isEmptyQuery - Whether this is an empty query (match all)
+     * @param requireDate - Whether to filter for timestamped content
+     * @param searchOrder - Ordering preference: 'MOD_TIME' or 'DATE'
+     * @param absoluteSearchPath - Absolute path to search directory
+     * @param ifs - File system interface instance
+     * @param callback - Callback function for handling results or errors
+     */
+    performTextSearch = (
+        query: string,
+        searchMode: string,
+        isEmptyQuery: boolean,
+        requireDate: boolean | undefined,
+        searchOrder: string,
+        absoluteSearchPath: string,
+        ifs: IFS,
+        callback: (error: { type: string; message: string } | null, results?: any[]) => void
+    ): void => {
+        const orderByModTime = searchOrder === 'MOD_TIME';
+        const orderByDate = searchOrder === 'DATE';
+
+        // Define timestamp regex for date filtering (optional)
+        // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
+        const dateRegex: string | null = requireDate ? 
+            "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+
+        // Define file inclusion/exclusion patterns
+        const include = '--include="*.md" --include="*.txt" --exclude="_*" --exclude=".*"';
+        const chain = 'xargs -0 --no-run-if-empty';
+        let searchTerms: string[] = [];
+
+        if (searchMode !== 'REGEX') {
+            searchTerms = docUtil.parseSearchTerms(query);
+            
+            if (searchTerms.length === 0) {
+                callback({ type: 'validation', message: 'No valid search terms found' });
+                return;
+            }
+        }
+
+        // Build grep command based on search mode and options
+        const cmd: string = this.getSearchCommand(searchMode, query, isEmptyQuery, dateRegex, include, absoluteSearchPath, chain, searchTerms);
+        console.log(`Executing search command: ${cmd}`);
+        
+        // Execute the grep command
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                // Exit code 1 means no matches (not an error)
+                if (error.code === 1) {
+                    console.log('No matches found for search query');
+                    callback({ type: 'no_matches', message: 'No matches found' });
+                    return;
+                }                    
+                console.error('Grep command error:', error);
+                callback({ type: 'execution', message: 'Search command failed' });
+                return;
+            }
+            
+            if (stderr) {
+                console.warn('Grep stderr:', stderr);
+            }
+            
+            // Parse grep output and build results
+            const results: any[] = [];
+            const fileTimes = (orderByModTime || orderByDate) ? new Map<string, number>() : null;
+            
+            if (stdout.trim()) {
+                const lines = stdout.trim().split('\n');
+                
+                if (isEmptyQuery) {
+                    // For empty queries, stdout contains file paths only (one per line)
+                    this.processResultLinesForEmptyQuery(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
+                } else {
+                    // For non-empty queries, process line-by-line results as before
+                    this.processResultLines(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
+                }
+            }
+            
+            // Sort results if time-based ordering is requested
+            if (orderByModTime || orderByDate) {
+                this.sortResults(results, isEmptyQuery);
+            }
+            
+            // Clean results (remove internal timeVal property)
+            const cleanResults = (orderByModTime || orderByDate) ? 
+                results.map(result => ({
+                    file: result.file,
+                    line: result.line,
+                    content: result.content
+                })) : 
+                results;
+            
+            // Return successful results
+            callback(null, cleanResults);
+        });
     }
 
     /**
