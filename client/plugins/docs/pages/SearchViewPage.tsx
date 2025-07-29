@@ -12,8 +12,9 @@ import { DBKeys } from '../../../AppServiceTypes';
 
 interface SearchResult {
     file: string;
-    line: number;
-    content: string;
+    line?: number;     // Optional for folder results
+    content?: string;  // Optional for folder results
+    folder?: string;   // Present for folder results
 }
 
 interface SearchResultItemProps {
@@ -27,30 +28,29 @@ interface SearchResultItemProps {
  * SearchResultItem component for displaying individual search result items
  */
 function SearchResultItem({ filePath, fileResults, onFileClick, vfsType }: SearchResultItemProps) {
-    const fileName = filePath.split('/').pop() || filePath;
-    const isFolder = !fileName.includes('.');
+    // Check if this is a folder result
+    const isFolder = fileResults.length > 0 && fileResults[0].folder !== undefined;
     
     return (
         <div 
             className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
             onClick={() => onFileClick(filePath, vfsType)}
         >
-            <div className={`font-medium ${isFolder ? 'text-blue-400' : 'text-gray-200'}`}>
-                {formatFullPath(filePath)}
+            <div className={`font-medium flex items-center gap-2 ${isFolder ? 'text-blue-400' : 'text-gray-200'}`}>
+                {isFolder ? `📁 ${formatFullPath(filePath)}` : `📄 ${formatFullPath(filePath)}`}
             </div>
             
-            {/* {fileName != filePath && <div className="text-xs text-gray-500 mb-2">
-                {filePath}
-            </div>} */}
-            
-            {fileResults.length > 0 && fileResults[0].line >= 0 && (
+            {/* Show file content results only for non-folder results */}
+            {!isFolder && fileResults.length > 0 && fileResults[0].line !== undefined && fileResults[0].line >= 0 && (
                 <div className="mt-2 space-y-1">
                     {fileResults.slice(0, 3).map((result: SearchResult, index: number) => (
-                        <div key={index} className="text-xs">
-                            <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
-                                {result.content.trim()}
+                        result.content && (
+                            <div key={index} className="text-xs">
+                                <div className="font-mono text-gray-300 bg-gray-800 p-1 rounded mt-1 text-xs leading-relaxed">
+                                    {result.content.trim()}
+                                </div>
                             </div>
-                        </div>
+                        )
                     ))}
                     {fileResults.length > 3 && (
                         <div className="text-xs text-gray-500 italic">
@@ -385,7 +385,7 @@ export default function SearchViewPage() {
                         {(gs.docsSearchResults || []).length > 0 && (
                             <div className="space-y-3">
                                 <div className="mb-4">
-                                    Found {(gs.docsSearchResults || []).length} match{(gs.docsSearchResults || []).length !== 1 ? 'es' : ''} in {uniqueFiles.length} file{uniqueFiles.length !== 1 ? 's' : ''} for [{gs.docsLastSearch}] in {gs.docsSearchOriginFolder || '/'}
+                                    Found {(gs.docsSearchResults || []).length} match{(gs.docsSearchResults || []).length !== 1 ? 'es' : ''} for [{gs.docsLastSearch}] in {gs.docsSearchOriginFolder || '/'}
                                 </div>
                                 
                                 {uniqueFiles.map((filePath) => (

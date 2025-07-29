@@ -730,6 +730,98 @@ class DocService {
     }
 
     /**
+     * Searches for folders matching the given search terms.
+     * 
+     * This method uses the `find` command to search for directory names that contain
+     * the search terms. It handles ordinal prefixes by searching for the actual folder
+     * name part (after the NNNN_ prefix).
+     * 
+     * @param searchTerms - Array of search terms to match against folder names
+     * @param searchMode - Search mode: 'MATCH_ANY', 'MATCH_ALL', or 'REGEX'
+     * @param absoluteSearchPath - Absolute path to search directory
+     * @param callback - Callback function for handling results or errors
+     */
+    private performFolderSearch = (
+        searchTerms: string[],
+        searchMode: string,
+        absoluteSearchPath: string,
+        callback: (error: { type: string; message: string } | null, results?: any[]) => void
+    ): void => {
+        if (searchTerms.length === 0) {
+            callback(null, []);
+            return;
+        }
+
+        let findCommand: string;
+
+        if (searchMode === 'REGEX') {
+            // For REGEX mode, use the first term as the regex pattern
+            const regexPattern = searchTerms[0];
+            // Find directories matching the regex pattern (case-insensitive)
+            findCommand = `find "${absoluteSearchPath}" -type d -iregex ".*${regexPattern}.*"`;
+        } else if (searchMode === 'MATCH_ANY') {
+            // For MATCH_ANY, find directories containing any of the terms
+            const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const namePatterns = escapedTerms.map(term => `-iname "*${term}*"`).join(' -o ');
+            findCommand = `find "${absoluteSearchPath}" -type d \\( ${namePatterns} \\)`;
+        } else {
+            // For MATCH_ALL, find directories containing all terms
+            // We'll use multiple find commands piped together
+            const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            findCommand = `find "${absoluteSearchPath}" -type d`;
+            
+            // Chain grep filters for each term
+            for (const term of escapedTerms) {
+                findCommand += ` | grep -i "${term}"`;
+            }
+        }
+
+        console.log(`Executing folder search command: ${findCommand}`);
+
+        exec(findCommand, (error, stdout, stderr) => {
+            if (error) {
+                // Exit code 1 means no matches (not an error for find)
+                if (error.code === 1) {
+                    console.log('No folder matches found for search query');
+                    callback(null, []);
+                    return;
+                }
+                console.error('Find command error:', error);
+                callback({ type: 'execution', message: 'Folder search command failed' });
+                return;
+            }
+
+            if (stderr) {
+                console.warn('Find stderr:', stderr);
+            }
+
+            // Parse find output and build folder results
+            const results: any[] = [];
+
+            if (stdout.trim()) {
+                const folderPaths = stdout.trim().split('\n');
+
+                for (const folderPath of folderPaths) {
+                    if (folderPath && folderPath !== absoluteSearchPath) {
+                        const relativePath = path.relative(absoluteSearchPath, folderPath);
+                        
+                        // Extract the folder name part (after ordinal prefix if present)
+                        const folderName = path.basename(folderPath);
+                        const matchedName = folderName.replace(/^\d{4}_/, ''); // Remove ordinal prefix
+                        
+                        results.push({
+                            file: relativePath,
+                            folder: matchedName
+                        });
+                    }
+                }
+            }
+
+            callback(null, results);
+        });
+    };
+
+    /**
      * Core text search functionality extracted for unit testing and reusability.
      * 
      * This method performs the actual grep-based search operation without HTTP-specific dependencies.
@@ -781,56 +873,93 @@ class DocService {
         const cmd: string = this.getSearchCommand(searchMode, query, isEmptyQuery, dateRegex, include, absoluteSearchPath, chain, searchTerms);
         console.log(`Executing search command: ${cmd}`);
         
-        // Execute the grep command
+        // Execute the grep command for file content search
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
                 // Exit code 1 means no matches (not an error)
                 if (error.code === 1) {
-                    console.log('No matches found for search query');
-                    callback({ type: 'no_matches', message: 'No matches found' });
+                    console.log('No file content matches found for search query');
+                    // Continue to folder search even if no file matches
+                } else {
+                    console.error('Grep command error:', error);
+                    callback({ type: 'execution', message: 'Search command failed' });
                     return;
-                }                    
-                console.error('Grep command error:', error);
-                callback({ type: 'execution', message: 'Search command failed' });
-                return;
+                }
             }
             
             if (stderr) {
                 console.warn('Grep stderr:', stderr);
             }
             
-            // Parse grep output and build results
-            const results: any[] = [];
+            // Parse grep output and build file content results
+            const fileResults: any[] = [];
             const fileTimes = (orderByModTime || orderByDate) ? new Map<string, number>() : null;
             
-            if (stdout.trim()) {
+            if (stdout && stdout.trim()) {
                 const lines = stdout.trim().split('\n');
                 
                 if (isEmptyQuery) {
                     // For empty queries, stdout contains file paths only (one per line)
-                    this.processResultLinesForEmptyQuery(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
+                    this.processResultLinesForEmptyQuery(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, fileResults);
                 } else {
                     // For non-empty queries, process line-by-line results as before
-                    this.processResultLines(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, results);
+                    this.processResultLines(lines, absoluteSearchPath, orderByModTime, orderByDate, fileTimes, fileResults);
                 }
             }
             
-            // Sort results if time-based ordering is requested
+            // Sort file results if time-based ordering is requested
             if (orderByModTime || orderByDate) {
-                this.sortResults(results, isEmptyQuery);
+                this.sortResults(fileResults, isEmptyQuery);
             }
             
-            // Clean results (remove internal timeVal property)
-            const cleanResults = (orderByModTime || orderByDate) ? 
-                results.map(result => ({
+            // Clean file results (remove internal timeVal property)
+            const cleanFileResults = (orderByModTime || orderByDate) ? 
+                fileResults.map(result => ({
                     file: result.file,
                     line: result.line,
                     content: result.content
                 })) : 
-                results;
-            
-            // Return successful results
-            callback(null, cleanResults);
+                fileResults;
+                
+            // Now perform folder search if we have search terms or it's regex mode
+            if (!isEmptyQuery && (searchTerms.length > 0 || searchMode === 'REGEX')) {
+                // For REGEX mode, use the original query as the search term
+                const folderSearchTerms = searchMode === 'REGEX' ? [query] : searchTerms;
+                
+                this.performFolderSearch(
+                    folderSearchTerms,
+                    searchMode,
+                    absoluteSearchPath,
+                    (folderError, folderResults) => {
+                        if (folderError) {
+                            console.warn('Folder search failed:', folderError);
+                            // Continue with just file results if folder search fails
+                            if (cleanFileResults.length === 0) {
+                                callback({ type: 'no_matches', message: 'No matches found' });
+                            } else {
+                                callback(null, cleanFileResults);
+                            }
+                            return;
+                        }
+                        
+                        // Combine file and folder results
+                        const combinedResults = [...cleanFileResults, ...(folderResults || [])];
+                        
+                        if (combinedResults.length === 0) {
+                            callback({ type: 'no_matches', message: 'No matches found' });
+                        } else {
+                            callback(null, combinedResults);
+                        }
+                    }
+                );
+            } else {
+                // No folder search for empty queries or regex mode without terms
+                if (cleanFileResults.length === 0) {
+                    callback({ type: 'no_matches', message: 'No matches found' });
+                } else {
+                    callback(null, cleanFileResults);
+                }
+            }
         });
     }
 

@@ -64,7 +64,7 @@ const initialState: GlobalState = {
 export type GlobalAction = { type: string, payload: GlobalState };
 
 const globalReducer = (state: GlobalState, action: GlobalAction): GlobalState => {
-    console.log('Dispatching action: '+ action.type);
+    // console.log('Dispatching action: '+ action.type);
 
     const ret = {
         ...state,
