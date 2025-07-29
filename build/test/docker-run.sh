@@ -77,6 +77,22 @@ if [ $? -eq 0 ]; then
     if [ $TEST_EXIT_CODE -eq 0 ]; then
         echo "✅ All tests passed!"
         echo "📊 Coverage report available in ./coverage/"
+        
+        # Check if coverage/index.html exists
+        if [ -f "./coverage/index.html" ]; then
+            echo "🌐 Opening coverage report in browser..."
+            # Get absolute path to the coverage report
+            COVERAGE_PATH=$(realpath ./coverage/index.html)
+            
+            # Use xdg-open to open with default browser
+            if command -v xdg-open >/dev/null 2>&1; then
+                xdg-open "file://${COVERAGE_PATH}" >/dev/null 2>&1 &
+            else
+                echo "⚠️  xdg-open not found. Coverage report is at: file://${COVERAGE_PATH}"
+            fi
+        else
+            echo "⚠️  Coverage report not found at ./coverage/index.html"
+        fi
     else
         echo "❌ Tests failed with exit code: $TEST_EXIT_CODE"
         exit $TEST_EXIT_CODE

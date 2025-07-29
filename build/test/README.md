@@ -13,7 +13,8 @@ yarn test:docker
 ✅ **37 tests passed** in the Docker environment  
 ✅ **3 test suites passed**: CommonUtils, DocService, ServerUtils  
 ✅ **Coverage reports** generated and available in `./coverage/`  
-✅ **PostgreSQL container** runs alongside for future database tests
+✅ **PostgreSQL container** runs alongside for future database tests  
+🌐 **Auto-opens coverage report** in System Browser when tests pass
 
 ## Files Created/Modified
 
@@ -38,6 +39,8 @@ yarn test:docker
 # Or directly:
 ./build/test/docker-run.sh
 ```
+
+**✨ When tests pass successfully, your default browser will automatically open to display the coverage report!**
 
 ### Stopping/Cleaning Test Environment
 ```bash
