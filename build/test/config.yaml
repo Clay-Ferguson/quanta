@@ -1,0 +1,23 @@
+host: "localhost" 
+clientHost: "localhost"
+port: "8000"
+secure: "n"
+adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
+desktopMode: "y"
+defaultPlugin: "docs"
+
+plugins:
+  - name: "Quanta Docs"
+    key: "docs"
+  # NOTE: We only can run chat with PosgreSQL, so that configuration requires the docker build, which uses 'docker-config.yaml', not this file.
+  # - name: "Quanta Chat"
+  #   key: "chat"
+
+# Public folders configuration - array of folder objects with name and path
+public-folders:
+  - name: "LFS Root"
+    key: "usr"
+    path: "/home/clay/ferguson/A-doc-root-test"
+    type: "lfs"  
+    # Accessable at: http://localhost:8000/doc/root
+  

@@ -33,7 +33,9 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 * Deployed via Docker Compose
 
 ## How to Build+Run
-Linux shell scripts named like `/build/dev/build-and-start.sh` are how we build/run outside of Docker. The `/build/dev/docker-run.sh` scripts are how we run via docker. This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
+Linux shell scripts named like `/build/dev/build-and-start.sh` are how we build/run outside of Docker. The `/build/dev/docker-run.sh` script is how we run via docker. This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
 
 ## Unit Testing 
-See [TESTING.md](/TESTING.md)
+The `/build/test/docker-run.sh` script is how we run the Jest Tests via docker. For test cases that can be run without docker simply run `jest test` in the project root.
+
+See [TESTING.md](/build/TESTING.md)

@@ -1,0 +1,49 @@
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: postgres-test
+    environment:
+      - POSTGRES_DB=quanta_test
+      - POSTGRES_USER=quanta_test
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"  # Use different port for test to avoid conflicts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quanta_test -d quanta_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  quanta-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        ENV: test
+    container_name: quanta-test
+    ports:
+      - "${APP_PORT:-8001}:8000"  # Use different port for test
+    volumes:
+      # Mount document root if it exists
+      - ${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root-test}:${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root-test}:ro
+      # Mount test results and coverage out to host
+      - ./coverage:/app/coverage
+      - ./test-results:/app/test-results
+    environment:
+      - CONFIG_FILE=./docker-config.yaml
+      - QUANTA_DEV=true
+      # PostgreSQL connection info for the app (for future PostgreSQL tests)
+      - POSTGRES_HOST=postgres-test
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=quanta_test
+      - POSTGRES_USER=quanta_test
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    # Don't restart automatically for tests
+    restart: "no"

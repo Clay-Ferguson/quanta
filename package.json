@@ -13,6 +13,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:verbose": "jest --verbose",
+    "test:docker": "./build/test/docker-run.sh",
     "postinstall": "[ -f package-lock.json ] && rm package-lock.json || true"
   },
   "dependencies": {

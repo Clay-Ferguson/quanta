@@ -36,7 +36,7 @@ Jest is configured in `jest.config.js` with the following key settings:
 ## Available Test Scripts
 
 ```bash
-# Run all tests
+# Run all tests, which don't require Postgres (Docker)
 yarn test
 
 # Run tests with coverage report
@@ -48,6 +48,8 @@ yarn test:verbose
 # Run specific test file
 yarn test CommonUtils.test.ts
 ```
+
+For testing which requires Postgres that can only be done thru Docker deploys, and the files for running the Docker-based Unit Tests can be found in `/build/test/' folder.
 
 ## Test Organization
 

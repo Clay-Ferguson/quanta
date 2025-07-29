@@ -1,0 +1,23 @@
+host: "0.0.0.0" 
+clientHost: "localhost"  # This is the host that the client will connect to, typically localhost in development
+# NOTE: This is an internal port number, not the external as mapped in docker-compose-test.yaml
+port: "8000"
+secure: "n"
+adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
+desktopMode: "n"
+defaultPlugin: "docs"
+
+plugins:
+  - name: "Quanta Docs"
+    key: "docs"
+  # For testing, we can enable chat later when we need to test PostgreSQL functionality
+  # - name: "Quanta Chat"
+  #   key: "chat"
+
+# Public folders configuration - array of folder objects with name and path
+public-folders:
+  - name: "Test Root"
+    key: "usr"
+    path: "/home/clay/ferguson/A-doc-root-test"
+    type: "lfs"  # Use local file system for testing
+    # Accessable at: http://localhost:8000/doc/usr
