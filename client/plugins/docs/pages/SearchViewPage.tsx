@@ -110,7 +110,7 @@ export default function SearchViewPage() {
             
             if (response) {
                 // pretty print the search results using formatted JSON
-                console.log('Search results:', JSON.stringify(response.results, null, 2));
+                // console.log('Search results:', JSON.stringify(response.results, null, 2));
                 gd({ type: 'setSearchResults', payload: { 
                     docsSearchResults: response.results || [],
                     docsSearchOriginFolder: searchFolder,
