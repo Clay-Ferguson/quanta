@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import pgdb from '../../server/PGDB.js';
+import pgdb from '../../../../PGDB.js';
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 import { pgdbTestSetFolderPublic } from './VFSTestAuth.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
@@ -7,7 +7,7 @@ import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes
 import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 
 const testRootKey = 'usr';
-const testEnabled = false;
+const testEnabled = true;
 
 /**
  * Test function to verify PostgreSQL database functionality
