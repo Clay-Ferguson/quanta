@@ -1,6 +1,6 @@
-import pgdb from '../../../../PGDB.js';
-import { AuthenticatedRequest } from '../../../../ServerUtil.js';
-import { docMod } from '../../DocMod.js';
+import pgdb from '../../server/PGDB.js';
+import { AuthenticatedRequest } from '../../server/ServerUtil.js';
+import { docMod } from '../../server/plugins/docs/DocMod.js';
 import { dumpTableStructure } from './VFSTest.js';
 
 const testRootKey = 'usr';

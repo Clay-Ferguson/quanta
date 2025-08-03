@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import pgdb from '../../../../PGDB.js';
+import pgdb from '../../server/PGDB.js';
 import { testFolderRenameWithChildren } from './testFolderRename.js';
 import { pgdbTestSetFolderPublic } from './VFSTestAuth.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
@@ -24,42 +24,44 @@ export async function pgdbTest(): Promise<void> {
     }
 
     await resetTestEnvironment();
-    await testFolderRenameWithChildren(owner_id);
-    await simpleReadWriteTest(owner_id);
 
-    await resetTestEnvironment();
-    await testFileOperations(owner_id);
+    // We will slowly add these tests back in under our Jest test suite
+    // await testFolderRenameWithChildren(owner_id);
+    // await simpleReadWriteTest(owner_id);
 
-    await resetTestEnvironment();
-    await testPathOperations();
+    // await resetTestEnvironment();
+    // await testFileOperations(owner_id);
+
+    // await resetTestEnvironment();
+    // await testPathOperations();
     
-    await resetTestEnvironment();
-    await testErrorHandling(owner_id);
+    // await resetTestEnvironment();
+    // await testErrorHandling(owner_id);
 
-    await resetTestEnvironment();
-    await pgdbTestMoveUp(owner_id);
+    // await resetTestEnvironment();
+    // await pgdbTestMoveUp(owner_id);
 
-    await resetTestEnvironment();
-    await pgdbTestSetFolderPublic(owner_id);
+    // await resetTestEnvironment();
+    // await pgdbTestSetFolderPublic(owner_id);
 
-    await resetTestEnvironment();
-    await deleteFolder(owner_id, '0001_test-structure');
+    // await resetTestEnvironment();
+    // await deleteFolder(owner_id, '0001_test-structure');
 
-    await resetTestEnvironment();
-    await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
+    // await resetTestEnvironment();
+    // await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
 
-    await resetTestEnvironment();
-    await testEnsurePath(owner_id);
+    // await resetTestEnvironment();
+    // await testEnsurePath(owner_id);
 
-    await resetTestEnvironment();
-    await testSetPublic(owner_id);
+    // await resetTestEnvironment();
+    // await testSetPublic(owner_id);
 
-    // Test search functionality
-    // await pgdbTestSearch();
+    // // Test search functionality
+    // // await pgdbTestSearch();
 
-    // now reset for gui to have a clean slate
-    await resetTestEnvironment();
-    await dumpTableStructure(owner_id);
+    // // now reset for gui to have a clean slate
+    // await resetTestEnvironment();
+    // await dumpTableStructure(owner_id);
 }
 export async function dumpTableStructure(owner_id: number): Promise<void> {
     await printFolderStructure(owner_id);
