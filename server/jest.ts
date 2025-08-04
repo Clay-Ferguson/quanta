@@ -8,14 +8,15 @@ import { run } from 'jest';
  * @param server The HTTP/HTTPS server instance to shut down if needed
  * @param testMatch The pattern to match test files
  * @param delayMs Delay in milliseconds before running tests
- * @param shouldExit Whether to shut down the server after tests complete
  * @param testWithCoverage Whether to run tests with code coverage
+ * @param shouldExit Whether to exit the process after tests complete
  */
 export async function runJestTests(
     server: Server,
     testMatch: string = '**/embedded-test.test.ts',
     delayMs: number = 3000,
-    testWithCoverage: boolean = false
+    testWithCoverage: boolean = false,
+    shouldExit: boolean = true
 ): Promise<void> {
     // Run Jest programmatically after a delay
     console.log(`\n--- Scheduling Jest tests to run in ${delayMs/1000} seconds ---`);
@@ -51,22 +52,30 @@ export async function runJestTests(
                 console.log("Coverage report generated in ./coverage directory");
             }
             
-            console.log("Shutting down server gracefully...");
-            // Give time for any pending operations to complete
-            setTimeout(() => {
-                server.close(() => {
-                    console.log("Server has been gracefully shut down.");
-                    process.exit(0);
-                });
-            }, 1000);
+            if (shouldExit) {
+                console.log("Shutting down server gracefully...");
+                // Give time for any pending operations to complete
+                setTimeout(() => {
+                    server.close(() => {
+                        console.log("Server has been gracefully shut down.");
+                        if (shouldExit) {
+                            process.exit(0);
+                        }
+                    });
+                }, 1000);
+            }
         } catch (error) {
             console.error('Error running Jest tests:', error);
-            setTimeout(() => {
-                server.close(() => {
-                    console.log("Server has been gracefully shut down.");
-                    process.exit(1);
-                });
-            }, 1000);
+            if (shouldExit) {
+                setTimeout(() => {
+                    server.close(() => {
+                        console.log("Server has been gracefully shut down.");
+                        if (shouldExit) {
+                            process.exit(1);
+                        }
+                    });
+                }, 1000);
+            }
         }
     }, delayMs);
 }

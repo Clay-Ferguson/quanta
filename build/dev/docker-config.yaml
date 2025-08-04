@@ -7,6 +7,14 @@ adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb
 desktopMode: "n"
 defaultPlugin: "chat"
 
+# Configuration for automated testing
+runJestTests: "y"  # Set to "y" to run embedded Jest tests on server start
+exitAfterTest: "n"  # Set to "y" to exit the process after tests complete
+
+# WARNING: This 'coverage' config doesn't currently work, because it creates lots of import errors
+# but since it's not important for now I'll just disable it and maybe come back to it later.     
+testWithCoverage: "n"  # Set to "y" to generate code coverage reports
+
 plugins:
   - name: "Quanta Chat"
     key: "chat"
