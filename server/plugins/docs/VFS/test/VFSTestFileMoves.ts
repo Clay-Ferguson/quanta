@@ -1,7 +1,7 @@
 import pgdb from '../../../../PGDB.js';
 import { AuthenticatedRequest } from '../../../../ServerUtil.js';
 import { docMod } from '../../DocMod.js';
-import { dumpTableStructure } from './VFSTest.js';
+import { dumpTableStructure, resetTestEnvironment } from './VFSTest.js';
 
 const testRootKey = 'usr';
 
@@ -32,6 +32,7 @@ const testRootKey = 'usr';
  */
 export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log('=== FILE MOVE TEST Starting ===');
         
         // Step 3: Verify the initial structure in the target folder

@@ -23,32 +23,32 @@ export async function pgdbTest(): Promise<void> {
         throw new Error('Admin profile not found, cannot run tests');
     }
 
-    await resetTestEnvironment();
+    // await resetTestEnvironment();
 
     // We will slowly add these tests back in under our Jest test suite
-    // await testFolderRenameWithChildren(owner_id);
-    // await simpleReadWriteTest(owner_id);
+    // await testFolderRenameWithChildren(owner_id); // Jest done!
+    // await simpleReadWriteTest(owner_id); // Jest done.
 
     // await resetTestEnvironment();
-    // await testFileOperations(owner_id);
+    // await testFileOperations(owner_id); // Jest done
 
     // await resetTestEnvironment();
-    // await testPathOperations();
+    // await testPathOperations(); // Jest done
     
     // await resetTestEnvironment();
-    // await testErrorHandling(owner_id);
+    // await testErrorHandling(owner_id); // Jest done
 
     // await resetTestEnvironment();
-    // await pgdbTestMoveUp(owner_id);
+    // await pgdbTestMoveUp(owner_id); // Jest done
 
     // await resetTestEnvironment();
-    // await pgdbTestSetFolderPublic(owner_id);
+    // await pgdbTestSetFolderPublic(owner_id); // Jest done
 
     // await resetTestEnvironment();
-    // await deleteFolder(owner_id, '0001_test-structure');
+    // await deleteFolder(owner_id, '0001_test-structure'); // Jest done.
 
     // await resetTestEnvironment();
-    // await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
+    // await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure'); // Jest done
 
     // await resetTestEnvironment();
     // await testEnsurePath(owner_id);
@@ -73,8 +73,9 @@ export async function resetTestEnvironment(): Promise<void> {
     await createFolderStructure();
 }
 
-async function deleteFolder(owner_id: number, folderName: string): Promise<void> {
+export async function deleteFolder(owner_id: number, folderName: string): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log(`=== DELETING FOLDER: ${folderName} ===`);
         
         const rootPath = '';  // Empty string for root directory
@@ -177,7 +178,7 @@ async function deleteFolder(owner_id: number, folderName: string): Promise<void>
 }
 
  
-async function simpleReadWriteTest(owner_id: number): Promise<void> {
+export async function simpleReadWriteTest(owner_id: number): Promise<void> {
     try {
         console.log('=== PGDB Test Starting ===');
 
@@ -248,8 +249,9 @@ async function simpleReadWriteTest(owner_id: number): Promise<void> {
     }
 }
  
-async function testFileOperations(owner_id: number): Promise<void> {
+export async function testFileOperations(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log('\n=== TESTING FILE OPERATIONS ===');        
         const testPath = '0001_test-structure/0002_two';  // Test in the 'two' folder
         
@@ -308,8 +310,9 @@ async function testFileOperations(owner_id: number): Promise<void> {
     }
 }
  
-async function testPathOperations(): Promise<void> {
+export async function testPathOperations(): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log('\n=== TESTING PATH OPERATIONS ===');
                 
         console.log('1. Testing manual deep path creation...');
@@ -377,8 +380,9 @@ async function testPathOperations(): Promise<void> {
     }
 } 
  
-async function testErrorHandling(owner_id: number): Promise<void> {
+export async function testErrorHandling(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         let failCount = 0; // Reset fail count for this test
         console.log('\n=== TESTING ERROR HANDLING ===');        
         const testPath = '0001_test-structure/0001_one';
@@ -475,7 +479,7 @@ async function testErrorHandling(owner_id: number): Promise<void> {
  * Test to verify that renaming folders preserves their children
  */
  
-async function testFolderRenamePreservesChildren(owner_id: number): Promise<void> {
+export async function testFolderRenamePreservesChildren(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
         
@@ -557,7 +561,7 @@ async function testFolderRenamePreservesChildren(owner_id: number): Promise<void
  * Tests the vfs_search_text function with basic substring search
  */
  
-async function pgdbTestSearch(): Promise<void> {
+export async function pgdbTestSearch(): Promise<void> {
     try {
         console.log('=== PGDB SEARCH TEST STARTING ===');
         
@@ -664,7 +668,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
     }
 }
 
-async function renameFolder(owner_id: number, folderName: string, newFolderName: string): Promise<void> {
+export async function renameFolder(owner_id: number, folderName: string, newFolderName: string): Promise<void> {
     try {
         console.log(`=== RENAMING FOLDER: ${folderName} to ${newFolderName} ===`);
         

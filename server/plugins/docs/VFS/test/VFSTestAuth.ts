@@ -1,4 +1,5 @@
 import pgdb from '../../../../PGDB.js';
+import { resetTestEnvironment } from './VFSTest.js';
 
 const testRootKey = 'usr';
 
@@ -30,6 +31,7 @@ const testRootKey = 'usr';
 */
 export async function pgdbTestSetFolderPublic(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log('=== FOLDER PUBLIC VISIBILITY TEST Starting ===');
         
         // Test 1: Set a single file to public
