@@ -3,13 +3,13 @@ describe('VFS Test', () => {
 
     // This test requires the Docker environment with PostgreSQL to be running
     // It can be executed with './build/dev/docker-run.sh'
-    it('should reset test environment for VFS tests', async () => {
+    it('should reset test environment for VFS tests(3)', async () => {
         // todo-0: need this test to skip if PostgreSQL is not available
         
         // We'll use dynamic import for the VFSTest
         try {
             // First, try to import the VFS test module
-            const { resetTestEnvironment } = await import('../plugins/docs/VFS/test/VFSTest.js');
+            const { resetTestEnvironment } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
             
             // Then try to access the database
             try {

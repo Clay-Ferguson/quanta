@@ -5,7 +5,7 @@ export default {
   cache: false,
   roots: ['<rootDir>/dist'],
   testMatch: [
-    '<rootDir>/dist/server/tests/embedded-test.test.ts'
+    '<rootDir>/dist/server/tests/plugins/docs/vfs.test.ts'
   ],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
