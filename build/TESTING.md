@@ -1,18 +1,16 @@
 # Testing Setup for Quanta
 
-This document describes the testing framework and best practices for the Quanta TypeScript/Node.js application. *NOTE: The below is an auto-generated file, created by Copilot Agent when we asked for inclusion of Jest in this app.*
-
 ## Overview
 
-We use **Jest** as our primary testing framework, which is the most popular and widely-adopted testing solution for JavaScript/TypeScript projects.
+We use **Jest** as our testing framework, which is the most popular and widely-adopted testing solution for JavaScript/TypeScript projects.
 
 ## Dependencies
 
-The following testing dependencies have been added to the project:
+The following dependencies have been added to the project:
 
 ```json
 {
-  "devDependencies": {
+  "dependencies": {
     "jest": "^30.0.5",
     "@types/jest": "^30.0.0",
     "ts-jest": "^29.4.0",
@@ -23,9 +21,21 @@ The following testing dependencies have been added to the project:
 }
 ```
 
+## Two Testing Approaches
+
+### 1. Docker-based Jest Tests
+
+This application has embedded-Jest running capability which means it includes Jest and all tests in all builds. We do this so that we can run tests inside Docker in a clean way in a "real" system. The main thing we're using Docker for is to package our app along with Postgres DB. The `Chat Plugin` always requires Postgres and the `Docs Plugin` requires Posgres whenever VFS (Virtual File System) is configured to be in use. So this means not all unit tests require Postgres of course, but some do, and when we need to test any Postgres-related code we do it only inside Docker environment.
+
+The way trigger testsing to be run, inside a Docker container, is by setting the `runJestTest=y` argument in the app config. This makes the `AppServer.ts` file run the Jest tests programatically inside the Server instance/container, right after startup. We do this only in the `dev` environment, and so the way it's run is with shell script `/build/dev/docker-run.sh`
+
+### 2. Non-Docker Jest Tests
+
+Since the app can also run in a non-Docker setup, such as when using only `Docs Plugin` and using LFS (Local File System, which doesn't require Postgres), that means we can run lots of Jest tests the normal way (outside Docker) as well. When running Jest test outside Docker we can of course simply run `yarn test`.
+
 ## Configuration
 
-Jest is configured in `jest.config.js` with the following key settings:
+Jest is configured in `jest.config.js` (for non-Docker runs) and in `jest.docker.config.js` for Docker runs, with the following key settings:
 
 - **TypeScript Support**: Uses `ts-jest` preset for TypeScript compilation
 - **ES Modules**: Configured to handle ES modules (`"type": "module"` in package.json)
@@ -33,7 +43,7 @@ Jest is configured in `jest.config.js` with the following key settings:
 - **Coverage**: Collects coverage from `server/`, `client/`, and `common/` directories
 - **Setup**: Global test setup is configured in `tests/setup.ts`
 
-## Available Test Scripts
+## Non-Docker Testing
 
 ```bash
 # Run all tests, which don't require Postgres (Docker)
@@ -49,22 +59,7 @@ yarn test:verbose
 yarn test CommonUtils.test.ts
 ```
 
-For testing which requires Postgres that can only be done thru Docker deploys, and the files for running the Docker-based Unit Tests can be found in `/build/test/' folder.
-
-## Test Organization
-
-### Directory Structure
-
-```
-tests/
-├── setup.ts              # Global test setup and utilities
-├── types.d.ts             # TypeScript type declarations for tests
-├── CommonUtils.test.ts    # Unit tests for CommonUtils
-├── example.test.ts        # Example test patterns and best practices
-└── [module-name].test.ts  # Other test files
-```
-
-### Naming Conventions
+## Naming Conventions
 
 - Test files should end with `.test.ts` or `.spec.ts`
 - Test files should be named after the module they test (e.g., `UserService.test.ts`)
@@ -294,14 +289,6 @@ yarn install
 yarn test:coverage
 ```
 
-## Examples
-
-The `tests/` directory contains several example test files:
-
-- `CommonUtils.test.ts` - Comprehensive unit tests for utility functions
-- `example.test.ts` - Various testing patterns and examples
-- `types.d.ts` - TypeScript definitions for test utilities
-
 ## Common Issues and Solutions
 
 ### 1. ES Module Issues
@@ -319,13 +306,6 @@ Increase Jest timeout for slow async operations:
 ```typescript
 jest.setTimeout(10000); // 10 seconds
 ```
-
-## Getting Started
-
-1. Look at the example tests in `tests/example.test.ts`
-2. Create new test files following the naming convention
-3. Aim for high code coverage (>80%) but focus on testing critical paths
-4. Write tests as you develop new features (Test-Driven Development)
 
 ## Resources
 

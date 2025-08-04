@@ -2,6 +2,7 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
+  cache: false,
   roots: ['<rootDir>/dist'],
   testMatch: [
     '<rootDir>/dist/server/tests/embedded-test.test.ts'

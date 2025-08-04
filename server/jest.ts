@@ -6,36 +6,32 @@ import { run } from 'jest';
  * Can optionally shut down the server after tests complete.
  * 
  * @param server The HTTP/HTTPS server instance to shut down if needed
- * @param testMatch The pattern to match test files
  * @param delayMs Delay in milliseconds before running tests
  * @param testWithCoverage Whether to run tests with code coverage
- * @param shouldExit Whether to exit the process after tests complete
+ * @param exitAfterTests Whether to exit the process after tests complete
  */
 export async function runJestTests(
     server: Server,
-    testMatch: string = '**/embedded-test.test.ts',
-    delayMs: number = 3000,
     testWithCoverage: boolean = false,
-    shouldExit: boolean = true
+    exitAfterTests: boolean = true
 ): Promise<void> {
-    // Run Jest programmatically after a delay
-    console.log(`\n--- Scheduling Jest tests to run in ${delayMs/1000} seconds ---`);
+    console.log(`\n--- Scheduling Jest tests to run in 3 seconds ---`);
 
     // Set a timeout to run tests after the specified delay
     setTimeout(async () => {
         console.log("--- Running Jest tests programmatically ---");
+        let exitCode = 0;
         try {
-            // Configure Jest arguments
+            // Configure Jest arguments - use config file for most settings
             const jestArgs = [
                 // '--forceExit',
                 '--silent',
-                '--testMatch',
-                testMatch,
-                '--no-cache'
+                '--config=jest.config.js'
             ];
             
             // Add coverage options if requested
             if (testWithCoverage) {
+                // WARNING: This code currently fails. We get lots of import errors.
                 console.log("Running with code coverage enabled");
                 jestArgs.push('--coverage');
                 jestArgs.push('--coverageReporters=text');
@@ -45,37 +41,29 @@ export async function runJestTests(
             
             // Run the tests
             const result = await run(jestArgs);
-            
             console.log(`Jest tests completed with exit code: ${result}`);
             
             if (testWithCoverage) {
                 console.log("Coverage report generated in ./coverage directory");
             }
-            
-            if (shouldExit) {
+        } catch (error) {
+            console.error('Error running Jest tests:', error);
+            exitCode = 1; // Set exit code to 1 if tests fail
+        }
+        finally {
+            if (exitAfterTests) {
                 console.log("Shutting down server gracefully...");
                 // Give time for any pending operations to complete
                 setTimeout(() => {
                     server.close(() => {
                         console.log("Server has been gracefully shut down.");
-                        if (shouldExit) {
-                            process.exit(0);
-                        }
-                    });
-                }, 1000);
-            }
-        } catch (error) {
-            console.error('Error running Jest tests:', error);
-            if (shouldExit) {
-                setTimeout(() => {
-                    server.close(() => {
-                        console.log("Server has been gracefully shut down.");
-                        if (shouldExit) {
-                            process.exit(1);
+                        if (exitAfterTests) {
+                            process.exit(exitCode);
                         }
                     });
                 }, 1000);
             }
         }
-    }, delayMs);
+    }, 3000);
 }
+
