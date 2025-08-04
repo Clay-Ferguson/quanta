@@ -11,7 +11,6 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import pgdb from "../../PGDB.js";
 import docVFS from "./VFS/DocVFS.js";
-import { pgdbTest } from "./VFS/test/VFSTest.js";
 import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
 import vfs from "./VFS/VFS.js";
 
@@ -41,12 +40,6 @@ class DocsServerPlugin implements IServerPlugin {
             }
             await vfs.createUserFolder(pgdb.adminProfile);
 
-            // Test PostgreSQL database functionality
-            try {
-                await pgdbTest(); 
-            } catch (error) {
-                console.error('PGDB test failed during plugin initialization:', error);
-            }
         }
         else {
             console.warn('POSTGRES_HOST environment variable is not set. Skipping database initialization.');

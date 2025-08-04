@@ -68,7 +68,7 @@ export async function dumpTableStructure(owner_id: number): Promise<void> {
     await listAllVfsNodes();
 }
 
-async function resetTestEnvironment(): Promise<void> {
+export async function resetTestEnvironment(): Promise<void> {
     await wipeTable();
     await createFolderStructure();
 }
