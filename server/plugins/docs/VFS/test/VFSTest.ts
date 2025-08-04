@@ -9,60 +9,6 @@ import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
 const testRootKey = 'usr';
 const testEnabled = true;
 
-/**
- * Test function to verify PostgreSQL database functionality
- * Creates a test file record and reads it back to verify everything is working
- */
-export async function pgdbTest(): Promise<void> {
-    if (!testEnabled) {
-        console.log('PGDB tests are disabled. Set testEnabled to true to run tests.');
-        return;
-    }
-    const owner_id = pgdb.adminProfile!.id;
-    if (!owner_id) {
-        throw new Error('Admin profile not found, cannot run tests');
-    }
-
-    // await resetTestEnvironment();
-
-    // We will slowly add these tests back in under our Jest test suite
-    // await testFolderRenameWithChildren(owner_id); // Jest done!
-    // await simpleReadWriteTest(owner_id); // Jest done.
-
-    // await resetTestEnvironment();
-    // await testFileOperations(owner_id); // Jest done
-
-    // await resetTestEnvironment();
-    // await testPathOperations(); // Jest done
-    
-    // await resetTestEnvironment();
-    // await testErrorHandling(owner_id); // Jest done
-
-    // await resetTestEnvironment();
-    // await pgdbTestMoveUp(owner_id); // Jest done
-
-    // await resetTestEnvironment();
-    // await pgdbTestSetFolderPublic(owner_id); // Jest done
-
-    // await resetTestEnvironment();
-    // await deleteFolder(owner_id, '0001_test-structure'); // Jest done.
-
-    // await resetTestEnvironment();
-    // await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure'); // Jest done
-
-    // await resetTestEnvironment();
-    // await testEnsurePath(owner_id);
-
-    // await resetTestEnvironment();
-    // await testSetPublic(owner_id);
-
-    // // Test search functionality
-    // // await pgdbTestSearch();
-
-    // // now reset for gui to have a clean slate
-    // await resetTestEnvironment();
-    // await dumpTableStructure(owner_id);
-}
 export async function dumpTableStructure(owner_id: number): Promise<void> {
     await printFolderStructure(owner_id);
     await listAllVfsNodes();
@@ -176,7 +122,6 @@ export async function deleteFolder(owner_id: number, folderName: string): Promis
         // (e.g., if the folder doesn't exist on first run)
     }
 }
-
  
 export async function simpleReadWriteTest(owner_id: number): Promise<void> {
     try {
@@ -478,7 +423,6 @@ export async function testErrorHandling(owner_id: number): Promise<void> {
 /**
  * Test to verify that renaming folders preserves their children
  */
- 
 export async function testFolderRenamePreservesChildren(owner_id: number): Promise<void> {
     try {
         console.log('\n=== TESTING FOLDER RENAME PRESERVES CHILDREN ===');
@@ -561,7 +505,7 @@ export async function testFolderRenamePreservesChildren(owner_id: number): Promi
  * Tests the vfs_search_text function with basic substring search
  */
  
-export async function pgdbTestSearch(): Promise<void> {
+export async function testSearch(): Promise<void> {
     try {
         console.log('=== PGDB SEARCH TEST STARTING ===');
         
@@ -670,6 +614,7 @@ And some unique content: UNIQUESTRING123 for exact matching.
 
 export async function renameFolder(owner_id: number, folderName: string, newFolderName: string): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log(`=== RENAMING FOLDER: ${folderName} to ${newFolderName} ===`);
         
         const rootPath = '';  // Empty string for root directory
@@ -799,8 +744,9 @@ export async function renameFolder(owner_id: number, folderName: string, newFold
     }
 }
 
-async function testEnsurePath(owner_id: number): Promise<void> {
+export async function testEnsurePath(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log(`=== TESTING VFS_ENSURE_PATH ===`);
         
         // Test 1: Test creating a path starting from root (empty string)
@@ -910,8 +856,10 @@ async function testEnsurePath(owner_id: number): Promise<void> {
         // Don't throw the error - we want tests to continue
     }
 }
-async function testSetPublic(owner_id: number): Promise<void> {
+
+export async function testSetPublic(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log(`=== TESTING VFS_SET_PUBLIC ===`);
         
         // Test 1: Test setting a root-level folder to public recursively

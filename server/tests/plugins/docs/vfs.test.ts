@@ -230,5 +230,93 @@ describe('VFS Test', () => {
             throw error; // Re-throw to fail the test
         }
     });
+    
+    // Test folder rename operations
+    it('should test folder rename functionality', async () => {
+        // Skip the test if database is not available
+        if (!databaseAvailable) {
+            console.log('Skipping test - database not available');
+            return;
+        }
+        
+        try {
+            // Import the test function from VFSTest.js
+            const { renameFolder } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            
+            // Run the test with the owner_id
+            await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
+            console.log('Folder rename test completed successfully');
+        } catch (error) {
+            const testError = error as Error;
+            console.error('Error in folder rename test:', testError.message);
+            throw error; // Re-throw to fail the test
+        }
+    });
+    
+    // Test path ensuring functionality
+    it('should test vfs_ensure_path functionality', async () => {
+        // Skip the test if database is not available
+        if (!databaseAvailable) {
+            console.log('Skipping test - database not available');
+            return;
+        }
+        
+        try {
+            // Import the test function from VFSTest.js
+            const { testEnsurePath } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            
+            // Run the test with the owner_id
+            await testEnsurePath(owner_id);
+            console.log('Path ensuring test completed successfully');
+        } catch (error) {
+            const testError = error as Error;
+            console.error('Error in path ensuring test:', testError.message);
+            throw error; // Re-throw to fail the test
+        }
+    });
+    
+    // Test set public functionality
+    it('should test folder and file visibility settings', async () => {
+        // Skip the test if database is not available
+        if (!databaseAvailable) {
+            console.log('Skipping test - database not available');
+            return;
+        }
+        
+        try {
+            // Import the test function from VFSTest.js
+            const { testSetPublic } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            
+            // Run the test with the owner_id
+            await testSetPublic(owner_id);
+            console.log('Set public test completed successfully');
+        } catch (error) {
+            const testError = error as Error;
+            console.error('Error in set public test:', testError.message);
+            throw error; // Re-throw to fail the test
+        }
+    });
+    
+    // Test search functionality
+    it('should test text search capabilities', async () => {
+        // Skip the test if database is not available
+        if (!databaseAvailable) {
+            console.log('Skipping test - database not available');
+            return;
+        }
+        
+        try {
+            // Import the test function from VFSTest.js
+            const { testSearch } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            
+            // Run the test
+            await testSearch();
+            console.log('Search functionality test completed successfully');
+        } catch (error) {
+            const testError = error as Error;
+            console.error('Error in search functionality test:', testError.message);
+            throw error; // Re-throw to fail the test
+        }
+    });
 });
 
