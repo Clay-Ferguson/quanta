@@ -9,7 +9,7 @@ import { httpServerUtil } from './HttpServerUtil.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
-import { run } from 'jest';
+import { runJestTests } from './jest.js';
 
 logInit();
 
@@ -202,50 +202,13 @@ server.listen(PORT, () => {
 await svrUtil.notifyPlugins(plugins, server);
 
 // Check if Jest tests should be run based on configuration
-const runJestTests = config.get("runJestTests") === "y";
+const shouldRunTests = config.get("runJestTests") === "y";
+const testWithCoverage = config.get("testWithCoverage") === "y";
 
-if (runJestTests) {
-    // Run Jest programmatically after a delay
-    console.log("\n--- Scheduling Jest tests to run in 3 seconds ---");
-
-    // Set a timeout to run tests after 3 seconds
-    setTimeout(async () => {
-        console.log("--- Running Jest tests programmatically ---");
-        try {
-            // Configure Jest to run our specific test file
-            const result = await run([
-                // '--forceExit',
-                '--silent',
-                '--testMatch',
-                '**/embedded-test.test.ts',
-                '--no-cache'
-            ]);
-            console.log(`Jest tests completed with exit code: ${result}`);
-            
-            console.log("Tests completed. Shutting down server gracefully...");
-            // Give time for any pending operations to complete
-            setTimeout(() => {
-                server.close(() => {
-                    console.log("Server has been gracefully shut down.");
-                    process.exit(0);
-                });
-            }, 1000);
-            
-        } catch (error) {
-            console.error('Error running Jest tests:', error);
-            // Exit with error code if configured to exit after tests
-            
-            console.log("Tests failed. Shutting down server with error code...");
-            setTimeout(() => {
-                server.close(() => {
-                    console.log("Server has been gracefully shut down.");
-                    process.exit(1);
-                });
-            }, 1000);
-        }
-    }, 3000); // 3000 milliseconds = 3 seconds
-} else {
-    console.log("\n--- Jest tests disabled in configuration ---");
-}
+// Call the imported function to run Jest tests if configured
+if (shouldRunTests) {
+    // Use the imported function to run Jest tests
+    runJestTests(server, '**/embedded-test.test.ts', 3000, testWithCoverage);
+} 
 
 console.log("App init complete.");

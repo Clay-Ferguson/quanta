@@ -9,6 +9,10 @@ defaultPlugin: "docs"
 # Configuration for automated testing
 runJestTests: "y"  # Set to "y" to run embedded Jest tests on server start
 
+# WARNING: This 'coverage' config doesn't currently work, because it creates lots of import errors
+# but since it's not important for now I'll just disable it and maybe come back to it later.     
+testWithCoverage: "n"  # Set to "y" to generate code coverage reports
+
 plugins:
   - name: "Quanta Docs"
     key: "docs"
