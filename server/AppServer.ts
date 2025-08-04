@@ -221,8 +221,27 @@ if (runJestTests) {
                 '--no-cache'
             ]);
             console.log(`Jest tests completed with exit code: ${result}`);
+            
+            console.log("Tests completed. Shutting down server gracefully...");
+            // Give time for any pending operations to complete
+            setTimeout(() => {
+                server.close(() => {
+                    console.log("Server has been gracefully shut down.");
+                    process.exit(0);
+                });
+            }, 1000);
+            
         } catch (error) {
             console.error('Error running Jest tests:', error);
+            // Exit with error code if configured to exit after tests
+            
+            console.log("Tests failed. Shutting down server with error code...");
+            setTimeout(() => {
+                server.close(() => {
+                    console.log("Server has been gracefully shut down.");
+                    process.exit(1);
+                });
+            }, 1000);
         }
     }, 3000); // 3000 milliseconds = 3 seconds
 } else {
