@@ -7,15 +7,16 @@ ARG ENV=local
 # Set working directory
 WORKDIR /app
 
-# Install production dependencies only
+# Install dependencies
 COPY package.json yarn.lock ./
-RUN yarn install --production --frozen-lockfile
+RUN yarn install --frozen-lockfile
 
 # Copy the built application and configs
 COPY dist/ ./dist/
 
-# Copy configuration file based on environment
+# Copy configuration files
 COPY build/${ENV}/docker-config.yaml ./
+COPY jest.docker.config.js ./jest.config.js
 
 # Create directory for database (will be mounted as volume)
 RUN mkdir -p /app/data

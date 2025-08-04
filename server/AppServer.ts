@@ -209,7 +209,7 @@ const exitAfterTest = config.get("exitAfterTest") === "y";
 // Call the imported function to run Jest tests if configured
 if (shouldRunTests) {
     // Use the imported function to run Jest tests
-    runJestTests(server, '**/embedded-test.test.ts', 3000, testWithCoverage, exitAfterTest);
+    runJestTests(server, '**/tests/embedded-test.test.ts', 3000, testWithCoverage, exitAfterTest);
 } 
 
 console.log("App init complete.");
