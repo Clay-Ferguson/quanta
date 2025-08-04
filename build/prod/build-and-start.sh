@@ -12,5 +12,5 @@ sudo systemctl stop nginx
 # Note: the -E flag preserves the environment variables
 sudo -E node dist/server/AppServer.js
 
-read -p "Quanta Chat Ended. press ENTER to exit..."
+read -p "Quanta Server Ended. press ENTER to exit..."
 

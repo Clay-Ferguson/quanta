@@ -200,4 +200,23 @@ server.listen(PORT, () => {
 
 await svrUtil.notifyPlugins(plugins, server);
 
+// Run Jest programmatically
+console.log("\n--- Running Jest tests programmatically ---");
+import { run } from 'jest';
+(async () => {
+    try {
+        // Configure Jest to run our specific test file
+        const result = await run([
+            // '--forceExit',
+            '--silent',
+            '--testMatch',
+            '**/embedded-test.test.ts',
+            '--no-cache'
+        ]);
+        console.log(`Jest tests completed with exit code: ${result}`);
+    } catch (error) {
+        console.error('Error running Jest tests:', error);
+    }
+})();
+
 console.log("App init complete.");
