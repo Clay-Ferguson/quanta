@@ -3,10 +3,10 @@ describe('VFS Test', () => {
     // Variables to store modules and connection status
     let pgdb: any;
     let vfsTestModule: any;
-    let testFolderRenameModule: any;
-    let testFileMovesModule: any;
-    let vfsTestAuthModule: any;
-    let resetTestEnvironment: any;
+    let folderRenameModule: any;
+    let fileMovesTestModule: any;
+    let authTestModule: any;
+    // let resetTestEnvironment: any;
     let databaseAvailable = false;
     let owner_id: number; // Changed from string to number to match expected type
     
@@ -22,13 +22,14 @@ describe('VFS Test', () => {
     // Before running any tests, check database connection
     beforeAll(async () => {
         try {
+            const base = '../../../plugins/docs/VFS/test';
             // Import necessary modules
             // todo-0: These imported files have inconsistent filenames and need to be renamed.
-            vfsTestModule = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-            testFolderRenameModule = await import('../../../plugins/docs/VFS/test/testFolderRename.js');
-            testFileMovesModule = await import('../../../plugins/docs/VFS/test/VFSTestFileMoves.js');
-            vfsTestAuthModule = await import('../../../plugins/docs/VFS/test/VFSTestAuth.js');
-            resetTestEnvironment = vfsTestModule.resetTestEnvironment;
+            vfsTestModule = await import(`${base}/VFSTest.js`);
+            folderRenameModule = await import(`${base}/FolderRenameTest.js`);
+            fileMovesTestModule = await import(`${base}/FileMovesTest.js`);
+            authTestModule = await import(`${base}/AuthTest.js`);
+            // resetTestEnvironment = vfsTestModule.resetTestEnvironment;
             
             // Import and check database connection
             const pgdbModule = await import('../../../PGDB.js');
@@ -52,14 +53,9 @@ describe('VFS Test', () => {
         }
     });
 
-    it('resetTestEnvironment', async () => {
-        if (skipIfDatabaseUnavailable()) return;
-        await resetTestEnvironment();
-    });
-
     it('folderRenameWithChildren', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        await testFolderRenameModule.testFolderRenameWithChildren(owner_id);
+        await folderRenameModule.testFolderRenameWithChildren(owner_id);
     });
 
     it('simpleReadWriteTest', async () => {
@@ -85,12 +81,12 @@ describe('VFS Test', () => {
     
     it('pgdbTestMoveUp', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        await testFileMovesModule.pgdbTestMoveUp(owner_id);
+        await fileMovesTestModule.pgdbTestMoveUp(owner_id);
     });
     
     it('pgdbTestSetFolderPublic', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        await vfsTestAuthModule.pgdbTestSetFolderPublic(owner_id);
+        await authTestModule.pgdbTestSetFolderPublic(owner_id);
     });
     
     it('deleteFolder', async () => {
@@ -116,6 +112,11 @@ describe('VFS Test', () => {
     it('testSearch', async () => {
         if (skipIfDatabaseUnavailable()) return;
         await vfsTestModule.testSearch();
+    });
+
+    it('resetTestEnvironment', async () => {
+        if (skipIfDatabaseUnavailable()) return;
+        await vfsTestModule.resetTestEnvironment();
     });
 });
 

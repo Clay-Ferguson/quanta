@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import pgdb from '../../../../PGDB.js';
-import { testFolderRenameWithChildren } from './testFolderRename.js';
-import { pgdbTestSetFolderPublic } from './VFSTestAuth.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
  
-import { pgdbTestMoveUp } from './VFSTestFileMoves.js';
-
 const testRootKey = 'usr';
-const testEnabled = true;
 
 export async function dumpTableStructure(owner_id: number): Promise<void> {
     await printFolderStructure(owner_id);

@@ -1,4 +1,5 @@
 import pgdb from '../../../../PGDB.js';
+import { resetTestEnvironment } from './VFSTest.js';
 
 const testRootKey = 'usr';
 
@@ -8,6 +9,7 @@ const testRootKey = 'usr';
  */
 export async function testFolderRenameWithChildren(owner_id: number): Promise<void> {
     try {
+        await resetTestEnvironment();
         console.log('\n=== TESTING FOLDER RENAME WITH CHILDREN ===');
         
         // Now rename one of the folders (e.g., '0001_test-structure/0001_one' to '0001_test-structure/0001_one-renamed')
