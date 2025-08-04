@@ -2,6 +2,10 @@
 describe('VFS Test', () => {
     // Variables to store modules and connection status
     let pgdb: any;
+    let vfsTestModule: any;
+    let testFolderRenameModule: any;
+    let testFileMovesModule: any;
+    let vfsTestAuthModule: any;
     let resetTestEnvironment: any;
     let databaseAvailable = false;
     let owner_id: number; // Changed from string to number to match expected type
@@ -19,7 +23,11 @@ describe('VFS Test', () => {
     beforeAll(async () => {
         try {
             // Import necessary modules
-            const vfsTestModule = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            // todo-0: These imported files have inconsistent filenames and need to be renamed.
+            vfsTestModule = await import('../../../plugins/docs/VFS/test/VFSTest.js');
+            testFolderRenameModule = await import('../../../plugins/docs/VFS/test/testFolderRename.js');
+            testFileMovesModule = await import('../../../plugins/docs/VFS/test/VFSTestFileMoves.js');
+            vfsTestAuthModule = await import('../../../plugins/docs/VFS/test/VFSTestAuth.js');
             resetTestEnvironment = vfsTestModule.resetTestEnvironment;
             
             // Import and check database connection
@@ -44,145 +52,70 @@ describe('VFS Test', () => {
         }
     });
 
-    // This test requires the Docker environment with PostgreSQL to be running
-    // It can be executed with './build/dev/docker-run.sh'
-    it('should reset test environment for VFS tests(3)', async () => {
+    it('resetTestEnvironment', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Database is available, run the test
         await resetTestEnvironment();
     });
 
-    // Test folder rename with children - requires the previous test to have run
-    it('should test folder rename with children functionality', async () => {
+    it('folderRenameWithChildren', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function
-        const { testFolderRenameWithChildren } = await import('../../../plugins/docs/VFS/test/testFolderRename.js');
-        
-        // Run the test with the owner_id
-        await testFolderRenameWithChildren(owner_id);
+        await testFolderRenameModule.testFolderRenameWithChildren(owner_id);
     });
 
-    // Test simple read/write functionality - requires the previous test to have run
-    it('should test simple read and write file operations', async () => {
+    it('simpleReadWriteTest', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function
-        const { simpleReadWriteTest } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await simpleReadWriteTest(owner_id);
+        await vfsTestModule.simpleReadWriteTest(owner_id);
     });
     
-    // Test file operations (stat, rename, read, unlink) - requires the previous tests to have run
-    it('should test various file operations', async () => {
+    it('testFileOperations', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function
-        const { testFileOperations } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await testFileOperations(owner_id);
+        await vfsTestModule.testFileOperations(owner_id);
     });
     
-    // Test path operations (creating and verifying nested directory structures)
-    it('should test path operations with nested directory structures', async () => {
+    it('testPathOperations', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function
-        const { testPathOperations } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test (note: this function doesn't require owner_id as parameter)
-        await testPathOperations();
+        await vfsTestModule.testPathOperations();
     });
     
     // Test error handling (testing error conditions and ensuring they're handled correctly)
-    it('should test error handling for invalid operations', async () => {
+    it('testErrorHandling', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function
-        const { testErrorHandling } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await testErrorHandling(owner_id);
+        await vfsTestModule.testErrorHandling(owner_id);
     });
     
-    // Test file move operations (moving files up in the ordering)
-    it('should test file move up operations', async () => {
+    it('pgdbTestMoveUp', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTestFileMoves.js
-        const { pgdbTestMoveUp } = await import('../../../plugins/docs/VFS/test/VFSTestFileMoves.js');
-        
-        // Run the test with the owner_id
-        await pgdbTestMoveUp(owner_id);
+        await testFileMovesModule.pgdbTestMoveUp(owner_id);
     });
     
-    // Test folder public visibility operations
-    it('should test folder public visibility settings', async () => {
+    it('pgdbTestSetFolderPublic', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTestAuth.js
-        const { pgdbTestSetFolderPublic } = await import('../../../plugins/docs/VFS/test/VFSTestAuth.js');
-        
-        // Run the test with the owner_id
-        await pgdbTestSetFolderPublic(owner_id);
+        await vfsTestAuthModule.pgdbTestSetFolderPublic(owner_id);
     });
     
-    // Test folder deletion operations
-    it('should test folder deletion functionality', async () => {
+    it('deleteFolder', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTest.js
-        const { deleteFolder } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await deleteFolder(owner_id, '0001_test-structure');
+        await vfsTestModule.deleteFolder(owner_id, '0001_test-structure');
     });
     
-    // Test folder rename operations
-    it('should test folder rename functionality', async () => {
+    it('renameFolder', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTest.js
-        const { renameFolder } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
+        await vfsTestModule.renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure');
     });
     
-    // Test path ensuring functionality
-    it('should test vfs_ensure_path functionality', async () => {
+    it('testEnsurePath', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTest.js
-        const { testEnsurePath } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await testEnsurePath(owner_id);
+        await vfsTestModule.testEnsurePath(owner_id);
     });
     
-    // Test set public functionality
-    it('should test folder and file visibility settings', async () => {
+    it('testSetPublic', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTest.js
-        const { testSetPublic } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test with the owner_id
-        await testSetPublic(owner_id);
+        await vfsTestModule.testSetPublic(owner_id);
     });
     
-    // Test search functionality
-    it('should test text search capabilities', async () => {
+    it('testSearch', async () => {
         if (skipIfDatabaseUnavailable()) return;
-        
-        // Import the test function from VFSTest.js
-        const { testSearch } = await import('../../../plugins/docs/VFS/test/VFSTest.js');
-        
-        // Run the test
-        await testSearch();
+        await vfsTestModule.testSearch();
     });
 });
 
