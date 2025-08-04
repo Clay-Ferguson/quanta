@@ -9,6 +9,7 @@ import { httpServerUtil } from './HttpServerUtil.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
+import { run } from 'jest';
 
 logInit();
 
@@ -200,23 +201,32 @@ server.listen(PORT, () => {
 
 await svrUtil.notifyPlugins(plugins, server);
 
-// Run Jest programmatically
-console.log("\n--- Running Jest tests programmatically ---");
-import { run } from 'jest';
-(async () => {
-    try {
-        // Configure Jest to run our specific test file
-        const result = await run([
-            // '--forceExit',
-            '--silent',
-            '--testMatch',
-            '**/embedded-test.test.ts',
-            '--no-cache'
-        ]);
-        console.log(`Jest tests completed with exit code: ${result}`);
-    } catch (error) {
-        console.error('Error running Jest tests:', error);
-    }
-})();
+// Check if Jest tests should be run based on configuration
+const runJestTests = config.get("runJestTests") === "y";
+
+if (runJestTests) {
+    // Run Jest programmatically after a delay
+    console.log("\n--- Scheduling Jest tests to run in 3 seconds ---");
+
+    // Set a timeout to run tests after 3 seconds
+    setTimeout(async () => {
+        console.log("--- Running Jest tests programmatically ---");
+        try {
+            // Configure Jest to run our specific test file
+            const result = await run([
+                // '--forceExit',
+                '--silent',
+                '--testMatch',
+                '**/embedded-test.test.ts',
+                '--no-cache'
+            ]);
+            console.log(`Jest tests completed with exit code: ${result}`);
+        } catch (error) {
+            console.error('Error running Jest tests:', error);
+        }
+    }, 3000); // 3000 milliseconds = 3 seconds
+} else {
+    console.log("\n--- Jest tests disabled in configuration ---");
+}
 
 console.log("App init complete.");

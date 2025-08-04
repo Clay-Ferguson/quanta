@@ -5,6 +5,7 @@ secure: "n"
 adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
 desktopMode: "y"
 defaultPlugin: "docs"
+runJestTests: "y"
 
 plugins:
   - name: "Quanta Docs"
