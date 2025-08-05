@@ -1,20 +1,19 @@
 import { Server } from 'http';
 import { run } from 'jest';
+import { config } from './Config.js';
 
 /**
  * Runs Jest tests programmatically after a specified delay.
  * Can optionally shut down the server after tests complete.
  * 
  * @param server The HTTP/HTTPS server instance to shut down if needed
- * @param delayMs Delay in milliseconds before running tests
- * @param testWithCoverage Whether to run tests with code coverage
- * @param exitAfterTests Whether to exit the process after tests complete
  */
 export async function runJestTests(
     server: Server,
-    testWithCoverage: boolean = false,
-    exitAfterTests: boolean = true
 ): Promise<void> {
+    const testWithCoverage = config.get("testWithCoverage") === "y";
+    const exitAfterTests = config.get("exitAfterTest") === "y";
+
     console.log(`\n--- Scheduling Jest tests to run in 3 seconds ---`);
 
     // Set a timeout to run tests after the specified delay
@@ -22,9 +21,9 @@ export async function runJestTests(
         console.log("--- Running Jest tests programmatically ---");
         let exitCode = 0;
         try {
-            // Configure Jest arguments - use config file for most settings
+            // NOTE: For non-docker runs the 'jest.config.file' will be the same as the one in the root of the project, but for
+            // docker runs, it will be a copy of the 'jest.docker.config.js' file.
             const jestArgs = [
-                // '--forceExit',
                 '--silent',
                 '--config=jest.config.js'
             ];

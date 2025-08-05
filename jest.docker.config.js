@@ -3,9 +3,9 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
   cache: false,
-  roots: ['<rootDir>/dist'],
+  roots: ['<rootDir>/dist/server/tests'],
   testMatch: [
-    '<rootDir>/dist/server/tests/plugins/docs/vfs.test.ts'
+    '**/*.test.ts'
   ],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
@@ -21,6 +21,8 @@ export default {
   ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   verbose: true,
+  // Ensure console output is visible during tests
+  silent: false,
   // Use our embedded test setup file
   setupFilesAfterEnv: ['<rootDir>/dist/server/tests/setup.ts']
 };

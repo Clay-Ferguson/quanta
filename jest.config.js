@@ -2,10 +2,10 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
+  cache: false,
   roots: ['<rootDir>/tests', '<rootDir>/server', '<rootDir>/client', '<rootDir>/common'],
   testMatch: [
-    '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts'
+    '**/*.test.ts'
   ],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
@@ -32,6 +32,8 @@ export default {
   coverageReporters: ['text', 'lcov', 'html'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   verbose: true,
+  // Ensure console output is visible during tests
+  silent: false,
   // Setup files to run before tests
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   // Module name mapping for path aliases
