@@ -49,7 +49,7 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 
 ### Files
 
-- **tsconfig.* , jest.* , vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.
+- **tsconfig.* , vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.
 
 ## How to Run
 There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)

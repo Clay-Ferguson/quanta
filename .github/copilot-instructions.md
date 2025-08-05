@@ -94,10 +94,6 @@ interface DocsGlobalState extends GlobalState {
 - Public key-based user identification
 - Admin key configuration for elevated privileges
 
-## Unit Testing
-
-We use 'Jest' for testing  and we have our test cases in the 'test' folder. See file [TESTING.md](./build/TESTING.md) for details how we do unit tests. For tests that require a PostgreSQL database, we use Docker to create an isolated test environment, which is done by running the script `./build/test/docker-run.sh`.
-
 # Coding Tips
 
 - Always use `import` statements for modules, avoid `require`.

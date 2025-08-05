@@ -9,7 +9,6 @@ import { httpServerUtil } from './HttpServerUtil.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
-import { runJestTests } from './jest.js';
 
 logInit();
 
@@ -201,9 +200,10 @@ server.listen(PORT, () => {
 
 await svrUtil.notifyPlugins(plugins, server);
 
-// Run Jest tests if configured
-if (config.get("runJestTests") === "y") {
-    runJestTests(server);
-} 
+// Run tests if configured
+// todo-0: implement
+// if (config.get("runTests") === "y") {
+//     runTests(server); // see 'vfs.test.ts.hide'
+// } 
 
 console.log("App init complete.");

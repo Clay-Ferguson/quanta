@@ -16,7 +16,6 @@ COPY dist/ ./dist/
 
 # Copy configuration files
 COPY build/${ENV}/docker-config.yaml ./
-COPY jest.docker.config.js ./jest.config.js
 
 # Create directory for database (will be mounted as volume)
 RUN mkdir -p /app/data
