@@ -147,7 +147,7 @@ class LFS implements IFS {
     }
 
     async mkdir(owner_id: number, path: string, options?: { recursive?: boolean }): Promise<void> {
-        this.mkdirEx(owner_id, path, options, false);
+        await this.mkdirEx(owner_id, path, options, false);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
