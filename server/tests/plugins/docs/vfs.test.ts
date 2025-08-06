@@ -3,41 +3,7 @@ import { simpleReadWriteTest, testFileOperations, testPathOperations, testErrorH
 import { testFolderRenameWithChildren } from '../../../plugins/docs/VFS/test/FolderRenameTest.js';
 import { pgdbTestMoveUp } from '../../../plugins/docs/VFS/test/FileMovesTest.js';
 import { pgdbTestSetFolderPublic } from '../../../plugins/docs/VFS/test/AuthTest.js';
-
-class TestRunner {
-    private successCount: number = 0;
-    private failCount: number = 0;
-
-    async run(testName: string, testFunction: () => Promise<void>): Promise<void> {
-        console.log(`🧪 Running ${testName}...`);
-        
-        try {
-            await testFunction();
-            this.successCount++;
-        } catch (error) {
-            this.failCount++;
-            console.error(`❌ Test failed: ${testName}`, error);
-
-            // todo-0: currently we consider that these tests may be building on top of each other
-            // so we rethrow the error to stop the test suite if anything goes wrong.
-            throw error;
-        }
-    }
-
-    report(): void {
-        const total = this.successCount + this.failCount;
-        console.log(`\n📊 Test Results:`);
-        console.log(`✅ Successful: ${this.successCount}`);
-        console.log(`❌ Failed: ${this.failCount}`);
-        console.log(`📈 Total: ${total}`);
-        
-        if (this.failCount === 0) {
-            console.log("🎉 All tests passed!");
-        } else {
-            console.log(`⚠️  ${this.failCount} test(s) failed`);
-        }
-    }
-}
+import { TestRunner } from '../../../../common/TestRunner.js';
 
 export async function runTests() {
     console.log("🚀 Starting VFS embedded tests...");
@@ -51,23 +17,23 @@ export async function runTests() {
     const owner_id = pgdb.adminProfile.id;
     console.log(`🔧 Running tests with owner_id: ${owner_id}`);
     
-    const testRunner = new TestRunner();
+    const testRunner = new TestRunner("VFS");
     
     try {
-        // Run all the tests using the test runner
-        await testRunner.run("folderRenameWithChildren", () => testFolderRenameWithChildren(owner_id));
-        await testRunner.run("simpleReadWriteTest", () => simpleReadWriteTest(owner_id));
-        await testRunner.run("testFileOperations", () => testFileOperations(owner_id));
-        await testRunner.run("testPathOperations", () => testPathOperations());
-        await testRunner.run("testErrorHandling", () => testErrorHandling(owner_id));        
-        await testRunner.run("pgdbTestMoveUp", () => pgdbTestMoveUp(owner_id));
-        await testRunner.run("pgdbTestSetFolderPublic", () => pgdbTestSetFolderPublic(owner_id));
-        await testRunner.run("deleteFolder", () => deleteFolder(owner_id, '0001_test-structure'));
-        await testRunner.run("renameFolder", () => renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure'));
-        await testRunner.run("testEnsurePath", () => testEnsurePath(owner_id));
-        await testRunner.run("testSetPublic", () => testSetPublic(owner_id));
-        await testRunner.run("testSearch", () => testSearch());
-        await testRunner.run("resetTestEnvironment", () => resetTestEnvironment());
+        // Run all the tests using the test runner. We pass rethrow as true to ensure any test failures will halt the test suite
+        await testRunner.run("folderRenameWithChildren", () => testFolderRenameWithChildren(owner_id), true);
+        await testRunner.run("simpleReadWriteTest", () => simpleReadWriteTest(owner_id), true);
+        await testRunner.run("testFileOperations", () => testFileOperations(owner_id), true);
+        await testRunner.run("testPathOperations", () => testPathOperations(), true);
+        await testRunner.run("testErrorHandling", () => testErrorHandling(owner_id), true);        
+        await testRunner.run("pgdbTestMoveUp", () => pgdbTestMoveUp(owner_id), true);
+        await testRunner.run("pgdbTestSetFolderPublic", () => pgdbTestSetFolderPublic(owner_id), true);
+        await testRunner.run("deleteFolder", () => deleteFolder(owner_id, '0001_test-structure'), true);
+        await testRunner.run("renameFolder", () => renameFolder(owner_id, '0001_test-structure', '0099_renamed-test-structure'), true);
+        await testRunner.run("testEnsurePath", () => testEnsurePath(owner_id), true);
+        await testRunner.run("testSetPublic", () => testSetPublic(owner_id), true);
+        await testRunner.run("testSearch", () => testSearch(), true);
+        await testRunner.run("resetTestEnvironment", () => resetTestEnvironment(), true);
         
         testRunner.report();
         

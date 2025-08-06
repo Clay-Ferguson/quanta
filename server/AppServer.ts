@@ -203,8 +203,23 @@ await svrUtil.notifyPlugins(plugins, server);
 // Run tests if configured
 if (config.get("runTests") === "y") {
     console.log("Running embedded tests...");
-    const { runTests } = await import('./tests/plugins/docs/vfs.test.js');
-    await runTests();
-} 
+
+    // todo-0: currently we just cram in the 'vfs' testing here, but in the future we want to have a plugin system for tests
+    // where each plugin can provide its own test entry point to run.
+    if (process.env.POSTGRES_HOST) {
+        const { runTests } = await import('./tests/plugins/docs/vfs.test.js');
+        await runTests();
+    }
+    // run non-Docker tests here
+    else {
+        // Run CommonUtils tests
+        const { runTests: runCommonUtilsTests } = await import('../tests/CommonUtils.test.js');
+        await runCommonUtilsTests();
+    
+        // Run DocService tests
+        const { runTests: runDocServiceTests } = await import('../tests/DocService.test.js');
+        await runDocServiceTests();
+    }
+}
 
 console.log("App init complete.");

@@ -19,7 +19,7 @@ QUANTA_DEV=true yarn dev
 
 # Check if yarn dev succeeded
 if [ $? -eq 0 ]; then
-    read -p "Quanta Server Ended. press ENTER to exit..."
+    read -p "Quanta Server Started."
 else
     echo "Dev script failed. Terminating script."
     exit 1
