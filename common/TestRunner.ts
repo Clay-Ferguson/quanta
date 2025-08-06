@@ -66,7 +66,7 @@ export class TestRunner {
         // Show global failure count across all test runners
         report += `\n🌍 Global failures: ${TestRunner.globalFailCount}`;
         report += `\n📝 Suites Completed: ${TestRunner.suitesRun.join(', ')}`;
-        report += `\n\n`;
+        report += `\n`;
         
         console.log(report);
     }

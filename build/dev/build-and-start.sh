@@ -7,6 +7,7 @@ if [ ! -f "./package.json" ]; then
 fi
 
 export CONFIG_FILE="./build/dev/config.yaml"
+export QUANTA_ENV=dev
 
 # ./kill.sh
 
@@ -15,6 +16,7 @@ rm -f package-lock.json
 rm -rf ./dist
 
 # Run the dev script which handles build and start with error checking
+# todo-0: do we still need QUANTA_DEV=true, separate from QUANTA_ENV=dev?
 QUANTA_DEV=true yarn dev
 
 # Check if yarn dev succeeded

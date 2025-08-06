@@ -235,8 +235,8 @@ const gracefulShutdown = async () => {
     }
 };
 
-// Run tests if configured
-if (config.get("runTests") === "y") {
+// Run tests if configured and in development environment ONLY
+if (config.get("runTests") === "y" && process.env.QUANTA_ENV === "dev") {
     await runAllTests();
 
     if (config.get("exitAfterTest") === "y") {

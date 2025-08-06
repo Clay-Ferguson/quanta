@@ -60,6 +60,7 @@ services:
     environment:
       - CONFIG_FILE=./docker-config.yaml
       - QUANTA_DEV=true
+      - QUANTA_ENV=${QUANTA_ENV}
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
