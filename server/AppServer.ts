@@ -201,9 +201,10 @@ server.listen(PORT, () => {
 await svrUtil.notifyPlugins(plugins, server);
 
 // Run tests if configured
-// todo-0: implement
-// if (config.get("runTests") === "y") {
-//     runTests(server); // see 'vfs.test.ts.hide'
-// } 
+if (config.get("runTests") === "y") {
+    console.log("Running embedded tests...");
+    const { runTests } = await import('./tests/plugins/docs/vfs.test.js');
+    await runTests();
+} 
 
 console.log("App init complete.");
