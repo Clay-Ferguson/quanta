@@ -35,7 +35,12 @@ runTests: "y"  # Set to "y" to run embedded tests on server start
 
 ### Test Orchestration
 
-The main test orchestration happens in `/server/app.test.ts`, which serves as the entry point for all testing:
+The main test orchestration happens in `/server/app.test.ts`, which serves as the **central entry point** for all testing. This file:
+
+- Imports all test suites from across the application
+- Determines which tests to run based on environment conditions
+- Coordinates test execution order
+- Acts as the single point of integration with the main application
 
 ```typescript
 export async function runAllTests(): Promise<void> {
@@ -45,10 +50,17 @@ export async function runAllTests(): Promise<void> {
         await runVfsTests();  // Virtual File System tests (requires PostgreSQL)
     } else {
         await runCommonUtilsTests();  // Common utility tests
+        await runCryptoTests();       // Cryptographic function tests  
         await runLfsTests();          // Local File System tests
     }
 }
 ```
+
+**Adding New Tests**: To integrate a new test suite into the application, you must:
+1. Create your test file following the naming convention `*.test.ts`
+2. Export a `runTests` function from your test file
+3. Import it in `/server/app.test.ts` with an alias (e.g., `import { runTests as runMyTests }`)
+4. Add the test execution call in the appropriate environment block within `runAllTests()`
 
 ### Application Integration
 
@@ -72,17 +84,11 @@ All tests use the common `TestRunner` class (`/common/TestRunner.ts`) which prov
 
 ## Test Files
 
-The following test files are currently part of the test suite:
+The Quanta testing system is centralized through a single orchestrator file:
 
-### Core Tests
-- `/tests/CommonUtils.test.ts` - Tests for common utility functions
-- `/server/app.test.ts` - Main test orchestrator
+- `/server/app.test.ts` - **Main test orchestrator** - This is the central entry point that controls which test suites run based on environment conditions. All test integration happens through this file.
 
-### Plugin Tests
-
-#### Docs Plugin Tests
-- `/server/plugins/docs/IFS/test/lfs.test.ts` - Local File System tests
-- `/server/plugins/docs/VFS/test/vfs.test.ts` - Virtual File System tests (requires PostgreSQL)
+Individual test files are automatically discovered and executed by the orchestrator based on the current environment and available services (such as PostgreSQL availability).
 
 ### Test File Naming Convention
 

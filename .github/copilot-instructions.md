@@ -22,9 +22,6 @@ For more see the README.md file in the root directory, which also includes links
 
 # Development with Docker (enables chat plugin)
 ./build/dev/docker-run.sh
-
-# Production deployment
-./build/prod/docker-run-prod.sh
 ```
 
 ### Build Process
@@ -94,5 +91,7 @@ interface DocsGlobalState extends GlobalState {
 - Admin key configuration for elevated privileges
 
 # Coding Tips
-
 - Always use `import` statements for modules, avoid `require`.
+
+# Testing
+Quanta uses an embedded testing system that runs tests during application startup when configured to do so. For detailed information about the testing architecture, how to run tests, and how to write new tests, see the [Testing Guide](./TESTING.md).
