@@ -3,6 +3,8 @@
  * to execute tests and track results.
  */
 export class TestRunner {
+    private static globalFailCount: number = 0;
+    
     private successCount: number = 0;
     private failCount: number = 0;
     private testName: string;
@@ -29,6 +31,7 @@ export class TestRunner {
             this.successCount++;
         } catch (error) {
             this.failCount++;
+            TestRunner.globalFailCount++;
             console.error(`❌ Test failed: ${testName}`, error);
             if (rethrow) {
                 throw error;
@@ -46,14 +49,17 @@ export class TestRunner {
         report += `\n✅ Successful: ${this.successCount}`;
         if (this.failCount > 0) {
             report += `\n❌ Failed: ${this.failCount}`;
+            report += `\n📈 Total: ${total}`;
         }
-        report += `\n📈 Total: ${total}`;
         
         if (this.failCount === 0) {
             report += `\n🎉 All tests passed!`;
         } else {
             report += `\n⚠️ ${this.failCount} test(s) failed`;
         }
+        
+        // Show global failure count across all test runners
+        report += `\n🌍 Global failures: ${TestRunner.globalFailCount}`;
         report += `\n\n`;
         
         console.log(report);
@@ -87,4 +93,18 @@ export class TestRunner {
         this.successCount = 0;
         this.failCount = 0;
     }
+
+    // /**
+    //  * Get the global failure count across all test runner instances
+    //  */
+    // static getGlobalFailCount(): number {
+    //     return TestRunner.globalFailCount;
+    // }
+
+    // /**
+    //  * Reset the global failure count
+    //  */
+    // static resetGlobalFailCount(): void {
+    //     TestRunner.globalFailCount = 0;
+    // }
 }
