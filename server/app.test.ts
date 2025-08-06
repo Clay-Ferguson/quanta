@@ -14,12 +14,8 @@ export async function runAllTests(): Promise<void> {
     if (process.env.POSTGRES_HOST) {
         await runVfsTests();
     }
-    // run non-Docker tests here
     else {
-        // Run CommonUtils tests
-        await runCommonUtilsTests();
-    
-        // Run DocService tests
+        await runCommonUtilsTests();    
         await runLfsTests();
     }
 }

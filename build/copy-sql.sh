@@ -1,7 +1,5 @@
 #!/bin/bash 
 
-# todo-0: need to rename this file to 'copy-files.sh'
-
 mkdir -p dist/server/
 cp server/*.sql dist/server/
 
