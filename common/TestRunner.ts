@@ -4,17 +4,22 @@
  */
 export class TestRunner {
     private static globalFailCount: number = 0;
+    private static suitesRun: string[] = [];
     
     private successCount: number = 0;
     private failCount: number = 0;
-    private testName: string;
+    private suiteName: string;
 
     /**
      * Create a new TestRunner instance
-     * @param testName The name of the test suite for reporting purposes
+     * @param suiteName The name of the test suite for reporting purposes
      */
-    constructor(testName: string) {
-        this.testName = testName;
+    constructor(suiteName: string) {
+        this.suiteName = suiteName;
+        // Track this test name globally
+        if (!TestRunner.suitesRun.includes(suiteName)) {
+            TestRunner.suitesRun.push(suiteName);
+        }
     }
 
     /**
@@ -45,7 +50,7 @@ export class TestRunner {
     report(): void {
         const total = this.successCount + this.failCount;
         let report = `\n________________________________________`;
-        report += `\n📊 Test Results: ${this.testName}`;
+        report += `\n📊 Test Results: ${this.suiteName}`;
         report += `\n✅ Successful: ${this.successCount}`;
         if (this.failCount > 0) {
             report += `\n❌ Failed: ${this.failCount}`;
@@ -60,6 +65,7 @@ export class TestRunner {
         
         // Show global failure count across all test runners
         report += `\n🌍 Global failures: ${TestRunner.globalFailCount}`;
+        report += `\n📝 Suites Completed: ${TestRunner.suitesRun.join(', ')}`;
         report += `\n\n`;
         
         console.log(report);
