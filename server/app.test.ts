@@ -1,5 +1,6 @@
 // Test imports - these will be compiled to .js at build time
 import { runTests as runCommonUtilsTests } from '../common/test/CommonUtils.test.js';
+import { runTests as runCryptoTests } from '../common/test/Crypto.test.js';
 import { runTests as runVfsTests } from './plugins/docs/VFS/test/vfs.test.js';
 import { runTests as runLfsTests } from './plugins/docs/IFS/test/lfs.test.js';
 
@@ -15,7 +16,8 @@ export async function runAllTests(): Promise<void> {
         await runVfsTests();
     }
     else {
-        await runCommonUtilsTests();    
+        await runCommonUtilsTests();
+        await runCryptoTests();
         await runLfsTests();
     }
 }

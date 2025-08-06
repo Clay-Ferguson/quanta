@@ -10,7 +10,7 @@ import { KeyPairHex, SignableObject } from './types/CommonTypes.js';
  * using the @noble/secp256k1 library. It supports both object signing with canonicalization
  * and raw data signing operations.
  * 
- * See also: https://www.npmjs.com/package/@noble/secp256k1
+ * See also: https://www.npmjs.com/package/@noble/secp256k1 
  */
 class Crypto {
     /**
