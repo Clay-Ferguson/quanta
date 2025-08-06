@@ -10,6 +10,11 @@ import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
 
+// Test imports - these will be compiled to .js at build time
+import { runTests as runCommonUtilsTests } from '../tests/CommonUtils.test.js';
+import { runTests as runVfsTests } from './plugins/docs/VFS/test/vfs.test.js';
+import { runTests as runLfsTests } from './plugins/docs/IFS/test/lfs.test.js';
+
 logInit();
 
 // Global error handlers to prevent server crashes
@@ -206,20 +211,16 @@ if (config.get("runTests") === "y") {
 
     // todo-0: currently we just cram in the 'vfs' testing here, but in the future we want to have a plugin system for tests
     // where each plugin can provide its own test entry point to run.
-    // todo-0: none of the below imports need to be dynamic, we can include all at top of this file.
     if (process.env.POSTGRES_HOST) {
-        const { runTests } = await import('./plugins/docs/VFS/test/vfs.test.js');
-        await runTests();
+        await runVfsTests();
     }
     // run non-Docker tests here
     else {
         // Run CommonUtils tests
-        const { runTests: runCommonUtilsTests } = await import('../tests/CommonUtils.test.js');
         await runCommonUtilsTests();
     
         // Run DocService tests
-        const { runTests: runDocServiceTests } = await import('./plugins/docs/IFS/test/lfs.test.js');
-        await runDocServiceTests();
+        await runLfsTests();
     }
 }
 
