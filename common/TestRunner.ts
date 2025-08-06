@@ -55,7 +55,7 @@ export class TestRunner {
         if (this.failCount === 0) {
             report += `\n🎉 All tests passed!`;
         } else {
-            report += `\n⚠️ ${this.failCount} test(s) failed`;
+            report += `\n⚠️  ${this.failCount} test(s) failed`;
         }
         
         // Show global failure count across all test runners
@@ -93,18 +93,4 @@ export class TestRunner {
         this.successCount = 0;
         this.failCount = 0;
     }
-
-    // /**
-    //  * Get the global failure count across all test runner instances
-    //  */
-    // static getGlobalFailCount(): number {
-    //     return TestRunner.globalFailCount;
-    // }
-
-    // /**
-    //  * Reset the global failure count
-    //  */
-    // static resetGlobalFailCount(): void {
-    //     TestRunner.globalFailCount = 0;
-    // }
 }

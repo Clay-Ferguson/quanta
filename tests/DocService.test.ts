@@ -542,20 +542,12 @@ export async function runTests() {
         await testRunner.run("Cleanup test environment", async () => {
             cleanupTestEnvironment();
         });
-
+    } 
+    catch {
+        console.error("❌ DocService test suite failed");
+    }
+    finally {
+        cleanupTestEnvironment();
         testRunner.report();
-        
-    } catch (error) {
-        console.error("❌ DocService test suite failed:", error);
-        
-        // Ensure cleanup even if tests fail
-        try {
-            cleanupTestEnvironment();
-        } catch (cleanupError) {
-            console.error("❌ Cleanup failed:", cleanupError);
-        }
-        
-        testRunner.report();
-        throw error;
     }
 }

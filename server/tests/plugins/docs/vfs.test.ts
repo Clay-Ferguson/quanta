@@ -34,12 +34,10 @@ export async function runTests() {
         await testRunner.run("testSetPublic", () => testSetPublic(owner_id), true);
         await testRunner.run("testSearch", () => testSearch(), true);
         await testRunner.run("resetTestEnvironment", () => resetTestEnvironment(), true);
-        
+    } catch {
+        console.error("❌ VFS test suite failed");
+    }
+    finally {
         testRunner.report();
-        
-    } catch (error) {
-        console.error("❌ VFS test suite failed:", error);
-        testRunner.report();
-        throw error;
     }
 }

@@ -526,8 +526,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
         // Test 1: Basic substring search (MATCH_ANY mode)
         console.log('Test 1: Basic substring search for "SEARCHME"...');
         const searchResult1 = await pgdb.query(
-            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'SEARCHME', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+            pgdb.adminProfile!.id, 'SEARCHME', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult1.rows.length} files containing "SEARCHME"`);
@@ -546,8 +546,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
         // Test 2: Search for content that should match existing files
         console.log('Test 2: Search for "test file" (should match multiple files)...');
         const searchResult2 = await pgdb.query(
-            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'test file', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+            pgdb.adminProfile!.id, 'test file', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult2.rows.length} files containing "test file"`);
@@ -559,8 +559,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
         // Test 3: Search for something unique that should only match our test file
         console.log('Test 3: Search for unique string "UNIQUESTRING123"...');
         const searchResult3 = await pgdb.query(
-            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'UNIQUESTRING123', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+            pgdb.adminProfile!.id, 'UNIQUESTRING123', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult3.rows.length} files containing "UNIQUESTRING123"`);
@@ -573,8 +573,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
         // Test 4: Search for something that should not be found
         console.log('Test 4: Search for non-existent string "NOTFOUND12345"...');
         const searchResult4 = await pgdb.query(
-            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'NOTFOUND12345', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
+            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+            pgdb.adminProfile!.id, 'NOTFOUND12345', '0001_test-structure', testRootKey, 'MATCH_ANY', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult4.rows.length} files containing "NOTFOUND12345"`);
@@ -587,8 +587,8 @@ And some unique content: UNIQUESTRING123 for exact matching.
         // Test 5: Test MATCH_ALL mode
         console.log('Test 5: MATCH_ALL search for "database postgresql" (both words must be present)...');
         const searchResult5 = await pgdb.query(
-            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6)',
-            'database postgresql', '0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME'
+            'SELECT * FROM vfs_search_text($1, $2, $3, $4, $5, $6, $7)',
+            pgdb.adminProfile!.id, 'database postgresql', '0001_test-structure', testRootKey, 'MATCH_ALL', false, 'MOD_TIME'
         );
         
         console.log(`Found ${searchResult5.rows.length} files containing both "database" and "postgresql"`);

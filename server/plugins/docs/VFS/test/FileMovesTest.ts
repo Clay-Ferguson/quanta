@@ -90,7 +90,7 @@ export async function pgdbTestMoveUp(owner_id: number): Promise<void> {
             }),
             json: (data: any) => {
                 console.log('Move operation successful, response:', data);
-                if (!data.success) {
+                if (!data.message || data.message !== 'Files moved successfully') {
                     throw new Error(`Move operation failed: ${data.message || 'Unknown error'}`);
                 }
             }
