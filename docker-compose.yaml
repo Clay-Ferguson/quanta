@@ -59,7 +59,7 @@ services:
       - ${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:ro
     environment:
       - CONFIG_FILE=./docker-config.yaml
-      - QUANTA_DEV=true
+      - DEV_BUILD_OPTS=true
       - QUANTA_ENV=${QUANTA_ENV}
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres

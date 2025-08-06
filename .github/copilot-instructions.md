@@ -28,9 +28,8 @@ For more see the README.md file in the root directory, which also includes links
 ```
 
 ### Build Process
-1. Client: `tsc -b && vite build` (builds React app)
-2. Server: `tsc -p server/tsconfig.json && npm run copy:sql` (builds Express server + copies SQL schemas)
-3. Environment controlled by `QUANTA_DEV` flag in vite config
+- Client: `tsc -b && vite build` (builds React app)
+- Server: `tsc -p server/tsconfig.json && npm run copy:sql` (builds Express server + copies SQL schemas)
 
 ### Plugin Development
 - Client plugins: `/client/plugins/{plugin-name}/plugin.ts`

@@ -16,8 +16,7 @@ rm -f package-lock.json
 rm -rf ./dist
 
 # Run the dev script which handles build and start with error checking
-# todo-0: do we still need QUANTA_DEV=true, separate from QUANTA_ENV=dev?
-QUANTA_DEV=true yarn dev
+DEV_BUILD_OPTS=true yarn dev
 
 # Check if yarn dev succeeded
 if [ $? -eq 0 ]; then

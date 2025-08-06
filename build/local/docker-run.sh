@@ -15,7 +15,7 @@ rm -f package-lock.json
 rm -rf ./dist
 
 echo "Building application..."
-QUANTA_DEV=true yarn build
+DEV_BUILD_OPTS=true yarn build
 
 # Check if yarn build succeeded
 if [ $? -eq 0 ]; then

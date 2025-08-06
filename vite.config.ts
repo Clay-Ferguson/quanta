@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 let config = null;
-const isDev = process.env.QUANTA_DEV === 'true'
+const isDev = process.env.DEV_BUILD_OPTS === 'true'
 
 if (!isDev) {
     // PRODUCTION
