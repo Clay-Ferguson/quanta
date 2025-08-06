@@ -1,7 +1,7 @@
 // todo-0: oops, AI was instructed to test LFS, but just used direct 'fs' so this isn't testing any of our code!
 import fs from 'fs';
 import path from 'path';
-import { TestRunner } from '../common/TestRunner.js';
+import { TestRunner } from '../../../../../common/TestRunner.js';
 import {
     assertNull,
     assertDefined,
@@ -9,12 +9,12 @@ import {
     assertContains,
     assertGreaterThan,
     assertArrayContains
-} from '../common/CommonUtils.js';
+} from '../../../../../common/CommonUtils.js';
 
 export async function runTests() {
-    console.log("🚀 Starting DocService tests...");
+    console.log("🚀 Starting LFS tests...");
     
-    const testRunner = new TestRunner("DocService");
+    const testRunner = new TestRunner("LFS");
     const testRootPath = '/home/clay/quanta-search-testing';
 
     /**

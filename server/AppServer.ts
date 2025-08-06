@@ -206,6 +206,7 @@ if (config.get("runTests") === "y") {
 
     // todo-0: currently we just cram in the 'vfs' testing here, but in the future we want to have a plugin system for tests
     // where each plugin can provide its own test entry point to run.
+    // todo-0: none of the below imports need to be dynamic, we can include all at top of this file.
     if (process.env.POSTGRES_HOST) {
         const { runTests } = await import('./plugins/docs/VFS/test/vfs.test.js');
         await runTests();
@@ -217,7 +218,7 @@ if (config.get("runTests") === "y") {
         await runCommonUtilsTests();
     
         // Run DocService tests
-        const { runTests: runDocServiceTests } = await import('../tests/DocService.test.js');
+        const { runTests: runDocServiceTests } = await import('./plugins/docs/IFS/test/lfs.test.js');
         await runDocServiceTests();
     }
 }
