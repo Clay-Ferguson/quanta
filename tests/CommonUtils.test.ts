@@ -9,70 +9,15 @@ import {
     formatDisplayName,
     stripOrdinal,
     formatFullPath,
-    createClickablePathComponents
+    createClickablePathComponents,
+    assert,
+    assertEqual,
+    assertContains,
+    assertMatches,
+    assertArrayLength,
+    assertObjectEqual
 } from '../common/CommonUtils.js';
-import { TestRunner } from '../common/TestRunner.js';
-
-/**
- * Simple assertion function that throws an error if the condition is false
- */
-function assert(condition: boolean, message: string): void {
-    if (!condition) {
-        throw new Error(`Assertion failed: ${message}`);
-    }
-}
-
-/**
- * Assertion function for checking equality
- */
-function assertEqual<T>(actual: T, expected: T, message?: string): void {
-    if (actual !== expected) {
-        const msg = message || `Expected ${expected}, but got ${actual}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if a string contains another string
- */
-function assertContains(haystack: string, needle: string, message?: string): void {
-    if (!haystack.includes(needle)) {
-        const msg = message || `Expected "${haystack}" to contain "${needle}"`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if a string matches a regex pattern
- */
-function assertMatches(str: string, pattern: RegExp, message?: string): void {
-    if (!pattern.test(str)) {
-        const msg = message || `Expected "${str}" to match pattern ${pattern}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking array length
- */
-function assertArrayLength<T>(array: T[], expectedLength: number, message?: string): void {
-    if (array.length !== expectedLength) {
-        const msg = message || `Expected array length ${expectedLength}, but got ${array.length}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking object equality (deep comparison)
- */
-function assertObjectEqual<T>(actual: T, expected: T, message?: string): void {
-    const actualStr = JSON.stringify(actual);
-    const expectedStr = JSON.stringify(expected);
-    if (actualStr !== expectedStr) {
-        const msg = message || `Expected ${expectedStr}, but got ${actualStr}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
+import { TestRunner } from '../common/TestRunner.js'; 
 
 export async function runTests() {
     console.log("🚀 Starting CommonUtils tests...");

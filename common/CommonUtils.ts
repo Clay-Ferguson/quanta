@@ -153,3 +153,120 @@ export function createClickablePathComponents(path: string): Array<{ displayName
     
     return result;
 }
+
+// ============================================================================
+// Test Assertion Functions
+// ============================================================================
+
+/**
+ * Simple assertion function that throws an error if the condition is false
+ */
+export function assert(condition: boolean, message: string): void {
+    if (!condition) {
+        throw new Error(`Assertion failed: ${message}`);
+    }
+}
+
+/**
+ * Assertion function for checking equality
+ */
+export function assertEqual<T>(actual: T, expected: T, message?: string): void {
+    if (actual !== expected) {
+        const msg = message || `Expected ${expected}, but got ${actual}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if a value is null
+ */
+export function assertNull(value: any, message?: string): void {
+    if (value !== null) {
+        const msg = message || `Expected null, but got ${value}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if a value is defined
+ */
+export function assertDefined(value: any, message?: string): void {
+    if (value === undefined) {
+        const msg = message || `Expected value to be defined, but got undefined`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if a value is an array
+ */
+export function assertIsArray(value: any, message?: string): void {
+    if (!Array.isArray(value)) {
+        const msg = message || `Expected array, but got ${typeof value}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if a string contains another string
+ */
+export function assertContains(haystack: string, needle: string, message?: string): void {
+    if (!haystack.includes(needle)) {
+        const msg = message || `Expected "${haystack}" to contain "${needle}"`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if a string matches a regex pattern
+ */
+export function assertMatches(str: string, pattern: RegExp, message?: string): void {
+    if (!pattern.test(str)) {
+        const msg = message || `Expected "${str}" to match pattern ${pattern}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking array length
+ */
+export function assertArrayLength<T>(array: T[], expectedLength: number, message?: string): void {
+    if (array.length !== expectedLength) {
+        const msg = message || `Expected array length ${expectedLength}, but got ${array.length}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking object equality (deep comparison)
+ */
+export function assertObjectEqual<T>(actual: T, expected: T, message?: string): void {
+    const actualStr = JSON.stringify(actual);
+    const expectedStr = JSON.stringify(expected);
+    if (actualStr !== expectedStr) {
+        const msg = message || `Expected ${expectedStr}, but got ${actualStr}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for checking if an array length is greater than a value
+ */
+export function assertGreaterThan(actual: number, expected: number, message?: string): void {
+    if (actual <= expected) {
+        const msg = message || `Expected ${actual} to be greater than ${expected}`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+}
+
+/**
+ * Assertion function for finding an item in an array
+ */
+export function assertArrayContains<T>(array: T[], predicate: (item: T) => boolean, message?: string): T {
+    const found = array.find(predicate);
+    if (!found) {
+        const msg = message || `Array does not contain expected item`;
+        throw new Error(`Assertion failed: ${msg}`);
+    }
+    return found;
+}

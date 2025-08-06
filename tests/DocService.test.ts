@@ -1,68 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { TestRunner } from '../common/TestRunner.js';
-
-/**
- * Assertion function for checking if a value is null
- */
-function assertNull(value: any, message?: string): void {
-    if (value !== null) {
-        const msg = message || `Expected null, but got ${value}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if a value is defined
- */
-function assertDefined(value: any, message?: string): void {
-    if (value === undefined) {
-        const msg = message || `Expected value to be defined, but got undefined`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if a value is an array
- */
-function assertIsArray(value: any, message?: string): void {
-    if (!Array.isArray(value)) {
-        const msg = message || `Expected array, but got ${typeof value}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if a string contains another string
- */
-function assertContains(haystack: string, needle: string, message?: string): void {
-    if (!haystack.includes(needle)) {
-        const msg = message || `Expected "${haystack}" to contain "${needle}"`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for checking if an array length is greater than a value
- */
-function assertGreaterThan(actual: number, expected: number, message?: string): void {
-    if (actual <= expected) {
-        const msg = message || `Expected ${actual} to be greater than ${expected}`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-}
-
-/**
- * Assertion function for finding an item in an array
- */
-function assertArrayContains<T>(array: T[], predicate: (item: T) => boolean, message?: string): T {
-    const found = array.find(predicate);
-    if (!found) {
-        const msg = message || `Array does not contain expected item`;
-        throw new Error(`Assertion failed: ${msg}`);
-    }
-    return found;
-}
+import {
+    assertNull,
+    assertDefined,
+    assertIsArray,
+    assertContains,
+    assertGreaterThan,
+    assertArrayContains
+} from '../common/CommonUtils.js';
 
 export async function runTests() {
     console.log("🚀 Starting DocService tests...");
