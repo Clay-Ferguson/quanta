@@ -9,11 +9,7 @@ import { httpServerUtil } from './HttpServerUtil.js';
 import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
-
-// Test imports - these will be compiled to .js at build time
-import { runTests as runCommonUtilsTests } from '../tests/CommonUtils.test.js';
-import { runTests as runVfsTests } from './plugins/docs/VFS/test/vfs.test.js';
-import { runTests as runLfsTests } from './plugins/docs/IFS/test/lfs.test.js';
+import { runAllTests } from './app.test.js';
 
 logInit();
 
@@ -205,22 +201,46 @@ server.listen(PORT, () => {
 
 await svrUtil.notifyPlugins(plugins, server);
 
+// Graceful shutdown function
+const gracefulShutdown = async () => {
+    console.log('Shutting down gracefully...');
+    
+    try {
+        // Close the HTTP/HTTPS server
+        if (server) {
+            await new Promise<void>((resolve, reject) => {
+                server.close((err) => {
+                    if (err) {
+                        console.error('Error closing server:', err);
+                        reject(err);
+                    } else {
+                        console.log('Server closed successfully');
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Close database connections if they exist
+        if (process.env.POSTGRES_HOST && pgdb) {
+            await pgdb.close();
+            console.log('Database connections closed');
+        }
+
+        console.log('Graceful shutdown complete');
+        process.exit(0);
+    } catch (error) {
+        console.error('Error during graceful shutdown:', error);
+        process.exit(1);
+    }
+};
+
 // Run tests if configured
 if (config.get("runTests") === "y") {
-    console.log("Running embedded tests...");
+    await runAllTests();
 
-    // todo-0: currently we just cram in the 'vfs' testing here, but in the future we want to have a plugin system for tests
-    // where each plugin can provide its own test entry point to run.
-    if (process.env.POSTGRES_HOST) {
-        await runVfsTests();
-    }
-    // run non-Docker tests here
-    else {
-        // Run CommonUtils tests
-        await runCommonUtilsTests();
-    
-        // Run DocService tests
-        await runLfsTests();
+    if (config.get("exitAfterTest") === "y") {
+        await gracefulShutdown();
     }
 }
 
