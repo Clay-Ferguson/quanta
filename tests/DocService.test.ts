@@ -1,3 +1,4 @@
+// todo-0: oops, AI was instructed to test LFS, but just used direct 'fs' so this isn't testing any of our code!
 import fs from 'fs';
 import path from 'path';
 import { TestRunner } from '../common/TestRunner.js';

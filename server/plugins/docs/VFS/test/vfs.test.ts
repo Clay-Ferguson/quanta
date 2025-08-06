@@ -1,9 +1,9 @@
-import pgdb from '../../../PGDB.js';
-import { simpleReadWriteTest, testFileOperations, testPathOperations, testErrorHandling, deleteFolder, renameFolder, testEnsurePath, testSetPublic, testSearch, resetTestEnvironment } from '../../../plugins/docs/VFS/test/VFSTest.js';
-import { testFolderRenameWithChildren } from '../../../plugins/docs/VFS/test/FolderRenameTest.js';
-import { pgdbTestMoveUp } from '../../../plugins/docs/VFS/test/FileMovesTest.js';
-import { pgdbTestSetFolderPublic } from '../../../plugins/docs/VFS/test/AuthTest.js';
-import { TestRunner } from '../../../../common/TestRunner.js';
+import pgdb from '../../../../PGDB.js';
+import { simpleReadWriteTest, testFileOperations, testPathOperations, testErrorHandling, deleteFolder, renameFolder, testEnsurePath, testSetPublic, testSearch, resetTestEnvironment } from './VFSTest.js';
+import { testFolderRenameWithChildren } from './FolderRenameTest.js';
+import { pgdbTestMoveUp } from './FileMovesTest.js';
+import { pgdbTestSetFolderPublic } from './AuthTest.js';
+import { TestRunner } from '../../../../../common/TestRunner.js';
 
 export async function runTests() {
     console.log("🚀 Starting VFS embedded tests...");

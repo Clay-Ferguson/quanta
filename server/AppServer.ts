@@ -207,7 +207,7 @@ if (config.get("runTests") === "y") {
     // todo-0: currently we just cram in the 'vfs' testing here, but in the future we want to have a plugin system for tests
     // where each plugin can provide its own test entry point to run.
     if (process.env.POSTGRES_HOST) {
-        const { runTests } = await import('./tests/plugins/docs/vfs.test.js');
+        const { runTests } = await import('./plugins/docs/VFS/test/vfs.test.js');
         await runTests();
     }
     // run non-Docker tests here
