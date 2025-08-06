@@ -64,7 +64,8 @@ export class TestRunner {
         }
         
         // Show global failure count across all test runners
-        report += `\n🌍 Global failures: ${TestRunner.globalFailCount}`;
+        const globalIcon = TestRunner.globalFailCount > 0 ? '❌❌❌' : '🌍';
+        report += `\n${globalIcon} Global failures: ${TestRunner.globalFailCount}`;
         report += `\n📝 Suites Completed: ${TestRunner.suitesRun.join(', ')}`;
         report += `\n`;
         
@@ -98,5 +99,12 @@ export class TestRunner {
     reset(): void {
         this.successCount = 0;
         this.failCount = 0;
+    }
+
+    /**
+     * Get the global failure count across all test runners
+     */
+    static getGlobalFailCount(): number {
+        return TestRunner.globalFailCount;
     }
 }

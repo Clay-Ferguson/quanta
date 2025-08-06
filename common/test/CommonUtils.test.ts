@@ -10,14 +10,16 @@ import {
     stripOrdinal,
     formatFullPath,
     createClickablePathComponents,
+    stripFileExtension,
+    fixName,
     assert,
     assertEqual,
     assertContains,
     assertMatches,
     assertArrayLength,
     assertObjectEqual
-} from '../common/CommonUtils.js';
-import { TestRunner } from '../common/TestRunner.js'; 
+} from '../CommonUtils.js';
+import { TestRunner } from '../TestRunner.js'; 
 
 export async function runTests() {
     console.log("🚀 Starting CommonUtils tests...");
@@ -103,6 +105,65 @@ export async function runTests() {
             const result = formatDateTime(timestamp);
             assertEqual(typeof result, 'string', 'Should return a string');
             assertMatches(result, /\d{2}\/\d{2}\/\d{4}/, 'Should match MM/DD/YYYY format');
+        });
+
+        await testRunner.run("formatDate - should handle edge cases", async () => {
+            assertEqual(typeof formatDate(0), 'string', 'Should handle Unix epoch');
+            assertEqual(typeof formatDate(-1), 'string', 'Should handle negative timestamps');
+            // Unix epoch should contain either 1969 or 69 (depending on locale and timezone)
+            const epochResult = formatDate(0);
+            assert(epochResult.includes('1969') || epochResult.includes('69'), 'Unix epoch should contain year reference');
+        });
+
+        await testRunner.run("formatDateTime - should handle edge cases", async () => {
+            assertEqual(typeof formatDateTime(0), 'string', 'Should handle Unix epoch');
+            assertEqual(typeof formatDateTime(-1), 'string', 'Should handle negative timestamps');
+            // Unix epoch should contain either 1969 or 69 (depending on locale and timezone)
+            const epochResult = formatDateTime(0);
+            assert(epochResult.includes('1969') || epochResult.includes('69'), 'Unix epoch should contain year reference');
+        });
+
+        // File Extension Stripping Tests
+        await testRunner.run("stripFileExtension - should remove extensions correctly", async () => {
+            assertEqual(stripFileExtension('document.pdf'), 'document');
+            assertEqual(stripFileExtension('archive.tar.gz'), 'archive.tar');
+            assertEqual(stripFileExtension('file.txt'), 'file');
+            assertEqual(stripFileExtension('image.jpeg'), 'image');
+        });
+
+        await testRunner.run("stripFileExtension - should handle files without extensions", async () => {
+            assertEqual(stripFileExtension('README'), 'README');
+            assertEqual(stripFileExtension('file.'), 'file');
+            assertEqual(stripFileExtension('noextension'), 'noextension');
+        });
+
+        await testRunner.run("stripFileExtension - should handle edge cases", async () => {
+            assertEqual(stripFileExtension(''), '');
+            assertEqual(stripFileExtension('.'), '');
+            assertEqual(stripFileExtension('..'), '.');
+            assertEqual(stripFileExtension('.hidden'), '');
+        });
+
+        // File Name Sanitization Tests
+        await testRunner.run("fixName - should replace invalid characters with underscores", async () => {
+            assertEqual(fixName('file@name#.txt'), 'file_name_.txt');
+            assertEqual(fixName('test/file\\name'), 'test_file_name');
+            assertEqual(fixName('file<>:"|?*.txt'), 'file_______.txt');
+            assertEqual(fixName('valid_file-name 123.txt'), 'valid_file-name 123.txt');
+        });
+
+        await testRunner.run("fixName - should preserve allowed characters", async () => {
+            assertEqual(fixName('file with spaces'), 'file with spaces');
+            assertEqual(fixName('file_name-123.txt'), 'file_name-123.txt');
+            assertEqual(fixName('UPPERCASE.TXT'), 'UPPERCASE.TXT');
+            assertEqual(fixName('lowercase.txt'), 'lowercase.txt');
+        });
+
+        await testRunner.run("fixName - should handle edge cases", async () => {
+            assertEqual(fixName(''), '');
+            assertEqual(fixName('!@#$%^&*()'), '__________');
+            assertEqual(fixName('...'), '...');
+            assertEqual(fixName('123'), '123');
         });
 
         // Path and Filename Utilities Tests
