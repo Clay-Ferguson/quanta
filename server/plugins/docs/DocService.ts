@@ -851,9 +851,9 @@ class DocService {
         const orderByDate = searchOrder === 'DATE';
 
         // Define timestamp regex for date filtering (optional)
-        // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
+        // Format: [YYYY/MM/DD HH:MM:SS AM/PM] - can appear anywhere in the line
         const dateRegex: string | null = requireDate ? 
-            "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+            "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
         // Define file inclusion/exclusion patterns
         const include = '--include="*.md" --include="*.txt" --exclude="_*" --exclude=".*"';
@@ -1062,9 +1062,9 @@ class DocService {
             console.log(`Simple search query: "${query}" with mode: "${searchMode}" in folder: "${absoluteSearchPath}"`);
 
             // Define timestamp regex for date filtering (optional)
-            // Format: [YYYY/MM/DD HH:MM:SS AM/PM]
+            // Format: [YYYY/MM/DD HH:MM:SS AM/PM] - can appear anywhere in the line
             const dateRegex: string | null = requireDate ? 
-                "^\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
+                "\\[20[0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] (AM|PM)\\]" : null;
 
             // Define file patterns for text files (excludes PDFs)
             const include = '--include="*.md" --include="*.txt" --exclude="*.pdf" --exclude="_*" --exclude=".*"';
