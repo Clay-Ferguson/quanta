@@ -922,7 +922,8 @@ class DocService {
                 fileResults;
                 
             // Now perform folder search if we have search terms or it's regex mode
-            if (!isEmptyQuery && (searchTerms.length > 0 || searchMode === 'REGEX')) {
+            // Skip folder search when requireDate is true since folder names won't contain timestamps
+            if (!isEmptyQuery && !requireDate && (searchTerms.length > 0 || searchMode === 'REGEX')) {
                 // For REGEX mode, use the original query as the search term
                 const folderSearchTerms = searchMode === 'REGEX' ? [query] : searchTerms;
                 
@@ -953,7 +954,7 @@ class DocService {
                     }
                 );
             } else {
-                // No folder search for empty queries or regex mode without terms
+                // No folder search for empty queries, requireDate=true, or regex mode without terms
                 if (cleanFileResults.length === 0) {
                     callback({ type: 'no_matches', message: 'No matches found' });
                 } else {
@@ -1235,7 +1236,7 @@ class DocService {
 
             if (dateRegex) {
                 // Search only timestamped files
-                searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -l -E "${escapedQuery}" "$file" 2>/dev/null; done`;
                 searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${escapedQuery}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
             } else {
                 // Search all files
@@ -1249,7 +1250,7 @@ class DocService {
             if (searchTerms.length === 1) {
                 // Single term: use simple string search for better compatibility
                 if (dateRegex) {
-                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l "${escapedTerms[0]}"`;
+                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -l "${escapedTerms[0]}" "$file" 2>/dev/null; done`;
                     searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q "${escapedTerms[0]}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
                 } else {
                     searchCommands.grepCmd = `grep -rl ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
@@ -1259,7 +1260,7 @@ class DocService {
                 // Multiple terms: use regex OR pattern
                 const regexPattern = escapedTerms.join('|');
                 if (dateRegex) {
-                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${regexPattern}"`;
+                    searchCommands.grepCmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -l -E "${regexPattern}" "$file" 2>/dev/null; done`;
                     searchCommands.pdfgrepCmd = `find "${absoluteSearchPath}" -name "*.pdf" -print0 | ${chain} sh -c 'for f; do if pdfgrep -q -e "${dateRegex}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh | ${chain} sh -c 'for f; do if pdfgrep -q -e "${regexPattern}" "$f" 2>/dev/null; then echo "$f"; fi; done' sh`;
                 } else {
                     searchCommands.grepCmd = `grep -rl ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
@@ -1515,15 +1516,16 @@ class DocService {
             if (isEmptyQuery) {
                 // For empty queries, return file-level results only (no line numbers)
                 if (dateRegex) {
-                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -l -E "${escapedQuery}"`;
+                    // Use tr to convert null separators to newlines for portability
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -l -E "${escapedQuery}" "$file"; done`;
                 } else {
                     cmd = `grep -rl ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
                 }
             } else {
                 // For non-empty queries, return line-by-line results
                 if (dateRegex) {
-                    // Filter to files with timestamps, then search
-                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${escapedQuery}"`;
+                    // Filter to files with timestamps, then search - use tr for portability
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -niH -E "${escapedQuery}" "$file"; done`;
                 } else {
                     // Search all matching files
                     cmd = `grep -rniH ${include} -E "${escapedQuery}" "${absoluteSearchPath}"`;
@@ -1536,7 +1538,8 @@ class DocService {
                 const regexPattern = escapedTerms.join('|');
 
                 if (dateRegex) {
-                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | ${chain} grep -niH -E "${regexPattern}"`;
+                    // Use tr to convert null separators to newlines for portability
+                    cmd = `grep -rlZ ${include} -E "${dateRegex}" "${absoluteSearchPath}" | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -niH -E "${regexPattern}" "$file"; done`;
                 } else {
                     cmd = `grep -rniH ${include} -E "${regexPattern}" "${absoluteSearchPath}"`;
                 }
@@ -1550,14 +1553,16 @@ class DocService {
                     for (let i = 0; i < escapedTerms.length; i++) {
                         baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
                     }
-                    cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
+                    // Use tr for portability instead of read -d
+                    cmd = `${baseCommand} | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -niH -E "${escapedTerms.join('|')}" "$file"; done`;
                 } else {
                     // Chain greps: files with term1 → files with term2 → ... → extract matches
                     let baseCommand = `grep -rlZ ${include} "${escapedTerms[0]}" "${absoluteSearchPath}"`;
                     for (let i = 1; i < escapedTerms.length; i++) {
                         baseCommand += ` | ${chain} grep -lZ -i "${escapedTerms[i]}"`;
                     }
-                    cmd = `${baseCommand} | ${chain} grep -niH -E "${escapedTerms.join('|')}"`;
+                    // Use tr for portability instead of read -d
+                    cmd = `${baseCommand} | tr '\\0' '\\n' | while read -r file; do [ -n "$file" ] && grep -niH -E "${escapedTerms.join('|')}" "$file"; done`;
                 }
             }
         }

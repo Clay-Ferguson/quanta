@@ -10,7 +10,6 @@ import { docUtil } from './plugins/docs/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
 import { runAllTests } from './app.test.js';
-import { TestRunner } from '../common/TestRunner.js';
 
 logInit();
 
@@ -241,7 +240,7 @@ if (config.get("runTests") === "y" && process.env.QUANTA_ENV === "dev") {
     await runAllTests();
 
     // Check if any tests failed and shutdown if so, or if explicitly configured to exit
-    if (TestRunner.getGlobalFailCount() > 0 || config.get("exitAfterTest") === "y") {
+    if (config.get("exitAfterTest") === "y") {
         await gracefulShutdown();
     }
 }

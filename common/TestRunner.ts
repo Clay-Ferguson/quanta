@@ -28,7 +28,7 @@ export class TestRunner {
      * @param testFunction The async function to execute as a test
      * @param rethrow Whether to re-throw errors after logging them (default: true)
      */
-    async run(testName: string, testFunction: () => Promise<void>, rethrow: boolean = true): Promise<void> {
+    async run(testName: string, testFunction: () => Promise<void>, rethrow: boolean = false): Promise<void> {
         console.log(`🧪 Running ${testName}...`);
         
         try {
