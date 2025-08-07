@@ -127,7 +127,7 @@ The testing system provides rich console output including:
 - ✅ Success counters
 - ❌ Failure details with stack traces
 - 📊 Comprehensive test suite summaries
-- 🌍 Global failure tracking across all test suites
+- ✅ Global failure tracking across all test suites
 - 📝 List of completed test suites
 
 Example output:
@@ -135,7 +135,7 @@ Example output:
 🧪 Running CommonUtils tests...
 ✅ Successful: 25
 🎉 All tests passed!
-🌍 Global failures: 0
+✅ Global failures: 0
 📝 Suites Completed: CommonUtils, LFS
 ```
 

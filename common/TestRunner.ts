@@ -62,9 +62,9 @@ export class TestRunner {
         } else {
             report += `\n⚠️  ${this.failCount} test(s) failed`;
         }
-        
+        report += `\n________________________________________`;
         // Show global failure count across all test runners
-        const globalIcon = TestRunner.globalFailCount > 0 ? '❌❌❌' : '🌍';
+        const globalIcon = TestRunner.globalFailCount > 0 ? '❌❌❌' : '✅✅✅';
         report += `\n${globalIcon} Global failures: ${TestRunner.globalFailCount}`;
         report += `\n📝 Suites Completed: ${TestRunner.suitesRun.join(', ')}`;
         report += `\n`;

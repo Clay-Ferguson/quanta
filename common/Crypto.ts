@@ -47,7 +47,8 @@ class Crypto {
             
             // Validate private key
             if (!secp.utils.isValidPrivateKey(privKeyBytes)) {
-                console.error("Invalid private key");
+                // Use console.log instead of console.error for validation failures (expected during testing)
+                console.log("Invalid private key");
                 return null;
             }
             
@@ -60,7 +61,8 @@ class Crypto {
                 publicKey: pubKeyHex,
             };
         } catch (error) {
-            console.error("Error creating key pair from private key:", error);
+            // Use console.log for expected validation errors during testing
+            console.log("Error creating key pair from private key:", error);
             return null;
         }
     }
@@ -102,7 +104,8 @@ class Crypto {
         try {
             return hexToBytes(privKeyHex);
         } catch (error) {
-            console.error("Error importing private key:", error);
+            // Use console.log for expected validation errors during testing
+            console.log("Error importing private key:", error);
             return null;
         }
     }
@@ -131,7 +134,8 @@ class Crypto {
         try {
             sig = secp.Signature.fromCompact(sigBytes);
         } catch (error) {
-            console.error("Error parsing signature:", error);
+            // Use console.log for expected parsing errors during testing
+            console.log("Error parsing signature:", error);
             return false;
         }
 

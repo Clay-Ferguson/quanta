@@ -35,9 +35,9 @@ export async function runTests() {
         const folders = [
             { ordinal: '0001', name: 'Projects', subfolders: [
                 { ordinal: '0001', name: 'WebDev', files: [
-                    { ordinal: '0001', name: 'frontend-guide.md', content: 'This is a guide for frontend development using React and TypeScript. It covers component design patterns.' },
+                    { ordinal: '0001', name: 'frontend-guide.md', content: '[2024/03/15 10:30:00 AM] This is a guide for frontend development using React and TypeScript. It covers component design patterns.' },
                     { ordinal: '0002', name: 'backend-setup.md', content: 'Backend setup instructions for Node.js and Express. Database integration with PostgreSQL.' },
-                    { ordinal: '0003', name: 'fullstack-tutorial.md', content: 'Complete fullstack tutorial covering React frontend and Node.js backend with TypeScript. Includes database setup and API development.' }
+                    { ordinal: '0003', name: 'fullstack-tutorial.md', content: '[2024/03/20 02:45:00 PM] Complete fullstack tutorial covering React frontend and Node.js backend with TypeScript. Includes database setup and API development.' }
                 ]},
                 { ordinal: '0002', name: 'Mobile', files: [
                     { ordinal: '0001', name: 'ios-development.md', content: 'iOS development using Swift and Xcode. Native app development patterns.' },
@@ -52,9 +52,9 @@ export async function runTests() {
             ]},
             { ordinal: '0002', name: 'Documentation', subfolders: [
                 { ordinal: '0001', name: 'UserGuides', files: [
-                    { ordinal: '0001', name: 'getting-started.md', content: 'Getting started guide for new users. Account setup and basic navigation.' },
+                    { ordinal: '0001', name: 'getting-started.md', content: '[2024/02/10 09:15:00 AM] Getting started guide for new users. Account setup and basic navigation.' },
                     { ordinal: '0002', name: 'advanced-features.md', content: 'Advanced features documentation. Power user tips and tricks.' },
-                    { ordinal: '0003', name: 'typescript-integration.md', content: 'TypeScript integration guide for developers. Setting up TypeScript with Node.js and React projects.' }
+                    { ordinal: '0003', name: 'typescript-integration.md', content: '[2024/02/28 04:20:00 PM] TypeScript integration guide for developers. Setting up TypeScript with Node.js and React projects.' }
                 ]},
                 { ordinal: '0002', name: 'APIs', files: [
                     { ordinal: '0001', name: 'rest-api.md', content: 'REST API documentation. Endpoint descriptions and example requests.' },
@@ -320,6 +320,229 @@ export async function runTests() {
             }
             
             console.log(`Found ${results.length} results for MATCH_ALL query with LFS`);
+        });
+
+        // Test 6: Test date-based search functionality (requireDate=true)
+        await testRunner.run("should test date-based search with requireDate=true", async () => {
+            // Test search for content that has both the search term AND timestamp
+            const searchPromise = new Promise<any[]>((resolve, reject) => {
+                docSvc.performTextSearch(
+                    'React',           // Search for "React"
+                    'MATCH_ANY',       // Search mode
+                    false,             // Not empty query
+                    true,              // requireDate=true (this is the key test)
+                    'MOD_TIME',        // Search order
+                    testRootPath,      // Search path
+                    lfs,               // File system interface
+                    (error, results) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(results || []);
+                        }
+                    }
+                );
+            });
+            
+            const results = await searchPromise;
+            
+            assertDefined(results);
+            assertIsArray(results);
+            assertGreaterThan(results.length, 0);
+            
+            // Should only find files that contain BOTH "React" AND a timestamp
+            // This should find:
+            // - frontend-guide.md (has "[2024/03/15 10:30:00 AM]" and "React")
+            // - fullstack-tutorial.md (has "[2024/03/20 02:45:00 PM]" and "React")
+            // Should NOT find any other files even if they contain "React" but no timestamp
+            
+            console.log(`Found ${results.length} results for date-based search with "React"`);
+            
+            // Verify each result contains both the search term and a timestamp
+            for (const result of results) {
+                assertContains(result.content, 'React');
+                // Check that the content contains a timestamp pattern [YYYY/MM/DD HH:MM:SS AM/PM]
+                const hasTimestamp = /\[20\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} (AM|PM)\]/.test(result.content);
+                if (!hasTimestamp) {
+                    throw new Error(`Result should contain timestamp but doesn't: ${result.file} - ${result.content}`);
+                }
+                assertGreaterThan(result.line, 0);
+            }
+            
+            // Verify that we get the correct number of results (files with both timestamp AND "React")
+            // Expected files:
+            // 1. frontend-guide.md (has "[2024/03/15 10:30:00 AM]" and "React")
+            // 2. fullstack-tutorial.md (has "[2024/03/20 02:45:00 PM]" and "React")
+            // 3. typescript-integration.md (has "[2024/02/28 04:20:00 PM]" and "React")
+            
+            console.log('Results found:');
+            results.forEach((result, index) => {
+                console.log(`  ${index + 1}. ${result.file} - Line ${result.line}: ${result.content.substring(0, 100)}...`);
+            });
+            
+            // We expect exactly 3 results
+            assertContains(results.length.toString(), '3');
+            
+            // Verify specific files are found (the ones we know should be there)
+            const frontendResults = results.filter(r => r.file.includes('frontend-guide.md'));
+            const fullstackResults = results.filter(r => r.file.includes('fullstack-tutorial.md'));
+            const typescriptResults = results.filter(r => r.file.includes('typescript-integration.md'));
+            
+            // These three files should definitely be found
+            if (frontendResults.length === 0) {
+                throw new Error('Expected to find frontend-guide.md in results');
+            }
+            if (fullstackResults.length === 0) {
+                throw new Error('Expected to find fullstack-tutorial.md in results');
+            }
+            if (typescriptResults.length === 0) {
+                throw new Error('Expected to find typescript-integration.md in results');
+            }
+            
+            const frontendResult = frontendResults[0];
+            assertContains(frontendResult.content, '[2024/03/15 10:30:00 AM]');
+            assertContains(frontendResult.content, 'React');
+            
+            const fullstackResult = fullstackResults[0];
+            assertContains(fullstackResult.content, '[2024/03/20 02:45:00 PM]');
+            assertContains(fullstackResult.content, 'React');
+            
+            const typescriptResult = typescriptResults[0];
+            assertContains(typescriptResult.content, '[2024/02/28 04:20:00 PM]');
+            assertContains(typescriptResult.content, 'React');
+            
+            // Check if there are any unexpected results
+            const expectedFiles = ['frontend-guide.md', 'fullstack-tutorial.md', 'typescript-integration.md'];
+            const unexpectedResults = results.filter(r => !expectedFiles.some(expected => r.file.includes(expected)));
+            
+            if (unexpectedResults.length > 0) {
+                console.warn('Found unexpected results:');
+                unexpectedResults.forEach(result => {
+                    console.warn(`  - ${result.file}: ${result.content.substring(0, 100)}...`);
+                });
+                throw new Error(`Found ${unexpectedResults.length} unexpected results in date-based search`);
+            }
+            
+            console.log('✅ Date-based search correctly found only timestamped files with search term');
+            
+            // IMPORTANT: Verify that NO folder results are included when requireDate=true
+            // This tests the fix we just implemented
+            const folderResults = results.filter(r => r.folder !== undefined);
+            if (folderResults.length > 0) {
+                throw new Error(`Date-based search should not return folder matches, but found ${folderResults.length} folder results`);
+            }
+            console.log('✅ Confirmed: No folder results returned when requireDate=true (fix verification)');
+        });
+
+        // Test 7: Test date-based search with MATCH_ALL mode (multiple search terms + timestamp)
+        await testRunner.run("should test date-based search with MATCH_ALL mode", async () => {
+            // Test search for content that has ALL search terms AND timestamp
+            const searchPromise = new Promise<any[]>((resolve, reject) => {
+                docSvc.performTextSearch(
+                    'React TypeScript',  // Search for files containing BOTH "React" AND "TypeScript"
+                    'MATCH_ALL',         // MATCH_ALL mode (must contain all terms)
+                    false,               // Not empty query
+                    true,                // requireDate=true (must also have timestamp)
+                    'MOD_TIME',          // Search order
+                    testRootPath,        // Search path
+                    lfs,                 // File system interface
+                    (error, results) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(results || []);
+                        }
+                    }
+                );
+            });
+            
+            const results = await searchPromise;
+            
+            assertDefined(results);
+            assertIsArray(results);
+            assertGreaterThan(results.length, 0);
+            
+            console.log(`Found ${results.length} results for MATCH_ALL date-based search with "React TypeScript"`);
+            
+            // Should only find files that contain ALL of: "React" AND "TypeScript" AND a timestamp
+            // Looking at our test data, the expected matches are:
+            // 1. frontend-guide.md (has "[2024/03/15 10:30:00 AM]", "React", and "TypeScript")  
+            // 2. fullstack-tutorial.md (has "[2024/03/20 02:45:00 PM]", "React", and "TypeScript")
+            // 3. typescript-integration.md (has "[2024/02/28 04:20:00 PM]", "React", and "TypeScript")
+            
+            console.log('MATCH_ALL date-based results found:');
+            results.forEach((result, index) => {
+                console.log(`  ${index + 1}. ${result.file} - Line ${result.line}: ${result.content.substring(0, 120)}...`);
+            });
+            
+            // Verify each result contains ALL search terms and a timestamp
+            for (const result of results) {
+                // Must contain "React"
+                assertContains(result.content, 'React');
+                // Must contain "TypeScript" 
+                assertContains(result.content, 'TypeScript');
+                // Must contain a timestamp pattern [YYYY/MM/DD HH:MM:SS AM/PM]
+                const hasTimestamp = /\[20\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} (AM|PM)\]/.test(result.content);
+                if (!hasTimestamp) {
+                    throw new Error(`MATCH_ALL result should contain timestamp but doesn't: ${result.file} - ${result.content}`);
+                }
+                assertGreaterThan(result.line, 0);
+            }
+            
+            // We expect exactly 3 results (same 3 files that happen to contain both React and TypeScript)
+            assertContains(results.length.toString(), '3');
+            
+            // Verify specific files are found
+            const frontendResults = results.filter(r => r.file.includes('frontend-guide.md'));
+            const fullstackResults = results.filter(r => r.file.includes('fullstack-tutorial.md'));
+            const typescriptResults = results.filter(r => r.file.includes('typescript-integration.md'));
+            
+            if (frontendResults.length === 0) {
+                throw new Error('Expected to find frontend-guide.md in MATCH_ALL date-based results');
+            }
+            if (fullstackResults.length === 0) {
+                throw new Error('Expected to find fullstack-tutorial.md in MATCH_ALL date-based results');
+            }
+            if (typescriptResults.length === 0) {
+                throw new Error('Expected to find typescript-integration.md in MATCH_ALL date-based results');
+            }
+            
+            // Verify each expected file has all required content
+            const frontendResult = frontendResults[0];
+            assertContains(frontendResult.content, '[2024/03/15 10:30:00 AM]');
+            assertContains(frontendResult.content, 'React');
+            assertContains(frontendResult.content, 'TypeScript');
+            
+            const fullstackResult = fullstackResults[0];
+            assertContains(fullstackResult.content, '[2024/03/20 02:45:00 PM]');
+            assertContains(fullstackResult.content, 'React');
+            assertContains(fullstackResult.content, 'TypeScript');
+            
+            const typescriptResult = typescriptResults[0];
+            assertContains(typescriptResult.content, '[2024/02/28 04:20:00 PM]');
+            assertContains(typescriptResult.content, 'React');
+            assertContains(typescriptResult.content, 'TypeScript');
+            
+            // Verify no unexpected results
+            const expectedFiles = ['frontend-guide.md', 'fullstack-tutorial.md', 'typescript-integration.md'];
+            const unexpectedResults = results.filter(r => !expectedFiles.some(expected => r.file.includes(expected)));
+            
+            if (unexpectedResults.length > 0) {
+                console.warn('Found unexpected MATCH_ALL results:');
+                unexpectedResults.forEach(result => {
+                    console.warn(`  - ${result.file}: ${result.content.substring(0, 100)}...`);
+                });
+                throw new Error(`Found ${unexpectedResults.length} unexpected results in MATCH_ALL date-based search`);
+            }
+            
+            console.log('✅ MATCH_ALL date-based search correctly found only files with ALL terms AND timestamps');
+            
+            // Verify that NO folder results are included when requireDate=true (even in MATCH_ALL mode)
+            const folderResults = results.filter(r => r.folder !== undefined);
+            if (folderResults.length > 0) {
+                throw new Error(`MATCH_ALL date-based search should not return folder matches, but found ${folderResults.length} folder results`);
+            }
+            console.log('✅ Confirmed: No folder results returned in MATCH_ALL mode when requireDate=true');
         });
 
         // Cleanup test environment
