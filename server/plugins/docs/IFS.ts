@@ -1,7 +1,4 @@
-
-// import * as fs from 'fs';
-
-import { TreeNode } from "../../../../common/types/CommonTypes.js";
+import { TreeNode } from "../../../common/types/CommonTypes.js";
 
 // Similar to 'fs.Stats', but for our virtual file system (VFS) or local file system (LFS)
 export interface IFSStats {

@@ -1,4 +1,4 @@
-import { IFS, IFSStats } from '../IFS/IFS.js'
+import { IFS, IFSStats } from '../IFS.js'
 import pgdb from '../../../PGDB.js';
 import { config } from '../../../Config.js';
 import { TreeNode, UserProfileCompact } from '../../../../common/types/CommonTypes.js';

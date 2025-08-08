@@ -4,7 +4,7 @@ import {  TreeRender_Response } from "../../../common/types/EndpointTypes.js";
 import { AuthenticatedRequest, handleError, svrUtil, throwError } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
 import { docUtil } from "./DocUtil.js";
-import { IFS } from "./IFS/IFS.js";
+import { IFS } from "./IFS.js";
 import { runTrans } from "../../Transactional.js";
 import fs from 'fs';
 import path from 'path';

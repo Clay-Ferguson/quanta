@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { handleError } from "../../ServerUtil.js";
 import { config } from "../../Config.js";
-import { IFS } from './IFS/IFS.js';
+import { IFS } from './IFS.js';
 import vfs from './VFS/VFS.js';
-import lfs from './IFS/LFS.js';
+import lfs from './LFS/LFS.js';
 const { exec } = await import('child_process');
 
 /**

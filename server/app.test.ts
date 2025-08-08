@@ -2,7 +2,7 @@
 import { runTests as runCommonUtilsTests } from '../common/test/CommonUtils.test.js';
 import { runTests as runCryptoTests } from '../common/test/Crypto.test.js';
 import { runTests as runVfsTests } from './plugins/docs/VFS/test/vfs.test.js';
-import { runTests as runLfsTests } from './plugins/docs/IFS/test/lfs.test.js';
+import { runTests as runLfsTests } from './plugins/docs/LFS/test/lfs.test.js';
 
 /**
  * Run all configured tests based on the environment
