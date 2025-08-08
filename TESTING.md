@@ -119,26 +119,6 @@ All test files follow the pattern `*.test.ts` and are located either in:
 5. Global test results are accumulated and reported
 6. Application continues normal startup after tests complete
 
-### Test Output
-
-The testing system provides rich console output including:
-
-- 🧪 Individual test execution indicators
-- ✅ Success counters
-- ❌ Failure details with stack traces
-- 📊 Comprehensive test suite summaries
-- ✅ Global failure tracking across all test suites
-- 📝 List of completed test suites
-
-Example output:
-```
-🧪 Running CommonUtils tests...
-✅ Successful: 25
-🎉 All tests passed!
-✅ Global failures: 0
-📝 Suites Completed: CommonUtils, LFS
-```
-
 ## Writing Tests
 
 ### Test Structure

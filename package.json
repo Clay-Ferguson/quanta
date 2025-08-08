@@ -10,6 +10,7 @@
     "build": "yarn build:client && yarn build:server",
     "start": "node dist/server/AppServer.js",
     "dev": "yarn build && yarn start",
+    "test": "./build/dev/build-and-start.sh",
     "test:docker": "./build/test/docker-run.sh",
     "postinstall": "[ -f package-lock.json ] && rm package-lock.json || true"
   },
