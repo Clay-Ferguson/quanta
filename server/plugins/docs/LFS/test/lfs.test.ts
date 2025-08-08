@@ -1,4 +1,4 @@
-// LFS Tests - Testing the actual Local File System implementation
+// LFS Tests - Testing the actual Local File System implementation 
 import lfs from '../LFS.js';
 import path from 'path';
 import { TestRunner } from '../../../../../common/TestRunner.js';
@@ -543,6 +543,48 @@ export async function runTests() {
                 throw new Error(`MATCH_ALL date-based search should not return folder matches, but found ${folderResults.length} folder results`);
             }
             console.log('✅ Confirmed: No folder results returned in MATCH_ALL mode when requireDate=true');
+        });
+
+        // Test 8: Security - checkFileAccess allows paths inside root
+        await testRunner.run("security: should allow access to files within the root", async () => {
+            // Choose a known in-root file
+            const inRootFile = lfs.pathJoin(testRootPath, '0001_Projects', '0001_WebDev', '0001_frontend-guide.md');
+            // Should not throw
+            lfs.checkFileAccess(inRootFile, testRootPath);
+            // Exact root should also be allowed
+            lfs.checkFileAccess(testRootPath, testRootPath);
+            console.log('✅ checkFileAccess allowed in-root paths');
+        });
+
+        // Test 9: Security - checkFileAccess blocks traversal outside root
+        await testRunner.run("security: should block directory traversal outside root", async () => {
+            const traversalPath = lfs.pathJoin(testRootPath, '../outside.txt');
+            let threw = false;
+            try {
+                lfs.checkFileAccess(traversalPath, testRootPath);
+            } catch {
+                threw = true;
+                console.log('✅ checkFileAccess blocked traversal path:', traversalPath);
+            }
+            if (!threw) {
+                throw new Error('checkFileAccess should have thrown for traversal path outside root');
+            }
+        });
+
+        // Test 10: Security - checkFileAccess blocks absolute paths outside root
+        await testRunner.run("security: should block absolute paths outside root", async () => {
+            // Use a well-known absolute path on Linux
+            const absoluteOutside = '/etc/hosts';
+            let threw = false;
+            try {
+                lfs.checkFileAccess(absoluteOutside, testRootPath);
+            } catch {
+                threw = true;
+                console.log('✅ checkFileAccess blocked absolute outside path:', absoluteOutside);
+            }
+            if (!threw) {
+                throw new Error('checkFileAccess should have thrown for absolute path outside root');
+            }
         });
 
         // Cleanup test environment
