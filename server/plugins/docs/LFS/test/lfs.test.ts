@@ -752,6 +752,109 @@ export async function runTests() {
             assertContains(isNull.toString(), 'true');
         });
 
+        // Test 19: Content Loading - readdirEx should load content only for files when requested
+        await testRunner.run("content: readdirEx should load file content when requested", async () => {
+            const ownerId = 1;
+
+            // Resolve current (possibly ordinalized) test root folder name
+            const rootEntries = await lfs.readdir(ownerId, publicFolder.path);
+            const match = rootEntries.find((name: string) => name.replace(/^\d{4}_/, '') === testRelativePath);
+            const testRootCurrentPath = lfs.pathJoin(publicFolder.path, match || testRelativePath);
+
+            // Resolve ordinalized names for nested directories
+            const level1Entries = await lfs.readdir(ownerId, testRootCurrentPath);
+            const projectsDirName = level1Entries.find((name: string) => name.replace(/^\d{4}_/, '') === 'Projects');
+            if (!projectsDirName) {
+                throw new Error('Projects directory not found under test root');
+            }
+            const projectsPath = lfs.pathJoin(testRootCurrentPath, projectsDirName);
+
+            const level2Entries = await lfs.readdir(ownerId, projectsPath);
+            const webdevDirName = level2Entries.find((name: string) => name.replace(/^\d{4}_/, '') === 'WebDev');
+            if (!webdevDirName) {
+                throw new Error('WebDev directory not found under Projects');
+            }
+
+            // Folder that contains files
+            const webdevPath = lfs.pathJoin(projectsPath, webdevDirName);
+            const nodesWithContent = await lfs.readdirEx(ownerId, webdevPath, true);
+            assertDefined(nodesWithContent);
+            assertIsArray(nodesWithContent);
+            assertGreaterThan(nodesWithContent.length, 0);
+
+            // Verify that a known file has its content loaded
+            const frontendNode = nodesWithContent.find((n: any) => n.name.endsWith('frontend-guide.md'));
+            assertDefined(frontendNode);
+            if (frontendNode) {
+                if (frontendNode.is_directory !== undefined) {
+                    assertContains(frontendNode.is_directory.toString(), 'false');
+                }
+                assertDefined(frontendNode.content);
+                assertContains(frontendNode.content || '', 'frontend development using React and TypeScript');
+            }
+
+            // Root contains only directories; even with loadContent=true, directory nodes must not include content
+            const rootNodesWithContent = await lfs.readdirEx(ownerId, testRootCurrentPath, true);
+            const projectsDir = rootNodesWithContent.find((n: any) => (n.name as string).replace(/^\d{4}_/, '').includes('Projects'));
+            assertDefined(projectsDir);
+            if (projectsDir) {
+                if (projectsDir.is_directory !== undefined) {
+                    assertContains(projectsDir.is_directory.toString(), 'true');
+                }
+                const hasContent = !!projectsDir.content;
+                if (hasContent) {
+                    throw new Error('Directory node should not include content when loadContent=true');
+                }
+            }
+        });
+
+        // Test 20: Metadata - readdirEx should return accurate metadata and stable, sorted names
+        await testRunner.run("metadata: readdirEx should return metadata and stable sorted names", async () => {
+            const ownerId = 1;
+
+            // Resolve current (possibly ordinalized) test root folder name
+            const rootEntries = await lfs.readdir(ownerId, publicFolder.path);
+            const match = rootEntries.find((name: string) => name.replace(/^\d{4}_/, '') === testRelativePath);
+            const testRootCurrentPath = lfs.pathJoin(publicFolder.path, match || testRelativePath);
+
+            const nodes1 = await lfs.readdirEx(ownerId, testRootCurrentPath, false);
+            assertDefined(nodes1);
+            assertIsArray(nodes1);
+            assertGreaterThan(nodes1.length, 0);
+
+            // Validate metadata and ordinalized names
+            for (const n of nodes1 as any[]) {
+                assertDefined(n.createTime);
+                assertDefined(n.modifyTime);
+                if (typeof n.createTime !== 'number' || typeof n.modifyTime !== 'number') {
+                    throw new Error('Expected numeric createTime/modifyTime');
+                }
+                if (!/^\d{4}_/.test(n.name)) {
+                    throw new Error(`Expected ordinalized name but got: ${n.name}`);
+                }
+            }
+
+            // Validate sorting is case-insensitive by name
+            const names1 = (nodes1 as any[]).map(n => (n.name as string).toLowerCase());
+            const sorted = [...names1].sort((a, b) => a.localeCompare(b));
+            const isSorted = names1.length === sorted.length && names1.every((v, i) => v === sorted[i]);
+            if (!isSorted) {
+                throw new Error('readdirEx results are not sorted case-insensitively by name');
+            }
+
+            // Idempotency: repeated calls should not re-ordinalize or change set of names
+            const nodes2 = await lfs.readdirEx(ownerId, testRootCurrentPath, false);
+            const names2 = (nodes2 as any[]).map(n => n.name as string);
+            if (names1.length !== names2.length) {
+                throw new Error('readdirEx idempotency failed: length mismatch across calls');
+            }
+            for (const name of (nodes1 as any[]).map(n => n.name as string)) {
+                if (!names2.includes(name)) {
+                    throw new Error('readdirEx idempotency failed: missing name on second call: ' + name);
+                }
+            }
+        });
+
         // Cleanup test environment
         await testRunner.run("Cleanup test environment", async () => {
             await cleanupTestEnvironment();
