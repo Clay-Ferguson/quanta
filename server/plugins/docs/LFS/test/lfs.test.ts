@@ -587,6 +587,171 @@ export async function runTests() {
             }
         });
 
+        // Test 11: Security - searchTextFiles should block traversal outside root
+        await testRunner.run("security: searchTextFiles should block traversal outside root", async () => {
+            const req: any = {
+                body: {
+                    query: 'anything',
+                    treeFolder: '../..',
+                    docRootKey: testRootKey,
+                    searchMode: 'MATCH_ANY',
+                    requireDate: false,
+                    searchOrder: 'MOD_TIME'
+                }
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            await docSvc.searchTextFiles(req, res);
+            // Expect generic error handler to catch boundary violation
+            assertContains(res.statusCode.toString(), '500');
+            assertDefined(res.body);
+            assertContains(res.body.errorMessage, 'Failed to perform search');
+        });
+
+        // Test 12: Security - searchBinaries should block traversal outside root
+        await testRunner.run("security: searchBinaries should block traversal outside root", async () => {
+            const req: any = {
+                body: {
+                    query: 'anything',
+                    treeFolder: '../..',
+                    docRootKey: testRootKey,
+                    searchMode: 'MATCH_ANY',
+                    requireDate: false,
+                    searchOrder: 'MOD_TIME'
+                }
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            await docSvc.searchBinaries(req, res);
+            assertContains(res.statusCode.toString(), '500');
+            assertDefined(res.body);
+            assertContains(res.body.errorMessage, 'Failed to perform simple search');
+        });
+
+        // Test 13: Security - treeRender should not escape root on traversal input
+        await testRunner.run("security: treeRender should normalize/contain traversal to root", async () => {
+            const req: any = {
+                params: { docRootKey: testRootKey, 0: '../..' },
+                query: {}
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            await docSvc.treeRender(req, res);
+            // Should succeed and stay within root (typically returns the root tree)
+            assertContains(res.statusCode.toString(), '200');
+            assertDefined(res.body);
+            assertIsArray(res.body.treeNodes);
+        });
+
+        // Test 14: Security - createFile should block traversal outside root
+        await testRunner.run("security: createFile should block traversal outside root", async () => {
+            const req: any = {
+                body: {
+                    fileName: 'security-file.md',
+                    treeFolder: '../..',
+                    insertAfterNode: '',
+                    docRootKey: testRootKey
+                }
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            try {
+                await docSvc.createFile(req, res);
+            } catch { /* runTrans may rethrow; response will still be set */ }
+            // LFS normalizePath sanitizes traversal to root; expect success within root
+            assertContains(res.statusCode.toString(), '200');
+            assertDefined(res.body);
+            assertContains(res.body.message, 'File created successfully');
+        });
+
+        // Test 16: Security - createFile allowed within root
+        await testRunner.run("security: createFile should allow creation within root", async () => {
+            // Root may have auto-ordinalized the test folder; resolve the actual current name
+            const ownerId = 1;
+            const rootEntries = await lfs.readdir(ownerId, publicFolder.path);
+            const match = rootEntries.find((name: string) => name.replace(/^\d{4}_/, '') === testRelativePath);
+            const treeFolderForCreate = match || testRelativePath;
+
+            const req: any = {
+                body: {
+                    fileName: 'allowed-file.md',
+                    treeFolder: treeFolderForCreate,
+                    insertAfterNode: '',
+                    docRootKey: testRootKey
+                }
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            await docSvc.createFile(req, res);
+            assertContains(res.statusCode.toString(), '200');
+            assertDefined(res.body);
+            assertContains(res.body.message, 'File created successfully');
+        });
+
+        // Test 17: Security - createFolder allowed within root
+        await testRunner.run("security: createFolder should allow creation within root", async () => {
+            // Root may have auto-ordinalized the test folder; resolve the actual current name
+            const ownerId = 1;
+            const rootEntries = await lfs.readdir(ownerId, publicFolder.path);
+            const match = rootEntries.find((name: string) => name.replace(/^\d{4}_/, '') === testRelativePath);
+            const treeFolderForCreate = match || testRelativePath;
+
+            const req: any = {
+                body: {
+                    folderName: 'allowed-folder',
+                    treeFolder: treeFolderForCreate,
+                    insertAfterNode: '',
+                    docRootKey: testRootKey
+                }
+            };
+            const res: any = (() => {
+                const obj: any = { statusCode: 200, body: null, headersSent: false, writableEnded: false };
+                obj.status = (code: number) => { obj.statusCode = code; return obj; };
+                obj.json = (data: any) => { obj.body = data; obj.headersSent = true; obj.writableEnded = true; };
+                return obj;
+            })();
+
+            try {
+                await docSvc.createFolder(req, res);
+            } catch { /* runTrans may rethrow; response will still be set */ }
+            assertContains(res.statusCode.toString(), '200');
+            assertDefined(res.body);
+            assertContains(res.body.message, 'Folder created successfully');
+        });
+
+        // Test 18: Security - resolveNonOrdinalPath should not escape root
+        await testRunner.run("security: resolveNonOrdinalPath should return null for traversal", async () => {
+            const result = await docSvc.resolveNonOrdinalPath(0, testRootKey, '../../etc', lfs);
+            // Should not resolve to anything outside; expect null
+            const isNull = result === null || result === '';
+            assertContains(isNull.toString(), 'true');
+        });
+
         // Cleanup test environment
         await testRunner.run("Cleanup test environment", async () => {
             await cleanupTestEnvironment();

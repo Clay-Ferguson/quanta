@@ -679,7 +679,7 @@ class DocService {
             const ifs = docUtil.getFileSystem(docRootKey);
             // Construct and validate search path
             const absoluteSearchPath = ifs.pathJoin(root, treeFolder);
-            // ifs.checkFileAccess(absoluteSearchPath, root);
+            ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });
@@ -781,7 +781,7 @@ class DocService {
         exec(findCommand, (error, stdout, stderr) => {
             if (error) {
                 // Exit code 1 means no matches (not an error for find)
-                if (error.code === 1) {
+                if ((error as any).code === 1) {
                     console.log('No folder matches found for search query');
                     callback(null, []);
                     return;
@@ -877,7 +877,7 @@ class DocService {
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
                 // Exit code 1 means no matches (not an error)
-                if (error.code === 1) {
+                if ((error as any).code === 1) {
                     console.log('No file content matches found for search query');
                     // Continue to folder search even if no file matches
                 } else {
@@ -1051,9 +1051,10 @@ class DocService {
                 return;
             }
             
-            // Construct and validate search path
-            const absoluteSearchPath = path.join(root, treeFolder);
-            // ifs.checkFileAccess(absoluteSearchPath, root);
+            // Get filesystem and construct search path with boundary check
+            const ifs = docUtil.getFileSystem(docRootKey);
+            const absoluteSearchPath = ifs.pathJoin(root, treeFolder);
+            ifs.checkFileAccess(absoluteSearchPath, root);
             
             if (!fs.existsSync(absoluteSearchPath)) {
                 res.status(404).json({ error: 'Search directory not found' });
