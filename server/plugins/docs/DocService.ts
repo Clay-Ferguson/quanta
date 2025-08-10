@@ -755,64 +755,84 @@ class DocService {
         let findCommand: string;
 
         if (searchMode === 'REGEX') {
-            // For REGEX mode, use the first term as the regex pattern
+            // For REGEX mode, use the first term as the regex pattern and search both files and folders
             const regexPattern = searchTerms[0];
-            // Find directories matching the regex pattern (case-insensitive)
-            findCommand = `find "${absoluteSearchPath}" -type d -iregex ".*${regexPattern}.*"`;
+            // -iregex matches the whole path; escape parentheses for /bin/sh
+            findCommand = `find "${absoluteSearchPath}" \\( -type d -o -type f \\) -iregex ".*${regexPattern}.*"`;
         } else if (searchMode === 'MATCH_ANY') {
-            // For MATCH_ANY, find directories containing any of the terms
+            // For MATCH_ANY, find items (dirs and files) containing any of the terms
             const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
             const namePatterns = escapedTerms.map(term => `-iname "*${term}*"`).join(' -o ');
-            findCommand = `find "${absoluteSearchPath}" -type d \\( ${namePatterns} \\)`;
+            findCommand = `find "${absoluteSearchPath}" \\( -type d -o -type f \\) \\( ${namePatterns} \\)`;
         } else {
-            // For MATCH_ALL, find directories containing all terms
-            // We'll use multiple find commands piped together
+            // For MATCH_ALL, find items (dirs and files) containing all terms by grepping the results
             const escapedTerms = searchTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-            findCommand = `find "${absoluteSearchPath}" -type d`;
-            
-            // Chain grep filters for each term
+            findCommand = `find "${absoluteSearchPath}" \\( -type d -o -type f \\)`;
+            // Chain grep filters for each term (case-insensitive)
             for (const term of escapedTerms) {
                 findCommand += ` | grep -i "${term}"`;
             }
         }
 
-        console.log(`Executing folder search command: ${findCommand}`);
+        console.log(`Executing name search command: ${findCommand}`);
 
         exec(findCommand, (error, stdout, stderr) => {
             if (error) {
-                // Exit code 1 means no matches (not an error for find)
+                // Exit code 1 means no matches (not an error for find/grep pipelines)
                 if ((error as any).code === 1) {
-                    console.log('No folder matches found for search query');
+                    console.log('No name matches found for search query');
                     callback(null, []);
                     return;
                 }
-                console.error('Find command error:', error);
-                callback({ type: 'execution', message: 'Folder search command failed' });
+                console.error('Name search command error:', error);
+                callback({ type: 'execution', message: 'Name search command failed' });
                 return;
             }
 
             if (stderr) {
-                console.warn('Find stderr:', stderr);
+                console.warn('Name search stderr:', stderr);
             }
 
-            // Parse find output and build folder results
+            // Parse output and build results, deduplicating paths
             const results: any[] = [];
+            const seen = new Set<string>();
 
             if (stdout.trim()) {
-                const folderPaths = stdout.trim().split('\n');
+                const itemPaths = stdout.trim().split('\n');
 
-                for (const folderPath of folderPaths) {
-                    if (folderPath && folderPath !== absoluteSearchPath) {
-                        const relativePath = path.relative(absoluteSearchPath, folderPath);
-                        
-                        // Extract the folder name part (after ordinal prefix if present)
-                        const folderName = path.basename(folderPath);
-                        const matchedName = folderName.replace(/^\d{4}_/, ''); // Remove ordinal prefix
-                        
-                        results.push({
-                            file: relativePath,
-                            folder: matchedName
-                        });
+                for (const itemPath of itemPaths) {
+                    if (!itemPath) continue;
+
+                    try {
+                        const relativePath = path.relative(absoluteSearchPath, itemPath);
+                        if (!relativePath || seen.has(relativePath)) {
+                            continue;
+                        }
+
+                        const stat = fs.statSync(itemPath);
+                        if (stat.isDirectory()) {
+                            // Skip the root directory itself
+                            if (itemPath === absoluteSearchPath) {
+                                continue;
+                            }
+                            const folderName = path.basename(itemPath);
+                            const matchedName = folderName.replace(/^\d{4}_/, ''); // Remove ordinal prefix
+                            results.push({
+                                file: relativePath,
+                                folder: matchedName
+                            });
+                        } else if (stat.isFile()) {
+                            // File name match: return file-level result (no content/line)
+                            results.push({
+                                file: relativePath,
+                                line: -1,
+                                content: ''
+                            });
+                        }
+
+                        seen.add(relativePath);
+                    } catch (e) {
+                        console.warn('Failed processing path from name search:', itemPath, e);
                     }
                 }
             }
@@ -924,17 +944,14 @@ class DocService {
             // Now perform folder search if we have search terms or it's regex mode
             // Skip folder search when requireDate is true since folder names won't contain timestamps
             if (!isEmptyQuery && !requireDate && (searchTerms.length > 0 || searchMode === 'REGEX')) {
-                // For REGEX mode, use the original query as the search term
                 const folderSearchTerms = searchMode === 'REGEX' ? [query] : searchTerms;
-                
                 this.performFolderSearch(
                     folderSearchTerms,
                     searchMode,
                     absoluteSearchPath,
                     (folderError, folderResults) => {
                         if (folderError) {
-                            console.warn('Folder search failed:', folderError);
-                            // Continue with just file results if folder search fails
+                            console.warn('Folder/name search failed:', folderError);
                             if (cleanFileResults.length === 0) {
                                 callback({ type: 'no_matches', message: 'No matches found' });
                             } else {
@@ -942,10 +959,12 @@ class DocService {
                             }
                             return;
                         }
-                        
-                        // Combine file and folder results
-                        const combinedResults = [...cleanFileResults, ...(folderResults || [])];
-                        
+
+                        // Deduplicate: if a file already matched by content, don't add again from name search
+                        const fileSet = new Set((cleanFileResults || []).map((r: any) => r.file));
+                        const filteredNameResults = (folderResults || []).filter((r: any) => r.folder !== undefined || !fileSet.has(r.file));
+                        const combinedResults = [...cleanFileResults, ...filteredNameResults];
+
                         if (combinedResults.length === 0) {
                             callback({ type: 'no_matches', message: 'No matches found' });
                         } else {

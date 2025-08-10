@@ -20,7 +20,7 @@ interface SearchResult {
 interface SearchResultItemProps {
     filePath: string;
     fileResults: SearchResult[];
-    onFileClick: (filePath: string, vfsType: string) => void;
+    onFileClick: (filePath: string, vfsType: string, isFolder: boolean) => void;
     vfsType: string;
 }
 
@@ -34,7 +34,7 @@ function SearchResultItem({ filePath, fileResults, onFileClick, vfsType }: Searc
     return (
         <div 
             className="bg-gray-700 rounded-lg p-3 hover:bg-gray-600 cursor-pointer transition-colors"
-            onClick={() => onFileClick(filePath, vfsType)}
+            onClick={() => onFileClick(filePath, vfsType, isFolder)}
         >
             <div className={`font-medium flex items-center gap-2 ${isFolder ? 'text-blue-400' : 'text-gray-200'}`}>
                 {isFolder ? `📁 ${formatFullPath(filePath)}` : `📄 ${formatFullPath(filePath)}`}
@@ -138,7 +138,26 @@ export default function SearchViewPage() {
         }
     };
     
-    const fileClicked = (filePath: string, vfsType: string) => { 
+    const fileClicked = (filePath: string, vfsType: string, isFolder: boolean) => { 
+        if (isFolder) {
+            // filePath is a folder path relative to the search origin
+            let searchRootFolder = gs.docsSearchOriginFolder || '/';
+            if (searchRootFolder === '/') {
+                searchRootFolder = '';
+            }
+            const targetFolderPath = vfsType === 'vfs' ? filePath : (searchRootFolder ? `${searchRootFolder}/${filePath}` : filePath);
+
+            gd({ type: 'setTreeFolder', payload: { 
+                docsFolder: targetFolderPath,
+                docsSelItems: new Set(),
+                docsHighlightedFolderName: null,
+                docsHighlightedFileName: null
+            }});
+
+            app.goToPage(DocsPageNames.treeViewer);
+            return;
+        }
+
         // Parse the file path to extract the folder path and filename
         // Note: filePath is relative to the searchOriginFolder where the search was performed
         const lastSlashIndex = filePath.lastIndexOf('/');
