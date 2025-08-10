@@ -9,6 +9,9 @@ import { app } from '../../../AppService';
 import { formatFullPath } from '../../../../common/CommonUtils';
 import { idb } from '../../../IndexedDB';
 import { DBKeys } from '../../../AppServiceTypes';
+import TagSelector from './comps/TagSelector';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTags } from '@fortawesome/free-solid-svg-icons';
 
 interface SearchResult {
     file: string;
@@ -68,6 +71,7 @@ function SearchResultItem({ filePath, fileResults, onFileClick, vfsType }: Searc
  */
 export default function SearchViewPage() {
     const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [showTagSelector, setShowTagSelector] = useState<boolean>(false);
     const gs = useGlobalState();
     const searchInputRef = useRef<HTMLInputElement>(null);
     
@@ -136,6 +140,22 @@ export default function SearchViewPage() {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    const handleTagsButtonClick = () => {
+        setShowTagSelector(!showTagSelector);
+    };
+
+    const handleTagsAdd = (selectedTags: string[]) => {
+        const currentSearch = gs.docsSearch || '';
+        const tagsString = selectedTags.join(' ');
+        const newSearch = currentSearch ? `${currentSearch} ${tagsString}` : tagsString;
+        gd({ type: 'setSearchQuery', payload: { docsSearch: newSearch }});
+        setShowTagSelector(false);
+    };
+
+    const handleTagsCancel = () => {
+        setShowTagSelector(false);
     };
     
     const fileClicked = (filePath: string, vfsType: string, isFolder: boolean) => { 
@@ -259,6 +279,16 @@ export default function SearchViewPage() {
                             disabled={isSearching}
                         />
                         
+                        {/* Tags Button */}
+                        <button
+                            onClick={handleTagsButtonClick}
+                            disabled={isSearching}
+                            className={`p-2 border border-gray-600 rounded hover:bg-gray-700 transition-colors ${showTagSelector ? 'bg-gray-700' : 'bg-gray-800'}`}
+                            title="Insert Tags"
+                        >
+                            <FontAwesomeIcon icon={faTags} className="text-gray-300" />
+                        </button>
+                        
                         {/* Search Mode Radio Buttons */}
                         <div className="flex gap-3 text-sm px-3 py-2 border border-gray-600 rounded-md bg-gray-800">
                             <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
@@ -379,6 +409,14 @@ export default function SearchViewPage() {
                             {isSearching ? 'Searching...' : 'Search'}
                         </button>
                     </div>
+                    
+                    {/* Tag Selector */}
+                    {showTagSelector && (
+                        <TagSelector
+                            onAddTags={handleTagsAdd}
+                            onCancel={handleTagsCancel}
+                        />
+                    )}
                 </div>
                 
                 <div className="flex-grow relative">

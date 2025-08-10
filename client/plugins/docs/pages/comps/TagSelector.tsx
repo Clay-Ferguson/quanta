@@ -123,16 +123,6 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
                         ))}
                     </div>
 
-                    {/* Selected tags preview */}
-                    {selectedTags.size > 0 && (
-                        <div className="mb-4">
-                            <p className="text-gray-400 text-sm mb-2">Selected tags:</p>
-                            <div className="text-gray-300 text-sm">
-                                {Array.from(selectedTags).sort().join(' ')}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Action buttons */}
                     <div className="flex justify-end gap-2">
                         <button
