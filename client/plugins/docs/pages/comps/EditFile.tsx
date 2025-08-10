@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faMicrophone, faStop, faTags } from '@fortawesome/free-solid-svg-icons';
 import { TreeNode } from '../../../../../common/types/CommonTypes';
 import { DocsGlobalState, gd } from '../../DocsTypes';
 import { stripOrdinal, stripFileExtension } from '../../../../../common/CommonUtils';
 import { handleSaveClick, handleSplitInline, handleMakeFolder } from '../TreeViewerPageOps';
 import { alertModal } from '../../../../components/AlertModalComp';
+import TagSelector from './TagSelector';
 
 interface EditFileProps {
     gs: DocsGlobalState;
@@ -63,6 +64,9 @@ export default function EditFile({
         gs.docsNewFileName || 
         (gs.docsEditNode?.name ? prepareFilenameForEditing(gs.docsEditNode.name) : '')
     );
+
+    // Tag selector state
+    const [showTagSelector, setShowTagSelector] = useState(false);
 
     // <speech>
     // Speech recognition state
@@ -277,6 +281,45 @@ export default function EditFile({
         }, 0);
     };
 
+    const handleInsertTags = (selectedTags: string[]) => {
+        if (!contentTextareaRef.current || selectedTags.length === 0) return;
+        
+        const textarea = contentTextareaRef.current;
+        const cursorPosition = textarea.selectionStart;
+        const selectionEnd = textarea.selectionEnd;
+        const currentContent = localContent;
+        
+        // Join tags with spaces
+        const tagsText = selectedTags.join(' ');
+        
+        // Insert tags at cursor position, replacing any selected text
+        const beforeCursor = currentContent.substring(0, cursorPosition);
+        const afterCursor = currentContent.substring(selectionEnd);
+        const newContent = beforeCursor + tagsText + afterCursor;
+        
+        // Update local content
+        setLocalContent(newContent);
+        
+        // Set cursor position after the inserted tags
+        setTimeout(() => {
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(cursorPosition + tagsText.length, cursorPosition + tagsText.length);
+            }
+        }, 0);
+        
+        // Hide the tag selector
+        setShowTagSelector(false);
+    };
+
+    const handleToggleTagSelector = () => {
+        setShowTagSelector(!showTagSelector);
+    };
+
+    const handleCancelTagSelector = () => {
+        setShowTagSelector(false);
+    };
+
     // <speech>
     const handleSpeechToggle = () => {
         if (!('webkitSpeechRecognition' in window)) {
@@ -369,6 +412,13 @@ export default function EditFile({
                     Make Folder
                 </button>
                 <button 
+                    onClick={handleToggleTagSelector}
+                    className={showTagSelector ? "bg-blue-600 text-white rounded-md flex items-center justify-center h-10 w-10" : "btn-icon"}
+                    title="Insert Tags"
+                >
+                    <FontAwesomeIcon icon={faTags} className="h-5 w-5" />
+                </button>
+                <button 
                     onClick={handleInsertTime}
                     className="btn-icon"
                     title="Insert Time"
@@ -391,6 +441,14 @@ export default function EditFile({
                     Cancel
                 </button>
             </div>
+            
+            {/* Tag Selector */}
+            {showTagSelector && (
+                <TagSelector 
+                    onAddTags={handleInsertTags}
+                    onCancel={handleCancelTagSelector}
+                />
+            )}
         </div>
     );
 }
