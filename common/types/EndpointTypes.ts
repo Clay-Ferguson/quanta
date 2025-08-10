@@ -52,3 +52,9 @@ export type TreeRender_Response = {
     treeFolder?: string; // Returns proper ordinal path for root node being viewed.
 }
 
+export type ExtractTags_Response = {
+    success: boolean;
+    message?: string;
+    tags: string[];
+}
+

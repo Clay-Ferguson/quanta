@@ -1588,6 +1588,86 @@ class DocService {
         }
         return cmd;
     }
+
+    /**
+     * HTTP endpoint for extracting hashtags from a ".TAGS.md" file in the document root.
+     * 
+     * This endpoint searches for a file named ".TAGS.md" in the root of the specified document root
+     * and extracts all hashtags from it using regex pattern matching. The tags are returned as a
+     * sorted array of unique tag strings.
+     * 
+     * @param req - Express request with docRootKey parameter
+     * @param res - Express response to send the extracted tags
+     */
+    extractTags = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        try {
+            const docRootKey = req.params.docRootKey;
+            const ifs = docUtil.getFileSystem(docRootKey);
+            const owner_id = svrUtil.getOwnerId(req, res);
+            if (owner_id == null) {
+                return;
+            }
+            
+            // Get the root path for the document root
+            const root = config.getPublicFolderByKey(docRootKey);
+            if (!root) {
+                res.json({
+                    success: false,
+                    message: 'Invalid document root key',
+                    tags: []
+                });
+                return;
+            }
+
+            try {
+                // Try to read .TAGS.md from the root directory
+                const tagsFilePath = ifs.pathJoin(root.path, '.TAGS.md');
+                ifs.checkFileAccess(tagsFilePath, root.path);
+                
+                const fileContent = await ifs.readFile(owner_id, tagsFilePath, 'utf8') as string;
+                
+                // Extract hashtags using regex
+                const tags = this.extractHashtagsFromText(fileContent);
+                
+                res.json({
+                    success: true,
+                    tags: tags
+                });
+                
+            } catch {
+                // If .TAGS.md doesn't exist or can't be read, return empty tags array
+                console.log('.TAGS.md not found or not readable, returning empty tags list');
+                res.json({
+                    success: true,
+                    tags: []
+                });
+            }
+            
+        } catch (error) {
+            handleError(error, res, 'Failed to extract tags');
+        }
+    }
+
+    /**
+     * Extracts hashtags from text content using regex pattern matching.
+     * 
+     * Searches for patterns like "#tagname" where tagname consists of letters, numbers, 
+     * underscores, and hyphens. Returns a sorted array of unique tags.
+     * 
+     * @param text - The text content to search for hashtags
+     * @returns Array of unique hashtags sorted alphabetically
+     */
+    private extractHashtagsFromText(text: string): string[] {
+        // Regex to match hashtags: # followed by word characters, underscores, and hyphens
+        const hashtagRegex = /#[a-zA-Z0-9_-]+/g;
+        
+        const matches = text.match(hashtagRegex) || [];
+        
+        // Convert to Set to remove duplicates, then back to Array and sort
+        const uniqueTags = Array.from(new Set(matches));
+        
+        return uniqueTags.sort();
+    }
 }
 
 export const docSvc = new DocService();

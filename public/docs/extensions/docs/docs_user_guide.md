@@ -110,6 +110,35 @@ When editing a file, you can use the **Split** feature to divide content into mu
 3. The system automatically creates separate files for each section
 4. Files are numbered sequentially and positioned appropriately in the folder
 
+### Tag Selection
+The Tag Selection feature allows you to quickly insert hashtags into your content while editing:
+
+#### Using the Tag Selector
+1. **Enable Edit Mode** and open any file for editing
+2. **Click the Tags icon** (hashtag symbol) in the editing toolbar
+3. **Select tags** from the available options using checkboxes
+4. **Preview your selection** in the "Selected tags" section
+5. **Click Add** to insert the selected tags at your cursor position
+6. **Click Cancel** to close without adding tags
+
+#### Tag Sources
+The system provides tags in two ways:
+- **Default Tags**: A built-in set of common hashtags is always available
+- **Custom Tags**: If you create a hidden file named `.TAGS.md` in your document root, the system will automatically extract hashtags from this file and add them to the available options
+
+#### Creating Custom Tags
+To define your own tags:
+1. **Create a file named `.TAGS.md`** in the root of your document folder
+2. **Add hashtags** throughout the content (e.g., `#productivity`, `#documentation`, `#ideas`)
+3. **Save the file** - the system will automatically detect and extract all hashtags
+4. **Open the Tag Selector** - your custom tags will now appear alongside the default options
+
+#### Tag Format
+- Tags must start with a hashtag (#) followed by letters, numbers, hyphens, or underscores
+- Examples: `#todo`, `#work-notes`, `#project_alpha`, `#version2`
+- Tags are automatically sorted alphabetically in the selector
+- Selected tags are inserted with spaces between them for easy reading
+
 ## File and Folder Management
 
 ### Selecting Items
