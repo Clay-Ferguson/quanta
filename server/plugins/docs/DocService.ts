@@ -1658,8 +1658,8 @@ class DocService {
      * @returns Array of unique hashtags sorted alphabetically
      */
     private extractHashtagsFromText(text: string): string[] {
-        // Regex to match hashtags: # followed by word characters, underscores, and hyphens
-        const hashtagRegex = /#[a-zA-Z0-9_-]+/g;
+        // Regex to match hashtags: # followed by word characters, underscores, hyphens, and forward slashes
+        const hashtagRegex = /#[a-zA-Z0-9_/-]+/g;
         
         const matches = text.match(hashtagRegex) || [];
         

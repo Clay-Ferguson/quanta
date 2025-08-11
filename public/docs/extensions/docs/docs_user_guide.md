@@ -134,8 +134,9 @@ To define your own tags:
 4. **Open the Tag Selector** - your custom tags will now appear alongside the default options
 
 #### Tag Format
-- Tags must start with a hashtag (#) followed by letters, numbers, hyphens, or underscores
-- Examples: `#todo`, `#work-notes`, `#project_alpha`, `#version2`
+- Tags must start with a hashtag (#) followed by letters, numbers, hyphens, underscores, or forward slashes
+- **Supported characters**: `a-z`, `A-Z`, `0-9`, `-`, `_`, `/`
+- Examples: `#todo`, `#work-notes`, `#project_alpha`, `#version2`, `#project/frontend`, `#docs/user-guide`
 - Tags are automatically sorted alphabetically in the selector
 - Selected tags are inserted with spaces between them for easy reading
 
