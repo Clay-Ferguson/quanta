@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { httpClientUtil } from '../../../../HttpClientUtil';
-import { ExtractTags_Response } from '../../../../../common/types/EndpointTypes';
+import { ExtractTags_Response, ScanTags_Response } from '../../../../../common/types/EndpointTypes';
 import { useGlobalState } from '../../DocsTypes';
+import { alertModal } from '../../../../components/AlertModalComp';
 
 // Module-level cache for tags to persist across component instances
 let cachedTags: string[] | null = null;
@@ -20,6 +21,7 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
     // Local state for available tags and loading
     const [availableTags, setAvailableTags] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isScanning, setIsScanning] = useState<boolean>(false);
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
 
     // Load tags from server on first mount
@@ -97,9 +99,56 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
         setSelectedTags(new Set()); // Clear selection after adding
     };
 
+    const handleScanClick = async () => {
+        if (!gs.docsRootKey) {
+            await alertModal('No document root available for scanning.');
+            return;
+        }
+
+        setIsScanning(true);
+        try {
+            const url = `/api/docs/tags/scan/${gs.docsRootKey}`;
+            const response: ScanTags_Response | null = await httpClientUtil.secureHttpPost(url, {});
+            
+            if (response && response.success) {
+                // Clear the cache so tags will be reloaded
+                cachedTags = null;
+                
+                // Reload tags to get the updated list
+                const tagsUrl = `/api/docs/tags/${gs.docsRootKey}`;
+                const tagsResponse: ExtractTags_Response | null = await httpClientUtil.secureHttpPost(tagsUrl, {});
+                
+                if (tagsResponse && tagsResponse.success) {
+                    setAvailableTags(tagsResponse.tags);
+                    cachedTags = tagsResponse.tags;
+                }
+                
+                await alertModal(response.message);
+            } else {
+                await alertModal(response?.message || 'Scan failed');
+            }
+            
+        } catch (error) {
+            console.error('Failed to scan tags:', error);
+            await alertModal('Failed to scan tags. Please try again.');
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
     return (
         <div className="bg-gray-800 border border-gray-600 rounded-lg px-4 pt-2 pb-4 mt-3 mb-4">
-            <h3 className="text-gray-200 text-lg font-semibold mb-3">Select Tags</h3>
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-gray-200 text-lg font-semibold">Select Tags</h3>
+                <button
+                    onClick={handleScanClick}
+                    disabled={isScanning || isLoading}
+                    className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    title="Scan all files and update tags"
+                >
+                    {isScanning ? 'Scanning...' : 'Scan'}
+                </button>
+            </div>
             
             {isLoading ? (
                 <div className="flex items-center justify-center py-8">

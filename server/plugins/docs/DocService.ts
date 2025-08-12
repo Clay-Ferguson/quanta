@@ -1649,6 +1649,161 @@ class DocService {
     }
 
     /**
+     * HTTP endpoint for scanning all markdown files and updating the .TAGS.md file with newly discovered hashtags.
+     * 
+     * This endpoint performs a two-phase scan:
+     * 1. Phase 1: Load existing tags from .TAGS.md into a hash map
+     * 2. Phase 2: Scan all markdown files in the document root for hashtags
+     * 3. Compare and append any new tags to .TAGS.md if new ones are found
+     * 
+     * @param req - Express request with docRootKey parameter
+     * @param res - Express response with scan results
+     */
+    scanAndUpdateTags = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        try {
+            const docRootKey = req.params.docRootKey;
+            const ifs = docUtil.getFileSystem(docRootKey);
+            const owner_id = svrUtil.getOwnerId(req, res);
+            if (owner_id == null) {
+                return;
+            }
+            
+            // Get the root path for the document root
+            const root = config.getPublicFolderByKey(docRootKey);
+            if (!root) {
+                res.json({
+                    success: false,
+                    message: 'Invalid document root key',
+                    existingTags: 0,
+                    newTags: 0,
+                    totalTags: 0
+                });
+                return;
+            }
+
+            console.log(`Starting tag scan for document root: ${root.path}`);
+
+            // Phase 1: Load existing tags from .TAGS.md
+            const tagsFilePath = ifs.pathJoin(root.path, '.TAGS.md');
+            const existingTagsMap = new Map<string, boolean>();
+            let existingContent = '';
+            
+            try {
+                ifs.checkFileAccess(tagsFilePath, root.path);
+                existingContent = await ifs.readFile(owner_id, tagsFilePath, 'utf8') as string;
+                const existingTags = this.extractHashtagsFromText(existingContent);
+                
+                existingTags.forEach(tag => {
+                    existingTagsMap.set(tag, true);
+                });
+                
+                console.log(`Found ${existingTags.length} existing tags in .TAGS.md`);
+            } catch {
+                console.log('.TAGS.md not found, starting with empty tag set');
+            }
+
+            // Phase 2: Scan all markdown files for hashtags
+            const newTagsMap = new Map<string, boolean>();
+            await this.scanDirectoryForTags(owner_id, root.path, root.path, ifs, existingTagsMap, newTagsMap);
+
+            const newTagsArray = Array.from(newTagsMap.keys()).sort();
+            console.log(`Found ${newTagsArray.length} new tags during scan`);
+
+            // Phase 3: Update .TAGS.md if new tags were found
+            if (newTagsArray.length > 0) {
+                const newTagsText = newTagsArray.join(' ') + '\n';
+                const updatedContent = existingContent ? `${existingContent}\n${newTagsText}` : newTagsText;
+                
+                try {
+                    await ifs.writeFile(owner_id, tagsFilePath, updatedContent, 'utf8');
+                    console.log(`Updated .TAGS.md with ${newTagsArray.length} new tags`);
+                } catch (error) {
+                    console.error('Failed to write updated .TAGS.md:', error);
+                    res.json({
+                        success: false,
+                        message: 'Failed to update .TAGS.md file',
+                        existingTags: existingTagsMap.size,
+                        newTags: newTagsArray.length,
+                        totalTags: existingTagsMap.size + newTagsArray.length
+                    });
+                    return;
+                }
+            }
+
+            // Clear the module-level cache so the TagSelector will reload
+            // Note: This is handled on the client side by invalidating the cache
+
+            res.json({
+                success: true,
+                message: newTagsArray.length > 0 ? 
+                    `Scan completed. Added ${newTagsArray.length} new tags.` : 
+                    'Scan completed. No new tags found.',
+                existingTags: existingTagsMap.size,
+                newTags: newTagsArray.length,
+                totalTags: existingTagsMap.size + newTagsArray.length
+            });
+            
+        } catch (error) {
+            handleError(error, res, 'Failed to scan and update tags');
+        }
+    }
+
+    /**
+     * Recursively scans a directory for markdown files and extracts hashtags.
+     * 
+     * @param owner_id - The owner ID for file access
+     * @param currentPath - Current directory path being scanned
+     * @param rootPath - Root path for security validation
+     * @param ifs - File system interface
+     * @param existingTags - Map of existing tags to avoid duplicates
+     * @param newTags - Map to collect newly discovered tags
+     */
+    private async scanDirectoryForTags(
+        owner_id: number,
+        currentPath: string,
+        rootPath: string,
+        ifs: IFS,
+        existingTags: Map<string, boolean>,
+        newTags: Map<string, boolean>
+    ): Promise<void> {
+        try {
+            ifs.checkFileAccess(currentPath, rootPath);
+            const items = await ifs.readdirEx(owner_id, currentPath, true);
+            
+            for (const item of items) {
+                // Skip hidden files and system files
+                if (item.name.startsWith('.') || item.name.startsWith('_')) {
+                    continue;
+                }
+                
+                const itemPath = ifs.pathJoin(currentPath, item.name);
+                
+                if (item.is_directory) {
+                    // Recursively scan subdirectories
+                    await this.scanDirectoryForTags(owner_id, itemPath, rootPath, ifs, existingTags, newTags);
+                } else if (item.name.toLowerCase().endsWith('.md') || item.name.toLowerCase().endsWith('.txt')) {
+                    // Process markdown and text files
+                    try {
+                        const fileContent = await ifs.readFile(owner_id, itemPath, 'utf8') as string;
+                        const fileTags = this.extractHashtagsFromText(fileContent);
+                        
+                        // Add any new tags to the newTags map
+                        fileTags.forEach(tag => {
+                            if (!existingTags.has(tag) && !newTags.has(tag)) {
+                                newTags.set(tag, true);
+                            }
+                        });
+                    } catch (error) {
+                        console.warn(`Failed to read file ${itemPath}:`, error);
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn(`Failed to scan directory ${currentPath}:`, error);
+        }
+    }
+
+    /**
      * Extracts hashtags from text content using regex pattern matching.
      * 
      * Searches for patterns like "#tagname" where tagname consists of letters, numbers, 

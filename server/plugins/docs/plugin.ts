@@ -78,6 +78,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/search-text', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docSvc.searchTextFiles));
         context.app.post('/api/docs/search-vfs', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docVFS.searchVFSFiles));
         context.app.post('/api/docs/tags/:docRootKey', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docSvc.extractTags));
+        context.app.post('/api/docs/tags/scan/:docRootKey', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docSvc.scanAndUpdateTags));
         context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, asyncHandler(ssg.generateStaticSite));
 
         context.app.get('/doc/:docRootKey', context.serveIndexHtml("TreeViewerPage"));

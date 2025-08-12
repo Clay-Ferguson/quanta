@@ -58,3 +58,11 @@ export type ExtractTags_Response = {
     tags: string[];
 }
 
+export type ScanTags_Response = {
+    success: boolean;
+    message: string;
+    existingTags: number;
+    newTags: number;
+    totalTags: number;
+}
+
