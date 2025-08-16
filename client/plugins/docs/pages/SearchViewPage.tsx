@@ -146,12 +146,21 @@ export default function SearchViewPage() {
         setShowTagSelector(!showTagSelector);
     };
 
-    const handleTagsAdd = (selectedTags: string[]) => {
-        const currentSearch = gs.docsSearch || '';
-        const tagsString = selectedTags.join(' ');
-        const newSearch = currentSearch ? `${currentSearch} ${tagsString}` : tagsString;
-        gd({ type: 'setSearchQuery', payload: { docsSearch: newSearch }});
-        setShowTagSelector(false);
+    // Live tag add: insert only newly checked tag into search input
+    const lastSelectedTagsRef = useRef<Set<string>>(new Set());
+    const handleLiveTagAdd = (selectedTags: string[]) => {
+        const prevTags = lastSelectedTagsRef.current;
+        const newTag = selectedTags.find(tag => !prevTags.has(tag));
+        if (newTag) {
+            const currentSearch = gs.docsSearch || '';
+            const newSearch = currentSearch ? `${currentSearch} ${newTag}` : newTag;
+            gd({ type: 'setSearchQuery', payload: { docsSearch: newSearch }});
+            // Optionally, focus the input
+            if (searchInputRef.current) {
+                searchInputRef.current.focus();
+            }
+        }
+        lastSelectedTagsRef.current = new Set(selectedTags);
     };
 
     const handleTagsCancel = () => {
@@ -413,8 +422,8 @@ export default function SearchViewPage() {
                     {/* Tag Selector */}
                     {showTagSelector && (
                         <TagSelector
-                            onAddTags={handleTagsAdd}
                             onCancel={handleTagsCancel}
+                            handleLiveTagAdd={handleLiveTagAdd}
                         />
                     )}
                 </div>

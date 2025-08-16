@@ -8,14 +8,15 @@ import { alertModal } from '../../../../components/AlertModalComp';
 let cachedTags: string[] | null = null;
 
 interface TagSelectorProps {
-    onAddTags: (selectedTags: string[]) => void;
     onCancel: () => void;
+    handleLiveTagAdd: (selectedTags: string[]) => void;
+    showAddButton?: boolean;
 }
 
 /**
- * Component for selecting tags using checkboxes and inserting them into text content
+ * Component for selecting hashtags using checkboxes and inserting them into text content
  */
-export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
+export default function TagSelector({ onCancel, handleLiveTagAdd, showAddButton = false }: TagSelectorProps) {
     const gs = useGlobalState();
     
     // Local state for available tags and loading
@@ -91,11 +92,12 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
             newSelectedTags.add(tag);
         }
         setSelectedTags(newSelectedTags);
+        handleLiveTagAdd(Array.from(newSelectedTags).sort());
     };
 
     const handleAddClick = () => {
         const tagsArray = Array.from(selectedTags).sort();
-        onAddTags(tagsArray);
+        handleLiveTagAdd(tagsArray);
         setSelectedTags(new Set()); // Clear selection after adding
     };
 
@@ -140,14 +142,22 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
         <div className="bg-gray-800 border border-gray-600 rounded-lg px-4 pt-2 pb-4 mt-3 mb-4">
             <div className="flex justify-between items-center mb-3">
                 <h3 className="text-gray-200 text-lg font-semibold">Select Tags</h3>
-                <button
-                    onClick={handleScanClick}
-                    disabled={isScanning || isLoading}
-                    className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                    title="Scan all files and update tags"
-                >
-                    {isScanning ? 'Scanning...' : 'Scan'}
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleScanClick}
+                        disabled={isScanning || isLoading}
+                        className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                        title="Scan all files and update tags"
+                    >
+                        {isScanning ? 'Scanning...' : 'Scan'}
+                    </button>
+                    <button
+                        onClick={onCancel}
+                        className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700"
+                    >
+                        Cancel
+                    </button>
+                </div>
             </div>
             
             {isLoading ? (
@@ -174,19 +184,15 @@ export default function TagSelector({ onAddTags, onCancel }: TagSelectorProps) {
 
                     {/* Action buttons */}
                     <div className="flex justify-end gap-2">
-                        <button
-                            onClick={onCancel}
-                            className="btn-secondary"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleAddClick}
-                            disabled={selectedTags.size === 0}
-                            className={`${selectedTags.size === 0 ? 'bg-gray-700 text-gray-500 cursor-not-allowed py-2 px-4 rounded h-10' : 'btn-primary'}`}
-                        >
-                            Add ({selectedTags.size})
-                        </button>
+                        {showAddButton && (
+                            <button
+                                onClick={handleAddClick}
+                                disabled={selectedTags.size === 0}
+                                className={`${selectedTags.size === 0 ? 'bg-gray-700 text-gray-500 cursor-not-allowed py-2 px-4 rounded h-10' : 'btn-primary'}`}
+                            >
+                                Add ({selectedTags.size})
+                            </button>
+                        )}
                     </div>
                 </>
             )}

@@ -67,6 +67,8 @@ export default function EditFile({
 
     // Tag selector state
     const [showTagSelector, setShowTagSelector] = useState(false);
+    // Track last selected tags for live add
+    const lastSelectedTagsRef = useRef<Set<string>>(new Set());
 
     // <speech>
     // Speech recognition state
@@ -281,35 +283,29 @@ export default function EditFile({
         }, 0);
     };
 
-    const handleInsertTags = (selectedTags: string[]) => {
-        if (!contentTextareaRef.current || selectedTags.length === 0) return;
-        
-        const textarea = contentTextareaRef.current;
-        const cursorPosition = textarea.selectionStart;
-        const selectionEnd = textarea.selectionEnd;
-        const currentContent = localContent;
-        
-        // Join tags with spaces
-        const tagsText = selectedTags.join(' ');
-        
-        // Insert tags at cursor position, replacing any selected text
-        const beforeCursor = currentContent.substring(0, cursorPosition);
-        const afterCursor = currentContent.substring(selectionEnd);
-        const newContent = beforeCursor + tagsText + afterCursor;
-        
-        // Update local content
-        setLocalContent(newContent);
-        
-        // Set cursor position after the inserted tags
-        setTimeout(() => {
-            if (textarea) {
+    // Live tag add: insert only newly checked tag
+    const handleLiveTagAdd = (selectedTags: string[]) => {
+        // Only insert if a new tag was checked (not unchecked)
+        const prevTags = lastSelectedTagsRef.current;
+        // Find the tag that was just added
+        const newTag = selectedTags.find(tag => !prevTags.has(tag));
+        if (newTag && contentTextareaRef.current) {
+            const textarea = contentTextareaRef.current;
+            const cursorPosition = textarea.selectionStart;
+            const currentContent = localContent;
+            // Insert tag at cursor position
+            const beforeCursor = currentContent.substring(0, cursorPosition);
+            const afterCursor = currentContent.substring(cursorPosition);
+            const tagText = newTag + ' ';
+            const newContent = beforeCursor + tagText + afterCursor;
+            setLocalContent(newContent);
+            setTimeout(() => {
                 textarea.focus();
-                textarea.setSelectionRange(cursorPosition + tagsText.length, cursorPosition + tagsText.length);
-            }
-        }, 0);
-        
-        // Hide the tag selector
-        setShowTagSelector(false);
+                textarea.setSelectionRange(cursorPosition + tagText.length, cursorPosition + tagText.length);
+            }, 0);
+        }
+        // Update lastSelectedTagsRef for next call
+        lastSelectedTagsRef.current = new Set(selectedTags);
     };
 
     const handleToggleTagSelector = () => {
@@ -445,8 +441,8 @@ export default function EditFile({
             {/* Tag Selector */}
             {showTagSelector && (
                 <TagSelector 
-                    onAddTags={handleInsertTags}
                     onCancel={handleCancelTagSelector}
+                    handleLiveTagAdd={handleLiveTagAdd}
                 />
             )}
         </div>
