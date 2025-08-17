@@ -24,12 +24,16 @@ All files and folders use a 4-digit numeric prefix (e.g., "0001_", "0002_") that
 ### Standard View Mode
 In standard view, files are rendered as formatted Markdown content, providing a clean reading experience. Images are displayed inline with the text.
 
+![Document View](img/doc-view.png)
+
 ### Edit Mode
 When **Edit Mode** is enabled via the checkbox in the header:
 - Checkboxes appear next to each item for selection
 - Edit controls become available for individual items
 - Additional management buttons appear in the header
-- Insert buttons appear between items for adding new content
+- Insert buttons appear between items for adding new content.
+
+![Document View](img/editing-view.png)
 
 ### Meta Mode
 When **Meta Mode** is enabled:
@@ -49,6 +53,14 @@ A dropdown in the header allows you to adjust the content width:
 - **Narrow**: Compact view for focused reading
 - **Medium**: Balanced view (default)
 - **Wide**: Expanded view for maximum content visibility
+
+## Overall Page Layout
+
+![Document View](img/editing-view-blocks.png)
+
+At the upper right of the page these are buttons for opening folders (if run locally only), followed by refresh, search, settings, report, and help buttons. Parent button takes you up one level on folder structure. These are general buttons about things at a higher level in the app.
+
+When `Edit Mode` is enabled we get more buttons down the middle and on the right side of the page for various edit-related tasks.
 
 ## Creating Content
 
@@ -185,6 +197,8 @@ Multiple text files can be combined into one:
 4. All other selected files are automatically deleted after joining
 
 ## Search Functionality
+
+![Document View](img/search-results.png)
 
 ### Accessing Search
 1. **Click the search icon** in the header to open the Search page
