@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolderOpen, faEdit, faSync, faSearch, faGear, faHome, faCubes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faSync, faSearch, faGear, faHome, faCubes, faQuestionCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { TreeNode } from '../../../../../common/types/CommonTypes';
 import { DocsGlobalState, DocsPageNames } from '../../DocsTypes';
 import { PageNames } from '../../../../AppServiceTypes';
@@ -111,7 +111,7 @@ export default function TopRightComps({ gs, rootNode, itemsAreSelected, reRender
                 className="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                 title="Open File system Editor"
             >
-                <FontAwesomeIcon icon={faEdit} className="h-5 w-5" />
+                <FontAwesomeIcon icon={faExternalLinkAlt} className="h-5 w-5" />
             </button>}
 
             <button 
