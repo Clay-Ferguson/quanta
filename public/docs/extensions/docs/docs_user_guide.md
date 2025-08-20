@@ -33,7 +33,27 @@ When **Edit Mode** is enabled via the checkbox in the header:
 - Additional management buttons appear in the header
 - Insert buttons appear between items for adding new content.
 
+. 
 ![Document View](img/editing-view.png)
+
+When in edit move, above each File/Folder are buttons for editing that specific item.
+
+| Icon | Action|
+|---|---|
+| <img src='img/icons/edit.png'> | Edits the file content or folder name |
+| <img src='img/icons/delete.png'> | Deletes the file/folder |
+| <img src='img/icons/move.png'> | Moves the file/folder up or down |
+
+Functions related to creating new files/folders are shown between each existing file/folder, so it's easy to insert new content at the correct ordinal where you want it.
+
+| Icon | Action|
+|---|---|
+| <img src='img/icons/plus.png'> | Inserts an empty new Markdown file |
+| <img src='img/icons/folder.png'> | Inserts a new Folder |
+| <img src='img/icons/upload-from-drive.png'> | Uploads from your device|
+| <img src='img/icons/upload-from-clipboard.png'> | Uploads what's in your clipboard |
+| <img src='img/icons/microphone.png'> | Start recording new TTS Note |
+
 
 ### Meta Mode
 When **Meta Mode** is enabled:
@@ -56,11 +76,21 @@ A dropdown in the header allows you to adjust the content width:
 
 ## Overall Page Layout
 
-![Document View](img/editing-view-blocks.png)
-
 At the upper right of the page these are buttons for opening folders (if run locally only), followed by refresh, search, settings, report, and help buttons. Parent button takes you up one level on folder structure. These are general buttons about things at a higher level in the app.
 
 When `Edit Mode` is enabled we get more buttons down the middle and on the right side of the page for various edit-related tasks.
+
+| Icon | Action|
+|---|---|
+| <img src='img/icons/folder-open.png'> | Opens Folder with OS |
+| <img src='img/icons/open-system-file.png'> | Opens File with System Editor |
+| <img src='img/icons/refresh.png'> | Refreshes the page |
+| <img src='img/icons/search.png'> | Search current Folder |
+| <img src='img/icons/settings.png'> | Opens User Preferences |
+| <img src='img/icons/site-gen.png'> | Generate Website |
+| <img src='img/icons/help.png'> | Help for this Page |
+| <img src='img/icons/parent-button.png'> | Go to Parent Folder |
+
 
 ## Creating Content
 
@@ -72,6 +102,18 @@ When `Edit Mode` is enabled we get more buttons down the middle and on the right
 5. **Edit the filename** using the text field above the content area
 6. **Add your content** in the text area below
 7. **Click Save** to preserve your changes
+
+.
+![alt text](img/edit-content.png)
+
+| Icon | Action|
+|---|---|
+| <img src='img/edit-buttons/split.png'> | Splits at '~' Delimiter |
+| <img src='img/edit-buttons/make-folder.png'> | Convert to folder with files |
+| <img src='img/edit-buttons/tags.png'> | Select Hashtags |
+| <img src='img/edit-buttons/clock.png'> | Insert Timestamp at Cursor |
+| <img src='img/edit-buttons/microphone.png'> | TTS in realtime into textarea |
+
 
 ### Creating New Folders
 1. **Enable Edit Mode**
