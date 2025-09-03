@@ -14,3 +14,5 @@ coverage/
 *.log
 .nyc_output/
 
+QDash.desktop
+
