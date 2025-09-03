@@ -95,7 +95,6 @@ class ChatClientPlugin implements IClientPlugin {
         case ChatPageNames.quantaChat: 
             return React.createElement(QuantaChatPage, { pluginTitle });
         case ChatPageNames.chatUserGuide:
-            // todo-0: Need to merge user guide into one documentation set (not multiple apps)
             return React.createElement(DocViewerPage, { filename: "/docs/extensions/chat/chat_user_guide.md", title: "Quanta Chat User Guide" });
         default: return null;
         }
