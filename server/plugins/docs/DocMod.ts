@@ -139,11 +139,11 @@ class DocMod {
                 ifs.checkFileAccess(finalFilePath, root);
                 
                 if (split) {
-                // Content splitting mode: divide content on '\n~\n' delimiter
+                    // Content splitting mode: divide content on '\n~\n' delimiter
                     const parts = content.split('\n~\n');
                     
                     if (parts.length > 1) {
-                    // Extract the original file's ordinal for proper sequencing
+                        // Extract the original file's ordinal for proper sequencing
                         const originalOrdinal = docUtil.getOrdinalFromName(path.basename(finalFilePath));
                         
                         // Make room for new files by shifting existing ordinals down
@@ -153,7 +153,7 @@ class DocMod {
                         
                         // Create a separate file for each content part
                         for (let i = 0; i < parts.length; i++) {
-                        // Clean up content by removing whitespace and delimiter artifacts
+                            // Clean up content by removing whitespace and delimiter artifacts
                             const partContent = parts[i].trim();
                             let partFilePath = finalFilePath;
                             
@@ -183,13 +183,13 @@ class DocMod {
                         console.log(`File split into ${parts.length} parts successfully`);
                         res.json({ message: `File split into ${parts.length} parts successfully` });
                     } else {
-                    // No split delimiter found - save as single file
+                        // No split delimiter found - save as single file
                         await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                         console.log(`File saved successfully: ${finalFilePath}`);
                         res.json({ message: 'File saved successfully (no split delimiter found)' });
                     }
                 } else {
-                // Standard save operation without content splitting
+                    // Standard save operation without content splitting
                     await ifs.writeFile(owner_id, finalFilePath, content, 'utf8');
                     console.log(`File saved successfully: ${finalFilePath}`);
                     res.json({ message: 'File saved successfully' });
@@ -295,7 +295,7 @@ class DocMod {
                 ifs.checkFileAccess(newAbsolutePath, root);
                 await ifs.rename(owner_id, oldAbsolutePath, newAbsolutePath);
             
-                console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
+                // console.log(`Folder renamed successfully: ${oldAbsolutePath} -> ${newAbsolutePath}`);
                 res.json({ message: 'Folder renamed successfully' });
             } catch (error) {
             // Handle any errors that occurred during the rename operation

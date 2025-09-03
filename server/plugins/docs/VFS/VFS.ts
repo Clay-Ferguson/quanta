@@ -522,7 +522,7 @@ class VFS implements IFS {
         console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
         const rootKey = "usr";
 
-        // Throw an error if 'userProfile.name' is not a valid filename containing only alphanumeric characters and underscores.
+        // Throw an error if 'userProfile.name' is not a valid filename.
         if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name!)) {
             throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
         }

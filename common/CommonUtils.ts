@@ -67,7 +67,7 @@ export function stripFileExtension(filename: string): string {
 
 export function fixName(name: string): string {
     // Replace any invalid characters with an underscore
-    return name.replace(/[^a-zA-Z0-9_. -]/g, '_');
+    return name.replace(/[^a-zA-Z0-9_. \-&]/g, '_'); 
 }   
     
 export function getFilenameExtension(fullPath: string): string {
@@ -84,14 +84,14 @@ export function formatDisplayName(name: string) {
     name = stripOrdinal(name);
     const endsWithUnderscore = name.endsWith('_');
 
-    // Replace underscores and dashes with spaces
-    name = name.replace(/[_-]/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
+    // Replace underscores with spaces but keep dashes as-is
+    name = name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
     name = name.trim();
 
     // we preserve the display of the final underscore if it exists, because that's important for the user to see
     // becasue it represents a 'pullup'
     if (endsWithUnderscore) {
-        // If the name ends with an underscore, we add a space at the end
+        // If the name ends with an underscore, we add back at the end
         name += '_';
     }
 

@@ -320,7 +320,7 @@ class DocService {
         let fileNodes = await ifs.readdirEx(owner_id, absolutePath, true);
 
         // This filters out hidden files and system files
-        fileNodes = fileNodes.filter(file => !file.name.startsWith('.') && !file.name.startsWith('_'));
+        fileNodes = fileNodes.filter(file => !file.name.startsWith('.'));
 
         // Process each file/folder in the directory
         for (const file of fileNodes) {    

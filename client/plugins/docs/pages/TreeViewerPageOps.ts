@@ -548,7 +548,7 @@ export const handleRenameClick = (gs: DocsGlobalState, treeNodes: TreeNode[], se
         const numericPrefix = underscoreIdx !== -1 ? originalName.substring(0, underscoreIdx + 1) : '';
             
         // Create the new full folder name with the numeric prefix, but replace spaces and dashes with underscores to create a valid folder name
-        const newFullFolderName = numericPrefix + gs.docsNewFolderName!.replace(/[ -]/g, '_');
+        const newFullFolderName = numericPrefix + gs.docsNewFolderName;
             
         // Find the node in treeNodes and update its name
         const updatedNodes = treeNodes.map(node => 

@@ -161,7 +161,7 @@ export async function runTests() {
 
         await testRunner.run("fixName - should handle edge cases", async () => {
             assertEqual(fixName(''), '');
-            assertEqual(fixName('!@#$%^&*()'), '__________');
+            assertEqual(fixName('!@#$%^*()'), '_________');
             assertEqual(fixName('...'), '...');
             assertEqual(fixName('123'), '123');
         });
@@ -203,7 +203,7 @@ export async function runTests() {
 
         await testRunner.run("formatDisplayName - should format names for display", async () => {
             assertEqual(formatDisplayName('01_hello_world'), 'Hello World');
-            assertEqual(formatDisplayName('02_advanced-topics'), 'Advanced Topics');
+            assertEqual(formatDisplayName('02_advanced-topics'), 'Advanced-Topics');
             assertEqual(formatDisplayName('user_profile_settings'), 'Profile Settings');
         });
 
