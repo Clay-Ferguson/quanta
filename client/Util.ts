@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChatMessage, FileBase64Intf } from "../common/types/CommonTypes";
 import { pluginsArray } from './AppService.ts';
+import { scrollEffects } from './ScrollEffects';
 
 class Util {
 
@@ -49,6 +50,19 @@ class Util {
                 });
             }
         }, 250);
+    };
+
+    // Clear saved scroll position and scroll to top for navigation
+    scrollToTopAndClearPosition = (elementId: string) => {
+        setTimeout(() => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Clear the saved scroll position for this element
+                scrollEffects.scrollPositions.delete(elementId);
+                // Scroll to top
+                element.scrollTop = 0;
+            }
+        }, 100);
     };
     
     // Find the tree node element that is closest to the top of the viewport

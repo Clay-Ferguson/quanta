@@ -44,6 +44,9 @@ export const handleFolderClick = (gs: DocsGlobalState, folderName: string) => {
         docsHighlightedFolderName: null,
         docsHighlightedFileName: null
     }});
+
+    // Clear saved scroll position and scroll to top after navigation
+    util.scrollToTopAndClearPosition('treeViewContent');
 };
 
 export const handleFileClick = async (gs: DocsGlobalState, fileName: string) => {
@@ -104,8 +107,12 @@ export const handleParentClick = (gs: DocsGlobalState) => {
     }
     
     // If we have a folder to scroll to, scroll to it after navigation
+    // If not, clear saved scroll position and scroll to top
     if (folderToScrollTo) {
         scrollToItem(folderToScrollTo);
+    } else {
+        // Clear saved scroll position and scroll to top
+        util.scrollToTopAndClearPosition('treeViewContent');
     }
 };
 
