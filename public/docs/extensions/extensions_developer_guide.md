@@ -8,14 +8,28 @@ This guide provides comprehensive instructions for software developers on how to
 
 The Quanta web application uses a plugin-based architecture that allows developers to extend functionality through modular components. Each plugin consists of both client-side and server-side components that integrate seamlessly with the application's core systems.
 
+## Plugin Installation
+
+Installing a new plugin in Quanta is extremely simple - just drop the plugin folder into the `/plugins/` directory and restart the application. The platform automatically discovers and loads any valid plugins during startup.
+
+**Installation steps:**
+1. Copy your plugin folder (e.g., `myplugin/`) into the `/plugins/` directory
+2. Ensure your plugin has the required structure: `plugins/myplugin/client/plugin.ts` and `plugins/myplugin/server/plugin.ts`
+3. Restart the Quanta application
+4. The plugin will be automatically discovered and loaded
+
+No configuration files need to be modified, no build processes need to be run, and no complex deployment procedures are required. This "drop-and-go" approach makes plugin management exceptionally straightforward.
+
 ## Plugin Architecture
 
 ### Directory Structure
 
 Plugins are organized in two main directories:
 
-- **Client-side plugins**: `client/plugins/`
-- **Server-side plugins**: `server/plugins/`
+Quanta uses a plugin-based architecture where functionality is divided into:
+
+- **Client-side plugins**: `plugins/{plugin-name}/client/`
+- **Server-side plugins**: `plugins/{plugin-name}/server/`
 
 Each plugin has its own directory containing an `plugin.ts` file that exports the plugin implementation.
 
@@ -23,29 +37,6 @@ In the folder structure below it's important to know that `chat` is the folder n
 
 You may wonder why `docs` was chosen as the extension name for a File Manager, and the reason is that indeed Quanta is more of a document editor than it is a file manager, because what it does that's unique is that it melds together the two concepts of 'file system' and 'document managers', in the same sort of way that Jupyter Notebooks is a melding together the concept of a cell-based spreadsheet and a document. Quanta is very similar to Jupyter Notebooks in this regard. However, importantly, Quanta uses individual files as it's 'cells' whereas Jupyter uses a single monolighic JSON file to hold 'cells' of content.
 
-Example structure:
-```
-client/plugins/
-  ├── chat/
-  │   ├── plugin.ts
-  │   ├── pages/
-  │   ├── comps/
-  │   └── ...
-  └── docs/
-      ├── plugin.ts
-      ├── pages/
-      └── ...
-
-server/plugins/
-  ├── chat/
-  │   ├── plugin.ts
-  │   ├── ChatService.ts
-  │   └── ...
-  └── docs/
-      ├── plugin.ts
-      ├── DocService.ts
-      └── ...
-```
 
 ## Plugin Interfaces
 
@@ -125,13 +116,13 @@ The `key` field corresponds to the directory name and the value returned by `get
 
 1. Create directories for your plugin:
    ```bash
-   mkdir client/plugins/myplugin
-   mkdir server/plugins/myplugin
+   mkdir -p plugins/myplugin/client
+   mkdir -p plugins/myplugin/server
    ```
 
 ### Step 2: Implement Client Plugin
 
-Create `client/plugins/myplugin/plugin.ts`:
+Create `plugins/myplugin/client/plugin.ts`:
 
 ```typescript
 import React from 'react';
@@ -190,7 +181,7 @@ export const plugin = new MyClientPlugin();
 
 ### Step 3: Implement Server Plugin
 
-Create `server/plugins/myplugin/plugin.ts`:
+Create `plugins/myplugin/server/plugin.ts`:
 
 ```typescript
 import { IServerPlugin } from "../../ServerUtil.js";
@@ -381,7 +372,7 @@ Plugins communicate through:
 
 Here's a complete minimal plugin example:
 
-**Client (`client/plugins/example/plugin.ts`)**:
+**Client (`plugins/example/client/plugin.ts`)**:
 ```typescript
 import React from 'react';
 import { IClientPlugin } from "../../AppServiceTypes";
@@ -402,7 +393,7 @@ class ExampleClientPlugin implements IClientPlugin {
 export const plugin = new ExampleClientPlugin();
 ```
 
-**Server (`server/plugins/example/plugin.ts`)**:
+**Server (`plugins/example/server/plugin.ts`)**:
 ```typescript
 import { IServerPlugin } from "../../ServerUtil.js";
 

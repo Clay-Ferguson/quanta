@@ -82,7 +82,11 @@ The system uses a plugin architecture that allows for modular application develo
 
 Each plugin should have an `plugin.ts` file in it's plugin folder which contains a class that derives from `IServerPlugin`. This Server Plugin interface has lifecycle methods that the plugin needs to implement to integrate and activate itself during startup of the web app.
 
-In general Plugins are kept in separate dedicated subfolders on the client and on the server. For example, the `chat` plugin is in `/client/plugins/chat` project folder for client code and a `/server/plugins/chat` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folder named `docs` is what contains the Document editor plugin. 
+In general Plugins are kept in separate dedicated subfolders. For example, the `chat` plugin is in `/plugins/chat/client` project folder for client code and a `/plugins/chat/server` folder for server-side code. The other plugin subfolder you'll currently see, in addition to `chat` is `docs`. The plugin folder named `docs` is what contains the Document editor plugin.
+
+**Plugin Installation**:
+
+One of the key advantages of Quanta's plugin architecture is its simplicity. Installing a new plugin requires no configuration changes or complex deployment procedures - simply drop the plugin folder into the `/plugins/` directory and restart the application. The platform automatically discovers and loads any valid plugins during startup, making plugin management exceptionally straightforward. 
 
 #### 3. ReactJS State Management
 
@@ -92,7 +96,7 @@ All state that's part of the core platform is kept in [GlobalState](/client/Glob
 
 **Plugin State Extension**:
 
-Each plugin can also have it's own type-safe "view" of the Global State as well by adding properties into the global state like, for example the [ChatGlobalState](/client/plugins/chat/ChatTypes.ts). We rely on a naming-convention based way of allowing all plugins to share parts of the same global state simply by requiringn each plugin to use the `Plugin Key` (same as plugin folder name) as the prefix for all global variables for a given plugin, to avoid naming conflicts. This naming convention lets us keep the simplest possible architecture by still having just one single GlobalState even when multiple different independent plugins are sharing contributions to it.
+Each plugin can also have it's own type-safe "view" of the Global State as well by adding properties into the global state like, for example the [ChatGlobalState](/plugins/chat/client/ChatTypes.ts). We rely on a naming-convention based way of allowing all plugins to share parts of the same global state simply by requiringn each plugin to use the `Plugin Key` (same as plugin folder name) as the prefix for all global variables for a given plugin, to avoid naming conflicts. This naming convention lets us keep the simplest possible architecture by still having just one single GlobalState even when multiple different independent plugins are sharing contributions to it.
 
 #### 4. HTTP API Architecture
 
@@ -135,11 +139,14 @@ yarn install
 ### Plugin Development
 
 **Creating a New Plugin**:
-1. Create plugin directories: `client/plugins/[name]/` and `server/plugins/[name]/`
+1. Create plugin directories: `plugins/[name]/client/` and `plugins/[name]/server/`
 2. Implement plugin interfaces (`IClientPlugin`, `IServerPlugin`)
 3. Add plugin configuration to `config.yaml`
 4. Export plugin instances from `plugin.ts` files
 5. Implement plugin-specific routes, pages, and components in `plugin.ts`
+
+**Plugin Installation**:
+Installing plugins is as simple as dropping the plugin folder into `/plugins/` and restarting the application. No build steps, configuration changes, or complex deployment procedures are required.
 
 **Plugin Isolation**:
 - **State Namespacing**: Use plugin key prefixes for global state variables

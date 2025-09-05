@@ -29,10 +29,11 @@ For more see the README.md file in the root directory, which also includes links
 - Server: `tsc -p server/tsconfig.json && npm run copy:sql` (builds Express server + copies SQL schemas)
 
 ### Plugin Development
-- Client plugins: `/client/plugins/{plugin-name}/plugin.ts`
-- Server plugins: `/server/plugins/{plugin-name}/plugin.ts`
+- Client plugins: `/plugins/{plugin-name}/client/plugin.ts`
+- Server plugins: `/plugins/{plugin-name}/server/plugin.ts`
 - Each plugin defines pages, state extensions, and route handlers
-- Schema files: `/server/plugins/{plugin-name}/schema.sql`
+- Schema files: `/plugins/{plugin-name}/server/schema.sql`
+- Installation: Simply drop plugin folder into `/plugins/` and restart - no configuration needed
 
 ## Project Patterns
 
@@ -64,8 +65,8 @@ interface DocsGlobalState extends GlobalState {
 - Environment variable `POSTGRES_HOST` controls DB initialization
 
 ### File Structure Conventions
-- `/client/plugins/{name}/` - Client-side plugin code
-- `/server/plugins/{name}/` - Server-side plugin code  
+- `/plugins/{name}/client/` - Client-side plugin code
+- `/plugins/{name}/server/` - Server-side plugin code  
 - `/common/types/` - Shared TypeScript interfaces
 - `/public/docs/` - Technical documentation
 - `/build/{env}/` - Environment-specific build scripts and configs

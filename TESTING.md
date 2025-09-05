@@ -94,7 +94,7 @@ Individual test files are automatically discovered and executed by the orchestra
 
 All test files follow the pattern `*.test.ts` and are located either in:
 - `/tests/` directory for core functionality tests
-- `/server/plugins/{plugin-name}/test/` for plugin-specific tests
+- `/plugins/{plugin-name}/server/test/` for plugin-specific tests
 
 ## Running Tests
 
