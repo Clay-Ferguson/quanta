@@ -151,7 +151,7 @@ class ServerUtil {
         for (const plugin of plugins) {
             try {
                 console.log(`plugin: ${plugin.key}`);
-                const pluginModule = await import(`../server/plugins/${plugin.key}/plugin.js`);
+                const pluginModule = await import(`../plugins/${plugin.key}/server/plugin.js`);
                 const pluginInst = pluginModule.plugin;
                 if (pluginInst) {
                     await pluginInst.init(context); // Initialize the plugin

@@ -10,5 +10,5 @@
       "skipLibCheck": true,
       "experimentalDecorators": true,
     },
-    "include": ["./**/*.ts", "../plugins/docs/server/DocBinary.ts", "../plugins/docs/server/DocMod.ts", "../plugins/docs/server/DocService.ts", "../plugins/docs/server/DocUtil.ts", "../plugins/docs/server/IFS.ts", "../plugins/docs/server/SSGService.ts", "../plugins/chat/server/WebRTCServer.ts", "../plugins/chat/server/ChatService.ts"]
+    "include": ["./**/*.ts", "../plugins/docs/server/DocBinary.ts", "../plugins/docs/server/DocMod.ts", "../plugins/docs/server/DocService.ts", "../plugins/docs/server/DocUtil.ts", "../plugins/docs/server/IFS.ts", "../plugins/docs/server/SSGService.ts", "../plugins/chat/server/WebRTCServer.ts", "../plugins/chat/server/ChatService.ts", "../plugins/chat/server/plugin.ts", "../plugins/docs/server/plugin.ts"]
   }
