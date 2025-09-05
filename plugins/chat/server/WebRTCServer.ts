@@ -4,7 +4,7 @@ import {canon} from '../../../common/Canonicalizer.js';
 import { User } from '../../../common/types/CommonTypes.js';
 import { WebRTCAck, WebRTCBroadcast, WebRTCDeleteMsg, WebRTCJoin, WebRTCRoomInfo, WebRTCSignal, WebRTCUserJoined, WebRTCUserLeft } from '../../../common/types/WebRTCTypes.js';
 import { dbMessages } from './db/DBMessages.js';
-import { dbUsers } from '../../DBUsers.js';
+import { dbUsers } from '../../../server/DBUsers.js';
 
 /**
  * Represents a chat room with its name and participants.

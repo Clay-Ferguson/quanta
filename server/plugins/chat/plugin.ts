@@ -1,7 +1,7 @@
 import { config } from "../../Config.js";
 import { httpServerUtil } from "../../HttpServerUtil.js";
-import { chatSvc } from "./ChatService.js";
-import { rtc } from "./WebRTCServer.js";
+import { chatSvc } from "../../../plugins/chat/server/ChatService.js";
+import { rtc } from "../../../plugins/chat/server/WebRTCServer.js";
 import { IAppContext, IServerPlugin, asyncHandler } from "../../ServerUtil.js";
 import path from 'path';
 import fs from 'fs';

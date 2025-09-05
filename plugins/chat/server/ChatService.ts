@@ -2,12 +2,12 @@ import { FileBlob } from "../../../common/types/CommonTypes.js";
 import { dbRoom } from "./db/DBRoom.js";
 import { dbMessages } from "./db/DBMessages.js";
 import { dbAttachments } from "./db/DBAttachments.js";
-import { dbUsers } from "../../DBUsers.js";
+import { dbUsers } from "../../../server/DBUsers.js";
 import { rtc } from './WebRTCServer.js';
 import { Request, Response } from 'express';
 import { BlockUser_Request, DeleteMessage_Request, DeleteRoom_Response, DeleteRoom_Request, GetMessageHistory_Response, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, GetMessagesByIds_Request, GetRecentAttachments_Response, GetRoomInfo_Response, SendMessages_Request } from "../../../common/types/EndpointTypes.js";
-import { handleError } from "../../ServerUtil.js";
-import { config } from "../../Config.js";
+import { handleError } from "../../../server/ServerUtil.js";
+import { config } from "../../../server/Config.js";
 
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
