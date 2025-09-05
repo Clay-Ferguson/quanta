@@ -7,8 +7,5 @@ certPath: "/etc/letsencrypt/live/quanta.wiki"
 desktopMode: "n"
 defaultPlugin: "chat"
 
-plugins:
-  - name: "Quanta Chat"
-    key: "chat"
  
 

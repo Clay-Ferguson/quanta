@@ -10,7 +10,7 @@ For more see the README.md file in the root directory, which also includes links
 
 - **Plugin System**: Each plugin implements `IClientPlugin` interface with `getKey()`, `init()`, and `getRoute()` methods
 - **Global State**: Centralized React state using `GlobalState` interface with plugin-specific extensions via key prefixes
-- **Configuration**: YAML-based config system (`/build/{env}/config.yaml`) defining plugins, hosts, and public folders
+- **Configuration**: YAML-based config system with individual plugin configs (`/plugins/{name}/config.yaml`) and environment configs (`/build/{env}/config.yaml`) defining hosts and public folders
 - **Dual Storage**: IndexedDB for client persistence, PostgreSQL for server-side data (chat requires DB)
 
 ## Development Workflows
@@ -33,7 +33,7 @@ For more see the README.md file in the root directory, which also includes links
 - Server plugins: `/plugins/{plugin-name}/server/plugin.ts`
 - Each plugin defines pages, state extensions, and route handlers
 - Schema files: `/plugins/{plugin-name}/server/schema.sql`
-- Installation: Simply drop plugin folder into `/plugins/` and restart - no configuration needed
+- Installation: Simply drop plugin folder with `config.yaml` into `/plugins/` and restart - automatic discovery and loading
 
 ## Project Patterns
 
@@ -54,8 +54,9 @@ interface DocsGlobalState extends GlobalState {
 
 ### Configuration System
 - Environment-specific YAML configs in `/build/{env}/`
-- `Config.ts` loads via `CONFIG_FILE` env var
-- Plugins array defines which capabilities are enabled
+- Individual plugin configs in `/plugins/{name}/config.yaml` with enabled property
+- `Config.ts` loads via `CONFIG_FILE` env var and scans plugins directory
+- Plugin discovery via individual config files with selective loading
 - Public folders config for file system access
 
 ### Database Strategy

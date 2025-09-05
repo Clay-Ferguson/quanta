@@ -90,25 +90,43 @@ export interface IServerPlugin {
 
 ## Configuration
 
-### config.yaml Files
+### Plugin Configuration Files
 
-The application supports multiple configuration files (e.g., `config.yaml`, `config-prod.yaml`) that define:
+The application uses two types of configuration:
+
+#### 1. Individual Plugin Config Files
+
+Each plugin has its own `config.yaml` file in its plugin directory (`/plugins/{plugin-name}/config.yaml`) that defines:
+
+- **Plugin Metadata**: Name, key, description, and version
+- **Enabled Status**: Boolean flag to enable/disable the plugin
+- **Plugin-Specific Settings**: Any custom configuration for the plugin
+
+Example plugin config file (`/plugins/chat/config.yaml`):
+```yaml
+name: "Quanta Chat"
+key: "chat"
+description: "WebRTC-powered peer-to-peer chat application"
+version: "1.0.0"
+enabled: true
+```
+
+**Plugin Discovery**: The application automatically scans the `/plugins/` directory for these config files during startup and only loads plugins where `enabled` is not `false`.
+
+#### 2. Environment Config Files
+
+The application also supports multiple environment configuration files (e.g., `config.yaml`, `config-prod.yaml`) in the `/build/{env}/` directories that define:
+
+- **Database Configuration**: PostgreSQL connection settings
+- **Public Folders**: File system access permissions  
+- **Host Settings**: Server host and port configuration
 
 #### Default Plugin
 ```yaml
 defaultPlugin: "chat"  # The plugin that loads by default
 ```
 
-#### Plugin Definitions
-```yaml
-plugins:
-  - name: "Quanta Chat"
-    key: "chat"
-  - name: "Quanta Docs"
-    key: "docs"
-```
-
-The `key` field corresponds to the directory name and the value returned by `getKey()`.
+**Note**: The `key` field in individual plugin configs corresponds to the directory name and the value returned by `getKey()`.
 
 ## Creating a New Plugin
 
@@ -224,16 +242,19 @@ class MyServerPlugin implements IServerPlugin {
 export const plugin = new MyServerPlugin();
 ```
 
-### Step 4: Update Configuration
+### Step 4: Create Plugin Configuration
 
-Add your plugin to the appropriate `config.yaml` file:
+Create a `config.yaml` file in your plugin directory (`/plugins/myplugin/config.yaml`):
 
 ```yaml
-plugins:
-  - name: "My Plugin"
-    key: "myplugin"
-  # ... existing plugins
+name: "My Plugin"
+key: "myplugin"
+description: "Description of what my plugin does"
+version: "1.0.0"
+enabled: true
 ```
+
+**Plugin Installation**: Simply drop the plugin folder into `/plugins/` and restart the application. The system will automatically discover your plugin's config file and load it if `enabled` is `true`.
 
 ## Plugin State Management
 

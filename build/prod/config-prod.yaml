@@ -8,10 +8,3 @@ adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb
 certPath: "/etc/letsencrypt/live/quanta.wiki"
 desktopMode: "n"
 defaultPlugin: "chat"
-
-plugins:
-  - name: "Quanta Chat"
-    key: "chat"
-  - name: "Quanta Docs"
-    key: "docs"
-

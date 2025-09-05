@@ -141,12 +141,12 @@ yarn install
 **Creating a New Plugin**:
 1. Create plugin directories: `plugins/[name]/client/` and `plugins/[name]/server/`
 2. Implement plugin interfaces (`IClientPlugin`, `IServerPlugin`)
-3. Add plugin configuration to `config.yaml`
+3. Create individual plugin configuration file (`plugins/[name]/config.yaml`)
 4. Export plugin instances from `plugin.ts` files
 5. Implement plugin-specific routes, pages, and components in `plugin.ts`
 
 **Plugin Installation**:
-Installing plugins is as simple as dropping the plugin folder into `/plugins/` and restarting the application. No build steps, configuration changes, or complex deployment procedures are required.
+Installing plugins is as simple as dropping the plugin folder into `/plugins/` and restarting the application. The system automatically discovers plugin config files and loads enabled plugins. No build steps, configuration changes, or complex deployment procedures are required.
 
 **Plugin Isolation**:
 - **State Namespacing**: Use plugin key prefixes for global state variables

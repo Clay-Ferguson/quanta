@@ -6,10 +6,6 @@ adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb
 desktopMode: "y"
 defaultPlugin: "docs"
 
-plugins:
-  - name: "Quanta"
-    key: "docs"
-
 # Public folders configuration - array of folder objects with name and path
 public-folders:
   - name: "Doc Root"

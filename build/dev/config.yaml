@@ -14,13 +14,6 @@ exitAfterTest: "n"  # Set to "y" to exit the process after tests complete
 # but since it's not important for now I'll just disable it and maybe come back to it later.     
 testWithCoverage: "n"  # Set to "y" to generate code coverage reports
 
-plugins:
-  - name: "Quanta Docs"
-    key: "docs"
-  # NOTE: We only can run chat with PosgreSQL, so that configuration requires the docker build, which uses 'docker-config.yaml', not this file.
-  # - name: "Quanta Chat"
-  #   key: "chat"
-
 # Public folders configuration - array of folder objects with name and path
 public-folders:
   - name: "LFS Root"

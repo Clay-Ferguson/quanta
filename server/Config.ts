@@ -1,5 +1,6 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
+import path from 'path';
 
 /** 
  * Configuration manager class that loads and provides access to YAML configuration 
@@ -20,12 +21,63 @@ class Config {
         try {
             const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
             this.configData = yaml.load(configFile) as any;
+            
+            // Dynamically scan and load plugins
+            const discoveredPlugins = Config.scanPlugins();
+            if (discoveredPlugins.length > 0) {
+                this.configData.plugins = discoveredPlugins;
+            }
+            
             console.log(`Configuration loaded successfully from ${CONFIG_FILE}`);
             console.log('Config:', JSON.stringify(this.configData, null, 2));
         } catch (error) {
             console.warn(`Could not load ${CONFIG_FILE} file:`, error instanceof Error ? error.message : error);
             console.log('Continuing with default configuration...');
         }
+    }
+
+    /**
+     * Scan the plugins directory for plugin configuration files
+     * and dynamically build the plugins array
+     */
+    static scanPlugins(): any[] {
+        const plugins: any[] = [];
+        const pluginsDir = path.join(process.cwd(), "plugins");
+        
+        if (!fs.existsSync(pluginsDir)) {
+            console.log("No plugins directory found");
+            return plugins;
+        }
+
+        const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+
+        for (const pluginFolder of pluginFolders) {
+            const configPath = path.join(pluginsDir, pluginFolder, "config.yaml");
+            
+            if (fs.existsSync(configPath)) {
+                try {
+                    const configContent = fs.readFileSync(configPath, 'utf8');
+                    const pluginConfig = yaml.load(configContent) as any;
+                    
+                    // Check if plugin is enabled (default to true if not specified)
+                    const isEnabled = pluginConfig.enabled !== false;
+                    
+                    if (isEnabled) {
+                        console.log(`Discovered plugin: ${pluginConfig.name} (${pluginConfig.key})`);
+                        plugins.push(pluginConfig);
+                    } else {
+                        console.log(`Skipping disabled plugin: ${pluginConfig.name} (${pluginConfig.key})`);
+                    }
+                } catch (error) {
+                    console.error(`Error loading plugin config from ${configPath}:`, error);
+                }
+            }
+        }
+
+        console.log(`Loaded ${plugins.length} plugins dynamically`);
+        return plugins;
     }
 
     /**

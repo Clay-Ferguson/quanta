@@ -1,0 +1,5 @@
+name: "Quanta Chat"
+key: "chat"
+description: "WebRTC-powered peer-to-peer chat application"
+version: "1.0.0"
+enabled: false
