@@ -15,6 +15,15 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path mapping 
+    
+    Example Use: import { SomeComponent } from '@plugins/chat/client/SomeComponent';
+    */
+    "baseUrl": ".",
+    "paths": {
+      "@plugins/*": ["plugins/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -22,5 +31,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["client", "common"]
+  "include": ["client", "common", "plugins/*/client"]
 }

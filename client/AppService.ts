@@ -86,7 +86,7 @@ export class AppService {
         for (const plugin of plugins) {
             try {
                 console.log(`load plugin: ${plugin}`);
-                const pluginModule = await import(`./plugins/${plugin}/plugin.ts`);
+                const pluginModule = await import(`../plugins/${plugin}/client/plugin.ts`);
                 pluginsArray.push(pluginModule.plugin);
             } catch (error) {
                 console.error(`Error loading plugin ${plugin}:`, error);

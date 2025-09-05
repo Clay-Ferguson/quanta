@@ -1,9 +1,36 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
+import fs from 'fs'
 
 // https://vite.dev/config/
 let config = null;
 const isDev = process.env.DEV_BUILD_OPTS === 'true'
+
+// Dynamically discover plugin client directories
+function getPluginAliases() {
+    const pluginsDir = path.resolve(__dirname, 'plugins')
+    const aliases: Record<string, string> = {
+        '@plugins': pluginsDir
+    }
+    
+    try {
+        const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name)
+        
+        pluginFolders.forEach(pluginName => {
+            const clientPath = path.join(pluginsDir, pluginName, 'client')
+            if (fs.existsSync(clientPath)) {
+                aliases[`@plugins/${pluginName}/client`] = clientPath
+            }
+        })
+    } catch (err) {
+        console.warn('Could not read plugins directory:', err)
+    }
+    
+    return aliases
+}
 
 if (!isDev) {
     // PRODUCTION
@@ -11,6 +38,9 @@ if (!isDev) {
     config = {
         plugins: [react()],
         root: '.', // Keep root at project level
+        resolve: {
+            alias: getPluginAliases()
+        },
         build: {
             rollupOptions: {
                 input: './server/index.html' // Use index.html from server folder
@@ -32,6 +62,9 @@ else {
     config = {
         plugins: [react()],
         root: '.', // Keep root at project level
+        resolve: {
+            alias: getPluginAliases()
+        },
         css: {
             preprocessorOptions: {
                 scss: {
