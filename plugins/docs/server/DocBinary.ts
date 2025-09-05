@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { handleError, svrUtil } from "../../ServerUtil.js";
-import { config } from "../../Config.js";
+import { handleError, svrUtil } from "../../../server/ServerUtil.js";
+import { config } from "../../../server/Config.js";
 import { docUtil } from "./DocUtil.js";
-import { runTrans } from '../../Transactional.js';
+import { runTrans } from '../../../server/Transactional.js';
 import { fixName, getImageContentType, isImageExt } from '../../../common/CommonUtils.js';
 import { ANON_USER_ID } from '../../../common/types/CommonTypes.js';
 

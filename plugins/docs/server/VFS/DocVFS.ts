@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { AuthenticatedRequest, handleError } from "../../../ServerUtil.js";
-import { config } from "../../../Config.js";
-import pgdb from '../../../PGDB.js';
+import { AuthenticatedRequest, handleError } from "../../../../server/ServerUtil.js";
+import { config } from "../../../../server/Config.js";
+import pgdb from '../../../../server/PGDB.js';
 import { ANON_USER_ID } from '../../../../common/types/CommonTypes.js';
 
 class DocVFS {

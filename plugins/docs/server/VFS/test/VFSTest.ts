@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import pgdb from '../../../../PGDB.js';
+import pgdb from '../../../../../server/PGDB.js';
 import { wipeTable, printFolderStructure, createFolderStructure, listAllVfsNodes } from './VFSTestCore.js';
  
 const testRootKey = 'usr';

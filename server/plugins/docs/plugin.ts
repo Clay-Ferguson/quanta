@@ -1,18 +1,18 @@
 import { config } from "../../Config.js";
 import { httpServerUtil } from "../../HttpServerUtil.js";
-import { docSvc } from "./DocService.js";
-import { ssg } from "./SSGService.js";
+import { docSvc } from "../../../plugins/docs/server/DocService.js";
+import { ssg } from "../../../plugins/docs/server/SSGService.js";
 import { IAppContext, IServerPlugin, asyncHandler } from "../../ServerUtil.js";
-import { docUtil } from "./DocUtil.js";
-import { docMod } from "./DocMod.js";
-import { docBinary } from "./DocBinary.js";
+import { docUtil } from "../../../plugins/docs/server/DocUtil.js";
+import { docMod } from "../../../plugins/docs/server/DocMod.js";
+import { docBinary } from "../../../plugins/docs/server/DocBinary.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import pgdb from "../../PGDB.js";
-import docVFS from "./VFS/DocVFS.js";
+import docVFS from '../../../plugins/docs/server/VFS/DocVFS.js';
 import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
-import vfs from "./VFS/VFS.js";
+import vfs from '../../../plugins/docs/server/VFS/VFS.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

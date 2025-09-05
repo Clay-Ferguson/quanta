@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { handleError } from "../../ServerUtil.js";
-import { config } from "../../Config.js";
+import { handleError } from "../../../server/ServerUtil.js";
+import { config } from "../../../server/Config.js";
 import { IFS } from './IFS.js';
 import vfs from './VFS/VFS.js';
 import lfs from './LFS/LFS.js';

@@ -1,8 +1,8 @@
-import { IFS, IFSStats } from '../IFS.js'
-import pgdb from '../../../PGDB.js';
-import { config } from '../../../Config.js';
+import { IFS, IFSStats } from '../../../../plugins/docs/server/IFS.js'
+import pgdb from '../../../../server/PGDB.js';
+import { config } from '../../../../server/Config.js';
 import { TreeNode, UserProfileCompact } from '../../../../common/types/CommonTypes.js';
-import { svrUtil } from '../../../ServerUtil.js';
+import { svrUtil } from '../../../../server/ServerUtil.js';
 import { getFilenameExtension } from '../../../../common/CommonUtils.js';
 
 const rootKey = "usr"; // Default root key for VFS, can be changed based on configuration

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { IFS, IFSStats } from '../IFS.js';
+import { IFS, IFSStats } from '../../../../plugins/docs/server/IFS.js';
 import path from 'path';
 import { TreeNode } from '../../../../common/types/CommonTypes.js';
 

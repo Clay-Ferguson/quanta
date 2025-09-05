@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import path from 'path';
-import { handleError, svrUtil } from "../../ServerUtil.js";
-import { config } from "../../Config.js";
+import { handleError, svrUtil } from "../../../server/ServerUtil.js";
+import { config } from "../../../server/Config.js";
 import { docUtil } from "./DocUtil.js";
-import { runTrans } from '../../Transactional.js';
-import pgdb from "../../PGDB.js";
+import { runTrans } from '../../../server/Transactional.js';
+import pgdb from "../../../server/PGDB.js";
 import { fixName } from '../../../common/CommonUtils.js';
 
 /**

@@ -1,4 +1,4 @@
-import pgdb from '../../../../PGDB.js';
+import pgdb from '../../../../../server/PGDB.js';
 import { simpleReadWriteTest, testFileOperations, testPathOperations, testErrorHandling, deleteFolder, renameFolder, testEnsurePath, testSetPublic, testSearch, resetTestEnvironment } from './VFSTest.js';
 import { testFolderRenameWithChildren } from './FolderRenameTest.js';
 import { pgdbTestMoveUp } from './FileMovesTest.js';

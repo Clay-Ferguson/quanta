@@ -9,8 +9,8 @@ import {
     assertGreaterThan,
     assertArrayContains
 } from '../../../../../common/CommonUtils.js';
-import { docSvc } from '../../DocService.js';
-import { config } from '../../../../Config.js';
+import { docSvc } from '../../../../../plugins/docs/server/DocService.js';
+import { config } from '../../../../../server/Config.js';
 
 export async function runTests() {
     console.log("🚀 Starting LFS tests...");

@@ -6,7 +6,7 @@ import { logInit } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
-import { docUtil } from './plugins/docs/DocUtil.js';
+import { docUtil } from '../plugins/docs/server/DocUtil.js';
 import pgdb from './PGDB.js';
 import { dbUsers } from './DBUsers.js';
 import { runAllTests } from './app.test.js';

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { config } from '../../Config.js';
+import { config } from '../../../server/Config.js';
 
 export interface GenerateDocOptions {
 	includeFileNames: boolean;
