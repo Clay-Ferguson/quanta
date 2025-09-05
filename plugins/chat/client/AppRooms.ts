@@ -1,9 +1,9 @@
 import { ChatMessage, KeyPairHex, User } from "../../../common/types/CommonTypes.ts";
-import { app } from "../../AppService.ts";
-import { DBKeys, RoomHistoryItem } from "../../AppServiceTypes.ts";
-import { confirmModal } from "../../components/ConfirmModalComp.tsx";
+import { app } from "../../../client/AppService.ts";
+import { DBKeys, RoomHistoryItem } from "../../../client/AppServiceTypes.ts";
+import { confirmModal } from "../../../client/components/ConfirmModalComp.tsx";
 import { ChatPageNames, gd, gs } from "./ChatTypes.ts"
-import {idb} from '../../IndexedDB.ts';
+import {idb} from '../../../client/IndexedDB.ts';
 import appMessages from "./AppMessages.ts";
 import { rtc } from "./WebRTC.ts";
 

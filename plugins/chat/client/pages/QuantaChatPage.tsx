@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import FooterComp from '../comps/FooterComp';
 import HeaderComp from '../comps/HeaderComp';
-import ImageViewerComp from '../../../components/ImageViewerComp';
+import ImageViewerComp from '../../../../client/components/ImageViewerComp';
 import MessagesComp from '../comps/MessagesComp';
 import { useGlobalState } from '../ChatTypes';
-import { util } from '../../../Util';
+import { util } from '../../../../client/Util';
 
 interface QuantaChatPageProps {
     pluginTitle?: string;

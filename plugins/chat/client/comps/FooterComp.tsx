@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import {util} from '../../../Util';
+import {util} from '../../../../client/Util';
 import { useGlobalState } from '../ChatTypes';
 import appMessages from '../AppMessages';
 

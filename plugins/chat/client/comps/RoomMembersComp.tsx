@@ -1,10 +1,10 @@
 import { useGlobalState } from '../ChatTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import HexKeyComp from '../../../components/HexKeyComp';
-import AvatarImageComp from '../../../components/AvatarImageComp';
+import HexKeyComp from '../../../../client/components/HexKeyComp';
+import AvatarImageComp from '../../../../client/components/AvatarImageComp';
 import { Contact } from '../../../../common/types/CommonTypes';
-import { alertModal } from '../../../components/AlertModalComp';
+import { alertModal } from '../../../../client/components/AlertModalComp';
 import { addContact } from '../Contacts';
 
 /**

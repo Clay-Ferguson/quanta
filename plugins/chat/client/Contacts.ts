@@ -1,6 +1,6 @@
 import { Contact, User } from "../../../common/types/CommonTypes";
-import { DBKeys } from "../../AppServiceTypes.ts";
-import { idb } from "../../IndexedDB";
+import { DBKeys } from "../../../client/AppServiceTypes.ts";
+import { idb } from "../../../client/IndexedDB";
 import { gd, gs } from "./ChatTypes.ts"
 
 /**

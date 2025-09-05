@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { gd, useGlobalState } from '../ChatTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
-import HexKeyComp from '../../../components/HexKeyComp';
-import AvatarImageComp from '../../../components/AvatarImageComp';
+import HexKeyComp from '../../../../client/components/HexKeyComp';
+import AvatarImageComp from '../../../../client/components/AvatarImageComp';
 import { Contact } from '../../../../common/types/CommonTypes';
-import { confirmModal } from '../../../components/ConfirmModalComp';
-import { alertModal } from '../../../components/AlertModalComp';
-import { DBKeys } from '../../../AppServiceTypes';
-import { idb } from '../../../IndexedDB';
+import { confirmModal } from '../../../../client/components/ConfirmModalComp';
+import { alertModal } from '../../../../client/components/AlertModalComp';
+import { DBKeys } from '../../../../client/AppServiceTypes';
+import { idb } from '../../../../client/IndexedDB';
 
 /**
  * Displays a list of contacts with options to add, edit, delete, and select multiple contacts.

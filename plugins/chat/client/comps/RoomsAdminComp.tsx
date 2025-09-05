@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useGlobalState } from '../ChatTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { httpClientUtil } from '../../../HttpClientUtil';
+import { httpClientUtil } from '../../../../client/HttpClientUtil';
 import { DeleteRoom_Request, GetRoomInfo_Response } from '../../../../common/types/EndpointTypes';
-import { alertModal } from '../../../components/AlertModalComp';
-import { confirmModal } from '../../../components/ConfirmModalComp';
+import { alertModal } from '../../../../client/components/AlertModalComp';
+import { confirmModal } from '../../../../client/components/ConfirmModalComp';
 import appRooms from '../AppRooms';
 
 // Define interface for room info

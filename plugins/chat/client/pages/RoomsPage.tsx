@@ -1,12 +1,12 @@
-import LogoBlockComp from '../../../components/LogoBlockComp';
-import BackButtonComp from '../../../components/BackButtonComp';
+import LogoBlockComp from '../../../../client/components/LogoBlockComp';
+import BackButtonComp from '../../../../client/components/BackButtonComp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import TitledPanelComp from '../../../components/TitledPanelComp';
+import TitledPanelComp from '../../../../client/components/TitledPanelComp';
 import { useGlobalState } from '../ChatTypes';
-import { RoomHistoryItem } from '../../../AppServiceTypes';
+import { RoomHistoryItem } from '../../../../client/AppServiceTypes';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useEffect } from 'react';
-import { util } from '../../../Util';
+import { util } from '../../../../client/Util';
 import appRooms from '../AppRooms';
 
 interface RoomsPageProps {

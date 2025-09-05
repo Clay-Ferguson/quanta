@@ -1,10 +1,10 @@
-import LogoBlockComp from '../../../components/LogoBlockComp';
-import BackButtonComp from '../../../components/BackButtonComp';
+import LogoBlockComp from '../../../../client/components/LogoBlockComp';
+import BackButtonComp from '../../../../client/components/BackButtonComp';
 import RoomMembersComp from '../comps/RoomMembersComp';
-import TitledPanelComp from '../../../components/TitledPanelComp';
+import TitledPanelComp from '../../../../client/components/TitledPanelComp';
 import { useGlobalState } from '../ChatTypes';
 import { useEffect } from 'react';
-import { util } from '../../../Util';
+import { util } from '../../../../client/Util';
 
 interface RoomInfoPageProps {
     pluginTitle?: string;

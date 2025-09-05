@@ -3,13 +3,13 @@ import { crypt } from "../../../common/Crypto.ts";
 import { ChatMessage, ChatMessageIntf, MessageStates } from "../../../common/types/CommonTypes.ts";
 import { DeleteMessage_Request, GetMessageIdsForRoom_Response, GetMessagesByIds_Response, SendMessages_Request } from "../../../common/types/EndpointTypes.ts";
 import appRooms from "./AppRooms.ts";
-import { DBKeys } from "../../AppServiceTypes.ts";
-import { alertModal } from "../../components/AlertModalComp.tsx";
-import { confirmModal } from "../../components/ConfirmModalComp.tsx";
+import { DBKeys } from "../../../client/AppServiceTypes.ts";
+import { alertModal } from "../../../client/components/AlertModalComp.tsx";
+import { confirmModal } from "../../../client/components/ConfirmModalComp.tsx";
 import { gd, gs } from "./ChatTypes.ts"
-import { httpClientUtil } from "../../HttpClientUtil.ts";
-import {idb} from '../../IndexedDB.ts';
-import { util } from "../../Util.ts";
+import { httpClientUtil } from "../../../client/HttpClientUtil.ts";
+import {idb} from '../../../client/IndexedDB.ts';
+import { util } from "../../../client/Util.ts";
 import { rtc } from "./WebRTC.ts";
 
 /**
