@@ -3,7 +3,7 @@ import { faShareAlt, faLink } from '@fortawesome/free-solid-svg-icons';
 import { TreeNode } from '../../../../../common/types/CommonTypes';
 import { DocsGlobalState, gd } from '../../DocsTypes';
 import { createClickablePathComponents } from '../../../../../common/CommonUtils';
-import { alertModal } from '../../../../components/AlertModalComp';
+import { alertModal } from '../../../../../client/components/AlertModalComp';
 
 declare const DESKTOP_MODE: boolean;
 

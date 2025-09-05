@@ -1,7 +1,7 @@
-import { app } from '../../AppService';
-import { DBKeys, PageNames } from '../../AppServiceTypes';
-import { alertModal } from '../../components/AlertModalComp';
-import { idb } from '../../IndexedDB';
+import { app } from '../../../client/AppService';
+import { DBKeys, PageNames } from '../../../client/AppServiceTypes';
+import { alertModal } from '../../../client/components/AlertModalComp';
+import { idb } from '../../../client/IndexedDB';
 import { DocsGlobalState, gd, DocsPageNames } from './DocsTypes';
 
 export async function docsGoHome(gs: DocsGlobalState): Promise<void> {

@@ -1,5 +1,5 @@
-import { idb } from '../../../../IndexedDB';
-import { DBKeys } from '../../../../AppServiceTypes';
+import { idb } from '../../../../../client/IndexedDB';
+import { DBKeys } from '../../../../../client/AppServiceTypes';
 import { gd, DocsGlobalState } from '../../DocsTypes';
 
 interface ViewWidthDropdownProps {

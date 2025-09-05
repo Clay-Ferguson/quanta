@@ -1,6 +1,6 @@
 import { TreeNode } from "../../../common/types/CommonTypes";
-import { GlobalState } from "../../GlobalState";
-import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalStateBase } from "../../GlobalState.tsx";
+import { GlobalState } from "../../../client/GlobalState";
+import { gd as gdBase, gs as gsBase, GlobalAction, useGlobalState as useGlobalStateBase } from "../../../client/GlobalState.tsx";
 
 export enum DocsPageNames {
     treeViewer = 'TreeViewerPage', 

@@ -3,8 +3,8 @@ import { faFolder, faFile, faExclamationTriangle, faShareAlt } from '@fortawesom
 import { TreeNode } from '../../../../../common/types/CommonTypes';
 import { DocsGlobalState } from '../../DocsTypes';
 import { isImageFile, isTextFile, stripOrdinal, formatDateTime } from '../../../../../common/CommonUtils';
-import { setFullSizeImage } from '../../../../components/ImageViewerComp';
-import { signedArgs } from '../../../../AppService';
+import { setFullSizeImage } from '../../../../../client/components/ImageViewerComp';
+import { signedArgs } from '../../../../../client/AppService';
 import { handleCheckboxChange, handleFolderClick, handleFileClick } from '../TreeViewerPageOps';
 import EditIcons from './EditIcons';
 import EditFolder from './EditFolder';

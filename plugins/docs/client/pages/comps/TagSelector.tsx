@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { httpClientUtil } from '../../../../HttpClientUtil';
+import { httpClientUtil } from '../../../../../client/HttpClientUtil';
 import { ExtractTags_Response, ScanTags_Response } from '../../../../../common/types/EndpointTypes';
 import { useGlobalState } from '../../DocsTypes';
-import { alertModal } from '../../../../components/AlertModalComp';
+import { alertModal } from '../../../../../client/components/AlertModalComp';
 
 // Module-level cache for tags to persist across component instances
 let cachedTags: string[] | null = null;

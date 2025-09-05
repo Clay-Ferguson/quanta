@@ -1,5 +1,5 @@
-import { alertModal } from '../../components/AlertModalComp';
-import { httpClientUtil } from '../../HttpClientUtil';
+import { alertModal } from '../../../client/components/AlertModalComp';
+import { httpClientUtil } from '../../../client/HttpClientUtil';
 import { useGlobalState, gd } from './DocsTypes';
 import { useState } from 'react';
 

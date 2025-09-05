@@ -1,4 +1,4 @@
-import Markdown from "../../../../components/MarkdownComp";
+import Markdown from "../../../../../client/components/MarkdownComp";
 
 interface ColumnMarkdownRendererProps {
     content: string;

@@ -5,7 +5,7 @@ import { TreeNode } from '../../../../../common/types/CommonTypes';
 import { DocsGlobalState, gd } from '../../DocsTypes';
 import { stripOrdinal, stripFileExtension } from '../../../../../common/CommonUtils';
 import { handleSaveClick, handleSplitInline, handleMakeFolder } from '../TreeViewerPageOps';
-import { alertModal } from '../../../../components/AlertModalComp';
+import { alertModal } from '../../../../../client/components/AlertModalComp';
 import TagSelector from './TagSelector';
 
 interface EditFileProps {

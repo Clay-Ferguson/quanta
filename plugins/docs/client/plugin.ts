@@ -1,9 +1,9 @@
 import React from 'react';
 import { DBKeys, IClientPlugin } from "../../../client/AppServiceTypes";
-import TreeViewerPage from "../../../client/plugins/docs/pages/TreeViewerPage";
-import SearchViewPage from '../../../client/plugins/docs/pages/SearchViewPage';
+import TreeViewerPage from "./pages/TreeViewerPage";
+import SearchViewPage from './pages/SearchViewPage';
 import { TreeNode, UserProfile } from '../../../common/types/CommonTypes';
-import { DocsGlobalState, DocsPageNames } from '../../../client/plugins/docs/DocsTypes';
+import { DocsGlobalState, DocsPageNames } from './DocsTypes';
 import { GlobalState } from '../../../client/GlobalState';
 import { idb } from '../../../client/IndexedDB';
 import { app } from '../../../client/AppService';
