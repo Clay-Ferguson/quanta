@@ -10,8 +10,14 @@ error_and_pause() {
 
 # Copy docs plugin SQL files
 mkdir -p dist/plugins/docs/server/VFS/SQL 
+
 if ! cp plugins/docs/server/VFS/SQL/*.sql dist/plugins/docs/server/VFS/SQL/ 2>/dev/null; then
     error_and_pause "Failed to copy plugins/docs/server/VFS/SQL/*.sql to dist/plugins/docs/server/VFS/SQL/"
 fi
 
-echo "All SQL files copied successfully!"
+if ! cp plugins/docs/*.yaml dist/plugins/docs/ 2>/dev/null; then
+    error_and_pause "Failed to copy plugins/docs/*.yaml to dist/plugins/docs/"
+fi
+
+
+echo "All files copied successfully!"

@@ -14,4 +14,8 @@ if ! cp plugins/chat/server/*.sql dist/plugins/chat/server/ 2>/dev/null; then
     error_and_pause "Failed to copy plugins/chat/server/*.sql to dist/plugins/chat/server/"
 fi
 
-echo "All SQL files copied successfully!"
+if ! cp plugins/chat/*.yaml dist/plugins/chat/ 2>/dev/null; then
+    error_and_pause "Failed to copy plugins/chat/*.yaml to dist/plugins/chat/"
+fi
+
+echo "All files copied successfully!"
