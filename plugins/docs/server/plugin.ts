@@ -1,4 +1,5 @@
 import { config } from "../../../server/Config.js";
+import { Request } from 'express';
 import { httpServerUtil } from "../../../server/HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
@@ -140,6 +141,37 @@ class DocsServerPlugin implements IServerPlugin {
         } finally {
             client.release();
         }
+    }
+
+    public async preProcessHtml(html: string, req: Request): Promise<string> {
+        const docRootKey = req.params?.docRootKey || 'usr';
+
+        // Get the file system type first if we have a docRootKey
+        let docRootType = "";
+        if (docRootKey) {
+            docRootType = await docUtil.getFileSystemType(docRootKey);
+        }
+
+        let docPath = '';
+        if (req.params.uuid) {
+            docPath = await docUtil.getPathByUUID(req.params.uuid, docRootKey) || '';
+        }
+        else {
+            if (docRootKey && req.params[0]) {
+                // Example Url handled here:
+                //   http://localhost:8000/doc/usr/Quanta_User_Guide
+                //   From handler: context.app.get('/doc/:docRootKey/*', context.serveIndexHtml("TreeViewerPage"));
+                //   Where usr is the `:docRootKey` and Quanta_User_Guide is the wildcard `*` part of the URL.
+                docPath = req.params[0];
+                // console.log(`Using docPath from request params: [${docPath}]`);
+            }
+        }
+
+        html = html
+            .replace('{{DOC_ROOT_KEY}}', docRootKey)
+            .replace('{{DOC_ROOT_TYPE}}', docRootType)
+            .replace('{{DOC_PATH}}', docPath);
+        return html;
     }
 }
 

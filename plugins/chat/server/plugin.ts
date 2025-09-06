@@ -3,6 +3,7 @@ import { httpServerUtil } from "../../../server/HttpServerUtil.js";
 import { chatSvc } from "./ChatService.js";
 import { rtc } from "./WebRTCServer.js";
 import { IAppContext, IServerPlugin, asyncHandler } from "../../../server/ServerUtil.js";
+import { Request } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -78,6 +79,11 @@ class ChatServerPlugin implements IServerPlugin {
 
     async notify(server: any): Promise<void> {
         await rtc.init(HOST, PORT, server);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async preProcessHtml(html: string, req: Request): Promise<string> {        
+        return html;
     }
 }
 

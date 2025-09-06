@@ -86,6 +86,8 @@ export interface IServerPlugin {
      */
     init(context: IAppContext): void;
 
+    preProcessHtml(html: string, req: Request): Promise<string>; // Optional method to pre-process HTML content
+
     /**
      * Notify the plugin that server startup is complete
      * @param server - The server instance (for WebRTC or other server-level operations)
