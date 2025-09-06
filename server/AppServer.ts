@@ -88,7 +88,7 @@ if (SECURE === 'y') {
     });
 }
 
-const plugins = config.get("plugins");
+const plugins = config.get("plugins") || [];
 // get commma delimited list of plugin 'key' values into a string
 const pluginKeys = plugins.map((plugin: any) => plugin.key).join(','); 
 console.log(`Plugins loaded: ${pluginKeys}`);

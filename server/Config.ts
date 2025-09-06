@@ -24,9 +24,7 @@ class Config {
             
             // Dynamically scan and load plugins
             const discoveredPlugins = Config.scanPlugins();
-            if (discoveredPlugins.length > 0) {
-                this.configData.plugins = discoveredPlugins;
-            }
+            this.configData.plugins = discoveredPlugins;
             
             console.log(`Configuration loaded successfully from ${CONFIG_FILE}`);
             console.log('Config:', JSON.stringify(this.configData, null, 2));
@@ -42,11 +40,21 @@ class Config {
      */
     static scanPlugins(): any[] {
         const plugins: any[] = [];
-        const pluginsDir = path.join(process.cwd(), "plugins");
+        const currentDir = process.cwd();
+        let pluginsDir = path.join(currentDir, "plugins");
         
+        // If plugins directory doesn't exist, try dist/plugins (for Docker builds)
         if (!fs.existsSync(pluginsDir)) {
-            console.log("No plugins directory found");
-            return plugins;
+            const distPluginsDir = path.join(currentDir, "dist", "plugins");
+            console.log(`DEBUG: plugins directory not found, trying dist/plugins at: ${distPluginsDir}`);
+            
+            if (fs.existsSync(distPluginsDir)) {
+                pluginsDir = distPluginsDir;
+                console.log(`DEBUG: Using dist/plugins directory`);
+            } else {
+                console.log("No plugins directory found (checked both plugins and dist/plugins)");
+                return plugins;
+            }
         }
 
         const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })

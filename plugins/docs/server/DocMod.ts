@@ -397,11 +397,11 @@ class DocMod {
                         if (stat.is_directory) {
                         // Remove directory recursively
                             await ifs.rm(owner_id, absoluteTargetPath, { recursive: true, force: true });
-                            console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
+                            // console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                         } else {
                         // Remove file
                             await ifs.unlink(owner_id, absoluteTargetPath);
-                            console.log(`File deleted successfully: ${absoluteTargetPath}`);
+                            // console.log(`File deleted successfully: ${absoluteTargetPath}`);
                         }
                     
                         deletedCount++;
