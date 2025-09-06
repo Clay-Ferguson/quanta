@@ -85,6 +85,10 @@ class ChatServerPlugin implements IServerPlugin {
     public async preProcessHtml(html: string, req: Request): Promise<string> {        
         return html;
     }
+
+    runAllTests(): Promise<void> {
+        return Promise.resolve();
+    }
 }
 
 export const plugin = new ChatServerPlugin();

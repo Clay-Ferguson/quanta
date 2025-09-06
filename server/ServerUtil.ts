@@ -87,6 +87,7 @@ export interface IServerPlugin {
     init(context: IAppContext): void;
 
     preProcessHtml(html: string, req: Request): Promise<string>; // Optional method to pre-process HTML content
+    runAllTests(): Promise<void>; // Optional method to run plugin-specific tests
 
     /**
      * Notify the plugin that server startup is complete

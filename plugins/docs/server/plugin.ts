@@ -1,5 +1,7 @@
 import { config } from "../../../server/Config.js";
 import { Request } from 'express';
+import { runTests as runVfsTests } from './VFS/test/vfs.test.js';
+import { runTests as runLfsTests } from './LFS/test/lfs.test.js';
 import { httpServerUtil } from "../../../server/HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { ssg } from "./SSGService.js";
@@ -173,6 +175,17 @@ class DocsServerPlugin implements IServerPlugin {
             .replace('{{DOC_PATH}}', docPath);
         return html;
     }
+
+    async runAllTests(): Promise<void> {
+        console.log("Running embedded tests...");
+        if (process.env.POSTGRES_HOST) {
+            await runVfsTests();
+        }
+        else {
+            await runLfsTests();
+        }
+        return Promise.resolve();
+    }    
 }
 
 export const plugin = new DocsServerPlugin();
