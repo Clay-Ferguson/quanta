@@ -223,3 +223,9 @@ if (config.get("runTests") === "y" && process.env.QUANTA_ENV === "dev") {
 }
 
 console.log("App init complete.");
+
+// Warn if no plugins are installed
+if (!plugins || plugins.length === 0) {
+    console.warn("WARNING: No plugins are installed. At least one plugin is required for the application to function.");
+}
+
