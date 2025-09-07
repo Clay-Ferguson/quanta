@@ -22,9 +22,9 @@ class Config {
             const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
             this.configData = yaml.load(configFile) as any;
             
-            // Dynamically scan and load plugins
-            const discoveredPlugins = Config.scanPlugins();
-            this.configData.plugins = discoveredPlugins;
+            // Dynamically scan and load plugins using the array from config
+            const pluginKeys = Array.isArray(this.configData.plugins) ? this.configData.plugins : [];
+            this.configData.plugins = Config.scanPlugins(pluginKeys);
             
             console.log(`Configuration loaded successfully from ${CONFIG_FILE}`);
             console.log('Config:', JSON.stringify(this.configData, null, 2));
@@ -38,22 +38,27 @@ class Config {
      * Scan the plugins directory for plugin configuration files
      * and dynamically build the plugins array
      */
-    static scanPlugins(): any[] {
-        const plugins: any[] = [];
+    /**
+     * Scan the plugins directory for plugin configuration files
+     * and dynamically build the plugins array, only including those
+     * whose folder name or key is present in the provided pluginKeys array.
+     */
+    static scanPlugins(pluginKeys: string[]): any[] {
+        const enabledPlugins: any[] = [];
         const currentDir = process.cwd();
         let pluginsDir = path.join(currentDir, "plugins");
-        
+
         // If plugins directory doesn't exist, try dist/plugins (for Docker builds)
         if (!fs.existsSync(pluginsDir)) {
             const distPluginsDir = path.join(currentDir, "dist", "plugins");
             console.log(`DEBUG: plugins directory not found, trying dist/plugins at: ${distPluginsDir}`);
-            
+
             if (fs.existsSync(distPluginsDir)) {
                 pluginsDir = distPluginsDir;
                 console.log(`DEBUG: Using dist/plugins directory`);
             } else {
                 console.log("No plugins directory found (checked both plugins and dist/plugins)");
-                return plugins;
+                return enabledPlugins;
             }
         }
 
@@ -62,30 +67,30 @@ class Config {
             .map(dirent => dirent.name);
 
         for (const pluginFolder of pluginFolders) {
+            // Only load plugins whose folder name or key is in pluginKeys
+            if (!pluginKeys.includes(pluginFolder)) {
+                continue;
+            }
             const configPath = path.join(pluginsDir, pluginFolder, "config.yaml");
-            
+
             if (fs.existsSync(configPath)) {
                 try {
                     const configContent = fs.readFileSync(configPath, 'utf8');
                     const pluginConfig = yaml.load(configContent) as any;
-                    
-                    // Check if plugin is enabled (default to true if not specified)
-                    const isEnabled = pluginConfig.enabled !== false;
-                    
-                    if (isEnabled) {
-                        console.log(`Discovered plugin: ${pluginConfig.name} (${pluginConfig.key})`);
-                        plugins.push(pluginConfig);
-                    } else {
-                        console.log(`Skipping disabled plugin: ${pluginConfig.name} (${pluginConfig.key})`);
+                    // Optionally, check for a 'key' property in the config and match that too
+                    if (pluginConfig.key && !pluginKeys.includes(pluginConfig.key) && !pluginKeys.includes(pluginFolder)) {
+                        continue;
                     }
+                    console.log(`Discovered plugin: ${pluginConfig.name || pluginFolder} (${pluginConfig.key || pluginFolder})`);
+                    enabledPlugins.push(pluginConfig);
                 } catch (error) {
                     console.error(`Error loading plugin config from ${configPath}:`, error);
                 }
             }
         }
 
-        console.log(`Loaded ${plugins.length} plugins dynamically`);
-        return plugins;
+        console.log(`Loaded ${enabledPlugins.length} plugins dynamically`);
+        return enabledPlugins;
     }
 
     /**

@@ -54,7 +54,6 @@ interface DocsGlobalState extends GlobalState {
 
 ### Configuration System
 - Environment-specific YAML configs in `/build/{env}/`
-- Individual plugin configs in `/plugins/{name}/config.yaml` with enabled property
 - `Config.ts` loads via `CONFIG_FILE` env var and scans plugins directory
 - Plugin discovery via individual config files with selective loading
 - Public folders config for file system access

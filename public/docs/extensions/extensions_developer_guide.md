@@ -99,7 +99,6 @@ The application uses two types of configuration:
 Each plugin has its own `config.yaml` file in its plugin directory (`/plugins/{plugin-name}/config.yaml`) that defines:
 
 - **Plugin Metadata**: Name, key, description, and version
-- **Enabled Status**: Boolean flag to enable/disable the plugin
 - **Plugin-Specific Settings**: Any custom configuration for the plugin
 
 Example plugin config file (`/plugins/chat/config.yaml`):
@@ -108,10 +107,9 @@ name: "Quanta Chat"
 key: "chat"
 description: "WebRTC-powered peer-to-peer chat application"
 version: "1.0.0"
-enabled: true
 ```
 
-**Plugin Discovery**: The application automatically scans the `/plugins/` directory for these config files during startup and only loads plugins where `enabled` is not `false`.
+**Plugin Discovery**: The application automatically scans the `/plugins/` directory for these config files during startup.
 
 #### 2. Environment Config Files
 
@@ -121,8 +119,11 @@ The application also supports multiple environment configuration files (e.g., `c
 - **Public Folders**: File system access permissions  
 - **Host Settings**: Server host and port configuration
 
-#### Default Plugin
+#### Configure Enabled and Default Plugins
 ```yaml
+plugins:
+  - chat
+  - docs
 defaultPlugin: "chat"  # The plugin that loads by default
 ```
 
@@ -251,10 +252,9 @@ name: "My Plugin"
 key: "myplugin"
 description: "Description of what my plugin does"
 version: "1.0.0"
-enabled: true
 ```
 
-**Plugin Installation**: Simply drop the plugin folder into `/plugins/` and restart the application. The system will automatically discover your plugin's config file and load it if `enabled` is `true`.
+**Plugin Installation**: Simply drop the plugin folder into `/plugins/` and restart the application. The system will automatically discover your plugin's config file and load/initialize the plugin.
 
 ## Plugin State Management
 

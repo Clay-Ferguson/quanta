@@ -144,7 +144,7 @@ yarn install
 5. Implement plugin-specific routes, pages, and components in `plugin.ts`
 
 **Plugin Installation**:
-Installing plugins is as simple as dropping the plugin folder into `/plugins/` and restarting the application. The system automatically discovers plugin config files and loads enabled plugins. No build steps, configuration changes, or complex deployment procedures are required.
+Installing plugins is as simple as dropping the plugin folder into `/plugins/` and restarting the application. The system automatically discovers plugin in this folder and loads them. No build steps, configuration changes, or complex deployment procedures are required, other than to update the "plugins" entry in the config.yaml file, which lists which of the plugins you want to enable at runtime.
 
 **Plugin Isolation**:
 - **State Namespacing**: Use plugin key prefixes for global state variables
