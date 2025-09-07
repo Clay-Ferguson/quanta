@@ -4,16 +4,19 @@ Quanta is a File Manager and Markdown Editor (similar to Jupyter Notebooks and O
 Quanta is a React-based Web Platform with a plugin interface that allows different extensions (i.e. applications) to be created rapidly, by reusing most of the core platform code. There is a lot of boiler plate involved with creating a new Web Project from scratch and also a lot of code that will be common across all web apps. Quanta provides a solution for being able to ship products fast by simply implementing one or more plugins that define the custom pages and capabilities of a specific app, to create a finished product without having to rewrite the common kinds of boilerplate you find in all web apps. *The name **Quanta** can refer to the platform itself, as well as the Filesystem based document editor, because this editor was the initial reason for creating the platform.
 
 
-## User Guides
-* [Quanta Docs](./public/docs/extensions/docs/docs_user_guide.md)
-* [Quanta Chat](./public/docs/extensions/chat/chat_user_guide.md) 
-
-## Developer Guides
+## Platform Developer Guides
 * [Core Platform](./public/docs/platform/platform_developer_guide.md)
 * [Extensions](./public/docs/extensions/extensions_developer_guide.md)
-* [Quanta Docs Plugin](./public/docs/extensions/docs/docs_developer_guide.md)
-* [Quanta Chat Plugin](./public/docs/extensions/chat/chat_developer_guide.md)
 
+## Plugins Documentation Links (External Projects)
+
+#### Docs Plugin
+* [User Guide](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/user_guide.md)
+* [Developer Guide](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/developer_guide.md)
+
+#### Chat Plugin
+* [User Guide](https://github.com/Clay-Ferguson/quanta-chat-plugin/blob/main/docs/user_guide.md) 
+* [Developer Guide](https://github.com/Clay-Ferguson/quanta-chat-plugin/blob/main/docs/developer_guide.md)
 
 ## Core Platform Tech Stack
 Quanta is designed to work well on both desktop browsers as well as mobile devices and uses the following technologies.
