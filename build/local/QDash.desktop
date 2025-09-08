@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=2022.3
-Exec=bash -c "cd /home/clay/ferguson/quanta-local && ./build/local/build-and-start.sh"
-Exec_with_terminal=gnome-terminal -- bash -c "source ~/.bashrc && cd /home/clay/ferguson/quanta-local && ./build/local/build-and-start.sh; echo 'Press any key to close...'; read"
+Exec=bash -c "cd /home/clay/ferguson/quanta-local && ./build/local/run-hidden.sh"
+Exec_with_terminal=gnome-terminal -- bash -c "source ~/.bashrc && cd /home/clay/ferguson/quanta-local && ./build/local/run.sh; echo 'Press any key to close...'; read"
 Icon=/home/clay/ferguson/quanta-local/desktop-icon.png
 Name=QDash
 GenericName=QDash

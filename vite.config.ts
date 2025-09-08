@@ -6,6 +6,7 @@ import fs from 'fs'
 // https://vite.dev/config/
 let config = null;
 const isDev = process.env.DEV_BUILD_OPTS === 'true'
+// console.log(`DEV_BUILD_OPTS: ${process.env.DEV_BUILD_OPTS}`);
 
 // Dynamically discover plugin client directories
 function getPluginAliases() {

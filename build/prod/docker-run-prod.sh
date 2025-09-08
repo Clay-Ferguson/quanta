@@ -7,7 +7,7 @@ exit 1
 
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then
-    echo "Error: package.json not found. Please run this script from the project root."
+    echo "Error: package.json not found. Run this script from the project root."
     exit 1
 fi
 

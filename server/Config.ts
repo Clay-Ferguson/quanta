@@ -17,7 +17,11 @@ class Config {
      * Load configuration from YAML file
      */
     private loadConfig(): void {
-        const CONFIG_FILE = process.env.CONFIG_FILE || 'config.yaml';
+        const CONFIG_FILE = process.env.CONFIG_FILE;
+        if (!CONFIG_FILE) {
+            // console.error("CONFIG_FILE environment variable is not set.");
+            throw new Error("CONFIG_FILE environment variable is required.");
+        }
         try {
             const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
             this.configData = yaml.load(configFile) as any;

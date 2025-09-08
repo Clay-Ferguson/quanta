@@ -22,7 +22,7 @@ Tests are controlled via the `runTests` configuration option in the environment-
 
 Example configuration:
 ```yaml
-runTests: "y"  # Set to "y" to run embedded tests on server start
+runTests: "y"  # Set to "y" to run embedded tests when server starts
 ```
 
 ### Environment Requirements
@@ -46,13 +46,9 @@ The main test orchestration happens in `/server/app.test.ts`, which serves as th
 export async function runAllTests(): Promise<void> {
     console.log("Running embedded tests...");
     
-    if (process.env.POSTGRES_HOST) {
-        await runVfsTests();  // Virtual File System tests (requires PostgreSQL)
-    } else {
-        await runCommonUtilsTests();  // Common utility tests
-        await runCryptoTests();       // Cryptographic function tests  
-        await runLfsTests();          // Local File System tests
-    }
+    await runCommonUtilsTests();  // Common utility tests
+    await runCryptoTests();       // Cryptographic function tests  
+    await runLfsTests();          // Local File System tests
 }
 ```
 

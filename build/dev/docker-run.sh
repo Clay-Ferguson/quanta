@@ -6,16 +6,15 @@
 
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then
-    echo "Error: package.json not found. Please run this script from the project root."
+    echo "Error: package.json not found. Run this script from the project root."
     exit 1
 fi
 
-# remove package-lock.json if anything ever creates it. This app uses Yarn instead.
-rm -f package-lock.json
-rm -rf ./dist
+./build/clean.sh
 
 echo "Building application..."
-DEV_BUILD_OPTS=true yarn build
+export DEV_BUILD_OPTS=true
+yarn build
 
 # Check if yarn build succeeded
 if [ $? -eq 0 ]; then
