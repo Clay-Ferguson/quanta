@@ -39,7 +39,16 @@ Quanta is designed to work well on both desktop browsers as well as mobile devic
 * Deployed via Docker Compose
 
 ## How to Build+Run
-Linux shell scripts named like `/build/dev/build-and-start.sh` are how we build/run outside of Docker. The `/build/dev/docker-run.sh` script is how we run via docker. This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
+This platform assumes it's running in a Linux environment, and has only been tested on Ubuntu.
+
+## Development
+* For non-docker run: `/build/dev/build-and-start.sh`
+* For docker run: `/build/dev/docker/build-and-start.sh`
+
+## Local Install (non-Development)
+* Create installation folder: `/build/local/create-install.sh`
+* Run local installation: `/build/local/run.sh`
+
 
 ## Testing
 Quanta uses an embedded testing system that runs tests during application startup when configured to do so. For detailed information about the testing architecture, how to run tests, and how to write new tests, see the [Testing Guide](./TESTING.md).

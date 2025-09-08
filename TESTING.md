@@ -94,18 +94,6 @@ All test files follow the pattern `*.test.ts` and are located either in:
 
 ## Running Tests
 
-### Development Environment
-
-1. **Non-Docker Setup** (Local File System only):
-   ```bash
-   ./build/dev/build-and-start.sh
-   ```
-
-2. **Docker Setup** (Full functionality including chat):
-   ```bash
-   ./build/dev/docker-run.sh
-   ```
-
 ### Test Execution Flow
 
 1. Application starts up normally

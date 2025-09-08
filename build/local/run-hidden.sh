@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# NOTE: run-hidden.sh runs the server in the background, detached from the terminal.
+# NOTE: run-hidden.sh runs the server in the background, detached from the terminal. This script should behave
+#       the same as run.sh except for this one running in a hidden terminal which is useful for the `QDash.desktop`
+#       way of running the app on Linux.
 
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then

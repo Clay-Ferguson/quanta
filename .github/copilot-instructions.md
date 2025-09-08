@@ -19,9 +19,6 @@ For more see the README.md file in the root directory, which also includes links
 ```bash
 # Development (local filesystem only, no DB)
 ./build/dev/build-and-start.sh
-
-# Development with Docker (enables chat plugin)
-./build/dev/docker-run.sh
 ```
 
 ### Build Process

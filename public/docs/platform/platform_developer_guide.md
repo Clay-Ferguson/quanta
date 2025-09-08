@@ -35,7 +35,8 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 
 ### Folders
 
-- **build**: Shell scripts used to build/run the app for `localhost`, `dev`, and `prod` deployments some of which have docker and non-Docker scripts for running either inside or outside of Docker. Note that the "Chat" plugin can ONLY run inside Docker, because it relies on using PostgreSQL to hold chat messages and other things.
+- **build**: Shell scripts used to build/run the app for `localhost`, `dev`, and `prod` deployments some of which have docker and non-Docker scripts for running either inside or outside of Docker. Note that the "Chat" plugin can ONLY run inside Docker, because it relies on using PostgreSQL to hold chat messages and other things, and we only support PostgreSQL when inside docker. 
+*Note: It would be trivial to get the app to run outside docker with PostgreSQL, but we just don't have any configurations that do that*
 
 - **server**: All server-side code, which is all in TypeScript, and runs an Express server.
 
@@ -54,9 +55,8 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 ## How to Run
 There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)
 
-We can run the app using either Docker or non-Docker deployments. We have the shell scripts named `run-*.sh` and `docker-run-*sh` in the project root which are somewhat self-explanatory. They end in `dev` for (development), `local` for a local deployment (non-server install), and `prod` for production servers which activate HTTPS support.
-
-Any configuration that uses PostgreSQL requires the Docker version becuause we're only setup to access PostgreSQL as a docker service.
+* For non-docker run: `/build/dev/build-and-start.sh`
+* For docker run: `/build/dev/docker/build-and-start.sh`
 
 When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always requires Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
 
@@ -116,23 +116,6 @@ Persistance on the browser is done entirely thru the [Browser Persistence API](/
 **Server-Side Storage (PostgreSQL)**:
 
 PostgreSQL DB is available for the Dockerized deployments. The key file for Postgres connections [PGDB.ts](/server/PGDB.ts). Search for files named `*.sql` do learn about database schemas. There is SQL to generate the platform core tables, as well as the ability for each Plugin to create tables of their own.
-
-### Development Workflow
-
-**Development Server**:
-Run this from the project folder! (as current directory)
-
-```bash
-# Install dependencies
-yarn install
-
-# Start a development server (for non-docker run)
-./build/dev/build-and-start.sh
-
---OR--
-# Start development server (for docker)
-./build/dev/docker-run.sh
-```
 
 ### Plugin Development
 
