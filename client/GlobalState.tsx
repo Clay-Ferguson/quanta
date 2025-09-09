@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { PanelKeys } from './AppServiceTypes';
-import { KeyPairHex, UserProfile } from '../common/types/CommonTypes';
+import { KeyPairHex, UserProfile } from '@common/types/CommonTypes';
 
 const GlobalStateContext = createContext<GlobalState | undefined>(undefined);
 const GlobalDispatchContext = createContext<React.Dispatch<GlobalAction> | undefined>(undefined); 

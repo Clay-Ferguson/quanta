@@ -1,4 +1,4 @@
-import { UserProfile } from "../common/types/CommonTypes";
+import { UserProfile } from "@common/types/CommonTypes";
 import { GlobalState } from "./GlobalState";
 
 export interface RoomHistoryItem {

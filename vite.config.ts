@@ -14,6 +14,7 @@ function getPluginAliases() {
     /* NOTE: These aliases are also in tsconfig.app.json file */
     const aliases: Record<string, string> = {
         '@client': path.resolve(__dirname, 'client'),
+        '@common': path.resolve(__dirname, 'common'),
         '@plugins': pluginsDir
     }
     

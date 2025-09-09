@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import LogoBlockComp from '../components/LogoBlockComp';
 import BackButtonComp from '../components/BackButtonComp';
 import { useGlobalState } from '../GlobalState';
-import { UserProfile } from '../../common/types/CommonTypes';
+import { UserProfile } from '@common/types/CommonTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from '../components/HexKeyComp';

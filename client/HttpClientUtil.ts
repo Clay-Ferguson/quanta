@@ -1,5 +1,5 @@
-import { crypt } from "../common/Crypto";
-import { KeyPairHex } from "../common/types/CommonTypes";
+import { crypt } from "@common/Crypto";
+import { KeyPairHex } from "@common/types/CommonTypes";
 import { alertModal } from "./components/AlertModalComp";
 import { gs } from "./GlobalState";
 

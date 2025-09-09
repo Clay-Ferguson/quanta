@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChatMessage, FileBase64Intf } from "../common/types/CommonTypes";
+import { ChatMessage, FileBase64Intf } from "@common/types/CommonTypes";
 import { pluginsArray } from './AppService.ts';
 import { scrollEffects } from './ScrollEffects';
 

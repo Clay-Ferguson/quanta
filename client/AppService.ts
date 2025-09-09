@@ -1,6 +1,6 @@
 import {DBKeys, IClientPlugin, PageNames} from './AppServiceTypes.ts';
 import {gd, GlobalState, gs, setApplyStateRules} from './GlobalState.tsx';
-import {FileBase64Intf, KeyPairHex } from '../common/types/CommonTypes.ts';
+import {FileBase64Intf, KeyPairHex } from '@common/types/CommonTypes.ts';
 import {idb} from './IndexedDB.ts';
 import appUsers from './AppUsers.ts';
 import { httpClientUtil } from './HttpClientUtil.ts';

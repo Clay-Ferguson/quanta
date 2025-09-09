@@ -1,6 +1,6 @@
-import { crypt } from "../common/Crypto";
-import { FileBase64Intf, KeyPairHex, UserProfile } from "../common/types/CommonTypes";
-import { BlockUser_Request } from "../common/types/EndpointTypes";
+import { crypt } from "@common/Crypto";
+import { FileBase64Intf, KeyPairHex, UserProfile } from "@common/types/CommonTypes";
+import { BlockUser_Request } from "@common/types/EndpointTypes";
 import { app } from "./AppService";
 import { DBKeys, PageNames } from "./AppServiceTypes";
 import { alertModal } from "./components/AlertModalComp";

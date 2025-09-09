@@ -1,7 +1,7 @@
 import {util} from '../Util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faFile } from '@fortawesome/free-solid-svg-icons';
-import { FileBase64Intf } from '../../common/types/CommonTypes';
+import { FileBase64Intf } from '@common/types/CommonTypes';
 import { setFullSizeImage } from './ImageViewerComp';
 
 interface AttachmentCompProps {

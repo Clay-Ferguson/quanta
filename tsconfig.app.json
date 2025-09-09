@@ -23,6 +23,7 @@
     /* NOTE: These aliases are also in vite.config.ts file */
     "paths": {
       "@client/*": ["client/*"],
+      "@common/*": ["common/*"],
       "@plugins/*": ["plugins/*"]
     },
 
