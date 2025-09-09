@@ -11,7 +11,9 @@ const isDev = process.env.DEV_BUILD_OPTS === 'true'
 // Dynamically discover plugin client directories
 function getPluginAliases() {
     const pluginsDir = path.resolve(__dirname, 'plugins')
+    /* NOTE: These aliases are also in tsconfig.app.json file */
     const aliases: Record<string, string> = {
+        '@client': path.resolve(__dirname, 'client'),
         '@plugins': pluginsDir
     }
     
