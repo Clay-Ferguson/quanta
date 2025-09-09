@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# todo-0: Need to update platform `developer_guide.md` to discuss this script.
+# =============================================================================
+# This script creates a local installation of the Quanta project, including
+# all necessary dependencies and configuration files, in the specified
+# target directory (TARGET_DIR) for running locally by either of the two files in this
+# directory, named run.sh or run-hidden.sh. The `QDash.desktop` file is just an example
+# of how you can setup the app to run from your desktop environment.
+# =============================================================================
 
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then
