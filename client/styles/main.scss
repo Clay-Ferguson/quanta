@@ -255,3 +255,14 @@ button:focus-visible {
     scrollbar-color: unset !important;
 }
 // FAT SCOLLBARS END
+
+.disabled-interactions {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: brightness(0.7);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.enabled-interactions {
+  pointer-events: auto;
+}
