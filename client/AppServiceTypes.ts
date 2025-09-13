@@ -19,6 +19,10 @@ export enum DBKeys {
     headerExpanded = 'headerExpanded',
     userId ='userId',
 
+    // TTS settings
+    ttsVoice = 'ttsVoice',
+    ttsRate = 'ttsRate',
+
     // chat plugin
     chatConnected = 'chatConnected',
 
@@ -34,6 +38,7 @@ export enum DBKeys {
 
 export enum PanelKeys {
     settings_userInfo = 'settings_userInfo',
+    settings_tts = 'settings_tts',
     settings_storageSpace = 'settings_storageSpace',
     settings_options = 'settings_options',
     settings_identityKeys = 'settings_identityKeys',

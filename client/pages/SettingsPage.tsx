@@ -8,7 +8,7 @@ import { useGlobalState } from '../GlobalState';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { util } from '../Util';
 import HexKeyComp from '../components/HexKeyComp';
-import { PanelKeys } from '../AppServiceTypes';
+import { PanelKeys, DBKeys } from '../AppServiceTypes';
 import { PageNames } from '../AppServiceTypes';
 import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
@@ -45,6 +45,11 @@ export default function SettingsPage() {
         remainingStorage: 0
     });
     
+    // TTS settings state
+    const [ttsVoice, setTtsVoice] = useState('');
+    const [ttsRate, setTtsRate] = useState('1.0');
+    const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+    
     const avatarInputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => {
@@ -67,6 +72,52 @@ export default function SettingsPage() {
         
         fetchStorageInfo();
     }, []);
+
+    // Load TTS settings and populate voices
+    useEffect(() => {
+        const loadTTSSettings = async () => {
+            // Load saved TTS settings
+            const savedVoice = await idb.getItem(DBKeys.ttsVoice, '');
+            const savedRate = await idb.getItem(DBKeys.ttsRate, '1.0');
+            setTtsVoice(savedVoice);
+            setTtsRate(savedRate);
+        };
+
+        const populateVoices = () => {
+            if ('speechSynthesis' in window) {
+                const voices = window.speechSynthesis.getVoices();
+                setAvailableVoices(voices);
+                
+                // If no saved voice and voices are available, set a default English voice
+                if (!ttsVoice && voices.length > 0) {
+                    // Try to find a US English voice first
+                    const usEnglishVoice = voices.find(voice => 
+                        voice.lang.startsWith('en-US') || voice.lang.startsWith('en')
+                    );
+                    if (usEnglishVoice) {
+                        setTtsVoice(usEnglishVoice.name);
+                        idb.setItem(DBKeys.ttsVoice, usEnglishVoice.name);
+                    } else {
+                        // Fallback to first available voice
+                        setTtsVoice(voices[0].name);
+                        idb.setItem(DBKeys.ttsVoice, voices[0].name);
+                    }
+                }
+            }
+        };
+
+        loadTTSSettings();
+        
+        // Voices might not be loaded immediately, so try multiple times
+        if ('speechSynthesis' in window) {
+            populateVoices();
+            window.speechSynthesis.onvoiceschanged = populateVoices;
+            
+            // Also try after a delay in case voices load slowly
+            setTimeout(populateVoices, 100);
+            setTimeout(populateVoices, 500);
+        }
+    }, [ttsVoice]);
 
     useEffect(() => {
         // Initialize the userName from global state when component mounts
@@ -136,6 +187,19 @@ export default function SettingsPage() {
         if (success && showConfirm) {
             await alertModal("Profile information saved successfully!");
         }
+    };
+
+    // TTS settings handlers
+    const handleTtsVoiceChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newVoice = event.target.value;
+        setTtsVoice(newVoice);
+        await idb.setItem(DBKeys.ttsVoice, newVoice);
+    };
+
+    const handleTtsRateChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newRate = event.target.value;
+        setTtsRate(newRate);
+        await idb.setItem(DBKeys.ttsRate, newRate);
     };
 
     return (
@@ -242,6 +306,70 @@ export default function SettingsPage() {
                             >
                                 Save
                             </button>
+                        </div>
+                    </TitledPanelComp>
+
+                    <TitledPanelComp title="Text-to-Speech Settings" collapsibleKey={PanelKeys.settings_tts}>
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-300 mb-4">
+                                Configure voice and speech rate for text-to-speech functionality in the docs editor.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Voice Selection */}
+                                <div>
+                                    <label htmlFor="ttsVoice" className="block text-sm font-medium text-blue-300 mb-2">
+                                        Voice
+                                    </label>
+                                    <select
+                                        id="ttsVoice"
+                                        value={ttsVoice}
+                                        onChange={handleTtsVoiceChange}
+                                        className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        disabled={availableVoices.length === 0}
+                                    >
+                                        {availableVoices.length === 0 ? (
+                                            <option value="">Loading voices...</option>
+                                        ) : (
+                                            availableVoices.map((voice, index) => (
+                                                <option key={index} value={voice.name}>
+                                                    {voice.name} ({voice.lang}){voice.default ? ' - Default' : ''}
+                                                </option>
+                                            ))
+                                        )}
+                                    </select>
+                                </div>
+                                
+                                {/* Rate Selection */}
+                                <div>
+                                    <label htmlFor="ttsRate" className="block text-sm font-medium text-blue-300 mb-2">
+                                        Speaking Speed
+                                    </label>
+                                    <select
+                                        id="ttsRate"
+                                        value={ttsRate}
+                                        onChange={handleTtsRateChange}
+                                        className="w-full bg-gray-900 border border-blue-400/20 rounded-md py-2 px-3 
+                                                text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="0.75">0.75 - Slow</option>
+                                        <option value="0.85">0.85 - Slower</option>
+                                        <option value="1.0">1.0 - Normal</option>
+                                        <option value="1.15">1.15 - Faster</option>
+                                        <option value="1.25">1.25 - Fast</option>
+                                        <option value="1.35">1.35 - Very Fast</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            {!('speechSynthesis' in window) && (
+                                <div className="bg-yellow-500/20 border-l-4 border-yellow-500 p-4 rounded-md">
+                                    <p className="text-yellow-300 text-sm">
+                                        Text-to-speech is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </TitledPanelComp>
 
