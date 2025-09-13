@@ -52,10 +52,16 @@ export type TreeRender_Response = {
     treeFolder?: string; // Returns proper ordinal path for root node being viewed.
 }
 
+export type TagCategory = {
+    heading: string;
+    tags: string[];
+}
+
 export type ExtractTags_Response = {
     success: boolean;
     message?: string;
-    tags: string[];
+    tags: string[]; // Kept for backward compatibility, will be deprecated
+    categories?: TagCategory[]; // New categorized format
 }
 
 export type ScanTags_Response = {
