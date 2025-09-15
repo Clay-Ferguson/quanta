@@ -139,6 +139,14 @@
   .btn-clear-icon {
     @apply text-white rounded-md flex items-center justify-center h-10 w-10;
   }
+
+  // Auto-sizing textarea using CSS field-sizing
+  .auto-sizing-textarea {
+    field-sizing: content;
+    min-height: 3em; /* Minimum 3 rows equivalent */
+    max-height: 20em; /* Maximum 20 rows equivalent */
+    resize: vertical; /* Allow manual vertical resize */
+  }
 }
 
 :root {
