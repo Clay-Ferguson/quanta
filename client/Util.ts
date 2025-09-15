@@ -75,8 +75,6 @@ class Util {
         }
         
         const viewportTop = window.scrollY;
-        const viewportHeight = window.innerHeight;
-        const viewportCenter = viewportTop + (viewportHeight / 3); // Use upper third as reference point
         
         let closestElement: Element | null = null;
         let smallestDistance = Infinity;
@@ -84,10 +82,12 @@ class Util {
         for (const element of treeElements) {
             const rect = element.getBoundingClientRect();
             const elementTop = rect.top + viewportTop;
-            const distance = Math.abs(elementTop - viewportCenter);
             
-            // Only consider elements that are reasonably close to the viewport
-            if (distance < smallestDistance && elementTop >= viewportTop - 200) {
+            // Find the element closest to the actual top of the viewport
+            const distance = Math.abs(elementTop - viewportTop);
+            
+            // Only consider elements that are visible or just above the viewport
+            if (distance < smallestDistance && elementTop >= viewportTop - 50) {
                 smallestDistance = distance;
                 closestElement = element;
             }
