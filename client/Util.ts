@@ -66,6 +66,7 @@ class Util {
     };
     
     // Find the tree node element that is closest to the top of the viewport
+    // Returns element ID, or "TOP" if the first element should be scrolled to
     findClosestTreeNodeToTop = (): string | null => {
         // Get all tree node elements (those with IDs starting with 'tree-')
         const treeElements = Array.from(document.querySelectorAll('[id^="tree-"]'));
@@ -78,10 +79,16 @@ class Util {
         
         let closestElement: Element | null = null;
         let smallestDistance = Infinity;
+        let firstElement: Element | null = null;
         
         for (const element of treeElements) {
             const rect = element.getBoundingClientRect();
             const elementTop = rect.top + viewportTop;
+            
+            // Track the first element (topmost in the document)
+            if (!firstElement || elementTop < (firstElement.getBoundingClientRect().top + viewportTop)) {
+                firstElement = element;
+            }
             
             // Find the element closest to the actual top of the viewport
             const distance = Math.abs(elementTop - viewportTop);
@@ -91,6 +98,11 @@ class Util {
                 smallestDistance = distance;
                 closestElement = element;
             }
+        }
+        
+        // If the closest element is the first element, return "TOP" to indicate scroll to top
+        if (closestElement && firstElement && closestElement === firstElement) {
+            return "TOP";
         }
         
         return closestElement ? closestElement.id : null;
