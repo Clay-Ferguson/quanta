@@ -5,7 +5,7 @@ Quanta provides a solution for being able to ship products fast by simply implem
 
 ### Screencast of Documents Plugin:
 
-![Quanta Platform Demo](./plugins/docs/docs/img/screencast.gif)
+![Quanta Platform Demo](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/img/screencast.gif?raw=true)
 
 ## Platform Developer Guides
 * [Core Platform](./public/docs/platform/platform_developer_guide.md)

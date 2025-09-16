@@ -5,7 +5,8 @@
 # all necessary dependencies and configuration files, in the specified
 # target directory (TARGET_DIR) for running locally by either of the two files in this
 # directory, named run.sh or run-hidden.sh. The `QDash.desktop` file is just an example
-# of how you can setup the app to run from your desktop environment.
+# of how you can setup the app to run from your desktop environment, out of one of these
+# installation folders.
 # =============================================================================
 
 # Check if we're in the project root by looking for package.json
