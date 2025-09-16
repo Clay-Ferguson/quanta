@@ -3,6 +3,10 @@ Quanta is a Web Platform with a plugin architecture that allows different plugin
 
 Quanta provides a solution for being able to ship products fast by simply implementing one or more plugins that define the custom pages and capabilities of a specific app, to create a finished product without having to rewrite the common kinds of boilerplate you find in all web apps. *The name **Quanta** can refer to the platform itself, as well as the Filesystem based document editor, because this editor was the initial reason for creating the platform.
 
+### Screencast of Documents Plugin:
+
+![Quanta Platform Demo](./plugins/docs/docs/img/screencast.gif)
+
 ## Platform Developer Guides
 * [Core Platform](./public/docs/platform/platform_developer_guide.md)
 * [Extensions](./public/docs/extensions/extensions_developer_guide.md)
