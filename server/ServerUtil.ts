@@ -2,6 +2,7 @@ import { Response, Request, NextFunction } from 'express';
 import { spawn } from 'child_process';
 import open from 'open';
 import path from 'path';
+import os from 'os';
 import { Application } from "express";
 import { ANON_USER_ID, UserProfileCompact } from '../common/types/CommonTypes.js';
 
@@ -216,7 +217,7 @@ class ServerUtil {
                 }
             }
             else if (item.bash) {
-                this.run_bash(item.bash, "", !!item.background);
+                this.run_bash(item.bash, item.args || "", !!item.background);
             }
             else if (item.link) {
                 if (item.link.startsWith("http:") || item.link.startsWith("https:") || item.link.startsWith("file:")) {
@@ -236,19 +237,36 @@ class ServerUtil {
 
     run_bash = (file_name: string, args: any, background: boolean) => {
         const folder = path.dirname(file_name);
+        // console.log(`Running bash script: file[${file_name}] args[${args}] in folder ${folder}, background=${background}`);
+
+        // Expand tilde in args if present
+        let expandedArgs = args;
+        if (args && typeof args === 'string' && args.startsWith('~')) {
+            expandedArgs = path.join(os.homedir(), args.slice(2));
+        }
+
         if (background) {
-            spawn(file_name, args ? args.split(" ") : [], {
+            const argsArray = expandedArgs ? expandedArgs.split(" ") : [];
+            spawn(file_name, argsArray, {
                 cwd: folder,
                 detached: true,
                 stdio: 'ignore',
                 shell: true
             });
         } else {
-            spawn('gnome-terminal', ['--', 'bash', '-c', `${file_name} ${args} || bash`], {
-                cwd: folder,
+            // Fixed spawn command for gnome-terminal with proper path handling
+            const baseFileName = path.basename(file_name);
+            const terminalCommand = `cd "${folder}" && ./${baseFileName} "${expandedArgs}" || { echo "Script failed. Press any key to close..."; read -n1; }`;
+            // console.log('Running terminal command:', terminalCommand);
+            spawn('gnome-terminal', [
+                '--',
+                'bash',
+                '-c',
+                terminalCommand
+            ], {
                 detached: true,
-                stdio: 'ignore',
-                shell: true
+                stdio: 'ignore'
+                // Remove shell: true when using gnome-terminal directly
             });
         }
     }
