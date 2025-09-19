@@ -31,9 +31,8 @@ export enum DBKeys {
     docsEditMode = 'docsEditMode',
     docsMetaMode = 'docsMetaMode',
     docsNamesMode = 'docsNamesMode',
-    docsRequireDate = 'docsRequireDate',
     docsSearchTextOnly = 'docsSearchTextOnly',
-    docsSearchOrder = 'docsSearchOrder',
+    orderByModTime = 'orderByModTime',
 }
 
 export enum PanelKeys {
