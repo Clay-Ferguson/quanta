@@ -32,7 +32,8 @@ export enum DBKeys {
     docsMetaMode = 'docsMetaMode',
     docsNamesMode = 'docsNamesMode',
     docsSearchTextOnly = 'docsSearchTextOnly',
-    orderByModTime = 'orderByModTime',
+    orderByModTime = 'orderByModTime', // todo-0: oops this violates naming convention.
+    docsShowFileName = 'docsShowFileName',
 }
 
 export enum PanelKeys {
