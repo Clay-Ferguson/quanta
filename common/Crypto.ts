@@ -159,6 +159,17 @@ class Crypto {
      */
     verifySignatureBytes = async (msgHash: Uint8Array, sigBytes: Uint8Array, pubKeyHex: string): Promise<boolean> => {
         try {
+            // Validate signature bytes length - compact signatures must be exactly 64 bytes
+            if (!sigBytes || sigBytes.length !== 64) {
+                return false;
+            }
+            
+            // Check for obviously invalid signatures (all zeros)
+            const isAllZeros = sigBytes.every(byte => byte === 0);
+            if (isAllZeros) {
+                return false;
+            }
+            
             const pubKeyBytes = hexToBytes(pubKeyHex);
             
             // Convert the signature bytes to a Signature object
