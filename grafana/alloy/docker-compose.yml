@@ -1,18 +1,6 @@
 version: '3.8'
 
 services:
-  # Syslog simulator using a Python script 
-  # NOTE: We're not using this simulator in Quanta, we're using the actual Quanta logs (monitoring logs in `[quanta project_root]/dist/server/logs`)
-  # logs-file:
-  #   image: python:${PYTHON_VERSION:-3.11-slim}
-  #   container_name: logs-file
-  #   volumes:
-  #     - ./main.py:/main.py  # Syslog simulator script
-  #     - ./logs:/logs  # Directory to store the logs
-  #   depends_on:
-  #     - alloy
-  #   command: ["python3", "/main.py"]
-  
 
   alloy:
     image: grafana/alloy:${GRAFANA_ALLOY_VERSION:-v1.10.0}

@@ -15,7 +15,7 @@ manage_grafana() {
         echo "Managing Grafana Alloy monitoring..."
         
         # Call the dedicated start script
-        if "./grafana/logs-file/start.sh"; then
+        if "./grafana/alloy/start.sh"; then
             echo "✓ Grafana Alloy management completed"
         else
             echo "Warning: Grafana Alloy startup had issues. Continuing with Quanta startup..."

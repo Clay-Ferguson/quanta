@@ -4,7 +4,7 @@ This directory contains a Grafana Alloy monitoring stack configured to collect a
 
 ## Overview
 
-This setup uses Grafana Alloy to collect logs from `./dist/server/logs`, forwards them to Loki for storage, and makes them available for visualization in Grafana. The configuration is based on the [Grafana Alloy logs-file scenario](https://github.com/grafana/alloy-scenarios/tree/main/logs-file).
+This setup uses Grafana Alloy to collect logs from `./dist/server/logs`, forwards them to Loki for storage, and makes them available for visualization in Grafana. The configuration is based on the [Grafana Alloy scenario](https://github.com/grafana/alloy-scenarios/tree/main/logs-file).
 
 ## Configuration
 
@@ -69,7 +69,7 @@ For manual control of the Grafana Alloy stack, use the dedicated scripts:
 
 **Start Grafana Alloy Stack:**
 ```bash
-./grafana/logs-file/start.sh
+./grafana/alloy/start.sh
 ```
 - Checks if containers are already running
 - Starts only if needed (idempotent)
@@ -77,7 +77,7 @@ For manual control of the Grafana Alloy stack, use the dedicated scripts:
 
 **Stop Grafana Alloy Stack:**
 ```bash
-./grafana/logs-file/stop.sh
+./grafana/alloy/stop.sh
 ```
 - Safely stops all Grafana containers
 - Checks status before attempting to stop
@@ -86,7 +86,7 @@ For manual control of the Grafana Alloy stack, use the dedicated scripts:
 ### Original Docker Compose Method
 You can also use the traditional Docker Compose commands:
 ```bash
-cd grafana/logs-file
+cd grafana/alloy
 docker-compose up -d    # Start
 docker-compose down     # Stop
 ```
@@ -98,7 +98,7 @@ docker-compose down     # Stop
 ## File Structure
 
 ```
-grafana/logs-file/
+grafana/alloy/
 ├── README.md                    # This documentation
 ├── config.alloy                # Alloy agent configuration
 ├── docker-compose.yml          # Container orchestration
@@ -144,39 +144,3 @@ Clean shutdown script that:
 4. **Query Your Logs**: Use `{job="quanta"}` to see all Quanta logs
 5. **Adjust Time Range**: If needed, expand to "Last 24 hours" or "Last 7 days"
 
-## Troubleshooting
-
-### No Logs Found in Grafana
-If you see "No logs found" when querying `{job="quanta"}`:
-
-1. **Check Container Status**: 
-   ```bash
-   cd grafana/logs-file && docker-compose ps
-   ```
-   All containers should show "Up" status.
-
-2. **Verify Log File Access**:
-   ```bash
-   docker exec logs-file-alloy-1 ls -la /temp/logs/
-   ```
-   You should see your log files listed.
-
-3. **Check Alloy Logs**:
-   ```bash
-   docker logs logs-file-alloy-1 --tail 10
-   ```
-   Look for "tail routine: started" and "Seeked" messages.
-
-4. **Path Issues**: If using relative paths in docker-compose.yml doesn't work, try absolute paths like `/home/clay/ferguson/quanta/dist/server/logs:/temp/logs`
-
-5. **State Reset**: If Alloy was previously running with different settings, stop containers completely and restart:
-   ```bash
-   docker-compose down && docker-compose up -d
-   ```
-
-6. **Wait for Pipeline**: Data can take 30-60 seconds to flow through Alloy → Loki → Grafana
-
-### Common Issues
-- **Volume Mount Problems**: Use absolute paths for reliable log file access
-- **Time Range**: Ensure Grafana time picker includes when your logs were written
-- **Container Connectivity**: Verify all three containers are running and healthy
