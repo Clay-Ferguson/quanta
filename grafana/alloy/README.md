@@ -83,6 +83,21 @@ For manual control of the Grafana Alloy stack, use the dedicated scripts:
 - Checks status before attempting to stop
 - Provides clean shutdown feedback
 
+**Restart Grafana Alloy Stack:**
+```bash
+./grafana/alloy/restart.sh
+```
+- Quick restart using `docker-compose restart` (recommended)
+- Restarts containers in place without recreation
+- Provides status feedback and URLs
+
+```bash
+./grafana/alloy/restart.sh --complete
+```
+- Complete restart using full stop/start cycle
+- Recreates containers from scratch
+- Use when you need a completely fresh start
+
 ### Original Docker Compose Method
 You can also use the traditional Docker Compose commands:
 ```bash
@@ -104,6 +119,8 @@ grafana/alloy/
 ├── docker-compose.yml          # Container orchestration
 ├── loki-config.yaml            # Loki storage configuration
 ├── main.py                     # Sample log generator (unused)
+├── restart.sh                  # Restart script
+├── set-env.sh                  # Environment variables configuration
 ├── start.sh                    # Startup script
 └── stop.sh                     # Shutdown script
 ```
@@ -125,6 +142,21 @@ Clean shutdown script that:
 - Uses `docker-compose down` for proper cleanup
 - Provides clear feedback on shutdown progress
 - Works from any directory
+
+### restart.sh
+Flexible restart script that:
+- **Default mode**: Uses `docker-compose restart` for efficient in-place restart
+- **Complete mode** (`--complete` flag): Performs full stop/start cycle for clean recreation
+- Automatically starts containers if not currently running
+- Provides clear status feedback and access URLs
+- Works from any directory
+
+### set-env.sh
+Centralized environment configuration that:
+- Defines all environment variables used by the monitoring stack
+- Sources consistent paths and settings across all scripts
+- Allows easy customization of directories and Docker image versions
+- Used automatically by `start.sh` and `restart.sh`
 
 ## Features
 

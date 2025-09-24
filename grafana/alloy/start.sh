@@ -6,11 +6,8 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Persistent storage directory configuration
-GRAFANA_DB_BASE_DIR="/home/clay/ferguson/grafana-database"
-GRAFANA_DATA_DIR="$GRAFANA_DB_BASE_DIR/grafana"
-LOKI_DATA_DIR="$GRAFANA_DB_BASE_DIR/loki"
-ALLOY_DATA_DIR="$GRAFANA_DB_BASE_DIR/alloy"
+# Source environment variables
+source "$SCRIPT_DIR/set-env.sh"
 
 # Function to setup persistent storage directories
 setup_persistent_storage() {
