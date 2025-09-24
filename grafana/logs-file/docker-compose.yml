@@ -22,6 +22,7 @@ services:
     volumes:
       - ./config.alloy:/etc/alloy/config.alloy
       - /home/clay/ferguson/quanta/dist/server/logs:/temp/logs
+      - /home/clay/ferguson/grafana-database/alloy:/var/lib/alloy/data
     command: run --server.http.listen-addr=0.0.0.0:12345 --stability.level=experimental  --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     depends_on:
       - loki
@@ -32,6 +33,7 @@ services:
       - "3100:3100"
     volumes:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - /home/clay/ferguson/grafana-database/loki:/tmp/loki
     command: -config.file=/etc/loki/local-config.yaml
 
   grafana:
@@ -42,6 +44,8 @@ services:
       - GF_AUTH_BASIC_ENABLED=false
     ports:
       - 3000:3000/tcp
+    volumes:
+      - /home/clay/ferguson/grafana-database/grafana:/var/lib/grafana
     entrypoint:
        - sh
        - -euc

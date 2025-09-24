@@ -112,10 +112,12 @@ grafana/logs-file/
 
 ### start.sh
 Intelligent startup script that:
+- **Automatically sets up persistent storage** directories and permissions
 - Checks if containers are already running
-- Starts the stack only if needed (idempotent)
+- Starts the stack only if needed (idempotent)  
 - Provides clear status feedback and access URLs
 - Works from any directory
+- Creates `/home/clay/ferguson/grafana-database/` structure automatically
 
 ### stop.sh
 Clean shutdown script that:
@@ -126,10 +128,11 @@ Clean shutdown script that:
 
 ## Features
 
+- **Automatic Setup**: The `start.sh` script automatically creates and configures persistent storage
 - **Automatic Log Discovery**: Monitors the Quanta logs directory for all `.log` files
 - **Real-time Monitoring**: New log entries are ingested as they're written
 - **Historical Data**: Existing log files are read in their entirety
-- **Persistent Storage**: Logs are stored in Loki for historical querying
+- **Persistent Storage**: Logs are stored permanently and survive container restarts
 - **Web Interface**: Easy visualization and searching through Grafana
 - **Scalable**: Handles multiple log files and growing log volumes
 
