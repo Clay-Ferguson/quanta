@@ -6,7 +6,7 @@
 
 # Core directory paths
 # todo-0: these config settings are not currently used OR correct, but just examples
-export GRAFANA_LOGS_SOURCE_DIR="/home/clay/ferguson/quanta/dist/server/logs"
+export GRAFANA_LOGS_SOURCE_DIR="/home/clay/ferguson/quanta-local/dist/server/logs"
 export GRAFANA_DB_BASE_DIR="/home/clay/ferguson/grafana-data/local/database"
 
 # Derived directory paths (used internally by scripts)

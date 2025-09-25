@@ -17,49 +17,13 @@ fi
 # Source environment variables
 source "$ENV_CONFIG_FILE"
 
-# Function to setup persistent storage directories
-setup_persistent_storage() {
-    echo "Setting up persistent storage directories..."
-    
-    # Create base directory if it doesn't exist
-    if [ ! -d "$GRAFANA_DB_BASE_DIR" ]; then
-        echo "  Creating base directory: $GRAFANA_DB_BASE_DIR"
-        mkdir -p "$GRAFANA_DB_BASE_DIR"
+# Initialize data directories with proper permissions using unified script
+initialize_data_directories() {
+    echo "Initializing data directories..."
+    if ! "$SCRIPT_DIR/init-data-folders.sh"; then
+        echo "✗ Failed to initialize data directories"
+        exit 1
     fi
-    
-    # Create and set permissions for Grafana directory
-    if [ ! -d "$GRAFANA_DATA_DIR" ]; then
-        echo "  Creating Grafana data directory: $GRAFANA_DATA_DIR"
-        mkdir -p "$GRAFANA_DATA_DIR"
-    fi
-    echo "  Setting Grafana permissions (user ID 472)..."
-    sudo chown -R 472:472 "$GRAFANA_DATA_DIR" 2>/dev/null || {
-        echo "  Warning: Could not set Grafana permissions. You may need to run with sudo."
-    }
-    
-    # Create and set permissions for Loki directory
-    if [ ! -d "$LOKI_DATA_DIR" ]; then
-        echo "  Creating Loki data directory: $LOKI_DATA_DIR"
-        mkdir -p "$LOKI_DATA_DIR"
-    fi
-    echo "  Setting Loki permissions (user ID 10001)..."
-    sudo chown -R 10001:10001 "$LOKI_DATA_DIR" 2>/dev/null || {
-        echo "  Warning: Could not set Loki permissions. You may need to run with sudo."
-    }
-    
-    # Create Alloy directory (runs as root, so no special permissions needed)
-    if [ ! -d "$ALLOY_DATA_DIR" ]; then
-        echo "  Creating Alloy data directory: $ALLOY_DATA_DIR"
-        mkdir -p "$ALLOY_DATA_DIR"
-    fi
-    
-    # Set general read/write permissions
-    echo "  Setting general directory permissions..."
-    sudo chmod -R 755 "$GRAFANA_DB_BASE_DIR" 2>/dev/null || {
-        echo "  Warning: Could not set directory permissions. You may need to run with sudo."
-    }
-    
-    echo "✓ Persistent storage setup completed"
 }
 
 # Function to check if Grafana Alloy containers are running
@@ -87,8 +51,8 @@ start_grafana() {
     # Change to script directory and start containers
     if (cd "$SCRIPT_DIR" && docker-compose up -d); then
         echo "✓ Grafana Alloy stack started successfully"
-        echo "  - Alloy UI: http://localhost:12345"
-        echo "  - Grafana UI: http://localhost:3000"
+        echo "  - Alloy UI: http://localhost:$ALLOY_HTTP_PORT"
+        echo "  - Grafana UI: http://localhost:$GRAFANA_PORT"
         return 0
     else
         echo "✗ Failed to start Grafana Alloy stack"
@@ -100,13 +64,13 @@ start_grafana() {
 echo "Grafana Alloy Stack Manager"
 echo "============================"
 
-# Always ensure persistent storage is properly configured
-setup_persistent_storage
+# Always ensure data directories are properly initialized
+initialize_data_directories
 
 if check_grafana_running; then
     echo "✓ Grafana Alloy stack is already running"
-    echo "  - Alloy UI: http://localhost:12345"
-    echo "  - Grafana UI: http://localhost:3000"
+    echo "  - Alloy UI: http://localhost:$ALLOY_HTTP_PORT"
+    echo "  - Grafana UI: http://localhost:$GRAFANA_PORT"
     echo "No action needed."
 else
     echo "Grafana Alloy stack is not running, starting it..."

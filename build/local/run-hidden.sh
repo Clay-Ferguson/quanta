@@ -15,6 +15,14 @@ export CONFIG_FILE="./build/local/config.yaml"
 ./build/kill.sh
 rm -f quanta.log
 
+# Run /dist/grafana/alloy/start.sh if it exists
+if [ -f "./dist/grafana/alloy/restart.sh" ]; then
+    echo "Starting existing Grafana Alloy stack..."
+    bash ./dist/grafana/alloy/restart.sh
+else
+    echo "No existing Grafana Alloy stack start script found. Continuing..."
+fi
+
 # Start the Node.js app in a new session (completely detached)
 echo "Starting new AppServer.js process..."
 

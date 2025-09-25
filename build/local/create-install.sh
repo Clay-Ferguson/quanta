@@ -36,10 +36,16 @@ sudo rsync -aAXvzc --delete --force --progress --stats ./node_modules/ $TARGET_D
 sudo rsync -aAXvzc --delete --force --progress --stats ./build/local/ $TARGET_DIR/build/local/
 sudo rsync -aAXvzc --delete --force --progress --stats ./public/ $TARGET_DIR/public/
 
-mkdir -p ./dist/grafana/alloy/
-rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ ./dist/grafana/alloy/
-cp ./build/local/grafana-set-env.sh ./dist/grafana/alloy/
+mkdir -p $TARGET_DIR/dist/grafana/alloy/
+rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ $TARGET_DIR/dist/grafana/alloy/
+cp ./build/local/grafana-set-env.sh $TARGET_DIR/dist/grafana/alloy/
 
 cp ./package.json $TARGET_DIR/package.json
+
+# Create logs directory with proper permissions
+mkdir -p $TARGET_DIR/dist/server/logs
+
+# Fix ownership of all copied files to the current user
+sudo chown -R $USER:$USER $TARGET_DIR
 
 read -p "Deploy is done. Press ENTER"

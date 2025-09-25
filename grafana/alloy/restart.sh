@@ -17,6 +17,13 @@ fi
 # Source environment variables
 source "$ENV_CONFIG_FILE"
 
+# Initialize data directories with proper permissions
+echo "Initializing data directories..."
+if ! "$SCRIPT_DIR/init-data-folders.sh"; then
+    echo "✗ Failed to initialize data directories"
+    exit 1
+fi
+
 # Function to check if any Grafana containers are running
 check_any_grafana_running() {
     if docker-compose -f "$SCRIPT_DIR/docker-compose.yml" ps --services --filter "status=running" | grep -q "."; then
@@ -34,8 +41,8 @@ restart_grafana() {
     # Using 'restart' is more efficient than 'down && up' as it restarts in place
     if (cd "$SCRIPT_DIR" && docker-compose restart); then
         echo "✓ Grafana Alloy stack restarted successfully"
-        echo "  - Alloy UI: http://localhost:12345"
-        echo "  - Grafana UI: http://localhost:3000"
+        echo "  - Alloy UI: http://localhost:$ALLOY_HTTP_PORT"
+        echo "  - Grafana UI: http://localhost:$GRAFANA_PORT"
         return 0
     else
         echo "✗ Failed to restart Grafana Alloy stack"
@@ -50,8 +57,8 @@ complete_restart() {
     # Change to script directory and perform complete restart
     if (cd "$SCRIPT_DIR" && docker-compose down && docker-compose up -d); then
         echo "✓ Grafana Alloy stack restarted successfully"
-        echo "  - Alloy UI: http://localhost:12345"
-        echo "  - Grafana UI: http://localhost:3000"
+        echo "  - Alloy UI: http://localhost:$ALLOY_HTTP_PORT"
+        echo "  - Grafana UI: http://localhost:$GRAFANA_PORT"
         return 0
     else
         echo "✗ Failed to restart Grafana Alloy stack"
@@ -85,8 +92,8 @@ else
     # If nothing is running, just start it (same as start.sh behavior)
     if (cd "$SCRIPT_DIR" && docker-compose up -d); then
         echo "✓ Grafana Alloy stack started successfully"
-        echo "  - Alloy UI: http://localhost:12345"
-        echo "  - Grafana UI: http://localhost:3000"
+        echo "  - Alloy UI: http://localhost:$ALLOY_HTTP_PORT"
+        echo "  - Grafana UI: http://localhost:$GRAFANA_PORT"
         echo "Stack startup completed successfully!"
     else
         echo "✗ Failed to start Grafana Alloy stack"

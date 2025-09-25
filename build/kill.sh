@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# NOTE: This is for stopping non-docker based instances.
+# Stop all running Docker containers
+echo "Stopping all running Docker containers..."
+docker stop $(docker ps -q)
 
 # Check for and terminate any existing AppServer.js processes
 echo "Checking for existing AppServer.js processes..."
