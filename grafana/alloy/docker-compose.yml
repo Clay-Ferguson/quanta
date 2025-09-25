@@ -5,8 +5,8 @@ services:
   alloy:
     image: grafana/alloy:${GRAFANA_ALLOY_VERSION:-v1.10.0}
     ports:
-      - 12345:12345
-      - 4318:4318
+      - ${ALLOY_HTTP_PORT}:12345
+      - ${ALLOY_OTLP_PORT}:4318
     volumes:
       - ./config.alloy:/etc/alloy/config.alloy
       - ${GRAFANA_LOGS_SOURCE_DIR}:/temp/logs
@@ -18,7 +18,7 @@ services:
   loki:
     image: grafana/loki:${GRAFANA_LOKI_VERSION:-3.5.2}
     ports:
-      - "3100:3100"
+      - "${LOKI_PORT}:3100"
     volumes:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
       - ${GRAFANA_DB_BASE_DIR}/loki:/tmp/loki
@@ -31,7 +31,7 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_BASIC_ENABLED=false
     ports:
-      - 3000:3000/tcp
+      - ${GRAFANA_PORT}:3000/tcp
     volumes:
       - ${GRAFANA_DB_BASE_DIR}/grafana:/var/lib/grafana
     entrypoint:

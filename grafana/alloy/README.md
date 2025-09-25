@@ -34,9 +34,9 @@ loki.source.file "log_scrape" {
 ### Docker Compose Setup
 
 The stack includes three containers:
-- **Alloy**: Log collection agent (port 12345)
-- **Loki**: Log storage backend (port 3100)  
-- **Grafana**: Visualization frontend (port 3000)
+- **Alloy**: Log collection agent (port ${ALLOY_HTTP_PORT})
+- **Loki**: Log storage backend (port ${LOKI_PORT})  
+- **Grafana**: Visualization frontend (port ${GRAFANA_PORT})
 
 Volume mount configuration:
 ```yaml
@@ -107,8 +107,8 @@ docker-compose down     # Stop
 ```
 
 ### Access Points
-- **Grafana Alloy UI**: `http://localhost:12345`
-- **Grafana UI**: `http://localhost:3000`
+- **Grafana Alloy UI**: `http://localhost:${ALLOY_HTTP_PORT}`
+- **Grafana UI**: `http://localhost:${GRAFANA_PORT}`
 
 ## File Structure
 
@@ -170,7 +170,7 @@ Centralized environment configuration that:
 
 ## Viewing Logs in Grafana
 
-1. **Access Grafana**: Go to `http://localhost:3000`
+1. **Access Grafana**: Go to `http://localhost:${GRAFANA_PORT}`
 2. **Navigate to Explore**: Click the compass icon (🧭) in the left sidebar
 3. **Select Loki Data Source**: Ensure "Loki" is selected in the dropdown
 4. **Query Your Logs**: Use `{job="quanta"}` to see all Quanta logs
