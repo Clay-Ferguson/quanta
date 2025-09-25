@@ -6,6 +6,17 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Check for existence of environment configuration file before sourcing
+ENV_CONFIG_FILE="$SCRIPT_DIR/grafana-set-env.sh"
+if [ ! -f "$ENV_CONFIG_FILE" ]; then
+    echo "✗ Error: Environment configuration file not found: $ENV_CONFIG_FILE"
+    echo "  Please ensure the grafana-set-env.sh file exists in the same directory as this script."
+    exit 1
+fi
+
+# Source environment variables
+source "$ENV_CONFIG_FILE"
+
 # Function to check if any Grafana containers are running
 check_any_grafana_running() {
     if docker-compose -f "$SCRIPT_DIR/docker-compose.yml" ps --services --filter "status=running" | grep -q "."; then

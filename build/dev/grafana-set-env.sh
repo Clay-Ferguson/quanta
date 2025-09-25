@@ -5,7 +5,7 @@
 
 # Core directory paths
 export GRAFANA_LOGS_SOURCE_DIR="/home/clay/ferguson/quanta/dist/server/logs"
-export GRAFANA_DB_BASE_DIR="/home/clay/ferguson/grafana-database"
+export GRAFANA_DB_BASE_DIR="/home/clay/ferguson/grafana-data/dev/database"
 
 # Derived directory paths (used internally by scripts)
 export GRAFANA_DATA_DIR="$GRAFANA_DB_BASE_DIR/grafana"

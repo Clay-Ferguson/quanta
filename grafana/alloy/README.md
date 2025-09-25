@@ -114,13 +114,13 @@ docker-compose down     # Stop
 
 ```
 grafana/alloy/
-├── README.md                    # This documentation
+├── README.md                   # This documentation
 ├── config.alloy                # Alloy agent configuration
 ├── docker-compose.yml          # Container orchestration
 ├── loki-config.yaml            # Loki storage configuration
 ├── main.py                     # Sample log generator (unused)
 ├── restart.sh                  # Restart script
-├── set-env.sh                  # Environment variables configuration
+├── grafana-set-env.sh          # Environment variables configuration
 ├── start.sh                    # Startup script
 └── stop.sh                     # Shutdown script
 ```
@@ -151,7 +151,7 @@ Flexible restart script that:
 - Provides clear status feedback and access URLs
 - Works from any directory
 
-### set-env.sh
+### grafana-set-env.sh
 Centralized environment configuration that:
 - Defines all environment variables used by the monitoring stack
 - Sources consistent paths and settings across all scripts
