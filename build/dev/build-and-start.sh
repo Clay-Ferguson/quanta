@@ -5,12 +5,6 @@ RUN_GRAFANA=false
 
 # Function to setup and start Grafana Alloy stack
 start_grafana_alloy() {
-    # Theoretically, we could run grafana right in the project folder. But to be consistent, we instead copy it. 
-    # to the distribution folder, and run it from there. 
-    mkdir -p ./dist/grafana/alloy/
-    rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ ./dist/grafana/alloy/
-    cp ./build/dev/grafana-set-env.sh ./dist/grafana/alloy/
-
     # Run /dist/grafana/alloy/start.sh if it exists
     if [ -f "./dist/grafana/alloy/start.sh" ]; then
         echo "Starting existing Grafana Alloy stack..."
@@ -44,6 +38,13 @@ export DEV_BUILD_OPTS=true
 # yarn dev
 echo "Building Quanta Server..."
 yarn build
+
+# Theoretically, we could run grafana right in the project folder. But to be consistent, we instead copy it. 
+# to the distribution folder, and run it from there. Also we DO copy the files to 'dist' folder even if 
+# we're not immediately starting grafana in this script, so this is not a mistake.
+mkdir -p ./dist/grafana/alloy/
+rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ ./dist/grafana/alloy/
+cp ./build/dev/grafana-set-env.sh ./dist/grafana/alloy/
 
 if [ "$RUN_GRAFANA" = "true" ]; then
     start_grafana_alloy
