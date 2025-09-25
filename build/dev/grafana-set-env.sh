@@ -12,6 +12,9 @@ export GRAFANA_DATA_DIR="$GRAFANA_DB_BASE_DIR/grafana"
 export LOKI_DATA_DIR="$GRAFANA_DB_BASE_DIR/loki"
 export ALLOY_DATA_DIR="$GRAFANA_DB_BASE_DIR/alloy"
 
+# Environment identification
+export GRAFANA_ENV_SUFFIX="dev"     # Suffix for container names to identify environment
+
 # Port configurations for Grafana services
 export GRAFANA_PORT="3000"           # Grafana UI port
 export LOKI_PORT="3100"             # Loki API port

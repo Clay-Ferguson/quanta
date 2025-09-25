@@ -36,6 +36,10 @@ sudo rsync -aAXvzc --delete --force --progress --stats ./node_modules/ $TARGET_D
 sudo rsync -aAXvzc --delete --force --progress --stats ./build/local/ $TARGET_DIR/build/local/
 sudo rsync -aAXvzc --delete --force --progress --stats ./public/ $TARGET_DIR/public/
 
+mkdir -p ./dist/grafana/alloy/
+rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ ./dist/grafana/alloy/
+cp ./build/local/grafana-set-env.sh ./dist/grafana/alloy/
+
 cp ./package.json $TARGET_DIR/package.json
 
 read -p "Deploy is done. Press ENTER"
