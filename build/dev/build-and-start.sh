@@ -1,10 +1,12 @@
 #!/bin/bash 
 
 # Configuration
-RUN_GRAFANA=true
+RUN_GRAFANA=false
 
 # Function to setup and start Grafana Alloy stack
 start_grafana_alloy() {
+    # Theoretically, we could run grafana right in the project folder. But to be consistent, we instead copy it. 
+    # to the distribution folder, and run it from there. 
     mkdir -p ./dist/grafana/alloy/
     rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ ./dist/grafana/alloy/
     cp ./build/dev/grafana-set-env.sh ./dist/grafana/alloy/
@@ -43,7 +45,9 @@ export DEV_BUILD_OPTS=true
 echo "Building Quanta Server..."
 yarn build
 
-start_grafana_alloy
+if [ "$RUN_GRAFANA" = "true" ]; then
+    start_grafana_alloy
+fi
 
 # Fix ownership of dist directory to ensure logging works properly
 # This needs to be done after grafana setup which might create some root-owned files

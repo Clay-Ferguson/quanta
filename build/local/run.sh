@@ -1,10 +1,13 @@
 #!/bin/bash
 
+# Configuration
+RUN_GRAFANA=${RUN_GRAFANA:-false}
+
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then
     echo "Error: package.json not found. Run this script from the project root."
     exit 1
-fi
+fi 
 
 export CONFIG_FILE="./build/local/config.yaml"
 
@@ -12,11 +15,13 @@ export CONFIG_FILE="./build/local/config.yaml"
 rm -f quanta.log
 
 # Run /dist/grafana/alloy/start.sh if it exists
-if [ -f "./dist/grafana/alloy/restart.sh" ]; then
-    echo "Starting existing Grafana Alloy stack..."
-    bash ./dist/grafana/alloy/restart.sh
-else
-    echo "No existing Grafana Alloy stack start script found. Continuing..."
+if [ "$RUN_GRAFANA" = "true" ]; then
+    if [ -f "./dist/grafana/alloy/restart.sh" ]; then
+        echo "Starting existing Grafana Alloy stack..."
+        bash ./dist/grafana/alloy/restart.sh
+    else
+        echo "No existing Grafana Alloy stack start script found. Continuing..."
+    fi
 fi
 
 # Start the Node.js app in a new session (completely detached)
