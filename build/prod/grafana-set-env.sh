@@ -5,7 +5,7 @@
 # Uses different ports from development to avoid conflicts
 
 # Core directory paths
-# todo-0: these config settings are not currently used OR correct, but just examples
+# todo-3: these config settings are not currently used OR correct, but just examples
 export GRAFANA_LOGS_SOURCE_DIR="/home/clay/ferguson/quanta/dist/server/logs"
 export GRAFANA_DB_BASE_DIR="/home/clay/ferguson/grafana-data/prod/database"
 
