@@ -12,12 +12,13 @@ This setup uses Grafana Alloy to collect logs from `./dist/server/logs`, forward
 
 The Alloy agent is configured to:
 - Monitor `/temp/logs/*.log` (mapped to Quanta's log directory)
+- **Parse JSON logs** and extract structured metadata
 - Use job label "quanta" for log identification
 - Read entire log files including existing content (`tail_from_end = false`)
 - Check for new files every 5 seconds
-- Forward all logs to Loki
+- Forward processed logs with labels to Loki
 
-Key configuration:
+Key configuration with JSON parsing:
 ```alloy
 local.file_match "local_files" {
     path_targets = [{"__path__" = "/temp/logs/*.log", "job" = "quanta", "hostname" = constants.hostname}]
@@ -26,8 +27,37 @@ local.file_match "local_files" {
 
 loki.source.file "log_scrape" {
     targets    = local.file_match.local_files.targets
-    forward_to = [loki.write.local.receiver]
+    forward_to = [loki.process.json_parser.receiver]
     tail_from_end = false
+}
+
+// Process JSON logs and extract structured metadata
+loki.process "json_parser" {
+    stage.json {
+        expressions = {
+            level     = "level",
+            timestamp = "time", 
+            message   = "msg",
+            pid       = "pid",
+            hostname  = "hostname",
+        }
+    }
+
+    // Add labels for better querying
+    stage.labels {
+        values = {
+            level    = "",
+            hostname = "",
+        }
+    }
+
+    // Format timestamp if needed
+    stage.timestamp {
+        source = "timestamp"
+        format = "RFC3339"
+    }
+
+    forward_to = [loki.write.local.receiver]
 }
 ```
 
@@ -49,11 +79,56 @@ volumes:
 
 ## Quanta Log Format
 
-Quanta generates logs in this format:
+Quanta now uses **structured JSON logging** with Pino for enhanced observability:
+
+### Structured JSON Logs
+All application logs are now in JSON format with structured metadata:
+```json
+{
+  "level": 30,
+  "time": "2025-09-26T18:48:32.628Z",
+  "pid": 111184,
+  "hostname": "XPS-9300",
+  "msg": "Plugins loaded: docs"
+}
+```
+
+### HTTP Request/Response Logs
+HTTP requests and responses are automatically logged with detailed information:
+```json
+{
+  "level": 30,
+  "time": "2025-09-26T18:48:32.628Z",
+  "pid": 111184,
+  "hostname": "XPS-9300",
+  "reqId": "req-352",
+  "req": {
+    "method": "GET",
+    "url": "/assets/main.js",
+    "headers": {
+      "host": "localhost:8000",
+      "user-agent": "Mozilla/5.0...",
+      "content-type": "application/javascript"
+    },
+    "remoteAddress": "::1",
+    "remotePort": 38740
+  },
+  "res": {
+    "statusCode": 200,
+    "headers": {
+      "content-type": "application/javascript; charset=UTF-8",
+      "content-length": "1603"
+    }
+  },
+  "responseTime": 14,
+  "msg": "request completed"
+}
+```
+
+### Legacy Text Format (Deprecated)
+Previous plain text format (now replaced with structured JSON):
 ```
 09-23-25 2:11:58 PM: Plugins loaded: docs
-09-23-25 2:11:58 PM: Initializing plugins (new)...
-09-23-25 2:11:58 PM: plugin: docs
 ```
 
 ## Usage
@@ -160,11 +235,17 @@ Centralized environment configuration that:
 
 ## Features
 
+- **Structured JSON Logging**: All logs use Pino for consistent JSON format with rich metadata
+- **HTTP Request Tracing**: Automatic logging of all HTTP requests and responses with timing
+- **JSON Parsing**: Alloy extracts structured fields for advanced querying in Grafana
+- **Correlation IDs**: Each HTTP request gets a unique ID for distributed tracing
+- **Performance Metrics**: Response times, status codes, and request details automatically captured
 - **Automatic Setup**: The `start.sh` script automatically creates and configures persistent storage
 - **Automatic Log Discovery**: Monitors the Quanta logs directory for all `.log` files
 - **Real-time Monitoring**: New log entries are ingested as they're written
 - **Historical Data**: Existing log files are read in their entirety
 - **Persistent Storage**: Logs are stored permanently and survive container restarts
+- **Advanced Querying**: LogQL queries on structured JSON fields (method, status, URL, timing)
 - **Web Interface**: Easy visualization and searching through Grafana
 - **Scalable**: Handles multiple log files and growing log volumes
 
@@ -173,6 +254,46 @@ Centralized environment configuration that:
 1. **Access Grafana**: Go to `http://localhost:${GRAFANA_PORT}`
 2. **Navigate to Explore**: Click the compass icon (🧭) in the left sidebar
 3. **Select Loki Data Source**: Ensure "Loki" is selected in the dropdown
-4. **Query Your Logs**: Use `{job="quanta"}` to see all Quanta logs
+4. **Query Your Logs**: Use these LogQL queries for different insights:
+
+### Basic Queries
+```logql
+{job="quanta"}                          # All Quanta logs
+{job="quanta"} | json                   # Parse JSON structure
+{job="quanta", level="error"}           # Error logs only
+{job="quanta"} | json | level="warn"    # Warning logs
+```
+
+### HTTP Request Analysis
+```logql
+# All HTTP requests
+{job="quanta"} | json | has("req")
+
+# Error responses (4xx/5xx)
+{job="quanta"} | json | res_statusCode >= 400
+
+# Slow requests (response time > 100ms)
+{job="quanta"} | json | responseTime > 100
+
+# Specific endpoints
+{job="quanta"} | json | req_method="POST"
+{job="quanta"} | json | req_url =~ "/api/.*"
+
+# Requests by status code
+{job="quanta"} | json | res_statusCode="200"
+```
+
+### Advanced Filtering
+```logql
+# Combine multiple conditions
+{job="quanta"} | json | req_method="GET" | res_statusCode >= 400
+
+# Search in message content
+{job="quanta"} |= "error" | json
+
+# Exclude certain paths
+{job="quanta"} | json | req_url !~ "/assets/.*"
+```
+
 5. **Adjust Time Range**: If needed, expand to "Last 24 hours" or "Last 7 days"
 

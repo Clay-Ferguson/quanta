@@ -11,8 +11,46 @@ local.file_match "local_files" {
  
 loki.source.file "log_scrape" {
     targets    = local.file_match.local_files.targets
-    forward_to = [loki.write.local.receiver]
+    forward_to = [loki.process.json_parser.receiver]
     tail_from_end = false
+}
+
+// Process JSON logs and extract structured metadata
+loki.process "json_parser" {
+    stage.json {
+        expressions = {
+            level     = "level",
+            timestamp = "time", 
+            message   = "msg",
+            pid       = "pid",
+            hostname  = "hostname",
+            req_id    = "reqId",
+            method    = "req.method",
+            url       = "req.url",
+            status    = "res.statusCode",
+            response_time = "responseTime",
+            user_agent = "req.headers.user-agent",
+            remote_addr = "req.remoteAddress"
+        }
+    }
+
+    // Add labels for better querying
+    stage.labels {
+        values = {
+            level = "",
+            method = "",
+            status_code = "status",
+            hostname = "",
+        }
+    }
+
+    // Format timestamp if needed
+    stage.timestamp {
+        source = "timestamp"
+        format = "RFC3339"
+    }
+
+    forward_to = [loki.write.local.receiver]
 }
 
 loki.write "local" {

@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import { logInit } from './ServerLogger.js';
+import pinoHttp from 'pino-http';
+import { logInit, getLogger } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
@@ -37,6 +38,18 @@ if (process.env.POSTGRES_HOST) {
 }
 
 const app = express();
+
+// Initialize HTTP request/response logging with Pino
+const logger = getLogger();
+if (logger) {
+    // Use type assertion to work around TypeScript import issues
+    const pinoHttpLogger = (pinoHttp as any)({
+        logger: logger,
+        autoLogging: true
+    });
+
+    app.use(pinoHttpLogger);
+}
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
