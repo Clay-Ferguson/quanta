@@ -36,10 +36,6 @@ sudo rsync -aAXvzc --delete --force --progress --stats ./node_modules/ $TARGET_D
 sudo rsync -aAXvzc --delete --force --progress --stats ./build/local/ $TARGET_DIR/build/local/
 sudo rsync -aAXvzc --delete --force --progress --stats ./public/ $TARGET_DIR/public/
 
-mkdir -p $TARGET_DIR/dist/grafana/alloy/
-rsync -aAXvzc --delete --force --progress --stats ./grafana/alloy/ $TARGET_DIR/dist/grafana/alloy/
-cp ./build/local/grafana-set-env.sh $TARGET_DIR/dist/grafana/alloy/
-
 cp ./package.json $TARGET_DIR/package.json
 
 # Create logs directory with proper permissions
