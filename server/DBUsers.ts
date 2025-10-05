@@ -1,5 +1,5 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
-import pgdb from "./PGDB.js";
+import pgdb from "./db/PGDB.js";
 import { Request, Response } from 'express';
 import { AuthenticatedRequest, handleError, svrUtil, throwError } from "./ServerUtil.js";
 import { config } from "./Config.js";

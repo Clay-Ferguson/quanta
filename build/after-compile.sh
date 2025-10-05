@@ -1,9 +1,9 @@
 #!/bin/bash 
 
 # Copy server SQL files
-mkdir -p dist/server/
-if ! cp server/*.sql dist/server/ 2>/dev/null; then
-    error_and_pause "Failed to copy server/*.sql to dist/server/"
+mkdir -p dist/server/db/
+if ! cp server/db/*.sql dist/server/db/ 2>/dev/null; then
+    error_and_pause "Failed to copy server/db/*.sql to dist/server/db/"
 fi
 
 # Find and run all after-compile.sh scripts in plugin build directories

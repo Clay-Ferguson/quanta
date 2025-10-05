@@ -3,9 +3,9 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Pool, PoolClient } from 'pg';
 import { getTransactionClient } from './Transactional.js';
-import { UserProfile, UserProfileCompact } from '../common/types/CommonTypes.js';
-import { dbUsers } from './DBUsers.js';
-import { config } from './Config.js';
+import { UserProfile, UserProfileCompact } from '../../common/types/CommonTypes.js';
+import { dbUsers } from '../DBUsers.js';
+import { config } from '../Config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

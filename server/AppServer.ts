@@ -7,7 +7,7 @@ import { logInit, getLogger } from './ServerLogger.js';
 import { config } from './Config.js'; 
 import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
-import pgdb from './PGDB.js';
+import pgdb from './db/PGDB.js';
 import { dbUsers } from './DBUsers.js';
 import { runAllTests } from './app.test.js';
 
@@ -44,7 +44,7 @@ const logger = getLogger();
 if (logger) {
     // Use type assertion to work around TypeScript import issues
     const pinoHttpLogger = (pinoHttp as any)({
-        logger: logger,
+        logger,
         autoLogging: true
     });
 

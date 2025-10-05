@@ -1,4 +1,4 @@
-import { config } from "./Config.js";
+import { config } from "../Config.js";
 import pgdb from "./PGDB.js";
 import { AsyncLocalStorage } from 'async_hooks';
 import { PoolClient } from 'pg';
