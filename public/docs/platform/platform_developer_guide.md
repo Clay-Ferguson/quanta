@@ -60,6 +60,253 @@ There are two major categories of configurations for this app: Docker or non-Doc
 
 When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always requires Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
 
+## Debugging in VS Code
+
+Quanta provides comprehensive debugging support for VS Code with TypeScript source maps, breakpoints, and step-by-step debugging capabilities. This section explains how to set up and use debugging for developers who have cloned the project from GitHub.
+
+### Prerequisites
+
+Before setting up debugging, ensure you have:
+- **Node.js installed via nvm**: The project uses Node.js v22.2.0 or later
+- **Yarn package manager**: Required for building the project
+- **VS Code**: With TypeScript support enabled
+
+### Setting Up VS Code Debug Configuration
+
+#### 1. Create VS Code Configuration Directory
+
+If the `.vscode` directory doesn't exist in your project root, create it:
+```bash
+mkdir .vscode
+```
+
+#### 2. Create Launch Configuration
+
+Create `.vscode/launch.json` with the following content:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Quanta Server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/dist/server/AppServer.js",
+            "preLaunchTask": "build-server",
+            "runtimeExecutable": "/home/clay/.nvm/versions/node/v22.2.0/bin/node",
+            "env": {
+                "CONFIG_FILE": "./build/dev/config.yaml",
+                "QUANTA_ENV": "dev",
+                "NODE_ENV": "development",
+                "PATH": "/home/clay/.nvm/versions/node/v22.2.0/bin:${env:PATH}"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "restart": true,
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Quanta Server (No Build)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/dist/server/AppServer.js",
+            "runtimeExecutable": "/home/clay/.nvm/versions/node/v22.2.0/bin/node",
+            "env": {
+                "CONFIG_FILE": "./build/dev/config.yaml",
+                "QUANTA_ENV": "dev",
+                "NODE_ENV": "development",
+                "PATH": "/home/clay/.nvm/versions/node/v22.2.0/bin:${env:PATH}"
+            },
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "restart": true,
+            "stopOnEntry": false
+        },
+        {
+            "name": "Attach to Quanta Server",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "address": "localhost",
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ]
+}
+```
+
+**Important**: Update the `runtimeExecutable` and `PATH` values to match your actual Node.js installation path. You can find your Node.js path with:
+```bash
+which node
+```
+
+#### 3. Create Tasks Configuration
+
+Create `.vscode/tasks.json` to handle the build process:
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-server",
+            "type": "shell",
+            "command": "/home/clay/.nvm/versions/node/v22.2.0/bin/yarn",
+            "args": ["build:server"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$tsc",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "/home/clay/.nvm/versions/node/v22.2.0/bin:${env:PATH}"
+                }
+            }
+        },
+        {
+            "label": "build-all",
+            "type": "shell",
+            "command": "/home/clay/.nvm/versions/node/v22.2.0/bin/yarn",
+            "args": ["build"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": "$tsc",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "/home/clay/.nvm/versions/node/v22.2.0/bin:${env:PATH}"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Important**: Update the yarn command path and PATH environment variable to match your installation.
+
+### Using the Debugger
+
+#### Method 1: VS Code Integrated Debugging (Recommended)
+
+1. **Set breakpoints**: Click in the left margin next to line numbers in any TypeScript file (`server/*.ts`, `plugins/*/server/*.ts`, `common/*.ts`)
+
+2. **Start debugging**: 
+   - Press `F5` or go to Run and Debug panel (`Ctrl+Shift+D`)
+   - Select "Debug Quanta Server" from the dropdown
+   - Click the green play button
+
+3. **Debugging features**:
+   - **Step controls**: Step over (`F10`), step into (`F11`), step out (`Shift+F11`)
+   - **Variable inspection**: Hover over variables or use the Variables panel
+   - **Call stack**: View execution path in the Call Stack panel
+   - **Debug console**: Execute JavaScript expressions in current context
+   - **Hot reload**: Debugger restarts automatically when files change
+
+#### Method 2: Debug Without Building (Faster Iteration)
+
+If you've already built the server and want to debug without rebuilding:
+1. Select "Debug Quanta Server (No Build)"
+2. Press `F5`
+
+#### Method 3: Attach to Running Process
+
+Similar to Java debugging, you can start the server first and then attach:
+
+1. **Start server with debug mode**:
+   ```bash
+   # Build first
+   yarn build
+   
+   # Start with debugging enabled
+   CONFIG_FILE="./build/dev/config.yaml" QUANTA_ENV=dev node --inspect=9229 dist/server/AppServer.js
+   ```
+
+2. **Attach debugger**: Select "Attach to Quanta Server" and press `F5`
+
+### Debugging Features
+
+#### Source Map Support
+- **TypeScript debugging**: Set breakpoints directly in `.ts` files
+- **Plugin debugging**: Debug plugin code in `plugins/*/server/*.ts`
+- **Common code debugging**: Debug shared code in `common/*.ts`
+
+#### Environment Configuration
+- **Development environment**: Uses `build/dev/config.yaml`
+- **Environment variables**: Properly configured for local development
+- **Plugin loading**: All configured plugins are loaded and debuggable
+
+#### Advanced Debugging
+
+**Plugin-Specific Debugging**:
+- Set breakpoints in plugin server code (`plugins/chat/server/*.ts`, `plugins/docs/server/*.ts`)
+- Debug plugin initialization and lifecycle methods
+- Inspect plugin-specific state and data
+
+**Common Code Debugging**:
+- Debug shared utilities in `common/` directory
+- Inspect cryptographic operations, utilities, and types
+- Debug test code in `common/test/`
+
+### Troubleshooting
+
+#### Common Issues
+
+**"Command not found" errors**:
+- Ensure Node.js and Yarn paths are correctly specified in configurations
+- Verify your nvm installation path matches the configuration
+
+**Source maps not working**:
+- Ensure TypeScript is configured with `"sourceMap": true`
+- Verify `outFiles` pattern matches your build output directory
+
+**Breakpoints not hitting**:
+- Ensure you're setting breakpoints in TypeScript files, not compiled JavaScript
+- Verify the build process completed successfully
+- Check that the debug configuration is using the correct entry point
+
+**Environment variable issues**:
+- Verify `CONFIG_FILE` points to correct configuration
+- Ensure `QUANTA_ENV` is set to appropriate environment
+- Check that plugin configurations are properly loaded
+
+For additional debugging support, refer to the [VS Code Node.js debugging documentation](https://code.visualstudio.com/docs/nodejs/nodejs-debugging).
+
 ## System Architecture
 
 ### Core Components
