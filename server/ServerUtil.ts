@@ -256,7 +256,7 @@ class ServerUtil {
         } else {
             // Fixed spawn command for gnome-terminal with proper path handling
             const baseFileName = path.basename(file_name);
-            const terminalCommand = `cd "${folder}" && ./${baseFileName} "${expandedArgs}" || { echo "Script failed. Press any key to close..."; read -n1; }`;
+            const terminalCommand = `cd "${folder}" && ${expandedArgs} ./${baseFileName} || { echo "Script failed. Press any key to close..."; read -n1; }`;
             // console.log('Running terminal command:', terminalCommand);
             spawn('gnome-terminal', [
                 '--',
