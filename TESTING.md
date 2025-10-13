@@ -29,7 +29,7 @@ runTests: "y"  # Set to "y" to run embedded tests when server starts
 
 - Tests only run in **development environment** (`QUANTA_ENV=dev`)
 - The application must have the `runTests` config set to `"y"`
-- Different test suites run based on available services (PostgreSQL presence affects which tests execute)
+- PostgreSQL database must be available for VFS (Virtual File System) operations
 
 ## Test Architecture
 
@@ -48,7 +48,7 @@ export async function runAllTests(): Promise<void> {
     
     await runCommonUtilsTests();  // Common utility tests
     await runCryptoTests();       // Cryptographic function tests  
-    await runLfsTests();          // Local File System tests
+    await runVfsTests();          // Virtual File System tests
 }
 ```
 
@@ -84,7 +84,7 @@ The Quanta testing system is centralized through a single orchestrator file:
 
 - `/server/app.test.ts` - **Main test orchestrator** - This is the central entry point that controls which test suites run based on environment conditions. All test integration happens through this file.
 
-Individual test files are automatically discovered and executed by the orchestrator based on the current environment and available services (such as PostgreSQL availability).
+Individual test files are automatically discovered and executed by the orchestrator based on the current environment.
 
 ### Test File Naming Convention
 
@@ -98,7 +98,7 @@ All test files follow the pattern `*.test.ts` and are located either in:
 
 1. Application starts up normally
 2. If `runTests: "y"` and `QUANTA_ENV=dev`, tests begin execution
-3. Test orchestrator determines which test suites to run based on environment
+3. Test orchestrator runs all configured test suites
 4. Each test suite uses `TestRunner` for execution and reporting
 5. Global test results are accumulated and reported
 6. Application continues normal startup after tests complete
@@ -134,22 +134,17 @@ export async function runTests() {
 - Use the `TestRunner` for consistent reporting
 - Place tests in appropriate directories based on functionality
 
-## Environment-Specific Testing
-
-### Local File System (LFS) Tests
-- Run when PostgreSQL is not available
-- Test file system operations directly on the local file system
-- Cover basic CRUD operations and file management
+## Test Categories
 
 ### Virtual File System (VFS) Tests  
-- Run when PostgreSQL is available (Docker environment)
-- Test the database-backed virtual file system
-- Cover multi-user scenarios and advanced file operations
+- Test the PostgreSQL-backed virtual file system
+- Cover file operations, multi-user scenarios, and data persistence
+- Validate CRUD operations and file management functionality
 
 ### Common Utility Tests
-- Always run regardless of environment
 - Test pure functions and utility methods
 - Validate core application logic
+- Test cryptographic functions and data manipulation utilities
 
 ## Best Practices
 
@@ -169,11 +164,11 @@ export async function runTests() {
 ### Test Failures
 - Review the detailed error output in the console
 - Check the global failure count to see if failures are isolated or systematic
-- Verify that required services (like PostgreSQL) are available for relevant tests
+- Verify that PostgreSQL database is available and properly configured
 
 ### Docker-specific Issues
 - Ensure Docker services are properly started
-- Check that PostgreSQL container is healthy before running VFS tests
+- Check that PostgreSQL container is healthy and accessible
 - Verify volume mounts and environment variables are correct
 
 The embedded testing system provides a robust foundation for ensuring code quality while maintaining the simplicity of a single-command startup process.

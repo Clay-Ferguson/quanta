@@ -4,8 +4,8 @@ This document explains the technical design of the Quanta `Core Platform` which 
 ## Overview
 Quanta is a React-based web platform designed as a plugin-extensible framework for rapid application development. It provides a comprehensive foundation that eliminates common boilerplate code while offering a robust architecture for building scalable web applications. The project currently packages together two separate plugins which make up the "Quanta" app, which consists of document editing and chat capabilitities. Each of the two plugins of course rely on a large amount of common `core platform` code and capabilities that are shared. 
 
-- **Quanta Docs Plugin**: A filesystem-based document editor with Jupyter Notebook-style interface
-- **Quanta Chat Plugin**: A WebRTC-powered peer-to-peer chat application with optional server persistence
+- **Quanta Docs Plugin**: A VFS-based document editor with Jupyter Notebook-style interface
+- **Quanta Chat Plugin**: A WebRTC-powered peer-to-peer chat application with server persistence
 
 The goal is that we can theoretically run the Docs and/or Chat plugins independently. That means we could run the Docs plugin without the Chat plugin and vice versa if the need ever arises. This is one reason why they are implemented as plugins, although an additional goal of creating the `core platform` itself is that we can create brand new applications from scratch just by using the core platform plus one or more plugins, just like we've done for Quanta.
 
@@ -53,12 +53,11 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 - **tsconfig.* , vite, yarn, tailwind, postcss, package.json**: These are all files you will recognize in a project that's using Vite builder, TailwindCSS, and using TypeScript.
 
 ## How to Run
-There are two major categories of configurations for this app: Docker or non-Docker. The only reason you'd want to run the app outside of Docker would be when you're running a private version where you're using the Quanta Plugin to edit files locally and/or to use Quanta as a menuing system (app launcher). Details of the local file editing and app launcher are explained in the Quanta-specific documentation (not this file)
+The application now requires Docker for all deployments as it relies entirely on PostgreSQL for the VFS (Virtual File System) implementation. Both the Chat and Docs plugins require database persistence.
 
-* For non-docker run: `/build/dev/build-and-start.sh`
 * For docker run: `/build/dev/docker/build-and-start.sh`
 
-When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. The only combination that you can run that doesn't require Postgres (and therefore Docker), is when you're running only the `docs` (i.e. `Quanta`) plugin, and running in LFS mode (Local File System). In other words we only have two plugins currently which are `chat` and `docs` and the chat app always requires Docker to run, and the `docs` will require Docker if you're using any VFS (Virtual File System) roots, because the VFS is implemented in Postgres. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
+When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. Both plugins (`chat` and `docs`) now require PostgreSQL and Docker to run, as all file operations use the VFS (Virtual File System) which is implemented in PostgreSQL. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
 
 ## Debugging in VS Code
 
