@@ -55,8 +55,6 @@ services:
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
-      # Mount document root if it exists
-      - ${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:${DOC_ROOT_PATH:-/home/clay/ferguson/A-doc-root}:ro
       # Mount logs directory to host
       - ${LOGS_PATH:-./logs}:/app/dist/server/logs
     environment:
