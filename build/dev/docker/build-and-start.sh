@@ -46,8 +46,10 @@ if [ $? -eq 0 ]; then
     
     # Build and start the container
     echo "Starting application with Docker Compose..."
-    # docker-compose --env-file .env --env-file ../.env-quanta --profile pgadmin up --build
-    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta up --build
+
+    # WARNING: If you have 'pgadmin' profile here, you need it in 'stop.sh' too!
+    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build
+    # docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta up --build
     
     echo "Quanta ended."
 else

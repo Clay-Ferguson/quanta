@@ -55,7 +55,25 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 ## How to Run
 The application now requires Docker for all deployments as it relies entirely on PostgreSQL for the VFS (Virtual File System) implementation. Both the Chat and Docs plugins require database persistence.
 
+### Starting the Application
 * For docker run: `/build/dev/docker/build-and-start.sh`
+
+### Stopping the Application (IMPORTANT)
+**Always use the proper stop script to terminate the Docker stack:**
+* For docker stop: `/build/dev/docker/stop.sh`
+
+**Never use CTRL-C to terminate the application** when running the Docker stack, as this leaves Docker containers, networks, and volumes in an orphaned state. This can cause networking errors like "network not found" when trying to restart the application. The stop script properly cleans up all Docker resources using `docker-compose down` and removes orphaned containers.
+
+If you accidentally terminated with CTRL-C and encounter startup issues, clean up manually with:
+```bash
+# Stop and remove containers
+docker stop $(docker ps -q)
+docker container prune -f
+
+# Clean up networks and volumes
+docker network prune -f
+docker volume prune -f
+```
 
 When you run the app it consists entirely of one or more activated 'plugins' which make up the deployed 'applications'. Both plugins (`chat` and `docs`) now require PostgreSQL and Docker to run, as all file operations use the VFS (Virtual File System) which is implemented in PostgreSQL. This paragraph will really only make complete sense once you've read the full Quanta Plugin docs.
 
