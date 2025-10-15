@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-# NOTE: Ends up with app running at http://localhost:8000/
+# NOTE: Ends up with app running at http://localhost:8000/ with debugging enabled
 
 # WARNING: You need to 'yarn install' before running this script!
 
@@ -17,13 +17,13 @@ fi
 
 ./build/clean.sh
 
-echo "Building application..."
+echo "Building application for debugging..."
 export DEV_BUILD_OPTS=true
 yarn build
 
 # Check if yarn build succeeded
 if [ $? -eq 0 ]; then
-    echo "Build successful. Preparing Docker environment..."
+    echo "Build successful. Preparing Docker environment with debugging enabled..."
 
     mkdir -p ../quanta-volumes/dev/pgadmin-data
     mkdir -p ../quanta-volumes/dev/docker/logs
@@ -46,15 +46,19 @@ if [ $? -eq 0 ]; then
     sudo chmod -R 755 ../quanta-volumes/dev/pgadmin-data
     
     # Stop any existing containers
-    # docker-compose --env-file .env --env-file ../.env-quanta --profile pgadmin down 
     docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta down 
     
-    # Build and start the container
-    echo "Starting application with Docker Compose..."
+    # Build and start the container with debugging enabled
+    echo "Starting application with Docker Compose (Debug Mode)..."
+    echo "Node.js debugger will be available on port 9229"
+    echo "Use 'Attach to Quanta Docker Server' configuration in VS Code to debug"
 
-    # Explicitly disable debug mode for production-like run
-    DEBUG=false docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build
-    # docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta up --build
+    # Override environment variables to force debug mode
+    export DEBUG=true
+    export DEBUG_PORT=9229
+    
+    # Start with debug profile and explicit debug environment
+    DEBUG=true DEBUG_PORT=9229 docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build
     
     echo "Quanta ended."
 else

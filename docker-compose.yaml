@@ -54,6 +54,8 @@ services:
     container_name: quanta-${QUANTA_ENV:-local}
     ports:
       - "${APP_PORT:-8000}:8000"
+      # Debug port for Node.js debugging
+      - "${DEBUG_PORT:-9229}:9229"
     volumes:
       # Mount logs directory to host
       - ${LOGS_PATH:-./logs}:/app/dist/server/logs
@@ -61,6 +63,8 @@ services:
       - CONFIG_FILE=./config.yaml
       - DEV_BUILD_OPTS=true
       - QUANTA_ENV=${QUANTA_ENV}
+      # Enable debugging based on environment variable
+      - DEBUG=${DEBUG:-false}
       # PostgreSQL connection info for the app
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
