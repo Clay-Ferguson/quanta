@@ -4,6 +4,11 @@
 
 # WARNING: You need to 'yarn install' before running this script!
 
+# Source nvm to ensure yarn is available
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
 # Check if we're in the project root by looking for package.json
 if [ ! -f "./package.json" ]; then
     echo "Error: package.json not found. Run this script from the project root."
