@@ -102,5 +102,6 @@ export type TreeNode = {
     content: string;
     children?: TreeNode[] | null; // subdirectories or files (pullups only)
     fsChildren?: boolean; // true if this node has children in the file system
+    ordinal?: number; // ordinal value for file/folder ordering (used in VFS2)
 }
 
