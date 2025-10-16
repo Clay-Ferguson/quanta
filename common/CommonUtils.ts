@@ -80,33 +80,36 @@ export function getFilenameExtension(fullPath: string): string {
     return fullPath.substring(lastDotIndex);
 }
 
+// todo-0: per vfs2 this method will go away soon.
 export function formatDisplayName(name: string) {
-    name = stripOrdinal(name);
-    const endsWithUnderscore = name.endsWith('_');
+    // name = stripOrdinal(name);
+    // const endsWithUnderscore = name.endsWith('_');
 
-    // Replace underscores with spaces but keep dashes as-is
-    name = name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
-    name = name.trim();
+    // // Replace underscores with spaces but keep dashes as-is
+    // name = name.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase()); 
+    // name = name.trim();
 
-    // we preserve the display of the final underscore if it exists, because that's important for the user to see
-    // becasue it represents a 'pullup'
-    if (endsWithUnderscore) {
-        // If the name ends with an underscore, we add back at the end
-        name += '_';
-    }
+    // // we preserve the display of the final underscore if it exists, because that's important for the user to see
+    // // becasue it represents a 'pullup'
+    // if (endsWithUnderscore) {
+    //     // If the name ends with an underscore, we add back at the end
+    //     name += '_';
+    // }
 
-    // If name ends with ".Md" remove it. Replace with ".md" if it exists
-    if (name.endsWith('.Md')) {
-        name = name.slice(0, -3) + '.md';
-    }
+    // // If name ends with ".Md" remove it. Replace with ".md" if it exists
+    // if (name.endsWith('.Md')) {
+    //     name = name.slice(0, -3) + '.md';
+    // }
         
     return name;
 }   
 
 // Removes the prefix from the file name. We find the first occurrence of an underscore and return the substring after it.
+// todo-0: this whole method to be removed soon,.
 export function stripOrdinal(name: string) {
-    const idx = name.indexOf('_');
-    return idx !== -1 ? name.substring(idx + 1) : name;
+    // const idx = name.indexOf('_');
+    // return idx !== -1 ? name.substring(idx + 1) : name;
+    return name;
 }   
 
 // This method should split apart path into its components and format it nicely

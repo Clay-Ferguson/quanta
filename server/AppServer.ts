@@ -131,6 +131,12 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
                 .replace('{{PLUGINS}}', pluginKeys)
                 .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
 
+            if (result.indexOf('{{') !== -1) {
+                console.error('Error: Unreplaced placeholders remain in index.html');
+                console.error('Resulting HTML:', result);
+                throw new Error('Error: Unreplaced placeholders remain in index.html');
+            }
+
             // Set the content type and send the modified HTML
             res.contentType('text/html');
             res.send(result);
