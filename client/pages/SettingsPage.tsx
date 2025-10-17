@@ -15,8 +15,6 @@ import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
 
-declare const DESKTOP_MODE: boolean;
-
 async function clear() {
     await idb.clear();
     console.log("Cleared IndexedDB");
@@ -294,7 +292,7 @@ export default function SettingsPage() {
                         </div>
                         
                         <div className="flex justify-end">
-                            {!DESKTOP_MODE && <button 
+                            {<button 
                                 className="btn-primary mr-2"
                                 onClick={previewUserInfo}
                             >

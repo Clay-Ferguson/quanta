@@ -31,7 +31,6 @@ export enum DBKeys {
     docsEditMode = 'docsEditMode',
     docsMetaMode = 'docsMetaMode',
     docsNamesMode = 'docsNamesMode',
-    docsSearchTextOnly = 'docsSearchTextOnly',
     docsOrderByModTime = 'docsOrderByModTime', 
     docsShowFileName = 'docsShowFileName',
 }

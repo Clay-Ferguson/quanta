@@ -127,7 +127,6 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
                 .replace('{{SECURE}}', SECURE)
                 .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
                 .replace(`{{PAGE}}`, page)
-                .replace('{{DESKTOP_MODE}}', config.get("desktopMode"))
                 .replace('{{PLUGINS}}', pluginKeys)
                 .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
 

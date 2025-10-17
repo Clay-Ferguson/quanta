@@ -10,8 +10,6 @@ import { gd, GlobalState, gs } from "./GlobalState";
 import { httpClientUtil } from "./HttpClientUtil";
 import { idb } from "./IndexedDB";
 
-declare const DESKTOP_MODE: boolean;
-
 /**
  * AppUsers class manages user-related operations and data persistence in the Quanta Chat application.
  * 
@@ -59,15 +57,6 @@ class AppUsers {
      * @param userAvatar The user's avatar image as a base64-encoded file interface, or null if no avatar
      */
     saveUserInfo = async (gs: GlobalState, userName: string, userDescription: string, userAvatar: FileBase64Intf | null): Promise<boolean> => {
-       
-        if (DESKTOP_MODE) {
-            // In desktop mode, we don't save to server, just return true
-            console.log("User Info Saved Locally in Desktop Mode: ", JSON.stringify(gs.userProfile, null, 2));
-            await idb.setItem(DBKeys.userName, userName);
-            await idb.setItem(DBKeys.userDescription, userDescription);
-            await idb.setItem(DBKeys.userAvatar, userAvatar);
-            return true;
-        }
 
         // Save user info to server if saving to server is enabled
         if (gs.keyPair?.publicKey) {
