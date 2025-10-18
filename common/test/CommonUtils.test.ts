@@ -6,9 +6,6 @@ import {
     formatDate,
     formatDateTime,
     getFilenameExtension,
-    formatDisplayName,
-    stripOrdinal,
-    formatFullPath,
     createClickablePathComponents,
     stripFileExtension,
     fixName,
@@ -184,52 +181,6 @@ export async function runTests() {
             assertEqual(getFilenameExtension('.'), '');
             assertEqual(getFilenameExtension('..'), '');
             assertEqual(getFilenameExtension('.hidden'), '.hidden');
-        });
-
-        await testRunner.run("stripOrdinal - should remove ordinal prefixes", async () => {
-            assertEqual(stripOrdinal('01_introduction.md'), 'introduction.md');
-            assertEqual(stripOrdinal('999_final_chapter.txt'), 'final_chapter.txt');
-            assertEqual(stripOrdinal('abc_document.pdf'), 'document.pdf');
-        });
-
-        await testRunner.run("stripOrdinal - should handle files without ordinals", async () => {
-            assertEqual(stripOrdinal('document.txt'), 'document.txt');
-            assertEqual(stripOrdinal('no-underscore.md'), 'no-underscore.md');
-        });
-
-        await testRunner.run("stripOrdinal - should handle multiple underscores", async () => {
-            assertEqual(stripOrdinal('01_chapter_one_intro.md'), 'chapter_one_intro.md');
-        });
-
-        await testRunner.run("formatDisplayName - should format names for display", async () => {
-            assertEqual(formatDisplayName('01_hello_world'), 'Hello World');
-            assertEqual(formatDisplayName('02_advanced-topics'), 'Advanced-Topics');
-            assertEqual(formatDisplayName('user_profile_settings'), 'Profile Settings');
-        });
-
-        await testRunner.run("formatDisplayName - should preserve trailing underscores", async () => {
-            assertEqual(formatDisplayName('01_pullup_topic_'), 'Pullup Topic_');
-            assertEqual(formatDisplayName('chapter_end_'), 'End_');
-        });
-
-        await testRunner.run("formatDisplayName - should handle .Md extension conversion", async () => {
-            assertEqual(formatDisplayName('01_readme.Md'), 'Readme.md');
-            assertEqual(formatDisplayName('chapter.MD'), 'Chapter.MD'); // Only .Md, not .MD
-        });
-
-        await testRunner.run("formatFullPath - should format complete paths", async () => {
-            assertEqual(formatFullPath('/docs/01_intro/02_getting_started'), 'Docs / Intro / Getting Started');
-            assertEqual(formatFullPath('/user/profile/settings'), 'User / Profile / Settings');
-        });
-
-        await testRunner.run("formatFullPath - should handle root and empty paths", async () => {
-            assertEqual(formatFullPath('/'), '');
-            assertEqual(formatFullPath(''), '');
-        });
-
-        await testRunner.run("formatFullPath - should handle single level paths", async () => {
-            assertEqual(formatFullPath('/home'), 'Home');
-            assertEqual(formatFullPath('/01_introduction'), 'Introduction');
         });
 
         await testRunner.run("createClickablePathComponents - should create navigation components", async () => {

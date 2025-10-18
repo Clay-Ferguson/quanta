@@ -80,21 +80,6 @@ export function getFilenameExtension(fullPath: string): string {
     return fullPath.substring(lastDotIndex);
 }
 
-// todo-0: per vfs2 this method will go away soon.
-export function formatDisplayName(name: string) {
-    return name;
-}   
-
-// todo-0: this whole method to be removed soon,.
-export function stripOrdinal(name: string) {
-    return name;
-}   
-
-// todo-0: remove
-export function formatFullPath(path: string): string {
-    return path;
-}
-
 // Creates an array of path components with their corresponding navigation paths
 // for rendering clickable breadcrumb navigation
 export function createClickablePathComponents(path: string): Array<{ displayName: string; navigationPath: string }> {
@@ -110,7 +95,7 @@ export function createClickablePathComponents(path: string): Array<{ displayName
         const navigationPath = '/' + components.slice(0, i + 1).join('/');
         
         // Format the display name (remove ordinals, capitalize, etc.)
-        const displayName = formatDisplayName(components[i]);
+        const displayName = components[i];
         
         result.push({
             displayName,
