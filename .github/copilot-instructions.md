@@ -78,7 +78,6 @@ interface DocsGlobalState extends GlobalState {
 
 ### File System Integration
 - VFS (Virtual File System) mode: PostgreSQL-backed
-- Configurable via `public-folders` in YAML config (todo-0: Is public-folders still used?)
 - File uploads handled via Express middleware with size limits
 
 ### Security Model

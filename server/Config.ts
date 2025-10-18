@@ -121,47 +121,6 @@ class Config {
         
         return value;
     }
-
-    /**
-     * Get a public folder configuration by name
-     */
-    getPublicFolderByName(name: string): any {
-        const folders = this.configData['public-folders'];
-        if (!folders || !Array.isArray(folders)) {
-            return undefined;
-        }
-        return folders.find((folder: any) => folder.name === name);
-    }
-
-    /**
-     * Get a public folder configuration by key (if you add a 'key' property later)
-     */
-    getPublicFolderByKey(key: string): any {
-        if (!key) {
-            return undefined;
-        }
-        // Ensure 'public-folders' exists and is an array
-        const folders = this.configData['public-folders'];
-        if (!folders || !Array.isArray(folders)) {
-            return undefined;
-        }
-        return folders.find((folder: any) => folder.key === key);
-    }
-
-    /**
-     * Get all public folders
-     */
-    getPublicFolders(): any[] {
-        return this.configData['public-folders'] || [];
-    }
-
-    /**
-     * Get a public folder path by name
-     */
-    getPublicFolderPath(name: string): string | undefined {
-        const folder = this.getPublicFolderByName(name);
-        return folder?.path;
-    }
 }
 
 // Create and export singleton instance

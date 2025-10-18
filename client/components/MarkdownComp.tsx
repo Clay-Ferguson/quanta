@@ -10,8 +10,6 @@ import rehypeHighlight from 'rehype-highlight';
 import { signedArgs } from '../AppService';
 import 'highlight.js/styles/github-dark.css'; 
 
-declare const DOC_ROOT_KEY: string;
-
 // Run function that calls the server endpoint
 async function run(item: any) {
     console.log(`Running command: ${item.cmd} with args: ${item.args}`);
@@ -100,8 +98,6 @@ export default function Markdown({ markdownContent, docMode, basePath }: Markdow
         }
     };
 
-    // When displayed in the TreeViewerPage we have very specific way of handling images due to the variable
-    // DOC_ROOT_KEY which is used to transform relative paths to absolute paths.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     comps.img = ({ node, src, ...props }) => {
         let imgSrc = src;
@@ -110,10 +106,10 @@ export default function Markdown({ markdownContent, docMode, basePath }: Markdow
             imgSrc = `${basePath}/${src}`;
             // console.log(`Transformed image path: basePath=[${basePath}] / srcPart=[${src}]`);
         }
-        // If we have a DOC_ROOT_KEY and the src is a relative path (doesn't start with http or /)
-        else if (docMode && DOC_ROOT_KEY && src && !src.startsWith('http') && !src.startsWith('/')) {
+        // If the src is a relative path (doesn't start with http or /)
+        else if (docMode && src && !src.startsWith('http') && !src.startsWith('/')) {
             // Transform relative paths to use the docs images API
-            imgSrc = `/api/docs/images/${DOC_ROOT_KEY}/${src}?${signedArgs.args}`;
+            imgSrc = `/api/docs/images/${src}?${signedArgs.args}`;
         }
         return <img src={imgSrc} {...props} onClick={() => setFullSizeImage({src: imgSrc!, name: "Markdown image"})} />;
     };
