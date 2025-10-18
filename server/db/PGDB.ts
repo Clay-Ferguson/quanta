@@ -70,17 +70,6 @@ class PGDB {
         await this.initSchema();
     }
 
-    // Returns id or 0 of it's admin. Postgres functions know to treat 0 as admin.
-    // todo-0: this method was a BAD idea. It converts user id of admin which is 1 to a 0, and inserts records with id 0,
-    // and then everything breaks. Leaving it here commented out for now.
-    public authId(id: number): number {  
-        // if (!this.adminProfile || !this.adminProfile.id) {
-        //     throw new Error('Admin profile not loaded or invalid, authId');
-        // }
-        // return this.adminProfile.id==id ? 0 : id;
-        return id;
-    }
-
     async loadAdminUser(): Promise<void> {
         const adminPubKey = config.get("adminPublicKey");
         this.adminProfile = await dbUsers.getUserProfileCompact(adminPubKey);
