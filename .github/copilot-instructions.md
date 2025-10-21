@@ -2,92 +2,240 @@
 
 ## Architecture Overview
 
-Quanta is a React-based plugin-extensible web platform that provides a foundation for rapid application development. The core platform manages two main plugins: **Docs** (file system editor) and **Chat** (WebRTC messaging), each independently configurable via YAML.
+Quanta is a React-based plugin-extensible web platform for rapid application development. The core platform is minimal and unopinionated—it manages plugins (currently **Docs** for file editing and **Chat** for WebRTC messaging), each independently configurable via YAML.
 
-For more see the README.md file in the root directory, which also includes links to the User Guides and Developer Guides, in the `/public/docs` directory.
+**Critical Insight**: Quanta is NOT a monolithic app. The platform provides infrastructure (state, routing, auth, DB), while plugins define all user-facing features. The platform itself has no business logic beyond plugin orchestration.
 
-### Key Components
+### Core Components
 
-- **Plugin System**: Each plugin implements `IClientPlugin` interface with `getKey()`, `init()`, and `getRoute()` methods
-- **Global State**: Centralized React state using `GlobalState` interface with plugin-specific extensions via key prefixes
-- **Configuration**: YAML-based config system with individual plugin configs (`/plugins/{name}/config.yaml`) and environment configs (`/build/{env}/config.yaml`) defining hosts and public folders
-- **Dual Storage**: IndexedDB for client persistence, PostgreSQL for server-side data (chat requires DB)
+**Plugin System** (dual-sided architecture):
+- Client: Implement `IClientPlugin` (`/client/AppServiceTypes.ts`)
+  - `getKey()`: Unique plugin identifier
+  - `init(context)`: Initialize plugin state
+  - `getRoute(gs, pageName)`: Return React component for page or null
+  - `notify()`: Post-startup hook
+  - `applyStateRules(gs)`: Enforce business rules on state changes
+  - `restoreSavedValues(gs)`: Load persisted settings from IndexedDB
+  - `getSettingsPageComponent()`, `getAdminPageComponent()`, `getUserProfileComponent()`: Inject into core pages
+- Server: Implement `IServerPlugin` (`/server/ServerUtil.ts`)
+  - `init(context)`: Register routes via `context.app` (Express instance)
+  - `preProcessHtml(html, req)`: Modify index.html before serving (inject variables)
+  - `notify(server)`: Post-startup hook (e.g., WebSocket server setup)
+  - `onCreateNewUser(userProfile)`: Hook for user creation events
+
+**Global State** (`/client/GlobalState.tsx`):
+- Single React context for entire app, accessed via `useGlobalState()` hook
+- Dispatch updates via `gd({type: 'actionName', payload: {...}})` function
+- Plugins extend `GlobalState` interface using key prefixes (e.g., `docsFolder`, `chatActiveRoom`)
+- Special feature: `setApplyStateRules()` callback allows plugins to enforce invariants on every state change
+- Imperative access via `gs()` function returns latest state ref (use sparingly, prefer hooks)
+
+**Routing Architecture** (state-based SPA):
+- NO URL routing—navigation managed via `gs.pages` array (stack)
+- Current page = `gs.pages[gs.pages.length - 1]`
+- `PageRouter.tsx` iterates plugins calling `getRoute()`, falls back to core pages
+- Back navigation: pop from `gs.pages` stack
+- Example: `app.goToPage(DocsPageNames.treeViewer)` pushes page to stack
+
+**Configuration System**:
+- Environment configs: `/build/{env}/config.yaml` (host, port, security settings)
+- Plugin configs: `/plugins/{name}/config.yaml` (name, key, description)
+- `Config.ts` loads env config via `CONFIG_FILE` env var
+- Auto-discovers plugins by scanning `/plugins/` directory, filters by `plugins` array in env config
+- Supports Docker builds (checks `/dist/plugins/` if `/plugins/` missing)
+
+**Dual Storage**:
+- IndexedDB (client): User preferences, draft state, keys (`/client/IndexedDB.ts`)
+- PostgreSQL (server): Persistent app data (users, messages, files)
+- DB optional for core platform, required per-plugin (Chat needs it, Docs can run without)
+- `POSTGRES_HOST` env var controls DB initialization
 
 ## Development Workflows
 
-### Build & Run Commands
+### Build & Run
 ```bash
-# Development (local filesystem only, no DB)
-./build/dev/build-and-start.sh
+# Docker dev environment (RECOMMENDED - includes PostgreSQL)
+./build/dev/docker/build-and-start.sh  # App at http://localhost:8000
+
+# Docker dev with debug port 9229 exposed
+./build/dev/docker/build-and-start-debug.sh
+
+# Non-Docker (requires manual PostgreSQL setup)
+yarn build && yarn start
+
+# Stop Docker containers
+./build/dev/docker/stop.sh
 ```
 
-### Build Process
-- Client: `tsc -b && vite build` (builds React app)
-- Server: `tsc -p server/tsconfig.json && npm run copy:sql` (builds Express server + copies SQL schemas)
+### Build Process Details
+1. **Client**: `tsc -b && vite build` → `/dist/client/`
+2. **Server**: `tsc -p server/tsconfig.json` → `/dist/server/`
+3. **Post-build**: `./build/after-compile.sh` runs plugin-specific scripts (`/plugins/{name}/build/after-compile.sh`)
+4. **Docker**: Copies entire `/dist/` into container, runs via `node dist/server/AppServer.js`
+
+**Key Files**:
+- `docker-compose.yaml`: Defines postgres, pgadmin (optional), quanta-app services
+- `Dockerfile`: Multi-stage build, copies config based on `ENV` arg
+- `/build/dev/.env`: Environment variables for Docker (ports, paths)
+- `../.env-quanta`: Secrets file (passwords, admin keys) NOT in repo
 
 ### Plugin Development
-- Client plugins: `/plugins/{plugin-name}/client/plugin.ts`
-- Server plugins: `/plugins/{plugin-name}/server/plugin.ts`
-- Each plugin defines pages, state extensions, and route handlers
-- Schema files: `/plugins/{plugin-name}/server/schema.sql`
-- Installation: Simply drop plugin folder with `config.yaml` into `/plugins/` and restart - automatic discovery and loading
 
-## Project Patterns
+**Creating a Plugin**:
+1. Create `/plugins/my-plugin/` with structure:
+   ```
+   config.yaml                  # Required: name, key, description
+   client/plugin.ts             # IClientPlugin implementation
+   server/plugin.ts             # IServerPlugin implementation
+   server/schema.sql            # Optional: PostgreSQL schema
+   build/after-compile.sh       # Optional: post-build script
+   ```
+2. Add plugin key to `plugins` array in `/build/{env}/config.yaml`
+3. Restart app—auto-discovered and loaded
 
-### State Management
+**Plugin Discovery Flow**:
+1. Server reads env config, gets `plugins: ['docs', 'chat']` array
+2. `Config.scanPlugins()` reads `/plugins/*/config.yaml` files
+3. Only loads plugins in whitelist array
+4. `AppServer.ts` imports each via dynamic `import()`
+5. Calls `plugin.init({app, serveIndexHtml})` on server plugins
+6. Client loads via `AppService.loadPlugins()` using `PLUGINS` var injected into HTML
+
+**Example Route Registration** (from `/plugins/docs/server/plugin.ts`):
 ```typescript
-// Plugin state extends global state with key prefixes
-interface DocsGlobalState extends GlobalState {
-    docsFolder?: string;
-    docsEditMode?: boolean;
-    // ... docs-specific state
+context.app.post('/api/docs/file/save', 
+  httpServerUtil.verifyReqHTTPSignature, 
+  asyncHandler(docMod.saveFile)
+);
+```
+
+## Critical Patterns
+
+### Error Handling
+- **Server**: Wrap all async routes in `asyncHandler()` (`/server/ServerUtil.ts`)
+- Prevents unhandled promise rejections from crashing server
+- Use `handleError(error, res, message)` for consistent error responses
+- Global handlers in `AppServer.ts` catch uncaught exceptions
+
+### HTTP Request Authentication
+- All API requests require HTTP signature verification (except endpoints with `AllowAnon`)
+- Client signs requests using secp256k1 private key (`/common/Crypto.ts`)
+- Server verifies via `httpServerUtil.verifyReqHTTPSignature` middleware
+- Sets `req.userProfile` on authenticated requests
+- Admin-only endpoints use `verifyAdminHTTPSignature` (checks against `adminPublicKey` config)
+
+### IndexedDB Usage
+- Wrap gets with default values: `await idb.getItem(DBKeys.docsViewWidth, 'medium')`
+- Use `DBKeys` enum for namespacing (`/client/AppServiceTypes.ts`)
+- Plugins extend enum for their keys (e.g., `DBKeys.docsEditMode`)
+
+### PostgreSQL Patterns
+- Connection pooling via `pg` library (`/server/db/PGDB.ts`)
+- Schemas in `/server/schema.sql` and `/plugins/{name}/server/schema.sql`
+- Initialize via `pgdb.initDb()` in `AppServer.ts`
+- Transactional wrapper: `Transactional.ts` for atomic operations
+
+### State Updates (Key Pattern)
+```typescript
+// In component
+const gs = useGlobalState();
+const dispatch = useGlobalDispatch();
+
+// Update state
+dispatch({ 
+  type: 'updateDocs', 
+  payload: { docsEditMode: true, docsFolder: '/new/path' } 
+});
+
+// State rules callback (runs on every dispatch)
+applyStateRules(gs: GlobalState) {
+  // Enforce invariants, e.g., clear selection when changing folders
+  if (gs.docsFolder !== prevFolder) gs.docsSelItems?.clear();
 }
 ```
 
-### Routing Pattern
-- SPA with page stack in `gs.pages` array (last = current page)
-- `PageRouter.tsx` checks plugins first via `getRoute()`, then core pages
-- No URL routing - state-driven navigation with back button support
+## Environment Configuration
 
-### Configuration System
-- Environment-specific YAML configs in `/build/{env}/`
-- `Config.ts` loads via `CONFIG_FILE` env var and scans plugins directory
-- Plugin discovery via individual config files with selective loading
-- Public folders config for file system access
+**Config Hierarchy**:
+1. `docker-compose.yaml` sets `CONFIG_FILE=./config.yaml`
+2. Dockerfile copies `/build/{env}/config.yaml` to `/app/dist/server/config.yaml`
+3. `Config.ts` reads from `CONFIG_FILE` path
+4. Merges plugin configs from `/plugins/*/config.yaml`
 
-### Database Strategy
-- Core platform: PostgreSQL optional (users table)
-- Docs plugin: Can run without DB (local file system mode)
-- Chat plugin: Requires PostgreSQL (messages, rooms, attachments)
-- Environment variable `POSTGRES_HOST` controls DB initialization
+**Key Env Vars**:
+- `QUANTA_ENV`: dev|local|prod (controls test execution, build opts)
+- `POSTGRES_HOST`: If set, enables DB; if unset, DB features disabled
+- `DEBUG`: If true, Node runs with `--inspect=0.0.0.0:9229`
+- `CONFIG_FILE`: Path to YAML config (injected by Docker)
 
-### File Structure Conventions
-- `/plugins/{name}/client/` - Client-side plugin code
-- `/plugins/{name}/server/` - Server-side plugin code  
-- `/common/types/` - Shared TypeScript interfaces
-- `/public/docs/` - Technical documentation
-- `/build/{env}/` - Environment-specific build scripts and configs
+## Security Model
+
+**Cryptographic Identity**:
+- Each user has secp256k1 key pair stored in IndexedDB
+- Public key = user ID (64-char hex string)
+- Private key never leaves browser, used to sign all requests
+- `/common/Crypto.ts`: `sign()`, `verify()`, `generateKeyPair()`
+
+**Request Signing**:
+- Client: `HttpClientUtil.makeSignedArgs()` creates signature valid for 5 minutes
+- Signature covers timestamp + request body
+- Server validates signature, rejects if expired or invalid
+- Admin endpoints additionally check public key against `adminPublicKey` config
+
+## Testing System
+
+**Embedded Testing** (see `TESTING.md`):
+- Tests run during app startup when `runTests: "y"` in config AND `QUANTA_ENV=dev`
+- Orchestrated via `/server/app.test.ts` (imports all test suites)
+- Uses custom `TestRunner` class (`/common/TestRunner.ts`) for reporting
+- Test files: `*.test.ts` pattern (e.g., `/common/test/Crypto.test.ts`)
+- Plugin tests: `/plugins/{name}/server/test/*.test.ts`
+- Add tests by: (1) Create `*.test.ts` with `export async function runTests()`, (2) Import in `app.test.ts`, (3) Call in `runAllTests()`
+
+## File Structure
+
+```
+/client/              React app, global state, routing
+/server/              Express server, DB layer, config
+/common/              Shared TypeScript (types, crypto, utils)
+/plugins/{name}/      Plugin code (client/, server/, config.yaml)
+/build/{env}/         Environment-specific configs and scripts
+/dist/                Build output (gitignored)
+/public/docs/         Static documentation served by app
+```
 
 ## Integration Points
 
-### Plugin Communication
-- Shared global state via React context
-- IndexedDB persistence with `DBKeys` enum for namespacing
-- HTTP endpoints follow `/api/{plugin}/{endpoint}` pattern
-- WebSocket communication for real-time features (chat)
+**Plugin-to-Platform Communication**:
+- Shared global state (via key prefixes)
+- IndexedDB namespacing (via `DBKeys` enum)
+- Lifecycle hooks (`init`, `notify`, `onCreateNewUser`)
 
-### File System Integration
-- VFS (Virtual File System) mode: PostgreSQL-backed
-- File uploads handled via Express middleware with size limits
+**Plugin-to-Plugin Communication**:
+- Via global state (read other plugin's prefixed keys)
+- Via HTTP endpoints (call other plugin's `/api/{plugin}/` routes)
+- No direct imports between plugins (prevents coupling)
 
-### Security Model
-- Cryptographic identity with secp256k1 key pairs
-- Message signing for chat integrity
-- Public key-based user identification
-- Admin key configuration for elevated privileges
+**Client-Server Communication**:
+- REST APIs: `/api/{plugin}/{endpoint}` pattern
+- WebSockets: Chat plugin uses `ws` library for real-time messaging
+- File uploads: Express middleware with size limits (20MB default)
 
-# Coding Tips
-- Always use `import` statements for modules, avoid `require`.
+## Coding Conventions
 
-# Testing
-Quanta uses an embedded testing system that runs tests during application startup when configured to do so. For detailed information about the testing architecture, how to run tests, and how to write new tests, see the [Testing Guide](./TESTING.md).
+- **Imports**: Use ES6 `import` with `.js` extensions (TypeScript requirement for ES modules)
+- **Async**: Always use `async/await`, never raw promises or callbacks
+- **Error Handling**: Never throw without wrapping in `asyncHandler()` on server
+- **Types**: Define in `/common/types/` for shared types, local for plugin-specific
+- **State**: Never mutate `gs` directly—always dispatch new payload object
+- **Logging**: Use `console.log` (Pino HTTP logging configured in `AppServer.ts`)
+
+## Common Pitfalls
+
+1. **Forgetting to extend DBKeys**: Plugin IndexedDB keys must be in enum or risk collisions
+2. **Plugin load order**: Plugins loaded in array order from config—matters for HTML preprocessing
+3. **State ref staleness**: `gs()` function returns ref, but hooks (`useGlobalState()`) auto-update
+4. **Missing asyncHandler**: Unwrapped async routes will crash server on error
+5. **Docker volumes**: PostgreSQL data in `../quanta-volumes/{env}/` outside repo (survives rebuilds)
+6. **Port conflicts**: Dev uses 8000 (app), 5432 (postgres), 5050 (pgadmin)—check availability
+7. **Plugin config sync**: Changing `config.yaml` requires restart to take effect
