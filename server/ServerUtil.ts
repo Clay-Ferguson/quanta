@@ -61,6 +61,13 @@ export function handleError(error: unknown, res: Response, message: string): any
  */
 export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) {
     return (req: any, res: Response, next: NextFunction) => {
+        // Log request details
+        console.log('Request URL:', req.url);
+        console.log('Request method:', req.method);
+        if (req.body && Object.keys(req.body).length > 0) {
+            console.log('Request body:', JSON.stringify(req.body, null, 2));
+        }
+        
         Promise.resolve(fn(req, res, next)).catch((error) => {
             console.error('ASYNC HANDLER ERROR:', error);
             console.error('Request URL:', req.url);
