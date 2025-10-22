@@ -3,7 +3,7 @@ clientHost: "localhost"  # This is the host that the client will connect to, typ
 # NOTE: This is an internal port number, not the external as mapped in docker-compose-dev.yaml
 port: "8000"
 secure: "n"
-adminPublicKey: "0357b752ea2b1bcc0365efa73ab0d573f1c27a948aa256394f991c8c09d8edb7df"
+adminPublicKey: "03f051a7104a81415643107a5ff477fbcaa70dfe5eed84763b34856a8e827f84aa"
 plugins:
   - docs
   - chat

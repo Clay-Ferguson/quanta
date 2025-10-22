@@ -90,6 +90,13 @@ export type AttachmentInfo = {
     roomName: string;
 }
 
+export type CompactTreeNode = {
+    uuid: string;
+    parent_path: string;
+    filename: string;
+    ordinal: number;
+}
+
 export type TreeNode = {
     uuid?: string; // unique identifier for the node, used for VFS
     owner_id?: number; // owner user ID, if applicable
