@@ -1,8 +1,4 @@
 import { Response, Request, NextFunction } from 'express';
-import { spawn } from 'child_process';
-import open from 'open';
-import path from 'path';
-import os from 'os';
 import { Application } from "express";
 import { ANON_USER_ID, UserProfileCompact } from '../common/types/CommonTypes.js';
 
@@ -47,6 +43,19 @@ export function handleError(error: unknown, res: Response, message: string): any
     if (res && !res.headersSent && !res.writableEnded) {
         res.status(500);
         res.json({ errorMessage: message, error: (error as any).message });
+    } else if (res) {
+        // Response already sent - this is a critical error that indicates a logic problem
+        let errorMessage = 'CRITICAL ERROR: Exception occurred after response was sent to client!\n';
+        errorMessage += 'This indicates a logic error in the route handler - all business logic must complete before sending response\n';
+        errorMessage += `Response headers sent: ${res.headersSent}\n`;
+        errorMessage += `Response finished: ${res.writableEnded}`;
+        
+        // For development, we might want to crash the process to make this error obvious
+        if (process.env.NODE_ENV === 'development') {
+            errorMessage += '\nDevelopment mode: This error should be fixed - exceptions must not occur after response is sent';
+        }
+        
+        console.error(errorMessage);
     }
 
     // return the error in case we want to rethrow.
@@ -59,7 +68,7 @@ export function handleError(error: unknown, res: Response, message: string): any
  * @param fn - The async route handler function
  * @returns Express route handler with error handling
  */
-export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) { 
+export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) {  
     return (req: any, res: Response, next: NextFunction) => {
         // Log request details only for API endpoints
         if (req.url.startsWith('/api/')) {
@@ -75,13 +84,8 @@ export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) 
             console.error('Request URL:', req.url);
             console.error('Request method:', req.method);
             
-            // Use our existing error handler
+            // Always attempt to send error response - handleError will check if response is already sent
             handleError(error, res, 'An unexpected error occurred');
-            
-            // Also call next to trigger Express error middleware
-            if (next) {
-                next(error);
-            }
         });
     };
 }
@@ -204,79 +208,6 @@ class ServerUtil {
             } catch (error) {
                 console.error(`Error notifying plugin:`, error);
             }
-        }
-    }
-
-    runAdminCommand = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const item = req.body;
-            console.log('Received command from client:');
-            console.log(JSON.stringify(item, null, 2));
-
-            if (item.cmd && item.args) {     
-                const env = { ...process.env, DISPLAY: ":0" }; // Ensure the correct display is set (Linux-specific)          
-                // Check if the _args contains spaces
-                if (item.args.includes(" ")) {
-                // Split the _args into a list
-                    item.args = item.args.split(" ");
-                    // Run the command with the arguments as a list
-                    spawn(item.cmd, item.args, { detached: true, stdio: 'ignore', env: env });
-                } else {
-                    spawn(item.cmd, [item.args], { detached: true, stdio: 'ignore', env: env });
-                }
-            }
-            else if (item.bash) {
-                this.run_bash(item.bash, item.args || "", !!item.background);
-            }
-            else if (item.link) {
-                if (item.link.startsWith("http:") || item.link.startsWith("https:") || item.link.startsWith("file:")) {
-                    open(item.link);
-                }
-            }
-            
-            // For now, just pretty print the item object and return success
-            res.json({ 
-                message: `Command received: ${item.cmd}`,
-                item: item
-            });
-        } catch (error) {
-            handleError(error, res, 'Error processing admin command');
-        }
-    }
-
-    run_bash = (file_name: string, args: any, background: boolean) => {
-        const folder = path.dirname(file_name);
-        // console.log(`Running bash script: file[${file_name}] args[${args}] in folder ${folder}, background=${background}`);
-
-        // Expand tilde in args if present
-        let expandedArgs = args;
-        if (args && typeof args === 'string' && args.startsWith('~')) {
-            expandedArgs = path.join(os.homedir(), args.slice(2));
-        }
-
-        if (background) {
-            const argsArray = expandedArgs ? expandedArgs.split(" ") : [];
-            spawn(file_name, argsArray, {
-                cwd: folder,
-                detached: true,
-                stdio: 'ignore',
-                shell: true
-            });
-        } else {
-            // Fixed spawn command for gnome-terminal with proper path handling
-            const baseFileName = path.basename(file_name);
-            const terminalCommand = `cd "${folder}" && ${expandedArgs} ./${baseFileName} || { echo "Script failed. Press any key to close..."; read -n1; }`;
-            // console.log('Running terminal command:', terminalCommand);
-            spawn('gnome-terminal', [
-                '--',
-                'bash',
-                '-c',
-                terminalCommand
-            ], {
-                detached: true,
-                stdio: 'ignore'
-                // Remove shell: true when using gnome-terminal directly
-            });
         }
     }
 }

@@ -155,7 +155,6 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
     });
 };
 
-app.post('/api/admin/run-cmd/', httpServerUtil.verifyAdminHTTPSignature, asyncHandler(svrUtil.runAdminCommand)); 
 app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, asyncHandler(dbUsers.saveUserProfile)); 
 app.get('/api/users/:pubKey/info', asyncHandler(dbUsers.getUserProfileReq));
 app.get('/api/users/:pubKey/avatar', asyncHandler(dbUsers.serveAvatar));

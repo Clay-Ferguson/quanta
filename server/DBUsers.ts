@@ -1,7 +1,7 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./db/PGDB.js";
 import { Request, Response } from 'express';
-import { AuthenticatedRequest, handleError, svrUtil, throwError } from "./ServerUtil.js";
+import { AuthenticatedRequest, svrUtil, throwError } from "./ServerUtil.js";
 import { config } from "./Config.js";
 
 /**
@@ -27,18 +27,14 @@ class DBUsers {
             throwError('Public key in header does not match public key in body', res);
         }
 
-        try {
-            if (!userProfile.publicKey) {
-                throwError('Public key is required', res);
-            }
-            const success = await this.saveUserInfo(userProfile, res); 
-            if (success) {
-                res.json({ user_id: userProfile.id });
-            } else {
-                throwError('Failed to save user information', res);
-            }
-        } catch (error) {
-            throw handleError(error, res, 'Failed to save user profile');
+        if (!userProfile.publicKey) {
+            throwError('Public key is required', res);
+        }
+        const success = await this.saveUserInfo(userProfile, res); 
+        if (success) {
+            res.json({ user_id: userProfile.id });
+        } else {
+            throwError('Failed to save user information', res);
         }
     }
 
@@ -210,42 +206,38 @@ class DBUsers {
      * @param res - Express response object
      */
     serveAvatar = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
-        try {
-            const publicKey = req.params.pubKey;
-            if (!publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
-            }
-                
-            // Get user info from the database
-            const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
-            if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
-                // Return a 404 for missing avatars
-                res.status(404).send('Avatar not found');
-                return;
-            }
-                
-            // Extract content type and base64 data
-            const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-            if (!matches || matches.length !== 3) {
-                res.status(400).send('Invalid avatar data format');
-                return;
-            }
-                
-            const contentType = matches[1];
-            const base64Data = matches[2];
-            const binaryData = Buffer.from(base64Data, 'base64');
-                
-            // Set appropriate headers
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Content-Length', binaryData.length);
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-                
-            // Send the binary image data
-            res.send(binaryData);
-        } catch (error) {
-            handleError(error, res, 'Failed to retrieve avatar');
+        const publicKey = req.params.pubKey;
+        if (!publicKey) {
+            res.status(400).json({ error: 'Public key is required' });
+            return;
         }
+                
+        // Get user info from the database
+        const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
+        if (!userProfile || !userProfile.avatar || !userProfile.avatar.data) {
+            // Return a 404 for missing avatars
+            res.status(404).send('Avatar not found');
+            return;
+        }
+                
+        // Extract content type and base64 data
+        const matches = userProfile.avatar.data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+            res.status(400).send('Invalid avatar data format');
+            return;
+        }
+                
+        const contentType = matches[1];
+        const base64Data = matches[2];
+        const binaryData = Buffer.from(base64Data, 'base64');
+                
+        // Set appropriate headers
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Length', binaryData.length);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                
+        // Send the binary image data
+        res.send(binaryData);
     }    
 
     /**
@@ -254,20 +246,16 @@ class DBUsers {
      * @param res - Express response object
      */
     getUserProfileReq = async (req: Request<{ pubKey: string }>, res: Response): Promise<void> => {
-        try {
-            const publicKey = req.params.pubKey;
-            if (!publicKey) {
-                res.status(400).json({ error: 'Public key is required' });
-                return;
-            }
-            const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
-            if (userProfile) {
-                res.json(userProfile);
-            } else {
-                res.status(404).json({ error: 'User information not found' });
-            }
-        } catch (error) {
-            handleError(error, res, 'Failed to retrieve user profile');
+        const publicKey = req.params.pubKey;
+        if (!publicKey) {
+            res.status(400).json({ error: 'Public key is required' });
+            return;
+        }
+        const userProfile: UserProfile | null = await dbUsers.getUserProfile(publicKey);
+        if (userProfile) {
+            res.json(userProfile);
+        } else {
+            res.status(404).json({ error: 'User information not found' });
         }
     }
 
