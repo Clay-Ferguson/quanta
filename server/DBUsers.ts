@@ -1,8 +1,9 @@
 import { FileBase64Intf, UserProfile, UserProfileCompact } from "../common/types/CommonTypes.js";
 import pgdb from "./db/PGDB.js";
 import { Request, Response } from 'express';
-import { AuthenticatedRequest, svrUtil, throwError } from "./ServerUtil.js";
+import { svrUtil, throwError } from "./ServerUtil.js";
 import { config } from "./Config.js";
+import { AuthenticatedRequest } from "./HttpTypes.js";
 
 /**
  * Database operations for managing user data.

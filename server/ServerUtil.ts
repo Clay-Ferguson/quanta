@@ -1,15 +1,11 @@
 import { Response, Request, NextFunction } from 'express';
 import { Application } from "express";
 import { ANON_USER_ID, UserProfileCompact } from '../common/types/CommonTypes.js';
+import { AuthenticatedRequest } from './HttpTypes.js';
 
 export interface IAppContext {
     app: Application; // Express application instance
     serveIndexHtml: (page: string) => (req: Request, res: Response) => void;
-}
-
-export interface AuthenticatedRequest extends Request { 
-    userProfile?: UserProfileCompact;
-    validSignature?: boolean; // Indicates if the request has a valid signature
 }
 
 export function throwError(message: string, response: Response | null = null): never {

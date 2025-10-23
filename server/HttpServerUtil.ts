@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { UserProfileCompact } from "../common/types/CommonTypes.js";
 import { config } from "./Config.js";
 import { dbUsers } from "./DBUsers.js";
-import { AuthenticatedRequest } from "./ServerUtil.js";
+import { AuthenticatedRequest } from "./HttpTypes.js";
 
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 

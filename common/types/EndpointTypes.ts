@@ -1,4 +1,10 @@
-import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, TreeNode } from "./CommonTypes.js";
+import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, TreeNode, UserProfileCompact } from "./CommonTypes.js";
+
+// Authentication properties that can be mixed into any Request type
+export interface AuthenticationInfo {
+    userProfile?: UserProfileCompact;
+    validSignature?: boolean; // Indicates if the request has a valid signature
+}
 
 export type DeleteRoom_Request = {
     roomName: string;
