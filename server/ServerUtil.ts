@@ -59,7 +59,7 @@ export function handleError(error: unknown, res: Response, message: string): any
  * @param fn - The async route handler function
  * @returns Express route handler with error handling
  */
-export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) {
+export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) { 
     return (req: any, res: Response, next: NextFunction) => {
         // Log request details only for API endpoints
         if (req.url.startsWith('/api/')) {
