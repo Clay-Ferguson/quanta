@@ -78,3 +78,18 @@ export type ScanTags_Response = {
     totalTags: number;
 }
 
+// HTTP Request info
+export type Delete_ReqInfo = {
+    fileOrFolderName?: string; // Single item mode
+    fileNames?: string[]; // Multiple items mode  
+    treeFolder: string; // Parent directory path
+}
+
+// HTTP Response info
+export type Delete_ResInfo = {
+    message?: string; // Success message
+    error?: string; // Single error message (for validation errors)
+    deletedCount?: number; // Present in multiple items mode
+    errors?: string[]; // Present if there were errors in multiple items mode
+}
+
