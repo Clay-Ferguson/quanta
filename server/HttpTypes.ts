@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthenticationInfo, Delete_ReqInfo, Delete_ResInfo, MoveUpDown_ReqInfo, MoveUpDown_ResInfo, SetPublic_ReqInfo, SetPublic_ResInfo, SaveFile_ReqInfo, SaveFile_ResInfo, CreateFile_ReqInfo, CreateFile_ResInfo, CreateFolder_ReqInfo, CreateFolder_ResInfo, BuildFolder_ReqInfo, BuildFolder_ResInfo, RenameFolder_ReqInfo, RenameFolder_ResInfo, PasteItems_ReqInfo, PasteItems_ResInfo, JoinFiles_ReqInfo, JoinFiles_ResInfo, Search_ReqInfo, Search_ResInfo, ExtractTags_ReqInfo, ExtractTags_ResInfo, ScanTags_ReqInfo, ScanTags_ResInfo } from "../common/types/EndpointTypes.js";
+import { AuthenticationInfo, Delete_ReqInfo, Delete_ResInfo, MoveUpDown_ReqInfo, MoveUpDown_ResInfo, SetPublic_ReqInfo, SetPublic_ResInfo, SaveFile_ReqInfo, SaveFile_ResInfo, CreateFile_ReqInfo, CreateFile_ResInfo, CreateFolder_ReqInfo, CreateFolder_ResInfo, BuildFolder_ReqInfo, BuildFolder_ResInfo, RenameFolder_ReqInfo, RenameFolder_ResInfo, PasteItems_ReqInfo, PasteItems_ResInfo, JoinFiles_ReqInfo, JoinFiles_ResInfo, Search_ReqInfo, Search_ResInfo, ExtractTags_ReqInfo, ExtractTags_ResInfo, ScanTags_ReqInfo, ScanTags_ResInfo, GetMessageIdsForRoom_ReqInfo, GetMessageIdsForRoom_ResInfo, GetMessageHistory_ReqInfo, GetMessageHistory_ResInfo, GetRoomInfo_ReqInfo, GetRoomInfo_ResInfo, DeleteRoom_ReqInfo, DeleteRoom_ResInfo } from "../common/types/EndpointTypes.js";
 
 export type AuthenticatedRequest = Request & AuthenticationInfo; 
 
@@ -41,3 +41,15 @@ export type ExtractTagsResponse = Response<ExtractTags_ResInfo>;
 
 export type ScanTagsRequest = Request<any, any, ScanTags_ReqInfo> & AuthenticationInfo;
 export type ScanTagsResponse = Response<ScanTags_ResInfo>;
+
+export type GetMessageIdsForRoomRequest = Request<{ roomId: string }, any, any, GetMessageIdsForRoom_ReqInfo>;
+export type GetMessageIdsForRoomResponse = Response<GetMessageIdsForRoom_ResInfo>;
+
+export type GetMessageHistoryRequest = Request<any, any, any, GetMessageHistory_ReqInfo>;
+export type GetMessageHistoryResponse = Response<GetMessageHistory_ResInfo>;
+
+export type GetRoomInfoRequest = Request<any, any, GetRoomInfo_ReqInfo> & AuthenticationInfo;
+export type GetRoomInfoResponse = Response<GetRoomInfo_ResInfo>;
+
+export type DeleteRoomRequest = Request<any, any, DeleteRoom_ReqInfo> & AuthenticationInfo;
+export type DeleteRoomResponse = Response<DeleteRoom_ResInfo>;

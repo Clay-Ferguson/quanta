@@ -33,20 +33,44 @@ export type SendMessages_Request = {
     messages: ChatMessage[];
 }
 
-export type GetMessageIdsForRoom_Response = {
+// HTTP Request info for getMessageIdsForRoom
+export type GetMessageIdsForRoom_ReqInfo = {
+    daysOfHistory?: number;
+}
+
+// HTTP Response info for getMessageIdsForRoom
+export type GetMessageIdsForRoom_ResInfo = BaseResponse & {
     messageIds: string[];
 }
 
-export type GetMessageHistory_Response = {
+// HTTP Request info for getMessageHistory
+export type GetMessageHistory_ReqInfo = {
+    roomName: string;
+    limit?: number;
+    offset?: number;
+}
+
+// HTTP Response info for getMessageHistory
+export type GetMessageHistory_ResInfo = BaseResponse & {
     messages: ChatMessageIntf[];
 }
 
-export type GetRoomInfo_Response = {
+// HTTP Request info for getRoomInfo
+export type GetRoomInfo_ReqInfo = Record<string, never>; // No request parameters needed
+
+// HTTP Response info for getRoomInfo
+export type GetRoomInfo_ResInfo = BaseResponse & {
     rooms: RoomInfo[];
 }
 
-export type DeleteRoom_Response = {
-    message: string;
+// HTTP Request info for deleteRoom
+export type DeleteRoom_ReqInfo = {
+    roomName: string;
+}
+
+// HTTP Response info for deleteRoom
+export type DeleteRoom_ResInfo = BaseResponse & {
+    message?: string;
 }
 
 export type GetRecentAttachments_Response = {
