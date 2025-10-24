@@ -2,7 +2,7 @@
 
 To describe the architectural pattern we're using to achieve type safety across the client and server REST/HTTP call Communications, you can look at the following example for the `delete` endpoint which is currently being done correctly following the correct pattern:
 
-## Client & Server Types
+## Client & Server Types 
 
 In `EndpointTypes.ts` we define the types that can work in both client and server. (Note that the client cannot use "Express" server stuff):
 

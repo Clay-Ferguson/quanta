@@ -79,7 +79,7 @@ export type ScanTags_Response = {
 }
 
 // HTTP Request info
-export type Delete_ReqInfo = {
+export type Delete_ReqInfo = { 
     fileOrFolderName?: string; // Single item mode
     fileNames?: string[]; // Multiple items mode  
     treeFolder: string; // Parent directory path
@@ -91,5 +91,20 @@ export type Delete_ResInfo = {
     error?: string; // Single error message (for validation errors)
     deletedCount?: number; // Present in multiple items mode
     errors?: string[]; // Present if there were errors in multiple items mode
+}
+
+// HTTP Request info for move up/down operation
+export type MoveUpDown_ReqInfo = {
+    direction: string; // "up" or "down"
+    filename: string; // Name of the file or folder to move
+    treeFolder: string; // Parent directory path
+}
+
+// HTTP Response info for move up/down operation
+export type MoveUpDown_ResInfo = {
+    message?: string; // Success message
+    error?: string; // Error message if operation failed
+    file1?: string; // First file involved in the swap
+    file2?: string; // Second file involved in the swap
 }
 
