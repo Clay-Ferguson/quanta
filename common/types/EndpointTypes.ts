@@ -69,16 +69,22 @@ export type TagCategory = {
     tags: string[];
 }
 
-export type ExtractTags_Response = {
+// HTTP Request info for extractTags
+export type ExtractTags_ReqInfo = Record<string, never>; // No request parameters needed - reads from .TAGS.md file
+
+// HTTP Response info for extractTags
+export type ExtractTags_ResInfo = BaseResponse & {
     success: boolean;
-    message?: string;
     tags: string[]; // Kept for backward compatibility, will be deprecated
     categories?: TagCategory[]; // New categorized format
 }
 
-export type ScanTags_Response = {
+// HTTP Request info for scanAndUpdateTags  
+export type ScanTags_ReqInfo = Record<string, never>; // No request parameters needed - scans all markdown files
+
+// HTTP Response info for scanAndUpdateTags
+export type ScanTags_ResInfo = BaseResponse & {
     success: boolean;
-    message: string;
     existingTags: number;
     newTags: number;
     totalTags: number;
@@ -159,5 +165,74 @@ export type CreateFolder_ReqInfo = {
 // HTTP Response info for create folder operation
 export type CreateFolder_ResInfo = BaseResponse & {
     folderName?: string; // Name of the created folder
+}
+
+// HTTP Request info for build folder operation (convert file to folder)
+export type BuildFolder_ReqInfo = {
+    filename: string; // Name of the existing file to convert to folder
+    folderName: string; // Desired name for the new folder
+    remainingContent: string; // Optional content to save in a new file inside the folder
+    treeFolder: string; // Relative path to the parent directory
+}
+
+// HTTP Response info for build folder operation
+export type BuildFolder_ResInfo = BaseResponse & {
+    folderName?: string; // Name of the created folder
+    fileName?: string; // Name of the file created inside the folder (if remainingContent provided)
+}
+
+// HTTP Request info for rename folder operation
+export type RenameFolder_ReqInfo = {
+    oldFolderName: string; // Current name of the folder to rename
+    newFolderName: string; // New name for the folder
+    treeFolder: string; // Relative path to the parent directory
+}
+
+// HTTP Response info for rename folder operation
+export type RenameFolder_ResInfo = BaseResponse & {
+    // No additional properties beyond base response
+}
+
+// HTTP Request info for paste items operation
+export type PasteItems_ReqInfo = {
+    targetFolder: string; // Target folder path where items will be pasted
+    pasteItems: string[]; // Array of item names to paste
+    targetOrdinal?: number; // Optional target ordinal position for insertion
+}
+
+// HTTP Response info for paste items operation
+export type PasteItems_ResInfo = BaseResponse & {
+    pastedCount?: number; // Number of items successfully pasted
+    totalItems?: number; // Total number of items attempted to paste
+    errors?: string[]; // Array of error messages for failed paste operations
+}
+
+// HTTP Request info for join files operation
+export type JoinFiles_ReqInfo = {
+    filenames: string[]; // Array of filenames to join together
+    treeFolder: string; // Relative path to the parent directory
+}
+
+// HTTP Response info for join files operation
+export type JoinFiles_ResInfo = BaseResponse & {
+    joinedFile?: string; // Name of the resulting joined file
+    deletedFiles?: string[]; // Array of deleted file names that were joined
+}
+
+// HTTP Request info for search operation
+export type Search_ReqInfo = {
+    query?: string; // Search query string
+    treeFolder: string; // Relative path to search within
+    searchMode?: string; // Search mode (e.g., 'MATCH_ANY', 'MATCH_ALL', 'REGEX')
+    searchOrder?: string; // Search result ordering (e.g., 'MOD_TIME')
+}
+
+// HTTP Response info for search operation
+export type Search_ResInfo = BaseResponse & {
+    query?: string; // The search query that was executed
+    searchPath?: string; // The path that was searched
+    searchMode?: string; // The search mode that was used
+    resultCount?: number; // Number of results found
+    results?: any[]; // Array of search results
 }
 
