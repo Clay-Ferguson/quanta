@@ -1,6 +1,6 @@
 import { crypt } from "@common/Crypto";
 import { FileBase64Intf, KeyPairHex, UserProfile } from "@common/types/CommonTypes";
-import { BlockUser_Request } from "@common/types/EndpointTypes";
+import { BlockUser_ReqInfo } from "@common/types/EndpointTypes";
 import { app } from "./AppService";
 import { DBKeys, PageNames } from "./AppServiceTypes";
 import { alertModal } from "./components/AlertModalComp";
@@ -179,7 +179,7 @@ class AppUsers {
         }
             
         // Make the secure POST request with body
-        const response = await httpClientUtil.secureHttpPost<BlockUser_Request, any>('/api/admin/block-user', {
+        const response = await httpClientUtil.secureHttpPost<BlockUser_ReqInfo, any>('/api/admin/block-user', {
             publicKey: publicKey.trim()
         });
         if (response) {

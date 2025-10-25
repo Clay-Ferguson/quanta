@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
-import { AuthenticationInfo, Delete_ReqInfo, Delete_ResInfo, MoveUpDown_ReqInfo, MoveUpDown_ResInfo, SetPublic_ReqInfo, SetPublic_ResInfo, SaveFile_ReqInfo, SaveFile_ResInfo, CreateFile_ReqInfo, CreateFile_ResInfo, CreateFolder_ReqInfo, CreateFolder_ResInfo, BuildFolder_ReqInfo, BuildFolder_ResInfo, RenameFolder_ReqInfo, RenameFolder_ResInfo, PasteItems_ReqInfo, PasteItems_ResInfo, JoinFiles_ReqInfo, JoinFiles_ResInfo, Search_ReqInfo, Search_ResInfo, ExtractTags_ReqInfo, ExtractTags_ResInfo, ScanTags_ReqInfo, ScanTags_ResInfo, GetMessageIdsForRoom_ReqInfo, GetMessageIdsForRoom_ResInfo, GetMessageHistory_ReqInfo, GetMessageHistory_ResInfo, GetRoomInfo_ReqInfo, GetRoomInfo_ResInfo, DeleteRoom_ReqInfo, DeleteRoom_ResInfo } from "../common/types/EndpointTypes.js";
+import { AuthenticationInfo, Delete_ReqInfo, Delete_ResInfo, MoveUpDown_ReqInfo, MoveUpDown_ResInfo, SetPublic_ReqInfo, SetPublic_ResInfo, SaveFile_ReqInfo, SaveFile_ResInfo, CreateFile_ReqInfo, CreateFile_ResInfo, CreateFolder_ReqInfo, CreateFolder_ResInfo, BuildFolder_ReqInfo, BuildFolder_ResInfo, RenameFolder_ReqInfo, RenameFolder_ResInfo, PasteItems_ReqInfo, PasteItems_ResInfo, JoinFiles_ReqInfo, JoinFiles_ResInfo, Search_ReqInfo, Search_ResInfo, ExtractTags_ReqInfo, ExtractTags_ResInfo, ScanTags_ReqInfo, ScanTags_ResInfo, GetMessageIdsForRoom_ReqInfo, GetMessageIdsForRoom_ResInfo, GetMessageHistory_ReqInfo, GetMessageHistory_ResInfo, GetRoomInfo_ReqInfo, GetRoomInfo_ResInfo, DeleteRoom_ReqInfo, DeleteRoom_ResInfo, UploadFiles_ReqInfo, UploadFiles_ResInfo, GetRecentAttachments_ReqInfo, GetRecentAttachments_ResInfo, BlockUser_ReqInfo, BlockUser_ResInfo, DeleteAttachment_ReqInfo, DeleteAttachment_ResInfo, DeleteMessage_ReqInfo, DeleteMessage_ResInfo } from "../common/types/EndpointTypes.js";
+
+// todo-0: These are incomplete, not consistently used throughout the codebase, and even once done we need to split
+// apart to where each plugin has it's own copy of these types rather than having them all in common/types
 
 export type AuthenticatedRequest = Request & AuthenticationInfo; 
 
 export type DeleteRequest = Request<any, any, Delete_ReqInfo> & AuthenticationInfo;
 export type DeleteResponse = Response<Delete_ResInfo>;
+
+export type UploadFilesRequest = Request<any, any, UploadFiles_ReqInfo> & AuthenticationInfo;
+export type UploadFilesResponse = Response<UploadFiles_ResInfo>;
 
 export type MoveUpDownRequest = Request<any, any, MoveUpDown_ReqInfo> & AuthenticationInfo;
 export type MoveUpDownResponse = Response<MoveUpDown_ResInfo>;
@@ -53,3 +59,15 @@ export type GetRoomInfoResponse = Response<GetRoomInfo_ResInfo>;
 
 export type DeleteRoomRequest = Request<any, any, DeleteRoom_ReqInfo> & AuthenticationInfo;
 export type DeleteRoomResponse = Response<DeleteRoom_ResInfo>;
+
+export type GetRecentAttachmentsRequest = Request<any, any, GetRecentAttachments_ReqInfo> & AuthenticationInfo;
+export type GetRecentAttachmentsResponse = Response<GetRecentAttachments_ResInfo>;
+
+export type BlockUserRequest = Request<any, any, BlockUser_ReqInfo> & AuthenticationInfo;
+export type BlockUserResponse = Response<BlockUser_ResInfo>;
+
+export type DeleteAttachmentRequest = Request<any, any, DeleteAttachment_ReqInfo> & AuthenticationInfo;
+export type DeleteAttachmentResponse = Response<DeleteAttachment_ResInfo>;
+
+export type DeleteMessageRequest = Request<any, any, DeleteMessage_ReqInfo> & AuthenticationInfo;
+export type DeleteMessageResponse = Response<DeleteMessage_ResInfo>;

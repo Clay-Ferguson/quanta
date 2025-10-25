@@ -1,79 +1,77 @@
 import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, TreeNode, UserProfileCompact } from "./CommonTypes.js";
 
-// Authentication properties that can be mixed into any Request type
+// todo-0: These are incomplete, not consistently used throughout the codebase, and even once done we need to split
+// apart to where each plugin has it's own copy of these types rather than having them all in common/types
+
 export interface AuthenticationInfo {
     userProfile?: UserProfileCompact;
-    validSignature?: boolean; // Indicates if the request has a valid signature
+    validSignature?: boolean;
 }
 
-// Base response interface that all API response types should extend
 export interface BaseResponse {
-    message?: string; // Success message
-    error?: string; // Error message if operation failed
+    message?: string;
+    error?: string;
 }
 
-export type DeleteRoom_Request = {
-    roomName: string;
-}
-
-export type DeleteMessage_Request = {
+export type DeleteMessage_ReqInfo = {
     messageId: string;
     roomName: string;
 }
 
-export type BlockUser_Request = {
+export type DeleteMessage_ResInfo = BaseResponse & {
+}
+
+export type BlockUser_ReqInfo = {
     publicKey: string;
 }
 
-export type GetMessagesByIds_Request = {
+export type BlockUser_ResInfo = BaseResponse & {
+}
+
+
+export type GetMessagesByIds_ReqInfo = {
     ids: string[];
 }
 
-export type SendMessages_Request = {
+export type SendMessages_ReqInfo = {
     messages: ChatMessage[];
 }
 
-// HTTP Request info for getMessageIdsForRoom
 export type GetMessageIdsForRoom_ReqInfo = {
     daysOfHistory?: number;
 }
 
-// HTTP Response info for getMessageIdsForRoom
 export type GetMessageIdsForRoom_ResInfo = BaseResponse & {
     messageIds: string[];
 }
 
-// HTTP Request info for getMessageHistory
 export type GetMessageHistory_ReqInfo = {
     roomName: string;
     limit?: number;
     offset?: number;
 }
 
-// HTTP Response info for getMessageHistory
 export type GetMessageHistory_ResInfo = BaseResponse & {
     messages: ChatMessageIntf[];
 }
 
-// HTTP Request info for getRoomInfo
-export type GetRoomInfo_ReqInfo = Record<string, never>; // No request parameters needed
+export type GetRoomInfo_ReqInfo = Record<string, never>;
 
-// HTTP Response info for getRoomInfo
 export type GetRoomInfo_ResInfo = BaseResponse & {
     rooms: RoomInfo[];
 }
 
-// HTTP Request info for deleteRoom
 export type DeleteRoom_ReqInfo = {
     roomName: string;
 }
 
-// HTTP Response info for deleteRoom
 export type DeleteRoom_ResInfo = BaseResponse & {
     message?: string;
 }
 
-export type GetRecentAttachments_Response = {
+export type GetRecentAttachments_ReqInfo = Record<string, never>;
+
+export type GetRecentAttachments_ResInfo = {
     attachments: AttachmentInfo[]
 }
 
@@ -85,7 +83,7 @@ export type TreeRender_Response = {
     user_id: number | null;
     treeNodes: TreeNode[];
     rootNode: TreeNode;
-    treeFolder?: string; // Returns proper ordinal path for root node being viewed.
+    treeFolder?: string;
 }
 
 export type TagCategory = {
@@ -93,20 +91,16 @@ export type TagCategory = {
     tags: string[];
 }
 
-// HTTP Request info for extractTags
-export type ExtractTags_ReqInfo = Record<string, never>; // No request parameters needed - reads from .TAGS.md file
+export type ExtractTags_ReqInfo = Record<string, never>;
 
-// HTTP Response info for extractTags
 export type ExtractTags_ResInfo = BaseResponse & {
     success: boolean;
-    tags: string[]; // Kept for backward compatibility, will be deprecated
-    categories?: TagCategory[]; // New categorized format
+    tags: string[];
+    categories?: TagCategory[];
 }
 
-// HTTP Request info for scanAndUpdateTags  
-export type ScanTags_ReqInfo = Record<string, never>; // No request parameters needed - scans all markdown files
+export type ScanTags_ReqInfo = Record<string, never>;
 
-// HTTP Response info for scanAndUpdateTags
 export type ScanTags_ResInfo = BaseResponse & {
     success: boolean;
     existingTags: number;
@@ -114,149 +108,139 @@ export type ScanTags_ResInfo = BaseResponse & {
     totalTags: number;
 }
 
-// HTTP Request info
 export type Delete_ReqInfo = { 
-    fileOrFolderName?: string; // Single item mode
-    fileNames?: string[]; // Multiple items mode  
-    treeFolder: string; // Parent directory path
+    fileOrFolderName?: string;
+    fileNames?: string[];
+    treeFolder: string;
 }
 
-// HTTP Response info
 export type Delete_ResInfo = BaseResponse & {
-    deletedCount?: number; // Present in multiple items mode
-    errors?: string[]; // Present if there were errors in multiple items mode
+    deletedCount?: number;
+    errors?: string[];
 }
 
-// HTTP Request info for move up/down operation
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type UploadFiles_ReqInfo = {
+}
+
+export type UploadFiles_ResInfo = BaseResponse & {
+    
+}
+
 export type MoveUpDown_ReqInfo = {
-    direction: string; // "up" or "down"
-    filename: string; // Name of the file or folder to move
-    treeFolder: string; // Parent directory path
+    direction: string;
+    filename: string;
+    treeFolder: string;
 }
 
-// HTTP Response info for move up/down operation
 export type MoveUpDown_ResInfo = BaseResponse & {
-    file1?: string; // First file involved in the swap
-    file2?: string; // Second file involved in the swap
+    file1?: string;
+    file2?: string;
 }
 
-// HTTP Request info for set public operation
 export type SetPublic_ReqInfo = {
-    is_public: boolean; // Target public accessibility status (true=public, false=private)
-    filename: string; // Name of the file or folder to modify
-    treeFolder: string; // Relative path to the parent directory
-    recursive?: boolean; // Optional flag to apply changes recursively to all nested content
+    is_public: boolean;
+    filename: string;
+    treeFolder: string;
+    recursive?: boolean;
 }
 
-// HTTP Response info for set public operation
 export type SetPublic_ResInfo = BaseResponse & {
-    // No additional properties beyond base response
 }
 
-// HTTP Request info for save file operation
 export type SaveFile_ReqInfo = {
-    filename: string; // Name of the file to save
-    content: string; // File content to save
-    treeFolder: string; // Relative path to the parent directory
-    newFileName?: string; // Optional new name for the file (triggers rename)
-    split?: boolean; // Whether to split content on '\n~\n' delimiter
+    filename: string;
+    content: string;
+    treeFolder: string;
+    newFileName?: string;
+    split?: boolean;
 }
 
-// HTTP Response info for save file operation
 export type SaveFile_ResInfo = BaseResponse & {
-    // No additional properties beyond base response
 }
 
-// HTTP Request info for create file operation
 export type CreateFile_ReqInfo = {
-    fileName: string; // Name of the file to create
-    treeFolder: string; // Relative path to the parent directory
-    insertAfterNode: string; // Name of the file/folder after which to insert the new file
+    fileName: string;
+    treeFolder: string;
+    insertAfterNode: string;
 }
 
-// HTTP Response info for create file operation
 export type CreateFile_ResInfo = BaseResponse & {
-    fileName?: string; // Name of the created file (may differ from requested name if collision occurred)
+    fileName?: string;
 }
 
-// HTTP Request info for create folder operation
 export type CreateFolder_ReqInfo = {
-    folderName: string; // Name of the folder to create
-    treeFolder: string; // Relative path to the parent directory
-    insertAfterNode: string; // Name of the file/folder after which to insert the new folder
+    folderName: string;
+    treeFolder: string;
+    insertAfterNode: string;
 }
 
-// HTTP Response info for create folder operation
 export type CreateFolder_ResInfo = BaseResponse & {
-    folderName?: string; // Name of the created folder
+    folderName?: string;
 }
 
-// HTTP Request info for build folder operation (convert file to folder)
 export type BuildFolder_ReqInfo = {
-    filename: string; // Name of the existing file to convert to folder
-    folderName: string; // Desired name for the new folder
-    remainingContent: string; // Optional content to save in a new file inside the folder
-    treeFolder: string; // Relative path to the parent directory
+    filename: string;
+    folderName: string;
+    remainingContent: string;
+    treeFolder: string;
 }
 
-// HTTP Response info for build folder operation
 export type BuildFolder_ResInfo = BaseResponse & {
-    folderName?: string; // Name of the created folder
-    fileName?: string; // Name of the file created inside the folder (if remainingContent provided)
+    folderName?: string;
+    fileName?: string;
 }
 
-// HTTP Request info for rename folder operation
 export type RenameFolder_ReqInfo = {
-    oldFolderName: string; // Current name of the folder to rename
-    newFolderName: string; // New name for the folder
-    treeFolder: string; // Relative path to the parent directory
+    oldFolderName: string;
+    newFolderName: string;
+    treeFolder: string;
 }
 
-// HTTP Response info for rename folder operation
 export type RenameFolder_ResInfo = BaseResponse & {
-    // No additional properties beyond base response
 }
 
-// HTTP Request info for paste items operation
 export type PasteItems_ReqInfo = {
-    targetFolder: string; // Target folder path where items will be pasted
-    pasteItems: string[]; // Array of item names to paste
-    targetOrdinal?: number; // Optional target ordinal position for insertion
+    targetFolder: string;
+    pasteItems: string[];
+    targetOrdinal?: number;
 }
 
-// HTTP Response info for paste items operation
 export type PasteItems_ResInfo = BaseResponse & {
-    pastedCount?: number; // Number of items successfully pasted
-    totalItems?: number; // Total number of items attempted to paste
-    errors?: string[]; // Array of error messages for failed paste operations
+    pastedCount?: number;
+    totalItems?: number;
+    errors?: string[];
 }
 
-// HTTP Request info for join files operation
 export type JoinFiles_ReqInfo = {
-    filenames: string[]; // Array of filenames to join together
-    treeFolder: string; // Relative path to the parent directory
+    filenames: string[];
+    treeFolder: string;
 }
 
-// HTTP Response info for join files operation
 export type JoinFiles_ResInfo = BaseResponse & {
-    joinedFile?: string; // Name of the resulting joined file
-    deletedFiles?: string[]; // Array of deleted file names that were joined
+    joinedFile?: string;
+    deletedFiles?: string[];
 }
 
-// HTTP Request info for search operation
 export type Search_ReqInfo = {
-    query?: string; // Search query string
-    treeFolder: string; // Relative path to search within
-    searchMode?: string; // Search mode (e.g., 'MATCH_ANY', 'MATCH_ALL', 'REGEX')
-    searchOrder?: string; // Search result ordering (e.g., 'MOD_TIME')
+    query?: string;
+    treeFolder: string;
+    searchMode?: string;
+    searchOrder?: string;
 }
 
-// HTTP Response info for search operation
 export type Search_ResInfo = BaseResponse & {
-    query?: string; // The search query that was executed
-    searchPath?: string; // The path that was searched
-    searchMode?: string; // The search mode that was used
-    resultCount?: number; // Number of results found
-    results?: any[]; // Array of search results
+    query?: string;
+    searchPath?: string;
+    searchMode?: string;
+    resultCount?: number;
+    results?: any[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type DeleteAttachment_ReqInfo = {
+}
+
+export type DeleteAttachment_ResInfo = BaseResponse & {
 }
 
