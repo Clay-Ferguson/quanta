@@ -114,3 +114,13 @@ export type TreeNode = {
     ordinal?: number; // ordinal value for file/folder ordering (used in VFS)
 }
 
+export interface AuthenticationInfo {
+    userProfile?: UserProfileCompact;
+    validSignature?: boolean; 
+}
+
+export interface BaseResponse {
+    message?: string;
+    error?: string;
+}
+
