@@ -1,4 +1,4 @@
-import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, UserProfileCompact } from "./CommonTypes.js";
+import { AttachmentInfo, ChatMessageIntf, RoomInfo, UserProfileCompact } from "./CommonTypes.js";
 
 
 // todo-0: These are incomplete, not consistently used throughout the codebase, and even once done we need to split
@@ -14,47 +14,7 @@ export interface BaseResponse {
     error?: string;
 }
 
-export type DeleteMessage_ReqInfo = {
-    messageId: string;
-    roomName: string;
-}
-
-export type DeleteMessage_ResInfo = BaseResponse & {
-}
-
-export type BlockUser_ReqInfo = {
-    publicKey: string;
-}
-
-export type BlockUser_ResInfo = BaseResponse & {
-}
-
-
-export type GetMessagesByIds_ReqInfo = {
-    ids: string[];
-}
-
-export type SendMessages_ReqInfo = {
-    messages: ChatMessage[];
-}
-
-export type GetMessageIdsForRoom_ReqInfo = {
-    daysOfHistory?: number;
-}
-
-export type GetMessageIdsForRoom_ResInfo = BaseResponse & {
-    messageIds: string[];
-}
-
-export type GetMessageHistory_ReqInfo = {
-    roomName: string;
-    limit?: number;
-    offset?: number;
-}
-
-export type GetMessageHistory_ResInfo = BaseResponse & {
-    messages: ChatMessageIntf[];
-}
+// &&&
 
 export type GetRoomInfo_ReqInfo = Record<string, never>;
 
