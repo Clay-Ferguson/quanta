@@ -10,6 +10,8 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "resolvePackageJsonExports": false,
+    "resolvePackageJsonImports": false,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -22,9 +24,9 @@
     "baseUrl": ".",
     /* NOTE: These aliases are also in vite.config.ts file */
     "paths": {
-      "@client/*": ["client/*"],
-      "@common/*": ["common/*"],
-      "@plugins/*": ["plugins/*"]
+      "@client/*": ["./client/*"],
+      "@common/*": ["./common/*"],
+      "@plugins/*": ["./plugins/*"]
     },
 
     /* Linting */
@@ -34,5 +36,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["client", "common", "plugins/*/client"]
+  "include": ["client/**/*", "common/**/*", "plugins/*/client/**/*"]
 }

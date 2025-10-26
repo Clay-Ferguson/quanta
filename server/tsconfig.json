@@ -10,5 +10,6 @@
       "skipLibCheck": true,
       "experimentalDecorators": true,
     },
-    "include": ["./**/*.ts", "../plugins/**/server/*.ts"]
+    "include": ["./**/*.ts", "../plugins/**/server/**/*.ts"],
+    "exclude": ["../plugins/**/client/**/*"]
   }

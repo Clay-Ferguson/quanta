@@ -1,11 +1,4 @@
-import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, TreeNode, UserProfileCompact } from "./CommonTypes.js";
-
-export type TreeRender_Response = {
-    user_id: number | null;
-    treeNodes: TreeNode[];
-    rootNode: TreeNode;
-    treeFolder?: string;
-}
+import { AttachmentInfo, ChatMessage, ChatMessageIntf, RoomInfo, UserProfileCompact } from "./CommonTypes.js";
 
 
 // todo-0: These are incomplete, not consistently used throughout the codebase, and even once done we need to split
