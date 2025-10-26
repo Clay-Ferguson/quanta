@@ -1,5 +1,7 @@
 import { ChatMessageIntf, SignableObject, User } from "./CommonTypes.js";
 
+// todo-0: all this should be only in chat plugin
+
 export type WebRTCJoin = SignableObject & {
     type: 'join';
     room: string,

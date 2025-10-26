@@ -1,6 +1,8 @@
 import { ChatMessage} from "./types/CommonTypes.js";
 import { WebRTCJoin, WebRTCOffer } from "./types/WebRTCTypes.js";
 
+// todo-0: This stuff needs to be ONLY in 'chat' plugin.
+
 /**
  * Common methods used by both client and server to canonicalize messages.
  * This is used to ensure that the same message is serialized in the same way 
@@ -27,7 +29,7 @@ class Canonicalizer {
         return '{' + parts.join(',') + '}';
     }
     
-    canonical_ChatMessage = (msg: ChatMessage): string => {
+    canonical_ChatMessage = (msg: ChatMessage): string => { // &&&
         return this.getCanonicalJSON({
             clz: 'ChatMessage',
             sender: msg.sender,

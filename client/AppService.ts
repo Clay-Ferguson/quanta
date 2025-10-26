@@ -28,7 +28,7 @@ export class AppService {
     dCount = 0;
 
     /**
-     * Initializes the AppService, setting up IndexedDB, WebRTC connection, and application state.
+     * Initializes the AppService, setting up IndexedDB, and application state.
      * Restores saved values, loads user identity, and sets up event listeners.
      * Runs room cleanup after initialization.
      */
