@@ -1,6 +1,6 @@
 export const ANON_USER_ID = -1;
 
-// todo-0: Everything plulgin-specific needs to be moved out of common/types and into the plugin itself.
+// todo-0: Everything plugin-specific needs to be moved out of common/types and into the plugin itself.
 
 export type KeyPairHex = {
     privateKey: string;
