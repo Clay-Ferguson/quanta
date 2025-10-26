@@ -1,9 +1,7 @@
 import { crypt } from "@common/Crypto";
 import { FileBase64Intf, KeyPairHex, UserProfile } from "@common/types/CommonTypes";
-import { BlockUser_ReqInfo } from "@common/types/EndpointTypes";
 import { app } from "./AppService";
 import { DBKeys, PageNames } from "./AppServiceTypes";
-import { alertModal } from "./components/AlertModalComp";
 import { confirmModal } from "./components/ConfirmModalComp";
 import { promptModal } from "./components/PromptModalComp";
 import { gd, GlobalState, gs } from "./GlobalState";
@@ -173,18 +171,20 @@ class AppUsers {
      * 
      * @param publicKey The public key of the user to block and remove messages from
      */
-    blockUser = async (publicKey: string) => {
-        if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
-            return;
-        }
+     
+    blockUser = async () => { //publicKey: string) => {
+        // todo-0: We're removing this because we don't want "BlockUser_ReqInfo" to be accessible from this server/generic package.
+        // if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
+        //     return;
+        // }
             
-        // Make the secure POST request with body
-        const response = await httpClientUtil.secureHttpPost<BlockUser_ReqInfo, any>('/api/admin/block-user', {
-            publicKey: publicKey.trim()
-        });
-        if (response) {
-            await alertModal(`Success: ${response.message}`);
-        }
+        // // Make the secure POST request with body
+        // const response = await httpClientUtil.secureHttpPost<BlockUser_ReqInfo, any>('/api/admin/block-user', {
+        //     publicKey: publicKey.trim()
+        // });
+        // if (response) {
+        //     await alertModal(`Success: ${response.message}`);
+        // }
     }   
 }
 

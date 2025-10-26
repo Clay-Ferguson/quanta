@@ -11,7 +11,6 @@ import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
 import TitledPanelComp from '../components/TitledPanelComp';
 import { httpClientUtil } from '../HttpClientUtil';
 import { util } from '../Util';
-import appUsers from '../AppUsers';
 import { pluginsArray } from '../AppService.ts';
 
 declare const ADMIN_PUBLIC_KEY: string;
@@ -143,7 +142,7 @@ export default function UserProfilePage() {
                     <TitledPanelComp title="Admin Actions">
                         {profileData && (
                             <button 
-                                onClick={() => appUsers.blockUser(profileData.publicKey!)}
+                                onClick={() => {}} // todo-1: currently disabled, because of types not available per refactor; appUsers.blockUser(profileData.publicKey!)}
                                 className="btn-danger"
                             >
                             Block User
