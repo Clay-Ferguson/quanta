@@ -2,7 +2,6 @@
 node_modules/
 dist/
 dist-pkg/
-plugins/
 
 # IDE
 .vscode/
@@ -15,5 +14,5 @@ coverage/
 *.log
 .nyc_output/
 
-QDash.desktop
+
 

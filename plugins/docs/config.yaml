@@ -1,0 +1,5 @@
+name: "Quanta Docs"
+key: "docs"
+description: "Document editor and file manager plugin"
+version: "1.0.0"
+enabled: true
