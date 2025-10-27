@@ -173,7 +173,7 @@ class AppUsers {
      */
      
     blockUser = async () => { //publicKey: string) => {
-        // todo-0: We're removing this because we don't want "BlockUser_ReqInfo" to be accessible from this server/generic package.
+        // todo-1: We're removing this because we don't want "BlockUser_ReqInfo" to be accessible from this server/generic package.
         // if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
         //     return;
         // }
