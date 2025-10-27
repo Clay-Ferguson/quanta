@@ -12,23 +12,6 @@ export type SignableObject = {
     publicKey?: string;
 }
 
-export enum MessageStates {
-    SENT = 's', // sent to server, not proven stored in DB yet
-    FAILED = 'f', // failed to send
-    SAVED = 'a' // acknowledged by server (stored in DB)
-}
-
-// Note: type inherits from SignableObject
-export type ChatMessageIntf = SignableObject & {
-    id: string;
-    timestamp: number;
-    sender: string;
-    content: string;
-    publicKey?: string;
-    signature?: string;
-    attachments?: FileBase64Intf[];
-    state?: MessageStates;
-}
 
 export type UserProfileCompact = {
     id?: number;
@@ -45,22 +28,6 @@ export type UserProfile = UserProfileCompact & {
 
 export type User = {
     name: string;
-    publicKey: string;
-}
-
-export type ChatMessage = ChatMessageIntf & {
-    sigVersion?: string; 
-    sigOk?: boolean; 
-}
-
-export type RoomInfo = {
-    id: string;
-    name: string;
-    messageCount: number;
-}
-
-export type Contact = {
-    alias: string;
     publicKey: string;
 }
 

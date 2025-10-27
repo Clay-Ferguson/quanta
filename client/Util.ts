@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChatMessage, FileBase64Intf } from "@common/types/CommonTypes";
+import { FileBase64Intf } from "@common/types/CommonTypes";
 import { pluginsArray } from './AppService.ts';
 import { scrollEffects } from './ScrollEffects';
 
@@ -154,15 +154,6 @@ class Util {
     getUrlParameter(name: string) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
-    }
-
-    formatMessageTime = (msg: ChatMessage) => {
-        return new Date(msg.timestamp).toLocaleDateString('en-US', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            year: '2-digit' 
-        })+" "+
-        new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     fileToBase64(file: File): Promise<FileBase64Intf> {
