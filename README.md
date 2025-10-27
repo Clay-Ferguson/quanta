@@ -5,26 +5,19 @@ Quanta provides a solution for being able to ship products fast by simply implem
 
 ### Screencast of Documents Plugin:
 
-![Quanta Platform Demo](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/img/screencast.gif?raw=true)
+![Quanta Platform Demo](./plugins/docs/docs/img/screencast.gif?raw=true)
 
 ## Platform Developer Guides
 * [Core Platform](./public/docs/platform/platform_developer_guide.md)
 * [Extensions](./public/docs/extensions/extensions_developer_guide.md)
 
-## Plugins Documentation Links (External Projects)
-
-The two existing (known) plugins for Quanta are as follows:
-
-* [Documents Plugin](https://github.com/Clay-Ferguson/quanta-docs-plugin)
-* [Chat Plugin](https://github.com/Clay-Ferguson/quanta-chat-plugin)
-
 #### Docs Plugin
-* [User Guide](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/user_guide.md)
-* [Developer Guide](https://github.com/Clay-Ferguson/quanta-docs-plugin/blob/main/docs/developer_guide.md)
+* [User Guide](./plugins/docs/docs/user_guide.md)
+* [Developer Guide](./plugins/docs/docs/developer_guide.md)
 
 #### Chat Plugin
-* [User Guide](https://github.com/Clay-Ferguson/quanta-chat-plugin/blob/main/docs/user_guide.md) 
-* [Developer Guide](https://github.com/Clay-Ferguson/quanta-chat-plugin/blob/main/docs/developer_guide.md)
+* [User Guide](./plugins/chat/docs/user_guide.md) 
+* [Developer Guide](./plugins/chat/docs/developer_guide.md)
 
 ## Core Platform Tech Stack
 Quanta is designed to work well on both desktop browsers as well as mobile devices and uses the following technologies.
@@ -52,7 +45,6 @@ This platform assumes it's running in a Linux environment, and has only been tes
 ## Local Install (non-Development)
 * Create installation folder: `/build/local/create-install.sh`
 * Run local installation: `/build/local/run.sh`
-
 
 ## Testing
 Quanta uses an embedded testing system that runs tests during application startup when configured to do so. For detailed information about the testing architecture, how to run tests, and how to write new tests, see the [Testing Guide](./TESTING.md).
