@@ -8,12 +8,9 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 import HexKeyComp from '../components/HexKeyComp';
 import Markdown from '../components/MarkdownComp';
 import LoadingIndicatorComp from '../components/LoadingIndicatorComp';
-import TitledPanelComp from '../components/TitledPanelComp';
 import { httpClientUtil } from '../HttpClientUtil';
 import { util } from '../Util';
 import { pluginsArray } from '../AppService.ts';
-
-declare const ADMIN_PUBLIC_KEY: string;
 
 /**
  * Page for displaying user profile information.
@@ -138,17 +135,6 @@ export default function UserProfilePage() {
                         </div>
                     )}
 
-                    { ADMIN_PUBLIC_KEY === gs.keyPair?.publicKey && ADMIN_PUBLIC_KEY !== profileData?.publicKey &&
-                    <TitledPanelComp title="Admin Actions">
-                        {profileData && (
-                            <button 
-                                onClick={() => {}} // todo-1: currently disabled, because of types not available per refactor; appUsers.blockUser(profileData.publicKey!)}
-                                className="btn-danger"
-                            >
-                            Block User
-                            </button>
-                        )}
-                    </TitledPanelComp> }   
                 </div>
             </div>
         </div>

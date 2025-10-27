@@ -157,35 +157,6 @@ class AppUsers {
         // Save the keyPair to IndexedDB
         await idb.setItem(DBKeys.keyPair, keyPair);
     }
-
-    /**
-     * Blocks a user and deletes all their messages from the system.
-     * 
-     * This administrative function performs a comprehensive blocking operation:
-     * 1. Shows a confirmation modal to prevent accidental blocking
-     * 2. Sends a secure request to the server to block the user by their public key
-     * 3. The server handles deletion of all messages from the blocked user
-     * 4. Displays a success message upon completion
-     * 
-     * This is typically an admin-only operation for content moderation purposes.
-     * 
-     * @param publicKey The public key of the user to block and remove messages from
-     */
-     
-    blockUser = async () => { //publicKey: string) => {
-        // todo-1: We're removing this because we don't want "BlockUser_ReqInfo" to be accessible from this server/generic package.
-        // if (!await confirmModal("Are you sure? This will delete all messages from this user and block them.")) {
-        //     return;
-        // }
-            
-        // // Make the secure POST request with body
-        // const response = await httpClientUtil.secureHttpPost<BlockUser_ReqInfo, any>('/api/admin/block-user', {
-        //     publicKey: publicKey.trim()
-        // });
-        // if (response) {
-        //     await alertModal(`Success: ${response.message}`);
-        // }
-    }   
 }
 
 /**
