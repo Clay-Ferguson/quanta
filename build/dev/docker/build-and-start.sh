@@ -45,16 +45,10 @@ if [ $? -eq 0 ]; then
     sudo chown -R 5050:5050 ../quanta-volumes/dev/pgadmin-data
     sudo chmod -R 755 ../quanta-volumes/dev/pgadmin-data
     
-    # Stop any existing containers
-    # docker-compose --env-file .env --env-file ../.env-quanta --profile pgadmin down 
-    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta down 
-    
-    # Build and start the container
+    # Build and start the container (this will recreate existing containers)
+    # NOTE: By using --force-recreate, that is the same as running 'down' before the 'up'
     echo "Starting application with Docker Compose..."
-
-    # Explicitly disable debug mode for production-like run
-    DEBUG=false docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build
-    # docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta up --build
+    DEBUG=false docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build --force-recreate --remove-orphans
     
     echo "Quanta ended."
 else

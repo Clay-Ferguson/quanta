@@ -45,9 +45,6 @@ if [ $? -eq 0 ]; then
     sudo chown -R 5050:5050 ../quanta-volumes/dev/pgadmin-data
     sudo chmod -R 755 ../quanta-volumes/dev/pgadmin-data
     
-    # Stop any existing containers
-    docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta down 
-    
     # Build and start the container with debugging enabled
     echo "Starting application with Docker Compose (Debug Mode)..."
     echo "Node.js debugger will be available on port 9229"
@@ -58,7 +55,8 @@ if [ $? -eq 0 ]; then
     export DEBUG_PORT=9229
     
     # Start with debug profile and explicit debug environment
-    DEBUG=true DEBUG_PORT=9229 docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build
+    # NOTE: By using --force-recreate, that is the same as running 'down' before the 'up'
+    DEBUG=true DEBUG_PORT=9229 docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build --force-recreate --remove-orphans
     
     echo "Quanta ended."
 else
