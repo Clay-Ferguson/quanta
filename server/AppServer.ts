@@ -106,7 +106,7 @@ const pluginKeys = plugins.map((plugin: any) => plugin.key).join(',');
 console.log(`Plugins loaded: ${pluginKeys}`);
 
 const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
-    fs.readFile("./dist/server/index.html", 'utf8', async (err, data) => {
+    fs.readFile("./dist/server/index.html", 'utf8', async (err, html) => {
         if (err) {
             console.error('Error reading index.html:', err);
             return res.status(500).send('Error loading page');
@@ -115,12 +115,13 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         try {
             console.log(`Serving index.html for page: ${page}`);
 
+            // Note: We support the ability for plugins to modify the HTML before it's sent, but currently no plugins use this.
             for (const plugin of svrUtil.pluginsArray) {
-                data = await plugin.preProcessHtml(data, req);
+                html = await plugin.preProcessHtml(html, req);
             }
 
             // Replace the placeholders with actual values
-            const result = data
+            const result = html
                 .replace('{{HOST}}', HOST)
                 .replace('{{CLIENT_HOST}}', CLIENT_HOST)
                 .replace('{{PORT}}', PORT)

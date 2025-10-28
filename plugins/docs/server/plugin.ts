@@ -5,7 +5,6 @@ import { runRESTEndpointsTests } from './test/rest.test.js';
 import { httpServerUtil } from "../../../server/HttpServerUtil.js";
 import { docSvc } from "./DocService.js";
 import { IAppContext, IServerPlugin, asyncHandler } from "../../../server/ServerUtil.js";
-import { docUtil } from "./DocUtil.js";
 import { docMod } from "./DocMod.js";
 import { docBinary } from "./DocBinary.js";
 import * as fs from 'fs';
@@ -145,22 +144,8 @@ class DocsServerPlugin implements IServerPlugin {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async preProcessHtml(html: string, req: Request): Promise<string> {
-
-        let docPath = '';
-        if (req.params.uuid) {
-            docPath = await docUtil.getPathByUUID(req.params.uuid) || '';
-        }
-        else {
-            if (req.params[0]) {
-                // Example Url handled here:
-                //   http://localhost:8000/doc/usr/Quanta_User_Guide
-                docPath = req.params[0];
-                // console.log(`Using docPath from request params: [${docPath}]`);
-            }
-        }
-
-        html = html.replace('{{DOC_PATH}}', docPath);
         return html;
     }
 
