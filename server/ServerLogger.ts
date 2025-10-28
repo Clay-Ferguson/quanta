@@ -41,8 +41,7 @@ export function logInit() {
         return;
     }
 
-    // Initialize Pino logger for file output only
-    // Console output is handled by overriding console.log/error below
+    // Initialize Pino logger with both file and console output
     logger = pino({
         level: 'info',
         formatters: {
@@ -53,7 +52,21 @@ export function logInit() {
             pid: process.pid,
             hostname: os.hostname()
         }
-    }, fs.createWriteStream(logFile, { flags: 'a' }));
+    }, pino.multistream([
+        // Write to log file as structured JSON
+        {
+            level: 'info',
+            stream: fs.createWriteStream(logFile, { flags: 'a' })
+        },
+        // Write to console with pretty formatting (for development)
+        {
+            level: 'info',
+            stream: pino.destination({
+                dest: process.stdout.fd,
+                sync: false
+            })
+        }
+    ]));
 
     // Override console methods to use Pino
     console.log = customLog;
@@ -62,14 +75,13 @@ export function logInit() {
 
 // Custom implementation for console.log using Pino
 function customLog(...args: any[]) {
-    // Always output to original console for Docker/terminal visibility
-    originalConsoleLog(...args);
-
     if (!logger) {
+        // Fallback to original console.log if logger isn't initialized
+        originalConsoleLog(...args);
         return;
     }
 
-    // Also log to file via Pino
+    // Handle different argument patterns
     if (args.length === 1) {
         const arg = args[0];
         if (typeof arg === 'string') {
@@ -99,14 +111,13 @@ function customLog(...args: any[]) {
 
 // Custom implementation for console.error using Pino
 function customError(...args: any[]) {
-    // Always output to original console for Docker/terminal visibility
-    originalConsoleError(...args);
-
     if (!logger) {
+        // Fallback to original console.error if logger isn't initialized
+        originalConsoleError(...args);
         return;
     }
 
-    // Also log to file via Pino
+    // Handle different error patterns
     if (args.length === 1) {
         const arg = args[0];
         if (arg instanceof Error) {
@@ -147,4 +158,3 @@ function customError(...args: any[]) {
         logger.error(errorData, message);
     }
 }
-

@@ -7,7 +7,6 @@ import path from 'path';
  */
 class Config {
     private configData: any = {};
-    public dbActive: boolean = !!process.env.POSTGRES_HOST;
 
     constructor() {
         this.loadConfig();

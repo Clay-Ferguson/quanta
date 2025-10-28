@@ -9,7 +9,6 @@ import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import pgdb from './db/PGDB.js';
 import { dbUsers } from './DBUsers.js';
-import { runAllTests } from './app.test.js';
 
 logInit();
 
@@ -33,9 +32,7 @@ const CLIENT_HOST = config.get("clientHost"); // This is the host for the web ap
 const SECURE = config.get("secure");
 const ADMIN_PUBLIC_KEY = config.get("adminPublicKey");
 
-if (process.env.POSTGRES_HOST) {
-    await pgdb.initDb();
-}
+await pgdb.initDb();
 
 const app = express();
 
@@ -160,10 +157,8 @@ app.post('/api/users/info', httpServerUtil.verifyReqHTTPSignatureAllowAnon, asyn
 app.get('/api/users/:pubKey/info', asyncHandler(dbUsers.getUserProfileReq));
 app.get('/api/users/:pubKey/avatar', asyncHandler(dbUsers.serveAvatar));
 
-if (process.env.POSTGRES_HOST) {
-    // NOTE: This MUST be called before 'initPlugins'
-    await pgdb.loadAdminUser();
-}
+// NOTE: This MUST be called before 'initPlugins'
+await pgdb.loadAdminUser();
 
 // NOTE: It's important to initialize plugins before defining the other routes below.
 await svrUtil.initPlugins(plugins, {app, serveIndexHtml});
@@ -217,11 +212,7 @@ const gracefulShutdown = async () => {
         }
 
         // Close database connections if they exist
-        if (process.env.POSTGRES_HOST && pgdb) {
-            await pgdb.close();
-            console.log('Database connections closed');
-        }
-
+        await pgdb.close();    
         console.log('Graceful shutdown complete');
         process.exit(0);
     } catch (error) {
@@ -232,7 +223,7 @@ const gracefulShutdown = async () => {
 
 // Run tests if configured and in development environment ONLY
 if (config.get("runTests") === "y" && process.env.QUANTA_ENV === "dev") {
-    await runAllTests();
+    await svrUtil.runAllTests();
 
     // Check if any tests failed and shutdown if so, or if explicitly configured to exit
     if (config.get("exitAfterTest") === "y") {

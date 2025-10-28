@@ -32,9 +32,6 @@ class PGDB {
      * Initialize the PostgreSQL database connection and create tables/functions
      */
     async initDb(): Promise<void> {
-        if (!process.env.POSTGRES_HOST) {
-            throw new Error('POSTGRES_HOST environment variable is not set');
-        }
         if (this.isInitialized) {
             return;
         }
@@ -117,15 +114,38 @@ class PGDB {
     }
     
     /**
-     * Get database configuration from environment variables or defaults
+     * Get database configuration from environment variables
+     * Throws an error if any required environment variable is missing
      */
     private getDbConfig(): PostgresConfig {
+        const host = process.env.POSTGRES_HOST;
+        const port = process.env.POSTGRES_PORT;
+        const database = process.env.POSTGRES_DB;
+        const user = process.env.POSTGRES_USER;
+        const password = process.env.POSTGRES_PASSWORD;
+
+        if (!host) {
+            throw new Error('POSTGRES_HOST environment variable is required');
+        }
+        if (!port) {
+            throw new Error('POSTGRES_PORT environment variable is required');
+        }
+        if (!database) {
+            throw new Error('POSTGRES_DB environment variable is required');
+        }
+        if (!user) {
+            throw new Error('POSTGRES_USER environment variable is required');
+        }
+        if (!password) {
+            throw new Error('POSTGRES_PASSWORD environment variable is required');
+        }
+
         return {
-            host: process.env.POSTGRES_HOST || 'localhost',
-            port: parseInt(process.env.POSTGRES_PORT || '5432'),
-            database: process.env.POSTGRES_DB || 'quanta',
-            user: process.env.POSTGRES_USER || 'quanta',
-            password: process.env.POSTGRES_PASSWORD || 'pwd'
+            host,
+            port: parseInt(port),
+            database,
+            user,
+            password
         };
     }
 

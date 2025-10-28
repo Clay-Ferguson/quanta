@@ -43,6 +43,7 @@ The main test orchestration happens in `/server/app.test.ts`, which serves as th
 - Acts as the single point of integration with the main application
 
 ```typescript
+// todo-0: the location of these tests has moved.
 export async function runAllTests(): Promise<void> {
     console.log("Running embedded tests...");
     

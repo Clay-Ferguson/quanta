@@ -26,33 +26,25 @@ class DocsServerPlugin implements IServerPlugin {
     async init(context: IAppContext) {
         console.log('init docs plugin...');
         this.initRoutes(context);
-
-        if (process.env.POSTGRES_HOST) {
-            this.pgMode = true;
+        this.pgMode = true;
         
-            const folder = "SQL";
-            console.log(`Initializing database for folder: ${folder}`);
-            await this.initializeSchema(folder);
+        const folder = "SQL";
+        console.log(`Initializing database for folder: ${folder}`);
+        await this.initializeSchema(folder);
 
-            // Initialize stored functions
-            await this.initializeFunctions(folder);
+        // Initialize stored functions
+        await this.initializeFunctions(folder);
 
-            if (!pgdb.adminProfile) {
-                throw new Error('Admin profile not loaded. Please ensure the database is initialized and the admin user is created.');
-            }
-            await vfs.createUserFolder(pgdb.adminProfile);
+        if (!pgdb.adminProfile) {
+            throw new Error('Admin profile not loaded. Please ensure the database is initialized and the admin user is created.');
         }
-        else {
-            throw new Error('POSTGRES_HOST environment variable is not set.');
-        }
+        await vfs.createUserFolder(pgdb.adminProfile);
     }
 
     // todo-1: we need to retest everything related to creating other users other than admin
     onCreateNewUser = async (userProfile: UserProfileCompact): Promise<UserProfileCompact> => {
-        if (process.env.POSTGRES_HOST) {
-            console.log('Docs onCreateNewUser: ', userProfile);
-            await vfs.createUserFolder(userProfile);
-        }
+        console.log('Docs onCreateNewUser: ', userProfile);
+        await vfs.createUserFolder(userProfile);
         return userProfile;
     }
 

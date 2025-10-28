@@ -167,22 +167,21 @@ class HttpServerUtil {
 
             // This is required so that we can let the user save a UserProfile knowing that they're the owner of the private key.
             (req as AuthenticatedRequest).validSignature = true;
-
-            if (process.env.POSTGRES_HOST) {
-                const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
-                if (userProfile) {
+           
+            const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
+            if (userProfile) {
                 // console.log('User profile found for public key:', publicKey);
                 // Store userProfile in the request object for use in downstream middleware and route handlers
-                    (req as AuthenticatedRequest).userProfile = userProfile;
-                }       
-                else {
-                    if (!allowAnon) {
-                        res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                        return;
-                    }
+                (req as AuthenticatedRequest).userProfile = userProfile;
+            }       
+            else {
+                if (!allowAnon) {
+                    res.status(401).json({ error: 'Unauthorized: User profile not found' });
+                    return;
+                }
                 // console.warn('User profile not found for public key (treating as ANON USER)', publicKey);
-                } 
-            }
+            } 
+            
             next();
         } catch (error) {
             console.error('Error verifying signature:', error);
@@ -204,11 +203,6 @@ class HttpServerUtil {
      * @returns Promise<void>
      */
     verifyReqHTTPQuerySig = async (req: Request, res: Response, next: any): Promise<void> => {
-        if (!process.env.POSTGRES_HOST) {
-            // If Postgres is not available, skip signature verification
-            next();
-            return;
-        }
         const { auth, signature } = req.query;
 
         // Validate required parameters
@@ -264,13 +258,11 @@ class HttpServerUtil {
                 return;
             }
     
-            if (process.env.POSTGRES_HOST) {
-                const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
-                if (userProfile) {
-                    // Store userProfile in the request object for use in downstream middleware and route handlers
-                    (req as AuthenticatedRequest).userProfile = userProfile;
-                }       
-            }
+            const userProfile: UserProfileCompact | null = await dbUsers.getUserProfileCompact(publicKey);
+            if (userProfile) {
+                // Store userProfile in the request object for use in downstream middleware and route handlers
+                (req as AuthenticatedRequest).userProfile = userProfile;
+            }       
 
             // If signature is valid, proceed to the next middleware or route handler
             next();

@@ -94,13 +94,11 @@ class DocService {
         treeFolder = docUtil.normalizePath(treeFolder); // Normalize the path to ensure consistent formatting
         // console.log(`Normalized treeFolder: [${treeFolder}]`);
 
-        if (process.env.POSTGRES_HOST) {
-            if (treeFolder.trim()=== '' || treeFolder === '/') {
-                if (user_id!=pgdb.adminProfile!.id) {
-                    // If treeFolder is empty or root, we return the admin profile's root node
-                    // This is a security measure to prevent unauthorized access to the admin's root
-                    throwError(`Unauthorized access attempt by user ${user_id} to root node.`);
-                }
+        if (treeFolder.trim()=== '' || treeFolder === '/') {
+            if (user_id!=pgdb.adminProfile!.id) {
+                // If treeFolder is empty or root, we return the admin profile's root node
+                // This is a security measure to prevent unauthorized access to the admin's root
+                throwError(`Unauthorized access attempt by user ${user_id} to root node.`);
             }
         }
         

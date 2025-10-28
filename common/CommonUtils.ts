@@ -95,7 +95,15 @@ export function createClickablePathComponents(path: string): Array<{ displayName
         const navigationPath = '/' + components.slice(0, i + 1).join('/');
         
         // Format the display name (remove ordinals, capitalize, etc.)
-        const displayName = components[i];
+        let displayName = components[i];
+        
+        // Remove ordinal prefixes like "01_", "02_", etc.
+        displayName = displayName.replace(/^\d+_/, '');
+        
+        // Capitalize first letter
+        if (displayName.length > 0) {
+            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        }
         
         result.push({
             displayName,

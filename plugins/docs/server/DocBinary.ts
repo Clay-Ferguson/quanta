@@ -40,11 +40,9 @@ class DocBinary {
      */
     serveDocImage = async (req: Request, res: Response): Promise<void> => {
         let owner_id: number | null = ANON_USER_ID;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = svrUtil.getOwnerId(req, res);
-            if (owner_id==null) {
-                return;
-            }
+        owner_id = svrUtil.getOwnerId(req, res);
+        if (owner_id==null) {
+            return;
         }
 
         // console.log(`>>>>>>> Serve Doc Image Request: [${req.path}] to userId ${owner_id}`);
