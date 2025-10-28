@@ -14,6 +14,8 @@ import { alertModal } from '../components/AlertModalComp';
 import { confirmModal } from '../components/ConfirmModalComp';
 import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
+import { runTests as runCryptoTests } from '@common/test/Crypto.test.js';
+import { runTests as runCommonUtilsTests } from '@common/test/CommonUtils.test.js';
 
 async function clear() {
     await idb.clear();
@@ -466,22 +468,33 @@ export default function SettingsPage() {
                         </div>
                     </TitledPanelComp>
 
-                    {gs.devMode && <TitledPanelComp title="Diagnostics" collapsibleKey={PanelKeys.settings_Diagnostics}>
-                        <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-lg font-medium text-blue-300">System Logs</h4>
+                    {gs.devMode && 
+                        <TitledPanelComp title="Diagnostics" collapsibleKey={PanelKeys.settings_Diagnostics}>
+                            <div className="bg-gray-800 rounded-lg p-4 border border-blue-400/20 shadow-md">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-lg font-medium text-blue-300">System Logs</h4>
+                                </div>
+                                <p className="text-sm text-gray-300 mb-4">
+                                    View system logs for troubleshooting and diagnostic purposes.
+                                </p>
+                                <button 
+                                    className="btn-primary mr-4"
+                                    onClick={() => app.goToPage(PageNames.logViewer)}
+                                >
+                                    View Logs
+                                </button>
+                                <button 
+                                    className="btn-primary mr-4"
+                                    onClick={async () => {
+                                        await runCryptoTests();
+                                        await runCommonUtilsTests();
+                                        await alertModal('Finished running tests. Switching to Log Viewer to show results.');
+                                        app.goToPage(PageNames.logViewer);
+                                    }}>
+                                    Run Tests
+                                </button>
                             </div>
-                            <p className="text-sm text-gray-300 mb-4">
-                                View system logs for troubleshooting and diagnostic purposes.
-                            </p>
-                            <button 
-                                className="btn-primary"
-                                onClick={() => app.goToPage(PageNames.logViewer)}
-                            >
-                                View Logs
-                            </button>
-                        </div>
-                    </TitledPanelComp>}
+                        </TitledPanelComp>}
                 </div>
             </div>
         </div>

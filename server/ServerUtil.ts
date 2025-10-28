@@ -119,13 +119,12 @@ class ServerUtil {
     /* Gets the appropriate owner_id to use for processing a request and null if we should not process the request */
     public getOwnerId = (req: Request, res: Response): number | null => {
         let owner_id: number | undefined = ANON_USER_ID;
-        if (process.env.POSTGRES_HOST) {
-            owner_id = (req as AuthenticatedRequest).userProfile?.id;
-            if (!owner_id) {
-                res.status(401).json({ error: 'Unauthorized: User profile not found' });
-                return null;
-            }
+        owner_id = (req as AuthenticatedRequest).userProfile?.id;
+        if (!owner_id) {
+            res.status(401).json({ error: 'Unauthorized: User profile not found' });
+            return null;
         }
+        
         return owner_id;
     }
 
@@ -204,6 +203,14 @@ class ServerUtil {
             } catch (error) {
                 console.error(`Error notifying plugin:`, error);
             }
+        }
+    }
+
+    runAllTests = async (): Promise<void> => {
+        console.log("Running embedded tests...");
+
+        for (const plugin of this.pluginsArray) {
+            await plugin.runAllTests();
         }
     }
 }

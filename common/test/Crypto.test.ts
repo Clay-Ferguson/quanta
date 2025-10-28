@@ -28,7 +28,6 @@ function mockCanonicalizer(obj: any): string {
 
 export async function runTests() {
     console.log("🚀 Starting Crypto tests...");
-    
     const testRunner = new TestRunner("Crypto");
     
     try {
