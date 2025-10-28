@@ -184,13 +184,21 @@ applyStateRules(gs: GlobalState) {
 
 ## Testing System
 
-**Embedded Testing** (see `TESTING.md`):
-- Tests run during app startup when `runTests: "y"` in config AND `QUANTA_ENV=dev`
-- Orchestrated via `/server/app.test.ts` (imports all test suites)
+**Dual Testing Architecture** (see `TESTING.md`):
+- **Server-side tests**: Run during app startup when `runTests: "y"` in config AND `QUANTA_ENV=dev`
+  - Orchestrated via `ServerUtil.runAllTests()` in `/server/ServerUtil.ts`
+  - Each plugin implements `IServerPlugin.runAllTests()` to execute its test suite
+  - Example: Docs plugin runs VFS tests and REST endpoint tests
+- **Client-side tests**: Run manually via button in Settings page (dev mode only)
+  - Located in "Diagnostics" panel of SettingsPage.tsx
+  - Executes browser-compatible tests (Crypto, CommonUtils)
+  - Results displayed in Log Viewer page
 - Uses custom `TestRunner` class (`/common/TestRunner.ts`) for reporting
-- Test files: `*.test.ts` pattern (e.g., `/common/test/Crypto.test.ts`)
-- Plugin tests: `/plugins/{name}/server/test/*.test.ts`
-- Add tests by: (1) Create `*.test.ts` with `export async function runTests()`, (2) Import in `app.test.ts`, (3) Call in `runAllTests()`
+- Test files: `*.test.ts` pattern
+  - Common tests: `/common/test/*.test.ts` (can run client or server-side)
+  - Plugin tests: `/plugins/{name}/server/test/*.test.ts` (server-side only)
+- **Adding server tests**: (1) Create `*.test.ts` in plugin's `/server/test/` directory, (2) Import in plugin's `plugin.ts`, (3) Call from plugin's `runAllTests()` method
+- **Adding client tests**: (1) Create browser-compatible `*.test.ts` in `/common/test/`, (2) Import in `SettingsPage.tsx`, (3) Add to "Run Tests" button handler 
 
 ## File Structure
 
