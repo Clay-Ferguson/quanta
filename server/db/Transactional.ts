@@ -1,4 +1,3 @@
-import { config } from "../Config.js";
 import pgdb from "./PGDB.js";
 import { AsyncLocalStorage } from 'async_hooks';
 import { PoolClient } from 'pg';
@@ -43,7 +42,7 @@ export function getTransactionClient(): PoolClient | null {
  */
 export async function runTrans__unused<T>(fn: () => Promise<T>): Promise<T> {
     // If database is not active, just run the function without transaction
-    if (!config.dbActive || !enabled) {
+    if (!enabled) {
         return await fn();
     }
     
@@ -132,12 +131,7 @@ export async function runTrans__unused<T>(fn: () => Promise<T>): Promise<T> {
  * @param fn The function to execute within the single transaction
  * @returns The result of the function execution
  */
-export async function runTrans<T>(fn: () => Promise<T>): Promise<T> {
-    // If database is not active, just run the function without transaction
-    if (!config.dbActive) {
-        return await fn();
-    }
-    
+export async function runTrans<T>(fn: () => Promise<T>): Promise<T> { 
     // Check if we're already in a single transaction context
     const context = singleTranStore.getStore();
     
