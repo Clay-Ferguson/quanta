@@ -10,6 +10,8 @@ import { app } from '@client/AppService';
 import DocViewerPage from '@client/pages/DocViewerPage';
 import { TreeNode } from '../common/CommonTypes';
 
+declare const DOC_PATH: string;
+
 class DocsClientPlugin implements IClientPlugin {
 
     getKey(): string {
@@ -19,7 +21,8 @@ class DocsClientPlugin implements IClientPlugin {
     async init(context: any) {
         console.log('Initializing Quanta Docs plugin...');
         const gs: DocsGlobalState = context.initGs;
-        gs.docsFolder = '/'; 
+        // Use DOC_PATH if available from URL parameter (e.g., /doc/id/:uuid), otherwise default to '/'
+        gs.docsFolder = (typeof DOC_PATH !== 'undefined' && DOC_PATH) ? DOC_PATH : '/'; 
         gs.docsEditMode = false;
         gs.docsMetaMode = false;
         gs.docsNamesMode = false;

@@ -8,6 +8,7 @@ import { svrUtil, asyncHandler } from './ServerUtil.js';
 import { httpServerUtil } from './HttpServerUtil.js';
 import pgdb from './db/PGDB.js';
 import { dbUsers } from './DBUsers.js';
+import { docUtil } from '../plugins/docs/server/DocUtil.js';
 
 logInit();
 
@@ -101,6 +102,18 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
         
         try {
             console.log(`Serving index.html for page: ${page}`);
+            let docPath: string = '';
+            if (req.params.uuid) {
+                docPath = await docUtil.getPathByUUID(req.params.uuid) || '';
+                if (!docPath) {
+                    throw new Error(`No path found for UUID: ${req.params.uuid}`);
+                }
+                // console.log(`Resolved docPath for UUID ${req.params.uuid}: ${docPath}`);
+            }
+            else if (req.params.path) {
+                docPath = decodeURIComponent(req.params.path);
+                // console.log(`docPath parameter from URL: ${docPath}`);
+            }
 
             // Note: We support the ability for plugins to modify the HTML before it's sent, but currently no plugins use this.
             for (const plugin of svrUtil.pluginsArray) {
@@ -115,6 +128,7 @@ const serveIndexHtml = (page: string) => (req: Request, res: Response) => {
                 .replace('{{SECURE}}', SECURE)
                 .replace('{{ADMIN_PUBLIC_KEY}}', ADMIN_PUBLIC_KEY)
                 .replace(`{{PAGE}}`, page)
+                .replace(`{{DOC_PATH}}`, docPath || '')
                 .replace('{{PLUGINS}}', pluginKeys)
                 .replace('{{DEFAULT_PLUGIN}}', config.get("defaultPlugin") || "");
 

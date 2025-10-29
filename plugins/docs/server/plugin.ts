@@ -76,6 +76,7 @@ class DocsServerPlugin implements IServerPlugin {
 
         context.app.get('/doc', context.serveIndexHtml("TreeViewerPage"));
         context.app.get('/doc/id/:uuid', context.serveIndexHtml("TreeViewerPage"));
+        context.app.get('/doc/path/:path', context.serveIndexHtml("TreeViewerPage"));
         context.app.get('/doc/*', context.serveIndexHtml("TreeViewerPage"));
 
         if (defaultPlugin === "docs") {

@@ -161,7 +161,7 @@ export default function TreeViewerPage() {
                 else {
                     // todo-2: we need to document this behaviour where we default users to the public folder, expecting it to exist.
                     console.log(`Setting docsFolder to public/admin. No user profile saved.`);
-                    folder = "/admin/public";
+                    folder = "/public";
                 }
 
                 // console.log(`Setting docsFolder to [${folder}]`);
