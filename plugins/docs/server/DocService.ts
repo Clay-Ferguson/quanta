@@ -77,15 +77,20 @@ class DocService {
      * @param res - Express response object for JSON tree data
      * @returns Promise<void> - Sends TreeRender_Response as JSON or error response
      */
-     
     treeRender = async (req: Request<{ 0: string }, any, any, { pullup?: string }>, res: Response): Promise<void> => {  
-        let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0; 
+        let user_id = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.id : 0;
+        const isAdmin = (req as any).userProfile ? (req as AuthenticatedRequest).userProfile?.name=='admin' : false;
         if (!user_id) {
+            // todo-0: this needs to trigger a redirect to somet "public" root the admin owns.
             user_id = ANON_USER_ID;
         }
+        // console.log(`DocService.treeRender param0=${req.params[0]} user_id=${user_id}`);
 
         // Extract the folder path from the wildcard part of the URL
-        const rawTreeFolder = req.params[0] || "/";
+        let rawTreeFolder = req.params[0];
+        if (!isAdmin && !rawTreeFolder || rawTreeFolder.trim() === '/') {
+            rawTreeFolder = `rt_${user_id}`;
+        }
         let treeFolder = decodeURIComponent(rawTreeFolder);
         
         // Extract the pullup parameter from query string
