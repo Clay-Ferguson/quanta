@@ -183,6 +183,22 @@ class PGDB {
         return this.pool!.connect();
     }
 
+    async wipeAdminOwnedNodes(): Promise<void> {
+        this.checkDb();
+        const adminProfile = this.adminProfile;
+        if (!adminProfile) {
+            throw new Error('Admin profile not loaded. loadAdminUser() must be called first.');
+        }
+        try {
+            const deleteQuery = 'DELETE FROM vfs_nodes WHERE owner_id = (SELECT id FROM user_info WHERE pub_key = $1)';
+            await this.query(deleteQuery, adminProfile.publicKey);
+            console.log('All nodes owned by admin user have been deleted.');
+        } catch (error) {
+            console.error('Error wiping admin owned nodes:', error);
+            throw error;
+        }
+    }
+
     /**
      * Execute a database query using transaction client if available, otherwise use the pool
      */
