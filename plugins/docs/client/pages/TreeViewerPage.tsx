@@ -110,6 +110,7 @@ export default function TreeViewerPage() {
     const [error, setError] = useState<string | null>(null);
     const gs = useGlobalState();
     const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const fetchInProgressRef = useRef(false);
     
     useEffect(() => util.resizeEffect(), []);
 
@@ -137,6 +138,7 @@ export default function TreeViewerPage() {
     // We have to wrap this in a useCallback in order to be able to use it in
     // the useEffect below
     const reRenderTree = useCallback(async () => {
+        // console.log("***************** Re-rendering tree viewer..."); // todo-0: this is getting called twice on initial page load. Need to investigate why.
         let folder = gs.docsFolder || '';
         if (!folder.startsWith('/')) {
             folder = `/${folder}`;
@@ -153,7 +155,7 @@ export default function TreeViewerPage() {
                     // if this is not the admin user we limit them to where an attempt to access root just sends them to their own folder instead.
                     if (!isAdmin) {
                         console.log(`Setting docsFolder to root for user ${gs.userProfile?.name}`);
-                        folder = "/"+gs.userProfile!.name; 
+                        folder = ''; // "/"+gs.userProfile!.name; 
                     }
                 }
                 else {
@@ -163,13 +165,21 @@ export default function TreeViewerPage() {
                 }
 
                 // console.log(`Setting docsFolder to [${folder}]`);
-                gd({ type: 'setUserProfile', payload: { 
-                    docsFolder: folder
-                }});
+                // Only update if the folder actually changed
+                if (gs.docsFolder !== folder) {
+                    gd({ type: 'setUserProfile', payload: { 
+                        docsFolder: folder
+                    }});
+                }
             }
 
             // console.log(`Refreshing tree for folder [${folder}]]`);
+            // todo-0: I think 'pullup' may be obsolete now? 
+            if (!folder || folder.trim() === '/') {
+                folder = '';
+            }
             const url = `/api/docs/render/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
+            // todo-0: it appears this is executing TWICE on initial page load. Need to investigate why.
             const treeResponse: TreeRender_ResInfo | null = await httpClientUtil.secureHttpPost(url, {});
             // console.log(`DocsFolder server response:`, JSON.stringify(treeResponse?.treeNodes, null, 2));
             
@@ -199,7 +209,7 @@ export default function TreeViewerPage() {
                 }
                 else {
                     // ensure docsFolder is what we got back from the server, because it might have been changed by the server
-                    if (treeResponse?.treeFolder) {
+                    if (treeResponse?.treeFolder && gs.docsFolder !== treeResponse.treeFolder) {
                         gd({ type: 'setDocsFolder', payload: {
                             docsFolder: treeResponse.treeFolder} 
                         });
@@ -235,6 +245,13 @@ export default function TreeViewerPage() {
 
     useEffect(() => {
         const fetchTree = async () => {
+            // Prevent concurrent fetches (helps with StrictMode double-render)
+            if (fetchInProgressRef.current) {
+                console.log("Fetch already in progress, skipping...");
+                return;
+            }
+            
+            fetchInProgressRef.current = true;
             // setIsLoading(true);
             setError(null);
             try {
@@ -244,10 +261,12 @@ export default function TreeViewerPage() {
                 setError(`Sorry, we encountered an error loading the tree for "${gs.docsFolder || '/'}".`);
             } finally {
                 // setIsLoading(false);
+                fetchInProgressRef.current = false;
             }
         };
         fetchTree();
-    }, [gs.docsFolder, gs.docsEditMode, reRenderTree]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [gs.docsFolder, gs.docsEditMode]);
 
     const elmRef = useRef<HTMLDivElement>(null);
     // useLayoutEffect(() => scrollEffects.layoutEffect(elmRef, false), [docContent]);
