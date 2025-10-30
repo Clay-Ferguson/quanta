@@ -3,6 +3,7 @@ import { UserProfileCompact } from '../../../common/types/CommonTypes.js';
 import { getFilenameExtension } from '../../../common/CommonUtils.js';
 import { CompactTreeNode, TreeNode } from '../common/CommonTypes.js';
 import { docUtil } from './DocUtil.js';
+import { throwError } from '../../../server/ServerUtil.js';
 
 const rootKey = "usr"; // Default root key for VFS, can be changed based on configuration
 
@@ -25,7 +26,7 @@ class VFS {
 
         // Throw an error if 'userProfile.name' is not valid.
         if (!/^[a-zA-Z0-9_]+$/.test(userProfile.name!)) {
-            throw new Error(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
+            throwError(`Invalid user name: ${userProfile.name}. Only alphanumeric characters and underscores are allowed.`);
         }
 
         if (!userProfile.id) {

@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from 'express';
 import { Application } from "express";
+import { AsyncLocalStorage } from 'async_hooks';
 import { ANON_USER_ID, UserProfileCompact } from '../common/types/CommonTypes.js';
 import { AuthenticatedRequest } from './HttpTypes.js';
 
@@ -8,14 +9,49 @@ export interface IAppContext {
     serveIndexHtml: (page: string) => (req: Request, res: Response) => void;
 }
 
+// Store request context per async execution context
+interface RequestContext {
+    req: Request;
+    res: Response;
+    error: unknown | null;
+}
+
+const requestStore = new AsyncLocalStorage<RequestContext>();
+
+/**
+ * Get the current response object from the async context
+ * @returns Response object or null if not in a request context
+ */
+export function getCurrentResponse(): Response | null {
+    const context = requestStore.getStore();
+    return context?.res || null;
+}
+
+/**
+ * Store the first error that occurred in this request context
+ * Subsequent errors won't overwrite the first one
+ * @param error - The error that occurred
+ */
+export function storeFirstError(error: unknown): void {
+    const context = requestStore.getStore();
+    if (context && !context.error) {
+        context.error = error;
+    }
+}
+
+// todo-0: need to search all code for "throw new Error" and for the ones that need to bubble up the message to end user make it call this method instead.
 export function throwError(message: string, response: Response | null = null): never {
     console.error(`${message}`);
     const error = new Error(message);
     (error as any).errorMessage = message; // Custom property to store user-friendly message
     (error as any).logged = true; // Custom property to indicate this error has been logged
-    if (response && !response.headersSent && !response.writableEnded) {
-        response.status(500);
-        response.json({ errorMessage: message });
+    
+    // Use provided response, or get from current context if available
+    const res = response || getCurrentResponse();
+    
+    if (res && !res.headersSent && !res.writableEnded) {
+        res.status(500);
+        res.json({ errorMessage: message });
     }
     throw error;
 }
@@ -61,27 +97,37 @@ export function handleError(error: unknown, res: Response, message: string): any
 /**
  * Async wrapper for Express route handlers to ensure all errors are caught and handled properly
  * This prevents unhandled promise rejections from crashing the server
+ * Uses AsyncLocalStorage to provide request context throughout the call stack
  * @param fn - The async route handler function
  * @returns Express route handler with error handling
  */
 export function asyncHandler(fn: (req: any, res: Response, next?: NextFunction) => Promise<any>) {  
     return (req: any, res: Response, next: NextFunction) => {
-        // Log request details only for API endpoints
-        if (req.url.startsWith('/api/')) {
-            console.log('Request URL:', req.url);
-            console.log('Request method:', req.method);
-            if (req.body && Object.keys(req.body).length > 0) {
-                console.log('Request body:', JSON.stringify(req.body, null, 2));
-            }
-        }
+        // Create request context for AsyncLocalStorage
+        const context: RequestContext = {req, res, error: null};
         
-        Promise.resolve(fn(req, res, next)).catch((error) => {
-            console.error('ASYNC HANDLER ERROR:', error);
-            console.error('Request URL:', req.url);
-            console.error('Request method:', req.method);
+        // Run the entire request handler within the AsyncLocalStorage context
+        requestStore.run(context, () => {
+            // Log request details only for API endpoints
+            if (req.url.startsWith('/api/')) {
+                console.log('Request URL:', req.url);
+                console.log('Request method:', req.method);
+                if (req.body && Object.keys(req.body).length > 0) {
+                    console.log('Request body:', JSON.stringify(req.body, null, 2));
+                }
+            }
             
-            // Always attempt to send error response - handleError will check if response is already sent
-            handleError(error, res, 'An unexpected error occurred');
+            Promise.resolve(fn(req, res, next)).catch((error) => {
+                console.error('ASYNC HANDLER ERROR:', error);
+                console.error('Request URL:', req.url);
+                console.error('Request method:', req.method);
+                
+                // Store the first error in context
+                storeFirstError(error);
+                
+                // Use custom error message if set, otherwise use default
+                handleError(error, res, 'An unexpected error occurred');
+            });
         });
     };
 }
