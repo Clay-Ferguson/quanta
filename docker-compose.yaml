@@ -1,7 +1,39 @@
+# --------------------------------
+# NOTE:
+# Docker 29.0.0 has a well-known bug where its embedded DNS resolver (running at 127.0.0.11 inside containers) fails 
+# to resolve service names on user-defined bridge networks, causing "getaddrinfo EAI_AGAIN" errors. The solution assigns 
+# static IP addresses to containers and uses extra_hosts to write the postgres hostname directly into hosts, completely 
+# bypassing Docker's broken DNS. This can be removed once Docker fixes the DNS resolution issue in a future release. 
+# Test by removing these changes and verifying that docker exec quanta-dev ping postgres works correctly.
+# 
+# Periodically as docker comes out with new releases. We can check to see. If we still need. 
+# To compensate for the bug. Do this by removing any of the sections below. That are labeled as 'EAI' Sections. 
+# There are four such sections of this code that can be removed. 
+# --------------------------------
+
+# BEGIN_EAI
+networks:
+  quanta-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: quanta-br0
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+# END_EAI
+
 services:
   postgres:
     image: postgres:15-alpine
     container_name: postgres-${QUANTA_ENV:-local}
+    # BEGIN_EAI    
+    networks:
+      quanta-network:
+        ipv4_address: 172.20.0.10
+    # END_EAI
     environment:
       - POSTGRES_DB=quanta
       - POSTGRES_USER=quanta
@@ -23,6 +55,10 @@ services:
     profiles: ["pgadmin"]
     image: dpage/pgadmin4:latest
     container_name: pgadmin-${QUANTA_ENV:-local}
+    # BEGIN_EAI
+    networks:
+      - quanta-network
+    # END_EAI
     # Note: This is linux UserId:GroupID, and NOT related to port numbers
     user: "5050:5050"
     environment:
@@ -52,6 +88,14 @@ services:
       args:
         ENV: ${QUANTA_ENV:-local}
     container_name: quanta-${QUANTA_ENV:-local}
+    # BEGIN_EAI
+    networks:
+      quanta-network:
+        ipv4_address: 172.20.0.20
+    # Workaround for Docker 29.x DNS issues - add static host entry
+    extra_hosts:
+      - "postgres:172.20.0.10"
+    # END_EAI
     ports:
       - "${APP_PORT:-8000}:8000"
       # Debug port for Node.js debugging
