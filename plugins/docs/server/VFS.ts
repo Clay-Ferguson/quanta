@@ -363,6 +363,21 @@ class VFS {
     async mkdirEx(owner_id: number, fullPath: string, options?: { recursive?: boolean }, is_public?: boolean, ordinal?: number): Promise<void> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
+
+            // Handle recursive creation
+            if (options?.recursive) {
+                // If directory already exists, return (mkdir -p behavior)
+                if (await this.exists(fullPath)) {
+                    return;
+                }
+
+                const { parentPath } = docUtil.parsePath(relativePath);
+                if (parentPath !== '') {
+                    // Recursively create parent
+                    await this.mkdirEx(owner_id, parentPath, { recursive: true }, is_public);
+                }
+            }
+
             const { parentPath, filename } = docUtil.parsePath(relativePath);
             
             // Pass null for ordinal if not provided to let the SQL function calculate it automatically

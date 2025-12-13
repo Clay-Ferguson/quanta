@@ -41,6 +41,7 @@ export enum PanelKeys {
     settings_storageSpace = 'settings_storageSpace',
     settings_options = 'settings_options',
     settings_identityKeys = 'settings_identityKeys',
+    settings_tools = 'settings_tools',
     settings_dangerZone = 'settings_dangerZone',
     settings_Diagnostics = 'settings_Diagnostics',
 }

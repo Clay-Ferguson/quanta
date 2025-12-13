@@ -16,6 +16,8 @@ import { idb } from '../IndexedDB';
 import appUsers from '../AppUsers';
 import { runTests as runCryptoTests } from '@common/test/Crypto.test.js';
 import { runTests as runCommonUtilsTests } from '@common/test/CommonUtils.test.js';
+import { httpClientUtil } from '../HttpClientUtil';
+import { DocsGlobalState } from '../../plugins/docs/client/DocsTypes';
 
 async function clear() {
     await idb.clear();
@@ -200,6 +202,43 @@ export default function SettingsPage() {
         const newRate = event.target.value;
         setTtsRate(newRate);
         await idb.setItem(DBKeys.ttsRate, newRate);
+    };
+
+    const handleImport = async () => {
+        const docsGs = gs as unknown as DocsGlobalState;
+        let nodeId = null;
+        
+        if (docsGs.docsSelItems && docsGs.docsSelItems.size > 0) {
+            const firstItem = docsGs.docsSelItems.values().next().value;
+            nodeId = firstItem?.uuid;
+        }
+
+        if (!nodeId) {
+            await alertModal("Please select a folder in the Docs tab first.");
+            return;
+        }
+
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.zip,.tar.gz';
+        input.onchange = async (e: any) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('nodeId', nodeId);
+
+            console.log("Uploading archive...");
+            await httpClientUtil.secureHttpPost('/api/docs/archive/import', formData);
+            await alertModal("Import started. Check server logs for details.");
+        };
+        input.click();
+    };
+
+    const handleExport = () => {
+        console.log("Export button clicked");
     };
 
     return (
@@ -431,6 +470,18 @@ export default function SettingsPage() {
                             <div className="flex space-x-4">
                                 <button className="btn-primary" onClick={() => appUsers.createIdentity(true)}>Create New Keys</button>
                                 <button className="btn-primary" onClick={appUsers.importKeyPair}>Import Keys</button>
+                            </div>
+                        </div>
+                    </TitledPanelComp>
+
+                    <TitledPanelComp title="Tools" collapsibleKey={PanelKeys.settings_tools}>
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-300 mb-4">
+                                Import and Export data.
+                            </p>
+                            <div className="flex space-x-4">
+                                <button className="btn-primary" onClick={handleImport}>Import</button>
+                                <button className="btn-primary" onClick={handleExport}>Export</button>
                             </div>
                         </div>
                     </TitledPanelComp>

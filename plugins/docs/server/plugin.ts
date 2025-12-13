@@ -14,6 +14,7 @@ import pgdb from "../../../server/db/PGDB.js";
 import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
 import vfs from "./VFS.js";
 import { docTags } from "./DocTags.js";
+import { importArchive } from "./ImportArchive.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +71,7 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/search', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docMod.search)); 
         context.app.post('/api/docs/tags', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docTags.extractTags));
         context.app.post('/api/docs/tags/scan', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docTags.scanAndUpdateTags));
+        context.app.post('/api/docs/archive/import', httpServerUtil.verifyReqHTTPSignature, asyncHandler(importArchive.doImport));
         
         // Removed until there's a docker+Postres version of this
         // context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, asyncHandler(ssg.generateStaticSite));
