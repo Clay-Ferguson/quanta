@@ -102,7 +102,7 @@ DEBUG_PORT=9229
 
 ### Debug Build Script
 
-Use `build/dev/docker/build-and-start-debug.sh` to start the application in debug mode:
+Use `build/dev/build-and-start-debug.sh` to start the application in debug mode:
 
 ```bash
 #!/bin/bash 
@@ -121,7 +121,7 @@ DEBUG=true DEBUG_PORT=9229 docker-compose \
 
 ### Production Build Script
 
-Use `build/dev/docker/build-and-start.sh` for regular development:
+Use `build/dev/build-and-start.sh` for regular development:
 
 ```bash
 # Explicitly disable debug mode for production-like run
@@ -271,7 +271,7 @@ Create or update `.vscode/tasks.json` for build automation:
         {
             "label": "Start Debug Server",
             "type": "shell",
-            "command": "./build/dev/docker/build-and-start-debug.sh",
+            "command": "./build/dev/build-and-start-debug.sh",
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -310,7 +310,7 @@ This is the primary debugging method for full-stack development:
 #### Step 1: Start Application in Debug Mode
 
 ```bash
-./build/dev/docker/build-and-start-debug.sh
+./build/dev/build-and-start-debug.sh
 ```
 
 This script will:
@@ -521,7 +521,7 @@ The debug configuration includes `"restart": true`, which allows:
 
 **Stopping Debug Session**:
 - Use VS Code stop button or `Shift+F5`
-- Stop Docker containers: `./build/dev/docker/stop.sh`
+- Stop Docker containers: `./build/dev/stop.sh`
 
 **Restarting Debug Session**:
 - Use restart button in VS Code debug toolbar

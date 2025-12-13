@@ -26,7 +26,7 @@ if [ $? -eq 0 ]; then
     echo "Build successful. Preparing Docker environment..."
 
     mkdir -p ../quanta-volumes/dev/pgadmin-data
-    mkdir -p ../quanta-volumes/dev/docker/logs
+    mkdir -p ../quanta-volumes/dev/logs
 
     # If that folder create didn't work, exit with an error
     if [ $? -ne 0 ]; then

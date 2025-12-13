@@ -56,11 +56,11 @@ The goal is that we can theoretically run the Docs and/or Chat plugins independe
 The application now requires Docker for all deployments as it relies entirely on PostgreSQL for the VFS (Virtual File System) implementation. Both the Chat and Docs plugins require database persistence.
 
 ### Starting the Application
-* For docker run: `/build/dev/docker/build-and-start.sh`
+* For docker run: `/build/dev/build-and-start.sh`
 
 ### Stopping the Application (IMPORTANT)
 **Always use the proper stop script to terminate the Docker stack:**
-* For docker stop: `/build/dev/docker/stop.sh`
+* For docker stop: `/build/dev/stop.sh`
 
 **Never use CTRL-C to terminate the application** when running the Docker stack, as this leaves Docker containers, networks, and volumes in an orphaned state. This can cause networking errors like "network not found" when trying to restart the application. The stop script properly cleans up all Docker resources using `docker-compose down` and removes orphaned containers.
 

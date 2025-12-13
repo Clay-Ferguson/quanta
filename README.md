@@ -40,7 +40,7 @@ This platform assumes it's running in a Linux environment, and has only been tes
 
 ## Development
 * For non-docker run: `/build/dev/build-and-start.sh`
-* For docker run: `/build/dev/docker/build-and-start.sh`
+* For docker run: `/build/dev/build-and-start.sh`
 
 ## Local Install (non-Development)
 * Create installation folder: `/build/local/create-install.sh`

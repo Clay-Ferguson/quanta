@@ -15,7 +15,7 @@ RUN yarn install --frozen-lockfile
 COPY dist/ ./dist/
 
 # Copy configuration files
-COPY build/${ENV}/docker/config.yaml ./
+COPY build/${ENV}/config.yaml ./
 
 # Create directory for database (will be mounted as volume)
 RUN mkdir -p /app/data

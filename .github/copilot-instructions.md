@@ -55,16 +55,16 @@ Quanta is a React-based plugin-extensible web platform for rapid application dev
 ### Build & Run
 ```bash
 # Docker dev environment (RECOMMENDED - includes PostgreSQL)
-./build/dev/docker/build-and-start.sh  # App at http://localhost:8000
+./build/dev/build-and-start.sh  # App at http://localhost:8000
 
 # Docker dev with debug port 9229 exposed
-./build/dev/docker/build-and-start-debug.sh
+./build/dev/build-and-start-debug.sh
 
 # Non-Docker (requires manual PostgreSQL setup)
 yarn build && yarn start
 
 # Stop Docker containers
-./build/dev/docker/stop.sh
+./build/dev/stop.sh
 ```
 
 ### Build Process Details
