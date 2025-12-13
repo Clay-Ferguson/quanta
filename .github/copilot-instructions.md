@@ -228,6 +228,16 @@ applyStateRules(gs: GlobalState) {
 - REST APIs: `/api/{plugin}/{endpoint}` pattern
 - WebSockets: Chat plugin uses `ws` library for real-time messaging
 - File uploads: Express middleware with size limits (20MB default)
+- **Archive Import**:
+  - Endpoint: `/api/docs/archive/import`
+  - Handled by: `ImportArchive.ts`
+  - Supports: ZIP, TAR.GZ, TGZ
+  - Logic:
+    - Uploads archive via multipart/form-data
+    - Extracts contents to temporary memory
+    - Recursively creates directories using `vfs.mkdirEx` (handles parent creation)
+    - Writes files using `vfs.writeFileEx` (auto-detects binary vs text based on extension)
+    - Reorders imported directories to match alphabetical order using a two-pass ordinal update strategy (negative then positive) to avoid unique constraint violations.
 
 ## Coding Conventions
 

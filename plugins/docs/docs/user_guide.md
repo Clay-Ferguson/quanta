@@ -76,6 +76,19 @@ A dropdown in the header allows you to adjust the content width:
 - **Medium**: Balanced view (default)
 - **Wide**: Expanded view for maximum content visibility
 
+## Importing Archives
+
+You can import content from existing archives (ZIP, TAR.GZ, TGZ) directly into your Quanta Docs structure. This is useful for migrating existing documentation or restoring backups.
+
+### How to Import
+1. Navigate to the **Settings** page (click the gear icon in the header).
+2. Scroll down to the **Tools** section.
+3. Click the **Import** button.
+4. Select the archive file you want to upload.
+5. The content will be imported into the currently selected folder in your Tree View.
+
+**Note**: The import process preserves the directory structure of your archive. Text files (like Markdown) are imported as editable content, while binary files (images, PDFs, etc.) are stored as attachments.
+
 ## Overall Page Layout
 
 At the upper right of the page these are buttons for opening folders (if run locally only), followed by refresh, search, settings, report, and help buttons. Parent button takes you up one level on folder structure. These are general buttons about things at a higher level in the app.
