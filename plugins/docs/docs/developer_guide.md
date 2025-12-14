@@ -28,6 +28,12 @@ Rather than password security, the entire Quanta Platform and all plugins use ex
 
 Currently we only allow sharing of files/folders to be either private or public. Private files/folders can only be viewed by their owner, and public items can be viewed by anyone.
 
+# Temporary Files (TMP Folder)
+
+The application uses a `tmp` folder mounted at `/app/dist/server/tmp` inside the Docker container for storing temporary files such as exported ZIP archives. This folder is defined as a volume in `docker-compose.yaml` and maps to the host's `./tmp` directory.
+
+**TODO**: There is currently no automatic cleanup of ZIP files in the TMP folder. These files accumulate over time and must be manually deleted. A scheduled cleanup mechanism should be implemented to remove old temporary files.
+
 # Special Syntax
 
 Quanta uses primarily standard Markdown for renering content, but there is one piece of non-standard syntax which is for how to display information in a columnar layout. The way this is done is by simply putting `***` (three asterisks) all on line line to split up the content into columns.
