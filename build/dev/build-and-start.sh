@@ -27,6 +27,7 @@ if [ $? -eq 0 ]; then
 
     mkdir -p ../quanta-volumes/dev/pgadmin-data
     mkdir -p ../quanta-volumes/dev/logs
+    mkdir -p ../quanta-volumes/dev/tmp
 
     # If that folder create didn't work, exit with an error
     if [ $? -ne 0 ]; then

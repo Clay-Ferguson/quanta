@@ -3,10 +3,12 @@ import { svrUtil } from "../../../server/ServerUtil.js";
 import AdmZip from 'adm-zip';
 import { docUtil } from './DocUtil.js';
 import pgdb from '../../../server/db/PGDB.js';
+import vfs from './VFS.js';
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
-import { randomUUID } from 'crypto';
+
+// Directory for temporary files (mounted as a volume in Docker)
+const TMP_DIR = '/app/dist/server/tmp';
 
 class ExportArchive {
     export = async (req: Request, res: Response): Promise<void> => {
@@ -46,16 +48,9 @@ class ExportArchive {
             const zip = new AdmZip();
 
             // Fetch all descendants (and the node itself)
-            const query = `
-                SELECT * FROM vfs_nodes 
-                WHERE uuid = $1 
-                   OR parent_path = $2 
-                   OR parent_path LIKE $3
-            `;
+            const rows = await vfs.getNodeWithDescendants(nodeId, rootPath);
             
-            const rows = await pgdb.query(query, nodeId, rootPath, rootPath + '/%');
-            
-            for (const row of rows.rows) {
+            for (const row of rows) {
                 // Construct full path for this node
                 const fullPath = row.parent_path ? `${row.parent_path}/${row.filename}` : row.filename;
                 
@@ -77,10 +72,9 @@ class ExportArchive {
                 }
             }
 
-            const guid = randomUUID();
-            const fileName = `${guid}.zip`;
-            const tempDir = os.tmpdir();
-            const filePath = path.join(tempDir, fileName);
+            const timestamp = Date.now();
+            const fileName = `${rootNode.filename}-${timestamp}.zip`;
+            const filePath = path.join(TMP_DIR, fileName);
 
             zip.writeZip(filePath);
 
@@ -106,8 +100,7 @@ class ExportArchive {
             return;
         }
 
-        const tempDir = os.tmpdir();
-        const filePath = path.join(tempDir, fileName);
+        const filePath = path.join(TMP_DIR, fileName);
 
         if (!fs.existsSync(filePath)) {
             res.status(404).send('File not found');

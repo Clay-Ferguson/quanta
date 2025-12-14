@@ -103,6 +103,7 @@ services:
     volumes:
       # Mount logs directory to host
       - ${LOGS_PATH:-./logs}:/app/dist/server/logs
+      - ${TMP_PATH:-./tmp}:/app/dist/server/tmp
     environment:
       - CONFIG_FILE=./config.yaml
       - DEV_BUILD_OPTS=true

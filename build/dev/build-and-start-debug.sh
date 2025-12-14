@@ -4,6 +4,8 @@
 
 # WARNING: You need to 'yarn install' before running this script!
 
+./build/dev/stop.sh
+
 # Source nvm to ensure yarn is available
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -27,6 +29,7 @@ if [ $? -eq 0 ]; then
 
     mkdir -p ../quanta-volumes/dev/pgadmin-data
     mkdir -p ../quanta-volumes/dev/logs
+    mkdir -p ../quanta-volumes/dev/tmp
 
     # If that folder create didn't work, exit with an error
     if [ $? -ne 0 ]; then
