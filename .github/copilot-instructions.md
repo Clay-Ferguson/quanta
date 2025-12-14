@@ -238,6 +238,18 @@ applyStateRules(gs: GlobalState) {
     - Recursively creates directories using `vfs.mkdirEx` (handles parent creation)
     - Writes files using `vfs.writeFileEx` (auto-detects binary vs text based on extension)
     - Reorders imported directories to match alphabetical order using a two-pass ordinal update strategy (negative then positive) to avoid unique constraint violations.
+- **Archive Export**:
+  - Endpoint: `/api/docs/archive/export` (POST, returns download link)
+  - Download Endpoint: `/api/docs/archive/download/:fileName` (GET, serves the ZIP file)
+  - Handled by: `ExportArchive.ts`
+  - Produces: ZIP files only
+  - Logic:
+    - Receives `nodeId` (UUID of folder to export)
+    - Queries all descendants from PostgreSQL VFS
+    - Creates ZIP file using AdmZip with full directory structure preserved
+    - Stores ZIP in OS temp directory with random GUID filename
+    - Returns download link to client
+    - Download endpoint serves file with basic path traversal protection
 
 ## Coding Conventions
 

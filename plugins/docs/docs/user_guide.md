@@ -89,6 +89,20 @@ You can import content from existing archives (ZIP, TAR.GZ, TGZ) directly into y
 
 **Note**: The import process preserves the directory structure of your archive. Text files (like Markdown) are imported as editable content, while binary files (images, PDFs, etc.) are stored as attachments.
 
+## Exporting Archives
+
+You can export any folder and its contents as a ZIP archive. This is useful for creating backups or sharing content with others.
+
+### How to Export
+1. In the **Tree View**, select the folder you want to export by checking its checkbox (Edit Mode must be enabled).
+2. Navigate to the **Settings** page (click the gear icon in the header).
+3. Scroll down to the **Tools** section.
+4. Click the **Export** button.
+5. A dialog will appear with a download link once the export is ready.
+6. Click the link to download your ZIP file.
+
+**Note**: The export includes all files and subfolders within the selected folder, preserving the complete directory structure. Both text and binary files are included in the archive.
+
 ## Overall Page Layout
 
 At the upper right of the page these are buttons for opening folders (if run locally only), followed by refresh, search, settings, report, and help buttons. Parent button takes you up one level on folder structure. These are general buttons about things at a higher level in the app.

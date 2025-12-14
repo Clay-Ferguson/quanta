@@ -15,6 +15,7 @@ import { UserProfileCompact } from "../../../common/types/CommonTypes.js";
 import vfs from "./VFS.js";
 import { docTags } from "./DocTags.js";
 import { importArchive } from "./ImportArchive.js";
+import { exportArchive } from "./ExportArchive.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +73,8 @@ class DocsServerPlugin implements IServerPlugin {
         context.app.post('/api/docs/tags', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docTags.extractTags));
         context.app.post('/api/docs/tags/scan', httpServerUtil.verifyReqHTTPSignature, asyncHandler(docTags.scanAndUpdateTags));
         context.app.post('/api/docs/archive/import', httpServerUtil.verifyReqHTTPSignature, asyncHandler(importArchive.doImport));
+        context.app.post('/api/docs/archive/export', httpServerUtil.verifyReqHTTPSignature, asyncHandler(exportArchive.export));
+        context.app.get('/api/docs/archive/download/:fileName', asyncHandler(exportArchive.download));
         
         // Removed until there's a docker+Postres version of this
         // context.app.post('/api/docs/ssg', httpServerUtil.verifyReqHTTPSignature, asyncHandler(ssg.generateStaticSite));

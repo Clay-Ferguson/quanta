@@ -237,8 +237,28 @@ export default function SettingsPage() {
         input.click();
     };
 
-    const handleExport = () => {
-        console.log("Export button clicked");
+    const handleExport = async () => {
+        const docsGs = gs as DocsGlobalState;
+        if (!docsGs.docsSelItems || docsGs.docsSelItems.size === 0) {
+            await alertModal("Please select a folder in the Docs view to export.");
+            return;
+        }
+        
+        const node = docsGs.docsSelItems.values().next().value;
+        if (!node) return;
+
+        try {
+            const res = await httpClientUtil.secureHttpPost('/api/docs/archive/export', { nodeId: node.uuid });
+            if (res?.downloadLink) {
+                const link = res.downloadLink;
+                await alertModal(`Export ready! [Click here to download](${link})`);
+            } else {
+                await alertModal("Export failed. No download link returned.");
+            }
+        } catch (e) {
+            console.error("Export error", e);
+            await alertModal("Export failed. See console for details.");
+        }
     };
 
     return (
