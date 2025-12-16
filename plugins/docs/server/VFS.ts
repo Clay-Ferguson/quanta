@@ -19,7 +19,10 @@ export interface VFSStats {
  * Virtual File System 2 (VFS) for handling file operations in a server environment, by using PostgreSQL as a backend for storage of files and folders.
  */
 class VFS {
-    /* Ensures that this user has a folder in the VFS root directory, and that it's named after their username. */
+    /**
+     * Ensures that this user has a folder in the VFS root directory, and that it's named after their username.
+     * @param userProfile - The user profile object containing name and id
+     */
     async createUserFolder(userProfile: UserProfileCompact) {
         console.log(`Creating user folder for: ${userProfile.name} (ID: ${userProfile.id})`);
         const rootKey = "usr";
@@ -53,6 +56,11 @@ class VFS {
         );
     }
 
+    /**
+     * Get a node by its full path
+     * @param fullPath - The full path of the node
+     * @returns The TreeNode or null if not found
+     */
     async getNodeByName(fullPath: string): Promise<TreeNode | null> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -77,7 +85,12 @@ class VFS {
         }
     }
 
-    // File existence and metadata
+    /**
+     * Check if a file or directory exists
+     * @param fullPath - The full path to check
+     * @param info - Optional object to populate with node info if it exists
+     * @returns True if the file/directory exists, false otherwise
+     */
     async exists(fullPath: string, info: any=null): Promise<boolean> {
         // if a non-info object was passed the caller needs additional info so we run getNodeByName
         // which returns the whole record.
@@ -119,6 +132,12 @@ class VFS {
         }
     }
     
+    /**
+     * Check if a directory has any children
+     * @param owner_id - The owner ID for authorization
+     * @param path - The directory path to check
+     * @returns True if the directory has children, false otherwise
+     */
     async childrenExist(owner_id: number, path: string): Promise<boolean> {
         try {
             const relativePath = docUtil.normalizePath(path);
@@ -139,6 +158,11 @@ class VFS {
         }
     }
     
+    /**
+     * Get file statistics
+     * @param fullPath - The full path of the file
+     * @returns VFSStats object containing file metadata
+     */
     async stat(fullPath: string): Promise<VFSStats> { 
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -180,6 +204,13 @@ class VFS {
         }
     }
     
+    /**
+     * Read file content
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the file to read
+     * @param encoding - Optional encoding (if provided, returns string, otherwise Buffer)
+     * @returns File content as string or Buffer
+     */
     async readFile(owner_id: number, fullPath: string, encoding?: BufferEncoding): Promise<string | Buffer> {
         try {
             const { parentPath, filename } = docUtil.parsePath(fullPath);
@@ -204,10 +235,26 @@ class VFS {
         }
     }
     
+    /**
+     * Write content to a file (simplified version)
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the file to write
+     * @param data - The content to write (string or Buffer)
+     * @param encoding - Optional encoding for string data
+     */
     async writeFile(owner_id: number, fullPath: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void> {
         return await this.writeFileEx(owner_id, fullPath, data, encoding || 'utf8', false);
     }
     
+    /**
+     * Write content to a file with extended options
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the file to write
+     * @param data - The content to write (string or Buffer)
+     * @param encoding - Encoding for string data
+     * @param is_public - Whether the file should be public
+     * @param ordinal - Optional ordinal position for the file
+     */
     async writeFileEx(owner_id: number, fullPath: string, data: string | Buffer, encoding: BufferEncoding, is_public: boolean, ordinal?: number): Promise<void> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -343,6 +390,12 @@ class VFS {
         }
     }
     
+    /**
+     * Read directory contents (filenames only)
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the directory
+     * @returns Array of filenames in the directory
+     */
     async readdir(owner_id: number, fullPath: string): Promise<string[]> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -360,6 +413,13 @@ class VFS {
         }
     }
     
+    /**
+     * Read directory contents with full node information
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the directory
+     * @param loadContent - Whether to load file content (not used in current implementation)
+     * @returns Array of TreeNode objects
+     */
     async readdirEx(owner_id: number, fullPath: string, loadContent: boolean): Promise<TreeNode[]> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -379,6 +439,14 @@ class VFS {
         }
     }
         
+    /**
+     * Create a directory
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the directory to create
+     * @param options - Options for creation (recursive)
+     * @param is_public - Whether the directory should be public
+     * @param ordinal - Optional ordinal position
+     */
     async mkdirEx(owner_id: number, fullPath: string, options?: { recursive?: boolean }, is_public?: boolean, ordinal?: number): Promise<void> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -412,6 +480,12 @@ class VFS {
         }
     } 
     
+    /**
+     * Rename a file or directory
+     * @param owner_id - The owner ID for authorization
+     * @param oldPath - The current path
+     * @param newPath - The new path
+     */
     async rename(owner_id: number, oldPath: string, newPath: string): Promise<void> {
         if (!docUtil.validPath(newPath)) {
             throw new Error(`Invalid new path: ${newPath}. Only alphanumeric characters and underscores`);
@@ -431,6 +505,11 @@ class VFS {
         }
     }
     
+    /**
+     * Delete a file (not directory)
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the file to delete
+     */
     async unlink(owner_id: number, fullPath: string): Promise<void> { 
         try {
             const relativePath = docUtil.normalizePath(fullPath);
@@ -474,6 +553,12 @@ class VFS {
         }
     }
     
+    /**
+     * Remove a file or directory
+     * @param owner_id - The owner ID for authorization
+     * @param fullPath - The full path of the item to remove
+     * @param options - Options for removal (recursive, force)
+     */
     async rm(owner_id: number, fullPath: string, options?: { recursive?: boolean, force?: boolean }): Promise<void> {
         try {
             const relativePath = docUtil.normalizePath(fullPath);
