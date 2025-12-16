@@ -485,56 +485,12 @@ class VFS {
             
             const { parentPath, filename } = docUtil.parsePath(relativePath);
             
-            // Check if the file/directory exists and get its info
-            let stats: VFSStats;
-            try {
-                stats = await this.stat(fullPath);
-            } catch (error) {
-                // If force option is enabled, don't throw errors for non-existent files/directories
-                if (options?.force) {
-                    return;
-                }
-                throw error;
-            }
+            // Use vfs_rm which now handles both files and directories, recursive and force options
+            await pgdb.query(
+                'SELECT vfs_rm($1, $2, $3, $4, $5, $6)',
+                owner_id, parentPath, filename, rootKey, options?.recursive || false, options?.force || false
+            );
             
-            if (stats.is_directory) {
-                // For directories, check if they have children (unless recursive is enabled)
-                if (!options?.recursive) {
-                    const hasChildren = await this.childrenExist(owner_id, relativePath);
-                    if (hasChildren) {
-                        throw new Error(`Directory not empty: ${fullPath}. Use recursive option to delete non-empty directories.`);
-                    }
-                }
-                
-                // Use a direct DELETE query for now since vfs_rmdir doesn't exist yet
-                const result = await pgdb.query(
-                    'DELETE FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 AND filename = $3 AND (owner_id = $4 OR $4 = 0) RETURNING *',
-                    rootKey, parentPath, filename, owner_id
-                );
-                
-                if (result.rowCount === 0) {
-                    throw new Error(`Permission denied or directory not found: ${fullPath}`);
-                }
-                
-                // If recursive, also delete all children
-                if (options?.recursive) {
-                    const childPath = relativePath;
-                    await pgdb.query(
-                        'DELETE FROM vfs_nodes WHERE doc_root_key = $1 AND (parent_path = $2 OR parent_path LIKE $3) AND (owner_id = $4 OR $4 = 0)',
-                        rootKey, childPath, childPath + '/%', owner_id
-                    );
-                }
-            } else {
-                // For files, use direct DELETE query since vfs_unlink doesn't exist yet
-                const result = await pgdb.query(
-                    'DELETE FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 AND filename = $3 AND (owner_id = $4 OR $4 = 0) RETURNING *',
-                    rootKey, parentPath, filename, owner_id
-                );
-                
-                if (result.rowCount === 0) {
-                    throw new Error(`Permission denied or file not found: ${fullPath}`);
-                }
-            }
         } catch (error) {
             // If force option is enabled, don't throw errors for certain types of failures
             if (options?.force && error instanceof Error && 

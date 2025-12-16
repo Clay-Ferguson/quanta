@@ -624,22 +624,26 @@ END;
 $$ LANGUAGE plpgsql;
 
 -----------------------------------------------------------------------------------------------------------
--- Function: vfs_rmdir
+-- Function: vfs_rm
 -- Equivalent to fs.rmSync() - removes a directory recursively
 -- Uses vfs_nodes table instead of vfs_nodes (key difference from VFS)
 -----------------------------------------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION vfs_rmdir(
+CREATE OR REPLACE FUNCTION vfs_rm(
     owner_id_arg INTEGER,
     parent_path_param TEXT,
     dirname_param TEXT,
-    root_key TEXT
+    root_key TEXT,
+    recursive_param BOOLEAN DEFAULT FALSE,
+    force_param BOOLEAN DEFAULT FALSE
 ) 
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER := 0;
     dir_path TEXT;
+    is_dir BOOLEAN;
+    children_exist BOOLEAN;
 BEGIN
-    -- Build the full path of the directory to delete
+    -- Build the full path of the directory/file to delete
     -- Handle empty string (root) vs non-empty parent paths
     IF parent_path_param = '' THEN
         dir_path := dirname_param;
@@ -647,37 +651,62 @@ BEGIN
         dir_path := parent_path_param || '/' || dirname_param;
     END IF;
     
-    -- Check if directory exists
+    -- Check if file/directory exists
     IF NOT vfs_exists(parent_path_param, dirname_param, root_key) THEN
-        RAISE EXCEPTION 'Directory not found: %s/%s', parent_path_param, dirname_param;
+        IF force_param THEN
+            RETURN 0;
+        ELSE
+            RAISE EXCEPTION 'File or directory not found: %/%', parent_path_param, dirname_param;
+        END IF;
     END IF;
     
     -- Check authorization
-    IF NOT vfs_check_auth(owner_id_arg, parent_path_param, dirname_param, root_key, TRUE) THEN
-        RAISE EXCEPTION 'Not authorized to remove directory: %s/%s', parent_path_param, dirname_param;
+    -- Pass NULL for is_directory_param to allow checking both files and directories
+    IF NOT vfs_check_auth(owner_id_arg, parent_path_param, dirname_param, root_key, NULL) THEN
+        RAISE EXCEPTION 'Not authorized to remove: %/%', parent_path_param, dirname_param;
+    END IF;
+
+    -- Check if it is a directory
+    SELECT is_directory INTO is_dir
+    FROM vfs_nodes
+    WHERE doc_root_key = root_key
+      AND parent_path = parent_path_param
+      AND filename = dirname_param;
+
+    IF is_dir THEN
+        -- If it's a directory, check for children if not recursive
+        IF NOT recursive_param THEN
+            SELECT EXISTS (
+                SELECT 1 FROM vfs_nodes
+                WHERE doc_root_key = root_key
+                  AND (parent_path = dir_path OR parent_path LIKE dir_path || '/%')
+            ) INTO children_exist;
+            
+            IF children_exist THEN
+                RAISE EXCEPTION 'Directory not empty: %/%. Use recursive option to delete non-empty directories.', parent_path_param, dirname_param;
+            END IF;
+        END IF;
+
+        -- Delete all descendants where parent_path starts with our directory path
+        DELETE FROM vfs_nodes
+        WHERE 
+            doc_root_key = root_key
+            AND (
+                parent_path = dir_path OR 
+                parent_path LIKE dir_path || '/%'
+            );
+        
+        GET DIAGNOSTICS deleted_count = ROW_COUNT;
     END IF;
     
-    -- Delete all children recursively first (using a simpler approach)
-    -- Delete all descendants where parent_path starts with our directory path
-    DELETE FROM vfs_nodes
-    WHERE 
-        doc_root_key = root_key
-        AND (
-            parent_path = dir_path OR 
-            parent_path LIKE dir_path || '/%'
-        );
-    
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    
-    -- Delete the directory itself
+    -- Delete the node itself (file or directory)
     DELETE FROM vfs_nodes
     WHERE 
         doc_root_key = root_key
         AND parent_path = parent_path_param
-        AND filename = dirname_param
-        AND is_directory = TRUE;
+        AND filename = dirname_param;
         
-    -- Add the directory itself to the count
+    -- Add the node itself to the count
     deleted_count := deleted_count + 1;
     
     RETURN deleted_count;

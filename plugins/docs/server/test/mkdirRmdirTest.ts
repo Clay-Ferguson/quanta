@@ -114,12 +114,12 @@ export async function mkdirRmdirTest(owner_id: number): Promise<void> {
             }
         }
 
-        // Test 4: Delete the directory using vfs_rmdir
-        console.log('Testing vfs_rmdir function for empty directory...');
+        // Test 4: Delete the directory using vfs_rm
+        console.log('Testing vfs_rm function for empty directory...');
         
         const rmdirResult = await pgdb.query(`
-            SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count
-        `, owner_id, testParentPath, testDirName, testRootKey);
+            SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+        `, owner_id, testParentPath, testDirName, testRootKey, false, false);
         
         const deletedCount = rmdirResult.rows[0].deleted_count;
         console.log(`Directory deletion result - deleted count: ${deletedCount}`);
@@ -217,11 +217,11 @@ export async function mkdirRmdirTest(owner_id: number): Promise<void> {
         }
 
         // Test recursive deletion
-        console.log('Testing vfs_rmdir for directory with content (recursive deletion)...');
+        console.log('Testing vfs_rm for directory with content (recursive deletion)...');
         
         const rmdirRecursiveResult = await pgdb.query(`
-            SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count
-        `, owner_id, testParentPath, testDirName2, testRootKey);
+            SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+        `, owner_id, testParentPath, testDirName2, testRootKey, true, false);
         
         const recursiveDeletedCount = rmdirRecursiveResult.rows[0].deleted_count;
         console.log(`Recursive directory deletion result - deleted count: ${recursiveDeletedCount}`);
@@ -246,21 +246,36 @@ export async function mkdirRmdirTest(owner_id: number): Promise<void> {
         console.log('✅ Recursive directory deletion test passed');
 
         // Test 7: Try to delete non-existent directory (should fail)
-        console.log('Testing vfs_rmdir for non-existent directory (should fail)...');
+        console.log('Testing vfs_rm for non-existent directory (should fail)...');
         
         try {
             await pgdb.query(`
-                SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count
-            `, owner_id, testParentPath, 'non-existent-directory', testRootKey);
+                SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+            `, owner_id, testParentPath, 'non-existent-directory', testRootKey, false, false);
             
             throw new Error('Expected exception for non-existent directory, but function succeeded');
         } catch (error: any) {
-            if (error.message && error.message.includes('Directory not found')) {
+            if (error.message && (error.message.includes('Directory not found') || error.message.includes('File or directory not found'))) {
                 console.log('✅ Non-existent directory deletion test passed - correctly threw exception');
             } else {
                 throw new Error(`Unexpected error for non-existent directory: ${error.message}`);
             }
         }
+
+        // Test 7b: Try to delete non-existent directory with force=true (should succeed with 0 count)
+        console.log('Testing vfs_rm for non-existent directory with force=true...');
+        
+        const forceRmdirResult = await pgdb.query(`
+            SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+        `, owner_id, testParentPath, 'non-existent-directory-force', testRootKey, false, true);
+        
+        const forceDeletedCount = forceRmdirResult.rows[0].deleted_count;
+        console.log(`Force directory deletion result - deleted count: ${forceDeletedCount}`);
+        
+        if (forceDeletedCount !== 0) {
+            throw new Error(`Expected 0 deleted items with force=true, got: ${forceDeletedCount}`);
+        }
+        console.log('✅ Non-existent directory force deletion test passed');
 
         // Test 8: Create public directory and test permissions
         const publicDirName = 'public-test-directory';
@@ -295,11 +310,11 @@ export async function mkdirRmdirTest(owner_id: number): Promise<void> {
         console.log('✅ Public directory creation test passed');
 
         // Delete the public directory
-        console.log('Testing vfs_rmdir for public directory...');
+        console.log('Testing vfs_rm for public directory...');
         
         const publicRmdirResult = await pgdb.query(`
-            SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count
-        `, owner_id, testParentPath, publicDirName, testRootKey);
+            SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+        `, owner_id, testParentPath, publicDirName, testRootKey, false, false);
         
         const publicDeletedCount = publicRmdirResult.rows[0].deleted_count;
         console.log(`Public directory deletion result - deleted count: ${publicDeletedCount}`);
@@ -356,8 +371,8 @@ export async function mkdirRmdirTest(owner_id: number): Promise<void> {
         
         for (const testDir of testDirs) {
             await pgdb.query(`
-                SELECT vfs_rmdir($1, $2, $3, $4) as deleted_count
-            `, owner_id, testParentPath, testDir.name, testRootKey);
+                SELECT vfs_rm($1, $2, $3, $4, $5, $6) as deleted_count
+            `, owner_id, testParentPath, testDir.name, testRootKey, false, false);
             
             console.log(`Deleted directory: ${testDir.name}`);
         }
