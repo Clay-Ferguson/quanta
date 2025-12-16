@@ -171,10 +171,10 @@ class DocUtil {
     }
     
     /**
- * Parse a full path to extract parent path and filename
- * @param fullPath - The full absolute path 
- * @returns Object with parentPath and filename
- */
+     * Parse a full path to extract parent path and filename
+     * @param fullPath - The full absolute path 
+     * @returns Object with parentPath and filename
+     */
     parsePath = (fullPath: string): { parentPath: string; filename: string } => {
         const normalizedPath = this.normalizePath(fullPath);
 
