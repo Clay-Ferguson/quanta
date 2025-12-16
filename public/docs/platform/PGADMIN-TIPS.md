@@ -118,7 +118,7 @@ The pgAdmin service is configured in `docker-compose.yaml` with:
 - **Profile**: `pgadmin` (must be explicitly enabled)
 - **Image**: `dpage/pgadmin4:latest`
 - **Port Mapping**: Host 5050 → Container 80
-- **Data Persistence**: `../quanta-volumes/dev/pgadmin-data`
+- **Data Persistence**: `$QUANTA_VOLUMES_PATH/pgadmin-data`
 
 ### Starting with pgAdmin Profile
 ```bash

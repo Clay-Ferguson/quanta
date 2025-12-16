@@ -266,6 +266,6 @@ applyStateRules(gs: GlobalState) {
 2. **Plugin load order**: Plugins loaded in array order from config—matters for HTML preprocessing
 3. **State ref staleness**: `gs()` function returns ref, but hooks (`useGlobalState()`) auto-update
 4. **Missing asyncHandler**: Unwrapped async routes will crash server on error
-5. **Docker volumes**: PostgreSQL data in `../quanta-volumes/{env}/` outside repo (survives rebuilds)
+5. **Docker volumes**: PostgreSQL data in `${QUANTA_VOLUMES_PATH}` outside repo (survives rebuilds)
 6. **Port conflicts**: Dev uses 8000 (app), 5432 (postgres), 5050 (pgadmin)—check availability
 7. **Plugin config sync**: Changing `config.yaml` requires restart to take effect

@@ -4,6 +4,14 @@
 
 # WARNING: You need to 'yarn install' before running this script!
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the .env file from the same directory if it exists
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    source "$SCRIPT_DIR/.env"
+fi
+
 # Source nvm to ensure yarn is available
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -25,13 +33,13 @@ yarn build
 if [ $? -eq 0 ]; then
     echo "Build successful. Preparing Docker environment..."
 
-    mkdir -p ../quanta-volumes/dev/pgadmin-data
-    mkdir -p ../quanta-volumes/dev/logs
-    mkdir -p ../quanta-volumes/dev/tmp
+    mkdir -p $QUANTA_VOLUMES_PATH/pgadmin-data
+    mkdir -p $QUANTA_VOLUMES_PATH/logs
+    mkdir -p $QUANTA_VOLUMES_PATH/tmp
 
     # If that folder create didn't work, exit with an error
     if [ $? -ne 0 ]; then
-        echo "Error: Could not create ../quanta-volumes/dev directory. Please check permissions."
+        echo "Error: Could not create $QUANTA_VOLUMES_PATH directory. Please check permissions."
         exit 1
     fi
 
@@ -43,8 +51,8 @@ if [ $? -eq 0 ]; then
 
     # Ensure pgAdmin data directory has correct permissions
     echo "Setting pgAdmin directory permissions..."
-    sudo chown -R 5050:5050 ../quanta-volumes/dev/pgadmin-data
-    sudo chmod -R 755 ../quanta-volumes/dev/pgadmin-data
+    sudo chown -R 5050:5050 $QUANTA_VOLUMES_PATH/pgadmin-data
+    sudo chmod -R 755 $QUANTA_VOLUMES_PATH/pgadmin-data
     
     # Build and start the container (this will recreate existing containers)
     # NOTE: By using --force-recreate, that is the same as running 'down' before the 'up'

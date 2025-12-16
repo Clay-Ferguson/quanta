@@ -15,6 +15,14 @@ fi
 
 # WARNING: You need to 'yarn install' before running this script!
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the .env file from the same directory if it exists
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    source "$SCRIPT_DIR/.env"
+fi
+
 ./build/clean.sh
 
 echo "Building application..."
@@ -25,11 +33,13 @@ yarn build
 if [ $? -eq 0 ]; then
     echo "Build successful. Preparing Docker environment..."
 
-    mkdir -p ../quanta-volumes/local/pgadmin-data
+    mkdir -p $QUANTA_VOLUMES_PATH/pgadmin-data
+    mkdir -p $QUANTA_VOLUMES_PATH/logs
+    mkdir -p $QUANTA_VOLUMES_PATH/tmp
 
     # If that folder create didn't work, exit with an error
     if [ $? -ne 0 ]; then
-        echo "Error: Could not create ../quanta-volumes/local directory. Please check permissions."
+        echo "Error: Could not create $QUANTA_VOLUMES_PATH directory. Please check permissions."
         exit 1
     fi
 
@@ -41,8 +51,8 @@ if [ $? -eq 0 ]; then
 
     # Ensure pgAdmin data directory has correct permissions
     echo "Setting pgAdmin directory permissions..."
-    sudo chown -R 5050:5050 ../quanta-volumes/local/pgadmin-data
-    sudo chmod -R 755 ../quanta-volumes/local/pgadmin-data
+    sudo chown -R 5050:5050 $QUANTA_VOLUMES_PATH/pgadmin-data
+    sudo chmod -R 755 $QUANTA_VOLUMES_PATH/pgadmin-data
     
     # Stop any existing containers
     docker-compose --env-file ./build/local/.env --env-file ../.env-quanta down 
