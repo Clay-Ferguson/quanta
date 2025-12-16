@@ -213,6 +213,10 @@ class ImportArchive {
     }
 
     private parseMultipartData(buffer: Buffer, boundary: Buffer): Buffer[] {
+        const HYPHEN = 0x2D;      // '-'
+        const CR = 0x0D;          // '\r' (carriage return)
+        const LF = 0x0A;          // '\n' (line feed)
+        
         const parts: Buffer[] = [];
         let start = 0;
         while (true) {
@@ -223,8 +227,10 @@ class ImportArchive {
                 if (part.length > 0) parts.push(part);
             }
             start = boundaryIndex + boundary.length;
-            if (buffer[start] === 0x2D && buffer[start + 1] === 0x2D) break;
-            if (buffer[start] === 0x0D && buffer[start + 1] === 0x0A) start += 2;
+            // Check for final boundary marker '--'
+            if (buffer[start] === HYPHEN && buffer[start + 1] === HYPHEN) break;
+            // Skip CRLF after boundary
+            if (buffer[start] === CR && buffer[start + 1] === LF) start += 2;
         }
         return parts;
     }
