@@ -431,7 +431,7 @@ class VFS {
         }
     }
     
-    async unlink(owner_id: number, fullPath: string): Promise<void> {
+    async unlink(owner_id: number, fullPath: string): Promise<void> { 
         try {
             const relativePath = docUtil.normalizePath(fullPath);
             
@@ -456,14 +456,17 @@ class VFS {
                 throw new Error(`Cannot unlink directory: ${fullPath}. Use rm with recursive option instead.`);
             }
             
-            // Delete the file using direct DELETE query
-            const result = await pgdb.query(
-                'DELETE FROM vfs_nodes WHERE doc_root_key = $1 AND parent_path = $2 AND filename = $3 AND is_directory = false AND (owner_id = $4 OR $4 = 0) RETURNING *',
-                rootKey, parentPath, filename, owner_id
-            );
-            
-            if (result.rowCount === 0) {
-                throw new Error(`Permission denied or file not found: ${fullPath}`);
+            // Delete the file using the stored procedure
+            try {
+                await pgdb.query(
+                    'SELECT vfs_unlink($1, $2, $3, $4)',
+                    owner_id, parentPath, filename, rootKey
+                );
+            } catch (error: any) {
+                if (error.message && error.message.includes('File not found')) {
+                    throw new Error(`Permission denied or file not found: ${fullPath}`);
+                }
+                throw error;
             }
         } catch (error) {
             console.error('VFS.unlink error:', error);
