@@ -38,6 +38,7 @@ import { moveUpOrDownTest } from './moveUpOrDownTest.js';
 import { moveUpOrDownTest2 } from './moveUpOrDownTest2.js';
 import { crossFolderPasteTest } from './crossFolderPasteTest.js';
 import { sameFolderReorderTest } from './sameFolderReorderTest.js';
+import { queryNodesTest } from './queryNodesTest.js';
 
 export async function runTests() {
     console.log("🚀 Starting VFS embedded tests...");
@@ -166,6 +167,9 @@ export async function runTests() {
 
         // Test same-folder reordering with ordinal conflicts (regression test for duplicate key bug)
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("sameFolderReorderTest", () => sameFolderReorderTest(owner_id), true);
+
+        // Test the getNodeWithDescendants method
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("queryNodesTest", () => queryNodesTest(owner_id), true);
 
         console.log("✅ VFS test suite passed");
     } catch {

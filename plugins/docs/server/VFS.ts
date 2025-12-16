@@ -332,14 +332,10 @@ class VFS {
      */
     async getNodeWithDescendants(nodeId: string, rootPath: string): Promise<any[]> {
         try {
-            const query = `
-                SELECT * FROM vfs_nodes 
-                WHERE uuid = $1 
-                   OR parent_path = $2 
-                   OR parent_path LIKE $3
-            `;
-            
-            const result = await pgdb.query(query, nodeId, rootPath, rootPath + '/%');
+            const result = await pgdb.query(
+                'SELECT * FROM vfs_get_node_with_descendants($1, $2)',
+                nodeId, rootPath
+            );
             return result.rows;
         } catch (error) {
             console.error('VFS.getNodeWithDescendants error:', error);

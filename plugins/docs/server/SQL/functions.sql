@@ -1274,3 +1274,57 @@ BEGIN
     RETURN QUERY SELECT uuid1_arg, ord2, uuid2_arg, ord1;
 END;
 $$ LANGUAGE plpgsql;
+
+-----------------------------------------------------------------------------------------------------------
+-- Function: vfs_get_node_with_descendants
+-- Gets a node and all its descendants by node ID and root path
+-- Returns the node itself, all direct children, and all nested descendants
+-----------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION vfs_get_node_with_descendants(
+    node_id_arg UUID,
+    root_path_arg TEXT
+) 
+RETURNS TABLE(
+    id INTEGER,
+    uuid UUID,
+    owner_id INTEGER,
+    doc_root_key VARCHAR(255),
+    parent_path TEXT,
+    filename VARCHAR(255),
+    ordinal INTEGER,
+    is_directory BOOLEAN,
+    content_text TEXT,
+    content_binary BYTEA,
+    is_binary BOOLEAN,
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    created_time TIMESTAMP WITH TIME ZONE,
+    modified_time TIMESTAMP WITH TIME ZONE,
+    is_public BOOLEAN
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        n.id,
+        n.uuid,
+        n.owner_id,
+        n.doc_root_key,
+        n.parent_path,
+        n.filename,
+        n.ordinal,
+        n.is_directory,
+        n.content_text,
+        n.content_binary,
+        n.is_binary,
+        n.content_type,
+        n.size_bytes,
+        n.created_time,
+        n.modified_time,
+        n.is_public
+    FROM vfs_nodes n
+    WHERE 
+        n.uuid = node_id_arg 
+        OR n.parent_path = root_path_arg 
+        OR n.parent_path LIKE (root_path_arg || '/%');
+END;
+$$ LANGUAGE plpgsql;

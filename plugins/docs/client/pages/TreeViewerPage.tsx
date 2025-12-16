@@ -138,7 +138,7 @@ export default function TreeViewerPage() {
     // We have to wrap this in a useCallback in order to be able to use it in
     // the useEffect below
     const reRenderTree = useCallback(async () => {
-        // console.log("***************** Re-rendering tree viewer..."); // todo-0: this is getting called twice on initial page load. Need to investigate why.
+        // console.log("***************** Re-rendering tree viewer..."); 
         let folder = gs.docsFolder || '';
         if (!folder.startsWith('/')) {
             folder = `/${folder}`;
@@ -179,7 +179,6 @@ export default function TreeViewerPage() {
                 folder = '';
             }
             const url = `/api/docs/render/${folder}${!gs.docsEditMode ? '?pullup=true' : ''}`;
-            // todo-0: it appears this is executing TWICE on initial page load. Need to investigate why.
             const treeResponse: TreeRender_ResInfo | null = await httpClientUtil.secureHttpPost(url, {});
             // console.log(`DocsFolder server response:`, JSON.stringify(treeResponse?.treeNodes, null, 2));
             
