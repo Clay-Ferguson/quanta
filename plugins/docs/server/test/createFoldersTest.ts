@@ -191,3 +191,134 @@ export async function createFoldersTest(owner_id: number): Promise<void> {
         throw error;
     }
 }
+
+/**
+ * Test for the VFS.createUserFolder method
+ * 
+ * This test verifies that createUserFolder correctly creates a user's root folder in the VFS
+ * with the proper naming convention (rt_{userId}), sets correct ownership, and handles
+ * idempotency (calling it multiple times should not error or create duplicates).
+ */
+export async function createUserFolderTest(owner_id: number): Promise<void> {
+    try {
+        console.log('=== VFS.createUserFolder Test ===');
+
+        // Create a test user profile
+        const testUser = {
+            id: owner_id,
+            name: 'testuser123',
+            publicKey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        };
+
+        console.log(`Test 1 - Creating user folder for: ${testUser.name} (ID: ${testUser.id})`);
+        
+        // Call createUserFolder
+        await vfs.createUserFolder(testUser);
+
+        // Verify the folder was created with correct naming convention
+        const expectedFolderName = `rt_${testUser.id}`;
+        const folderPath = `/${expectedFolderName}`;
+        
+        console.log(`Test 1a - Verifying folder exists at path: ${folderPath}`);
+        const folderExists = await vfs.exists(folderPath);
+        
+        if (!folderExists) {
+            throw new Error(`Test 1a failed! User folder ${expectedFolderName} should exist after createUserFolder`);
+        }
+        
+        console.log('✅ Test 1a passed - User folder exists');
+
+        // Verify it's a directory
+        console.log('Test 1b - Verifying node is a directory');
+        const folderStat = await vfs.stat(folderPath);
+        
+        if (!folderStat.is_directory) {
+            throw new Error('Test 1b failed! User folder should be a directory');
+        }
+        
+        console.log('✅ Test 1b passed - User folder is a directory');
+
+        // Verify the folder is owned by the correct user
+        console.log('Test 1c - Verifying folder ownership');
+        const folderNode = await vfs.getNodeByName(folderPath);
+        
+        if (!folderNode) {
+            throw new Error('Test 1c failed! Could not retrieve user folder node');
+        }
+        
+        if (folderNode.owner_id !== testUser.id) {
+            throw new Error(`Test 1c failed! Expected owner_id ${testUser.id} but got ${folderNode.owner_id}`);
+        }
+        
+        console.log('✅ Test 1c passed - User folder has correct owner');
+
+        // Test idempotency - calling createUserFolder again should not fail or create duplicate
+        console.log('Test 2 - Testing idempotency (calling createUserFolder again)');
+        await vfs.createUserFolder(testUser);
+        
+        // Verify still only one folder exists
+        const rootContents = await vfs.readdirEx(owner_id, '/', false);
+        const userFolders = rootContents.filter(node => node.name === expectedFolderName);
+        
+        if (userFolders.length !== 1) {
+            throw new Error(`Test 2 failed! Expected exactly 1 user folder but found ${userFolders.length}`);
+        }
+        
+        console.log('✅ Test 2 passed - Idempotency verified, no duplicate folders created');
+
+        // Test invalid username validation
+        console.log('Test 3 - Testing invalid username validation');
+        const invalidUser = {
+            id: owner_id + 1000,
+            name: 'invalid user!@#',
+            publicKey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        };
+        
+        let validationErrorCaught = false;
+        try {
+            await vfs.createUserFolder(invalidUser);
+        } catch (error: any) {
+            if (error.message && error.message.includes('Invalid user name')) {
+                validationErrorCaught = true;
+                console.log('✅ Test 3 passed - Invalid username properly rejected');
+            } else {
+                throw new Error(`Test 3 failed! Expected validation error but got: ${error.message}`);
+            }
+        }
+        
+        if (!validationErrorCaught) {
+            throw new Error('Test 3 failed! Expected validation error for invalid username but none was thrown');
+        }
+
+        // Test missing user ID validation
+        console.log('Test 4 - Testing missing user ID validation');
+        const noIdUser = {
+            name: 'validname',
+            publicKey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        };
+        
+        let missingIdErrorCaught = false;
+        try {
+            await vfs.createUserFolder(noIdUser);
+        } catch (error: any) {
+            if (error.message && error.message.includes('User profile must have an ID')) {
+                missingIdErrorCaught = true;
+                console.log('✅ Test 4 passed - Missing user ID properly rejected');
+            } else {
+                throw new Error(`Test 4 failed! Expected missing ID error but got: ${error.message}`);
+            }
+        }
+        
+        if (!missingIdErrorCaught) {
+            throw new Error('Test 4 failed! Expected error for missing user ID but none was thrown');
+        }
+
+        console.log('✅ All VFS.createUserFolder tests passed');
+        console.log('=== VFS.createUserFolder Test Completed Successfully ===');
+        
+    } catch (error) {
+        console.error('=== VFS.createUserFolder Test Failed ===');
+        console.error('Error during createUserFolder test:', error);
+        throw error;
+    }
+}
