@@ -17,7 +17,7 @@ export async function setOrdinalTest(owner_id: number): Promise<void> {
         // First, try to delete our specific test files by name
         for (const file of testFiles) {
             try {
-                await vfs.unlink(owner_id, file.name);
+                await vfs.rm(owner_id, file.name);
                 console.log(`Cleanup - Deleted existing ${file.name}`);
             } catch (error) {
                 // File doesn't exist, which is fine - ignore the error
@@ -41,7 +41,7 @@ export async function setOrdinalTest(owner_id: number): Promise<void> {
                     if (file.is_directory) {
                         await vfs.rm(owner_id, file.name);
                     } else {
-                        await vfs.unlink(owner_id, file.name);
+                        await vfs.rm(owner_id, file.name);
                     }
                     console.log(`Cleanup - Deleted file/folder with conflicting ordinal ${file.ordinal}: ${file.name}`);
                 } catch (error) {
@@ -282,7 +282,7 @@ export async function setOrdinalTest(owner_id: number): Promise<void> {
         console.log('Cleanup - Removing test files and directory');
         for (const file of testFiles) {
             try {
-                await vfs.unlink(owner_id, file.name);
+                await vfs.rm(owner_id, file.name);
                 console.log(`Cleanup - Deleted ${file.name}`);
             } catch (error) {
                 console.log(`Cleanup - Could not delete ${file.name}:`, error);

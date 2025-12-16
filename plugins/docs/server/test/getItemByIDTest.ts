@@ -265,7 +265,7 @@ export async function getItemByIDTest(owner_id: number): Promise<void> {
         // Test 10: Clean up test files
         console.log('Test 10 - Cleaning up test files');
         try {
-            await vfs.unlink(owner_id, testFileName);
+            await vfs.rm(owner_id, testFileName);
             console.log('Test 10 - Deleted test file');
         } catch (error) {
             console.log('Test 10 - Could not delete test file:', error);

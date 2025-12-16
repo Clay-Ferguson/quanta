@@ -102,7 +102,7 @@ export async function moveUpOrDownTest2(owner_id: number): Promise<void> {
         console.log('Cleanup - Removing test files');
         for (const file of testFiles) {
             try {
-                await vfs.unlink(owner_id, file.name);
+                await vfs.rm(owner_id, file.name);
                 console.log(`Cleanup - Deleted ${file.name}`);
             } catch (error) {
                 console.log(`Cleanup - Could not delete ${file.name}:`, error);

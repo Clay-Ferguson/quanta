@@ -184,7 +184,7 @@ export async function readdirTest2(owner_id: number): Promise<void> {
         // Delete test files
         for (const fileName of testFiles) {
             try {
-                await vfs.unlink(owner_id, fileName);
+                await vfs.rm(owner_id, fileName);
                 console.log(`Test 10 - Deleted test file: ${fileName}`);
             } catch (error) {
                 // File might already be deleted by previous tests

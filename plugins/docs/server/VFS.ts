@@ -504,55 +504,7 @@ class VFS {
             throw new Error(`Failed to rename: ${result.rows[0].diagnostic}`);
         }
     }
-    
-    /**
-     * Delete a file (not directory)
-     * @param owner_id - The owner ID for authorization
-     * @param fullPath - The full path of the file to delete
-     */
-    async unlink(owner_id: number, fullPath: string): Promise<void> { 
-        try {
-            const relativePath = docUtil.normalizePath(fullPath);
-            
-            // Special case: prevent deletion of root directory
-            if (relativePath === '') {
-                throw new Error('Cannot unlink root directory');
-            }
-            
-            const { parentPath, filename } = docUtil.parsePath(relativePath);
-            
-            // Check if the file exists and get its info
-            let stats: VFSStats;
-            try {
-                stats = await this.stat(fullPath);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (error) {
-                throw new Error(`File not found: ${fullPath}`);
-            }
-            
-            // unlink should only work on files, not directories
-            if (stats.is_directory) {
-                throw new Error(`Cannot unlink directory: ${fullPath}. Use rm with recursive option instead.`);
-            }
-            
-            // Delete the file using the stored procedure
-            try {
-                await pgdb.query(
-                    'SELECT vfs_unlink($1, $2, $3, $4)',
-                    owner_id, parentPath, filename, rootKey
-                );
-            } catch (error: any) {
-                if (error.message && error.message.includes('File not found')) {
-                    throw new Error(`Permission denied or file not found: ${fullPath}`);
-                }
-                throw error;
-            }
-        } catch (error) {
-            console.error('VFS.unlink error:', error);
-            throw error;
-        }
-    }
-    
+        
     /**
      * Remove a file or directory
      * @param owner_id - The owner ID for authorization

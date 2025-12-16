@@ -4,36 +4,36 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
     try {
         console.log('=== VFS Unlink Test Starting ===');
 
-        // Test 1: Test unlinking non-existent file (should throw error)
-        console.log('Test 1 - Attempting to unlink non-existent file');
+        // Test 1: Test removing non-existent file (should throw error)
+        console.log('Test 1 - Attempting to remove non-existent file');
         try {
-            await vfs.unlink(owner_id, 'nonexistent-file.txt');
+            await vfs.rm(owner_id, 'nonexistent-file.txt');
             throw new Error('Test 1 failed! Should have thrown error for non-existent file');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.log('Test 1 passed - Non-existent file threw error:', errorMessage);
-            if (!errorMessage.includes('File not found')) {
+            if (!errorMessage.includes('File or directory not found') && !errorMessage.includes('File not found')) {
                 throw new Error('Test 1 failed! Should throw "File not found" error');
             }
         }
 
-        // Test 2: Test unlinking root directory (should throw error)
-        console.log('Test 2 - Attempting to unlink root directory');
+        // Test 2: Test removing root directory (should throw error)
+        console.log('Test 2 - Attempting to remove root directory');
         try {
-            await vfs.unlink(owner_id, '');
+            await vfs.rm(owner_id, '');
             throw new Error('Test 2 failed! Should have thrown error for root directory');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.log('Test 2 passed - Root directory unlink threw error:', errorMessage);
-            if (!errorMessage.includes('Cannot unlink root directory')) {
+            console.log('Test 2 passed - Root directory remove threw error:', errorMessage);
+            if (!errorMessage.includes('Cannot delete root directory')) {
                 throw new Error('Test 2 failed! Should throw specific root directory error');
             }
         }
 
-        // Test 3: Create a test file and then unlink it
-        console.log('Test 3 - Create and unlink a test file');
+        // Test 3: Create a test file and then remove it
+        console.log('Test 3 - Create and remove a test file');
         const testFileName = 'test-unlink-file.txt';
-        const testContent = 'This file will be unlinked by the unlink test.';
+        const testContent = 'This file will be removed by the rm test.';
         
         // Create the file
         await vfs.writeFile(owner_id, testFileName, testContent, 'utf8');
@@ -44,40 +44,40 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
         if (!existsBefore) {
             throw new Error('Test 3 failed! Test file should exist after creation');
         }
-        console.log('Test 3 - File existence verified before unlinking');
+        console.log('Test 3 - File existence verified before removing');
         
-        // Unlink the file
-        await vfs.unlink(owner_id, testFileName);
-        console.log('Test 3 - Successfully unlinked test file');
+        // Remove the file
+        await vfs.rm(owner_id, testFileName);
+        console.log('Test 3 - Successfully removed test file');
         
         // Verify it no longer exists
         const existsAfter = await vfs.exists(testFileName);
         if (existsAfter) {
-            throw new Error('Test 3 failed! Test file should not exist after unlinking');
+            throw new Error('Test 3 failed! Test file should not exist after removing');
         }
-        console.log('Test 3 - File unlinking verified');
+        console.log('Test 3 - File removal verified');
 
-        // Test 4: Test unlinking with path normalization
-        console.log('Test 4 - Test unlinking with path normalization');
+        // Test 4: Test removing with path normalization
+        console.log('Test 4 - Test removing with path normalization');
         const testFileName4 = 'test-unlink-normalize.txt';
         
         // Create file
         await vfs.writeFile(owner_id, testFileName4, 'Normalization test content', 'utf8');
         console.log(`Test 4 - Created test file: ${testFileName4}`);
         
-        // Unlink with path that needs normalization
-        await vfs.unlink(owner_id, `///${testFileName4}///`);
-        console.log('Test 4 - Successfully unlinked file with normalized path');
+        // Remove with path that needs normalization
+        await vfs.rm(owner_id, `///${testFileName4}///`);
+        console.log('Test 4 - Successfully removed file with normalized path');
         
         // Verify deletion
         const exists4 = await vfs.exists(testFileName4);
         if (exists4) {
-            throw new Error('Test 4 failed! File should not exist after unlinking with normalized path');
+            throw new Error('Test 4 failed! File should not exist after removing with normalized path');
         }
-        console.log('Test 4 - Path normalization unlinking verified');
+        console.log('Test 4 - Path normalization removal verified');
 
-        // Test 5: Test unlinking multiple files in sequence
-        console.log('Test 5 - Test unlinking multiple files in sequence');
+        // Test 5: Test removing multiple files in sequence
+        console.log('Test 5 - Test removing multiple files in sequence');
         const testFiles = ['test-unlink-multi-1.txt', 'test-unlink-multi-2.txt', 'test-unlink-multi-3.txt'];
         
         // Create multiple files
@@ -95,23 +95,23 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
         }
         console.log('Test 5 - All files verified to exist');
         
-        // Unlink all files
+        // Remove all files
         for (const fileName of testFiles) {
-            await vfs.unlink(owner_id, fileName);
-            console.log(`Test 5 - Unlinked file: ${fileName}`);
+            await vfs.rm(owner_id, fileName);
+            console.log(`Test 5 - Removed file: ${fileName}`);
         }
         
         // Verify all files are gone
         for (const fileName of testFiles) {
             const exists = await vfs.exists(fileName);
             if (exists) {
-                throw new Error(`Test 5 failed! File ${fileName} should not exist after unlinking`);
+                throw new Error(`Test 5 failed! File ${fileName} should not exist after removing`);
             }
         }
-        console.log('Test 5 - All files verified to be unlinked');
+        console.log('Test 5 - All files verified to be removed');
 
-        // Test 6: Test that unlink fails on directories
-        console.log('Test 6 - Test that unlink fails on directories');
+        // Test 6: Test that rm can delete empty directories
+        console.log('Test 6 - Test that rm can delete empty directories');
         const testDirName = 'test-unlink-dir';
         
         // Create a directory first
@@ -124,21 +124,16 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
             throw new Error('Test 6 failed! Test directory should exist after creation');
         }
         
-        // Try to unlink the directory (should fail)
-        try {
-            await vfs.unlink(owner_id, testDirName);
-            throw new Error('Test 6 failed! Should have thrown error when trying to unlink directory');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.log('Test 6 passed - Directory unlink threw error:', errorMessage);
-            if (!errorMessage.includes('Cannot unlink directory')) {
-                throw new Error('Test 6 failed! Should throw specific directory error');
-            }
-        }
-        
-        // Clean up the directory using rm
+        // Remove the directory (should succeed for empty dir)
         await vfs.rm(owner_id, testDirName);
-        console.log('Test 6 - Cleaned up test directory using rm');
+        console.log('Test 6 - Successfully removed empty directory');
+        
+        // Verify it's gone
+        const dirExistsAfter = await vfs.exists(testDirName);
+        if (dirExistsAfter) {
+            throw new Error('Test 6 failed! Directory should not exist after removal');
+        }
+        console.log('Test 6 - Directory removal verified');
 
         // Test 7: Test different file types
         console.log('Test 7 - Test unlinking different file types');
@@ -161,9 +156,9 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
                 throw new Error(`Test 7 failed! File ${file.name} should exist after creation`);
             }
             
-            // Unlink it
-            await vfs.unlink(owner_id, file.name);
-            console.log(`Test 7 - Unlinked ${file.name}`);
+            // Remove it
+            await vfs.rm(owner_id, file.name);
+            console.log(`Test 7 - Removed ${file.name}`);
             
             // Verify it's gone
             const existsAfter = await vfs.exists(file.name);
@@ -187,9 +182,9 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
                 await vfs.writeFile(owner_id, fileName, `Content for ${fileName}`, 'utf8');
                 console.log(`Test 8 - Created file with special chars: ${fileName}`);
                 
-                // Unlink it
-                await vfs.unlink(owner_id, fileName);
-                console.log(`Test 8 - Successfully unlinked: ${fileName}`);
+                // Remove it
+                await vfs.rm(owner_id, fileName);
+                console.log(`Test 8 - Successfully removed: ${fileName}`);
                 
                 // Verify it's gone
                 const exists = await vfs.exists(fileName);
@@ -214,10 +209,10 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
         await vfs.writeFile(owner_id, testFile9b, 'Consistency test content', 'utf8');
         console.log('Test 9 - Created two test files for consistency test');
         
-        // Delete one with unlink, one with rm
-        await vfs.unlink(owner_id, testFile9a);
+        // Delete both with rm
+        await vfs.rm(owner_id, testFile9a);
         await vfs.rm(owner_id, testFile9b);
-        console.log('Test 9 - Deleted one with unlink, one with rm');
+        console.log('Test 9 - Deleted both with rm');
         
         // Verify both are gone
         const exists9a = await vfs.exists(testFile9a);
@@ -235,12 +230,12 @@ export async function unlinkTest2(owner_id: number): Promise<void> {
         const rootPaths = ['/', '//', '///', './'];
         for (const path of rootPaths) {
             try {
-                await vfs.unlink(owner_id, path);
+                await vfs.rm(owner_id, path);
                 throw new Error(`Test 10 failed! Should have thrown error for root path: ${path}`);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
                 console.log(`Test 10 - Root path '${path}' correctly threw error`);
-                if (!errorMessage.includes('Cannot unlink root directory') && !errorMessage.includes('File not found')) {
+                if (!errorMessage.includes('Cannot delete root directory') && !errorMessage.includes('File or directory not found') && !errorMessage.includes('File not found')) {
                     throw new Error(`Test 10 failed! Unexpected error for root path ${path}: ${errorMessage}`);
                 }
             }

@@ -369,7 +369,7 @@ class DocMod {
                         // console.log(`Folder deleted successfully: ${absoluteTargetPath}`);
                     } else {
                         // Remove file
-                        await vfs.unlink(owner_id, absoluteTargetPath);
+                        await vfs.rm(owner_id, absoluteTargetPath);
                         // console.log(`File deleted successfully: ${absoluteTargetPath}`);
                     }
                 
@@ -1012,7 +1012,7 @@ class DocMod {
                         
                 try {
                     // Validate access and delete the file
-                    await vfs.unlink(owner_id, deleteFilePath);
+                    await vfs.rm(owner_id, deleteFilePath);
                     deletedFiles.push(fileToDelete.filename);
                     console.log(`Deleted file: ${fileToDelete.filename}`);
                 } catch (error) {
@@ -1139,7 +1139,7 @@ class DocMod {
 
             // Perform the conversion: delete original file and create folder
             // Step 1: Remove the original file with security validation
-            await vfs.unlink(owner_id, absoluteFilePath);
+            await vfs.rm(owner_id, absoluteFilePath);
             console.log(`File deleted: ${absoluteFilePath}`);
 
             // Step 2: Create the new folder structure with the preserved ordinal
