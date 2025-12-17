@@ -34,28 +34,8 @@ yarn build
 # Check if yarn build succeeded
 if [ $? -eq 0 ]; then
     echo "Build successful. Preparing Docker environment with debugging enabled..."
+    ./build/pre-build.sh
 
-    mkdir -p $QUANTA_VOLUMES_PATH/pgadmin-data
-    mkdir -p $QUANTA_VOLUMES_PATH/logs
-    mkdir -p $QUANTA_VOLUMES_PATH/tmp
-
-    # If that folder create didn't work, exit with an error
-    if [ $? -ne 0 ]; then
-        echo "Error: Could not create $QUANTA_VOLUMES_PATH directory. Please check permissions."
-        exit 1
-    fi
-
-    # if ../.env-quanta does not exist, display error and exit
-    if [ ! -f ../.env-quanta ]; then
-        echo "Error: ../.env-quanta file does not exist. Please create it before running this script."
-        exit 1
-    fi
-
-    # Ensure pgAdmin data directory has correct permissions
-    echo "Setting pgAdmin directory permissions..."
-    sudo chown -R 5050:5050 $QUANTA_VOLUMES_PATH/pgadmin-data
-    sudo chmod -R 755 $QUANTA_VOLUMES_PATH/pgadmin-data
-    
     # Build and start the container with debugging enabled
     echo "Starting application with Docker Compose (Debug Mode)..."
     echo "Node.js debugger will be available on port 9229"
@@ -68,7 +48,6 @@ if [ $? -eq 0 ]; then
     # Start with debug profile and explicit debug environment
     # NOTE: By using --force-recreate, that is the same as running 'down' before the 'up'
     DEBUG=true DEBUG_PORT=9229 docker-compose --env-file ./build/dev/.env --env-file ../.env-quanta --profile pgadmin up --build --force-recreate --remove-orphans
-    
     echo "Quanta ended."
 else
     echo "Build failed. Terminating script."

@@ -174,7 +174,6 @@ export default function TreeViewerPage() {
             }
 
             // console.log(`Refreshing tree for folder [${folder}]]`);
-            // todo-0: I think 'pullup' may be obsolete now? 
             if (!folder || folder.trim() === '/') {
                 folder = '';
             }
