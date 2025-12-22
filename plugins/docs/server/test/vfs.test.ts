@@ -35,6 +35,7 @@ import { shiftOrdinalsDownTest2 } from './shiftOrdinalsDownTest2.js';
 import { writeFileExTest } from './writeFileExTest.js';
 import { writeFileAndReadFileTest } from './writeFileAndReadFileTest.js';
 import { rmTest } from './rmTest.js';
+import { rmTest2 } from './rmTest2.js';
 import { unlinkTest2 } from './unlinkTest2.js';
 import { readdirTest2 } from './readdirTest2.js';
 import { getItemByIDTest } from './getItemByIDTest.js';
@@ -164,6 +165,9 @@ export async function runTests() {
         
         // Test the rm method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("rmTest", () => rmTest(owner_id), true);
+        
+        // Test the rm method edge cases
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("rmTest2", () => rmTest2(owner_id), true);
         
         // Test the unlink method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("unlinkTest", () => unlinkTest2(owner_id), true);
