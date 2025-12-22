@@ -36,7 +36,7 @@ import { writeFileExTest } from './writeFileExTest.js';
 import { writeFileAndReadFileTest } from './writeFileAndReadFileTest.js';
 import { rmTest } from './rmTest.js';
 import { rmTest2 } from './rmTest2.js';
-import { unlinkTest2 } from './unlinkTest2.js';
+import { rmTest3 } from './rmTest3.js';
 import { readdirTest2 } from './readdirTest2.js';
 import { getItemByIDTest } from './getItemByIDTest.js';
 import { setOrdinalTest } from './setOrdinalTest.js';
@@ -171,7 +171,7 @@ export async function runTests() {
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("rmTest2", () => rmTest2(owner_id), true);
         
         // Test the unlink method
-        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("unlinkTest", () => unlinkTest2(owner_id), true);
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("unlinkTest", () => rmTest3(owner_id), true);
         
         // Test the readdir method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("readdirTest", () => readdirTest2(owner_id), true);

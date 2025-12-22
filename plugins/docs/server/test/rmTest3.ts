@@ -1,6 +1,6 @@
 import vfs from '../VFS.js';
 
-export async function unlinkTest2(owner_id: number): Promise<void> {
+export async function rmTest3(owner_id: number): Promise<void> {
     try {
         console.log('=== VFS Unlink Test Starting ===');
 
