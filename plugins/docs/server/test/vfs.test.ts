@@ -13,6 +13,7 @@ import { statTest } from './statTest.js';
 import { unlinkTest } from './unlinkTest.js';
 import { childrenExistTest } from './childrenExistTest.js';
 import { mkdirRmdirTest } from './mkdirRmdirTest.js';
+import { mkdirRmdirTest2 } from './mkdirRmdirTest2.js';
 import { ensurePathAndRenameTest } from './ensurePathAndRenameTest.js';
 import { ensurePathAndRenameTest2 } from './ensurePathAndRenameTest2.js';
 import { setPublicTest } from './setPublicTest.js';
@@ -96,6 +97,9 @@ export async function runTests() {
         
         // Run the mkdir/rmdir test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("mkdirRmdirTest", () => mkdirRmdirTest(owner_id), true);
+        
+        // Run the mkdir/rmdir edge cases test using the test runner
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("mkdirRmdirTest2", () => mkdirRmdirTest2(owner_id), true);
         
         // Run the ensure_path and rename test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("ensurePathAndRenameTest", () => ensurePathAndRenameTest(owner_id), true);
