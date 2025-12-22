@@ -1,6 +1,7 @@
 import pgdb from '../../../../server/db/PGDB.js';
 import { TestRunner } from '../../../../common/TestRunner.js';
 import { createFilesTest } from './saveFileTest.js';
+import { saveFileEdgeCasesTest } from './saveFileTest2.js';
 import { createFoldersTest } from './createFoldersTest.js';
 import { crossFolderPasteTest } from './crossFolderPasteTest.js';
 import { sameFolderReorderTest } from './sameFolderReorderTest.js';
@@ -22,6 +23,10 @@ export async function runRESTEndpointsTests() {
         // Run the saveFile test - creates three files in root folder
         await pgdb.wipeAdminOwnedNodes(); 
         await testRunner.run("createFilesTest", () => createFilesTest(owner_id), true);
+        
+        // Run the saveFile edge cases test - renaming, updates, error handling
+        await pgdb.wipeAdminOwnedNodes(); 
+        await testRunner.run("saveFileEdgeCasesTest", () => saveFileEdgeCasesTest(owner_id), true);
         
         // Run the createFolder test - creates three folders (cumulative, does NOT clear DB)
         // Note: This test does NOT clear the database, it appends to existing data
