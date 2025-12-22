@@ -28,6 +28,7 @@ import { existsTest2 } from './existsTest2.js';
 import { readdirExTest } from './readdirExTest.js';
 import { childrenExistTest2 } from './childrenExistTest2.js';
 import { renameTest } from './renameTest.js';
+import { renameTest2 } from './renameTest2.js';
 import { statTest2 } from './statTest2.js';
 import { shiftOrdinalsDownTest } from './shiftOrdinalsDownTest.js';
 import { shiftOrdinalsDownTest2 } from './shiftOrdinalsDownTest2.js';
@@ -142,6 +143,9 @@ export async function runTests() {
         
         // Test the rename method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("renameTest", () => renameTest(owner_id), true);
+        
+        // Test the rename method with successful operations and edge cases
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("renameTest2", () => renameTest2(owner_id), true);
         
         // Test the stat method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("statTest2", () => statTest2(), true);
