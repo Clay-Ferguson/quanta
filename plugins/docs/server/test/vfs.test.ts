@@ -22,6 +22,7 @@ import { getNodeByUuidTest } from './getNodeByUuidTest.js';
 import { searchTextTest } from './searchTextTest.js';
 import { normalizePathTest } from './normalizePathTest.js';
 import { joinPathTest } from './joinPathTest.js';
+import { joinPathTest2 } from './joinPathTest2.js';
 import { existsTest2 } from './existsTest2.js';
 import { readdirExTest } from './readdirExTest.js';
 import { childrenExistTest2 } from './childrenExistTest2.js';
@@ -122,6 +123,9 @@ export async function runTests() {
         
         // Test the joinPath method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("joinPathTest", () => joinPathTest(), true);
+        
+        // Test the joinPath method edge cases
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("joinPathTest2", () => joinPathTest2(), true);
         
         // Test the exists method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("existsTest", () => existsTest2(), true);
