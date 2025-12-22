@@ -45,6 +45,7 @@ import { moveUpOrDownTest2 } from './moveUpOrDownTest2.js';
 import { crossFolderPasteTest } from './crossFolderPasteTest.js';
 import { crossFolderPasteTest2 } from './crossFolderPasteTest2.js';
 import { sameFolderReorderTest } from './sameFolderReorderTest.js';
+import { sameFolderReorderTest2 } from './sameFolderReorderTest2.js';
 import { queryNodesTest } from './queryNodesTest.js';
 
 export async function runTests() {
@@ -195,6 +196,9 @@ export async function runTests() {
 
         // Test same-folder reordering with ordinal conflicts (regression test for duplicate key bug)
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("sameFolderReorderTest", () => sameFolderReorderTest(owner_id), true);
+
+        // Test same-folder reordering edge cases (single item, identity, large reorder, gaps, subdirs, chains, reversal)
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("sameFolderReorderTest2", () => sameFolderReorderTest2(owner_id), true);
 
         // Test the getNodeWithDescendants method
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("queryNodesTest", () => queryNodesTest(owner_id), true);
