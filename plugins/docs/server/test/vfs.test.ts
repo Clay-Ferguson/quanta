@@ -14,8 +14,10 @@ import { unlinkTest } from './unlinkTest.js';
 import { childrenExistTest } from './childrenExistTest.js';
 import { mkdirRmdirTest } from './mkdirRmdirTest.js';
 import { ensurePathAndRenameTest } from './ensurePathAndRenameTest.js';
+import { ensurePathAndRenameTest2 } from './ensurePathAndRenameTest2.js';
 import { setPublicTest } from './setPublicTest.js';
 import { checkAuthTest } from './checkAuthTest.js';
+import { checkAuthTest2 } from './checkAuthTest2.js';
 import { getNodeByUuidTest } from './getNodeByUuidTest.js';
 import { searchTextTest } from './searchTextTest.js';
 import { normalizePathTest } from './normalizePathTest.js';
@@ -37,6 +39,7 @@ import { setOrdinalTest } from './setOrdinalTest.js';
 import { moveUpOrDownTest } from './moveUpOrDownTest.js';
 import { moveUpOrDownTest2 } from './moveUpOrDownTest2.js';
 import { crossFolderPasteTest } from './crossFolderPasteTest.js';
+import { crossFolderPasteTest2 } from './crossFolderPasteTest2.js';
 import { sameFolderReorderTest } from './sameFolderReorderTest.js';
 import { queryNodesTest } from './queryNodesTest.js';
 
@@ -96,11 +99,17 @@ export async function runTests() {
         // Run the ensure_path and rename test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("ensurePathAndRenameTest", () => ensurePathAndRenameTest(owner_id), true);
         
+        // Run the ensure_path and rename edge cases test using the test runner
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("ensurePathAndRenameTest2", () => ensurePathAndRenameTest2(owner_id), true);
+        
         // Run the set_public test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("setPublicTest", () => setPublicTest(owner_id), true);
         
         // Run the check_auth test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("checkAuthTest", () => checkAuthTest(owner_id), true);
+        
+        // Run the check_auth edge cases test using the test runner
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("checkAuthTest2", () => checkAuthTest2(owner_id), true);
         
         // Run the get_node_by_uuid test using the test runner
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("getNodeByUuidTest", () => getNodeByUuidTest(owner_id), true);
@@ -164,6 +173,9 @@ export async function runTests() {
 
         // Test cross-folder paste with ordinal conflicts (regression test for duplicate key bug)
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("crossFolderPasteTest", () => crossFolderPasteTest(owner_id), true);
+
+        // Test cross-folder paste with multiple items and nested folders
+        await pgdb.wipeAdminOwnedNodes(); await testRunner.run("crossFolderPasteTest2", () => crossFolderPasteTest2(owner_id), true);
 
         // Test same-folder reordering with ordinal conflicts (regression test for duplicate key bug)
         await pgdb.wipeAdminOwnedNodes(); await testRunner.run("sameFolderReorderTest", () => sameFolderReorderTest(owner_id), true);
