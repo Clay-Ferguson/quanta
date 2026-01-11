@@ -1,20 +1,20 @@
 # Quanta Docs Developer Guide
 
-This document contains technical information about Quanta Docs (File System-based Wiki) written for the software developer audience. The Quanta app is a block-based document editor and cloud publishing app. You should read the [User Guide](./user_guide.md) for a less technical overview of the app, describing the high-level features. Quanta (the App) is implemented as a plugin for the Quanta Platform. In this document when we say `Quanta` it's referring to the Quanta App itself, not the entire platform.
+This document contains technical information about Quanta Docs written for the software developer audience. The Quanta app is a block-based document editor and cloud publishing app. You should read the [User Guide](./user_guide.md) for a less technical overview of the app, describing the high-level features. Quanta (the App) is implemented as a plugin for the Quanta Platform. In this document when we say `Quanta` it's referring to the Quanta App itself, not the entire platform.
 
 This app runs as a web application using Docker and uses a Virtual File System (VFS) to hold documents, which is implemented as Postgres Functions.
 
 # Virtual File System (VFS)
 
-The application uses a Virtual File System (VFS) that provides a multi-user website experience, similar to a cloud-based Jupyter Notebooks. VFS is a File System implementation made up entirely of a single PostgreSQL table, and a set of PostgreSQL functions which emulates the `fs` NPM module's API entirely but self-contained in Postgres! We don't provide full-coverage of all of the `fs` API because we don't need it, but we support basic functions necessary to drive this app, like reading directories, reading/writing files, renaming, deleting, etc.
+The application uses a Virtual File System (VFS) that provides a multi-user website experience, similar to a cloud-based Jupyter Notebooks. VFS is a File System implementation made up entirely of a single PostgreSQL table and a set of PostgreSQL functions. We support basic file operations necessary to drive this app, like reading directories, reading/writing files, renaming, deleting, etc.
 
 To control which files are accessible through the app, we have a section in the `config-*.yaml` files named `public-folders` where the admin can define file system roots.
 
 # File/Folder Ordinals
 
-The reason `Quanta` is able to use File Systems (i.e. files/folders) as the fundamental building blocks to hold Document Cell content in individual files (as in Jupyter-like Cells), is because Quanta uses the one ingredient what was always required to make this happen: Ordinals. The reason no one (afaik) has ever used a folder structure as the primary storage system for arbitrary documents, in this fine-grained way, is simple: Files/Folders don't have any inherent ordering. 
+The reason `Quanta` is able to use a file/folder structure as the fundamental building blocks to hold Document Cell content in individual files (as in Jupyter-like Cells), is because Quanta uses the one ingredient that was always required to make this happen: Ordinals. The reason no one (afaik) has ever used a folder structure as the primary storage system for arbitrary documents, in this fine-grained way, is simple: Files/Folders don't have any inherent ordering. 
 
-File Systems have always only been able to sort files alphabetically or by timestamps, but they have no inherent persistent ordering, in the way that paragraphs in a document are 'ordered'. Thus it has always been essentially impossible to make a "Cell-based" (as in Jupyter Cells) document system based on File Systems, until that problem is solved. The solution Quanta uses to solve this challenge is simply to automatically prefix files with an ordinal number like `0123_MyFile.md` or `0456_My_Folder`. This approach provides a consistent, predictable ordering system that allows the Virtual File System to maintain proper document structure and cell ordering within the Quanta Application interface.
+Traditional file systems have always only been able to sort files alphabetically or by timestamps, but they have no inherent persistent ordering, in the way that paragraphs in a document are 'ordered'. Thus it has always been essentially impossible to make a "Cell-based" (as in Jupyter Cells) document system based on a folder structure, until that problem is solved. The solution Quanta uses to solve this challenge is simply to automatically prefix files with an ordinal number like `0123_MyFile.md` or `0456_My_Folder`. This approach provides a consistent, predictable ordering system that allows the Virtual File System to maintain proper document structure and cell ordering within the Quanta Application interface.
 
 # Project Files
 

@@ -1,12 +1,12 @@
 # Quanta Docs User Guide
 
-**Quanta Docs** is a File Manager and Markdown Editor (similar to Jupyter Notebooks and Obsidian), which can run either locally, where it directly uses local files, or as a cloud-based multi-user app where a `Virtual File System` is used. When deployed to the cloud you also get a 'chat room' feature where users can do realtime messaging. The Document-centric features and the Chat-related features are implemented in two separate plugins which can actually be used either together or independently.
+**Quanta Docs** is a File Manager and Markdown Editor (similar to Jupyter Notebooks and Obsidian). It uses a `Virtual File System` (VFS) backed by a PostgreSQL database to store your documents. This architecture provides a robust, multi-user cloud-based experience. Optionally you can also use the 'chat room' feature where users can do realtime messaging. The Document-centric features and the Chat-related features are implemented in two separate plugins which can be used either together or independently.
 
-Quanta Documents plugin is a powerful file system-based document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an actual file on the file system rather than a chunk of JSON in a monolithic document file like Jupyter uses. The app provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) but using your file system itself for storage.
+Quanta Docs is a powerful document editor that allows you to view, edit, and organize your documents and folders in a tree-like structure, similar to Jupyter Notebooks, but where each 'cell' is an individual file in the VFS rather than a chunk of JSON in a monolithic document file like Jupyter uses. The app provides a comprehensive set of tools for managing your content, from simple text editing to advanced file operations, creating a Jupyter-like experience (block-based editor) with persistent cloud storage.
 
 ## Getting Started
 
-Using Quanta is much like browsing a File System, except that the content itself is being presented to you rather than just filenames. So Quanta is like a Wiki, or Document Editor/Publisher in that regard. Quanta presents your files and folders as a unified document view that you can browse around in. Each file in a folder is displayed as a separate section/cell, creating the appearance of one continuous document while maintaining individual file organization. At any given time you'll be viewing the content of a folder, but you'll be seeing all the markdown of all the files in that folder presented to you as a big editable document. So in the sense that you can edit online content this is similar to a Wiki.
+Using Quanta is much like browsing a traditional file system, except that the content itself is being presented to you rather than just filenames. So Quanta is like a Wiki, or Document Editor/Publisher in that regard. Quanta presents your files and folders as a unified document view that you can browse around in. Each file in a folder is displayed as a separate section/cell, creating the appearance of one continuous document while maintaining individual file organization. At any given time you'll be viewing the content of a folder, but you'll be seeing all the markdown of all the files in that folder presented to you as a big editable document. So in the sense that you can edit online content this is similar to a Wiki.
 
 ### Navigation
 
@@ -105,14 +105,12 @@ You can export any folder and its contents as a ZIP archive. This is useful for 
 
 ## Overall Page Layout
 
-At the upper right of the page these are buttons for opening folders (if run locally only), followed by refresh, search, settings, report, and help buttons. Parent button takes you up one level on folder structure. These are general buttons about things at a higher level in the app.
+At the upper right of the page there are buttons for refresh, search, settings, report, and help. The Parent button takes you up one level in the folder structure. These are general buttons about things at a higher level in the app.
 
 When `Edit Mode` is enabled we get more buttons down the middle and on the right side of the page for various edit-related tasks.
 
 | Icon | Action|
 |---|---|
-| <img src='img/icons/folder-open.png'> | Opens Folder with OS |
-| <img src='img/icons/open-system-file.png'> | Opens File with System Editor |
 | <img src='img/icons/refresh.png'> | Refreshes the page |
 | <img src='img/icons/search.png'> | Search current Folder |
 | <img src='img/icons/settings.png'> | Opens User Preferences |
@@ -308,11 +306,6 @@ The search feature offers three modes:
 
 ## Advanced Features
 
-### File System Integration
-For administrators with desktop access:
-- **File system editor**: Opens your system's default file editor
-- **Explore folder**: Opens the current folder in your file manager (desktop mode only)
-
 ### Static Site Generation
 The **Generate Static Site** button (cube icon) creates a static HTML version of your document structure, useful for publishing or sharing.
 
@@ -345,5 +338,5 @@ The **Generate Static Site** button (cube icon) creates a static HTML version of
 ### File Naming
 - While numeric prefixes are used internally, focus on meaningful names for the content portion
 - File extensions are automatically added (.md for text files) if not specified
-- Avoid special characters that might cause issues with file systems
+- Avoid special characters in file and folder names
 
