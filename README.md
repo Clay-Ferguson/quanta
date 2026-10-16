@@ -1,5 +1,11 @@
 # Quanta Web Platform
 
+## WARNING (This project is deprecated, and longer being maintained)
+
+**IMPORTANT Note from the developer (Clay Ferguson):**
+
+*This project was created almost entirely with 2023-era AI ChatGPT Agents, but the project was abandoned around 2024. I'm leaving it on Github only as a historical record. I may revive this project eventually because it has a good architecture and decent design. However, if I ever begin working on this again, the first thing I would do is have a modern 2026-era AI Agent look it over for bugs, and write a massive unit test suite, to get it up to what I consider modern quality standards. For me this project represented a significant milestone, because it was my first large scale AI work. Over several weeks, I was able to redesign and rewrite the Quanta concept (originally done in the quantizr project, which is a kind of block-based Wiki), completely from scratch with a new architecture, doing it all thru AI Prompting alone. The two main concepts in this app, that were new for me, were the creation of a virtual file system written almost entirely in Postgres Functions, and WebRTC for realtime messaging.* 
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white)](package.json)
